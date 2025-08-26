@@ -6,68 +6,158 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { LoginScreenNavigationProp } from '../types/navigation';
-// import Icon from 'react-native-vector-icons';
 
 function LoginScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
 
+  const handleSignIn = () => {
+    // You can add validation or API login logic here
+    navigation.navigate('Home');
+  };
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>Login</Text>
-      <TextInput
-        placeholder="Enter your email"
-        placeholderTextColor="#a84fa1"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-        style={styles.input}
-      />
-      <View style={styles.passwordContainer}>
-        <TextInput
-          placeholderTextColor="#a84fa1"
-          placeholder="Enter your password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry={!showPassword}
-          style={styles.passwordInput}
-        />
-      </View>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={styles.container}
+    >
+      <SafeAreaView style={styles.container}>
+        <ScrollView style={styles.scrollContainer}>
+          <View style={styles.logoView}>
+            <Image
+              source={require('../assets/LOGO__.png')}
+              style={styles.logo}
+            />
+          </View>
+          <View style={styles.card}>
+            <Text style={styles.title}>Login</Text>
+            <Text style={styles.welcomeText}>Welcome Back!</Text>
+            <Text style={styles.subText}>
+              Sign in to continue your journey with Evolve Robotics.
+            </Text>
 
-      <TouchableOpacity style={styles.loginButton}>
-        <Text style={styles.loginText}>Log In</Text>
-      </TouchableOpacity>
+            <Text style={styles.label}>Email Address</Text>
 
-      <View style={styles.signupContainer}>
-        <Text>Don't have an account?</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
-            <Text style={styles.signupLink} >Sign up</Text>
-          </TouchableOpacity>
-      </View>
+            <TextInput
+              placeholder="Enter your email"
+              placeholderTextColor="light black"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              style={styles.input}
+            />
+            <Text style={styles.label}>Password</Text>
 
-    </ScrollView>
+            <View style={styles.passwordContainer}>
+              <TextInput
+                placeholderTextColor="light black"
+                placeholder="Enter your password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                textContentType="password"
+                autoCapitalize="none"
+                style={styles.passwordInput}
+              />
+            </View>
+
+            <TouchableOpacity
+              onPress={() => navigation.navigate('ForgotPassword')}
+            >
+              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.loginButton} onPress={handleSignIn}>
+              <Text style={styles.loginText}>Login to Account</Text>
+            </TouchableOpacity>
+
+            <View style={styles.signupContainer}>
+              <Text>Don't have an account?</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
+                <Text style={styles.signupLink}>Sign up</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  container: { flex: 1, backgroundColor: '#fff' },
+  scrollContainer: {
     flexGrow: 1,
-    padding: 20,
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+    marginTop: 40,
     backgroundColor: '#fff',
   },
-  title: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: '#a42a8b',
-    marginBottom: 30,
-    textAlign: 'center',
+  logoView: {
+    flex: 1,
+    justifyContent: 'center',
   },
+  logo: {
+    height: 60,
+    width: 60,
+    alignSelf: 'center',
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 14,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 5 },
+    height: '100%',
+    paddingVertical: 20,
+    top: '7%',
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '600',
+    alignSelf: 'center',
+    color: '#a42a8b',
+    marginBottom: 22,
+    paddingTop: 15,
+    // textAlign: 'center',
+  },
+  welcomeText: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    textAlign: 'center',
+    color: '#000',
+  },
+  subText: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 32,
+    color: '#555',
+  },
+  label: {
+    fontWeight: '600',
+    marginBottom: 8,
+    fontSize: 14,
+    color: '#a42a8b',
+  },
+  forgotPasswordText: {
+    color: '#9C27B0', // Purple color
+    textAlign: 'right',
+    marginBottom: 32,
+    fontSize: 14,
+  },
+
   input: {
     borderWidth: 1,
     borderColor: '#eecdf4',
@@ -107,14 +197,14 @@ const styles = StyleSheet.create({
   signupContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 10
+    marginTop: 10,
   },
   signupLink: {
     fontSize: 14,
     color: '#9C27B0',
     fontWeight: '600',
-    textDecorationLine: 'underline'
-  }
+    textDecorationLine: 'underline',
+  },
 });
 
 export default LoginScreen;

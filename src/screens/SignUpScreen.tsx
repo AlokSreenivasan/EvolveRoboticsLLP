@@ -1,33 +1,64 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  Text,
-  StyleSheet,
-  ScrollView,
   View,
+  Text,
   TextInput,
   TouchableOpacity,
+  StyleSheet,
+  Alert,
+  ScrollView,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import {LoginScreenNavigationProp} from "../types/navigation";
 
-function SignUpScreen() {
-  const [fullName, setFullName] = React.useState('');
-  const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
-  const [confirmPassword, setConfirmPassword] = React.useState('');
+
+const SignUpScreen = () => {
+  const navigation = useNavigation<LoginScreenNavigationProp>();
+
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [errors, setErrors] = useState({});
+
+  const validate = () => {
+    const newErrors: any = {};
+
+    if (!fullName) newErrors.fullName = 'Full name is required';
+    if (!email || !email.includes('@'))
+      newErrors.email = 'Valid email is required';
+    if (!password || password.length < 8)
+      newErrors.password = 'Minimum 8 characters';
+    if (confirmPassword !== password)
+      newErrors.confirmPassword = 'Passwords do not match';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSignUp = () => {
+    if (validate()) {
+      Alert.alert('Success', 'Form submitted!');
+      // Call API or navigate here
+    }
+  };
+
+  // @ts-ignore
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Sign Up</Text>
 
       <View style={styles.card}>
         <Text style={styles.heading}>Create Your Account</Text>
 
-        <Text style={styles.label}>Full name:</Text>
+        <Text style={styles.label}>Full Name</Text>
         <TextInput
-          placeholder="Enter full name"
+          style={styles.input}
+          placeholder="Enter your full name"
           value={fullName}
           onChangeText={setFullName}
-          style={styles.input}
         />
-        {/*{errors.fullName && <Text style={styles.error}>{errors.fullName</Text>}*/}
+        {errors.fullName && <Text style={styles.error}>{errors.fullName}</Text>}
 
         <Text style={styles.label}>Email</Text>
         <TextInput
@@ -37,7 +68,7 @@ function SignUpScreen() {
           onChangeText={setEmail}
           keyboardType="email-address"
         />
-        {/*{errors.email && <Text style={styles.error}>{errors.email}</Text>}*/}
+        {errors.email && <Text style={styles.error}>{errors.email}</Text>}
 
         <Text style={styles.label}>Password</Text>
         <TextInput
@@ -47,7 +78,7 @@ function SignUpScreen() {
           onChangeText={setPassword}
           secureTextEntry
         />
-        {/*{errors.password && <Text style={styles.error}>{errors.password}</Text>}*/}
+        {errors.password && <Text style={styles.error}>{errors.password}</Text>}
 
         <Text style={styles.label}>Confirm Password</Text>
         <TextInput
@@ -57,37 +88,37 @@ function SignUpScreen() {
           onChangeText={setConfirmPassword}
           secureTextEntry
         />
-        {/*{errors.confirmPassword && (*/}
-        {/*  <Text style={styles.error}>{errors.confirmPassword}</Text>*/}
-        {/*)}*/}
+        {errors.confirmPassword && (
+          <Text style={styles.error}>{errors.confirmPassword}</Text>
+        )}
 
-        <TouchableOpacity
-          style={styles.button}
-          // onPress={handleSignUp}
-        >
+        <TouchableOpacity style={styles.button} onPress={handleSignUp}>
           <Text style={styles.buttonText}>Sign Up</Text>
         </TouchableOpacity>
 
-        <Text style={styles.footerText}>
-          Already have an account? <Text style={styles.link}>Sign In</Text>
-        </Text>
+        <View style={styles.signupline}>
+          <Text
+          // style={styles.footerText}
+          >
+            Already have an account?
+          </Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+            <Text style={styles.signinLink}>Sign In</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </ScrollView>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    padding: 20,
-    backgroundColor: '#fff',
-  },
+  container: { padding: 20, backgroundColor: '#fff', flexGrow: 1 },
   title: {
     fontSize: 20,
     fontWeight: '600',
     alignSelf: 'center',
-    padding: 30,
-    marginVertical: 16,
+    marginVertical: 46,
+    color: '#a42a8b',
   },
   card: {
     backgroundColor: '#fafafa',
@@ -101,40 +132,45 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     alignSelf: 'center',
   },
-  label: {
-    marginTop: 36,
-    fontWeight: '500',
-  },
+  label: { marginTop: 10, fontWeight: '500', color: '#a42a8b' },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#eecdf4',
     borderRadius: 6,
     padding: 10,
     marginTop: 5,
+    color: '#a42a8b'
   },
-  error: {
-    fontSize: 12,
-    color: 'red',
-    marginBottom: 5,
+  error: { fontSize: 12, color: 'red', marginBottom: 5 },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 12,
   },
+  checkboxText: { marginLeft: 8 },
+  link: { color: '#a42a8b', fontWeight: '600' },
   button: {
     backgroundColor: '#a42a8b',
     padding: 15,
     borderRadius: 8,
     marginTop: 10,
   },
-  buttonText: {
-    color: '#fff',
-    alignSelf: 'center',
-    fontWeight: 'bold',
-  },
+  buttonText: { color: '#fff', alignSelf: 'center', fontWeight: 'bold' },
   footerText: {
     alignSelf: 'center',
     marginTop: 15,
   },
-  link: {
-    color: '#a42a8b',
-    fontWeight: '600',
+  signupline: {
+    flexDirection: 'row',
+    marginVertical: 15,
+    justifyContent: 'center',
   },
+  signinLink: {
+    fontSize: 14,
+    color: '#9C27B0',
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  }
 });
+
 export default SignUpScreen;
