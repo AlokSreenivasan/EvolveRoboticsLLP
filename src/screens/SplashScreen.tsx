@@ -24,6 +24,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff', // you can use your brand color
     alignItems: 'center',
     justifyContent: 'center',
+
   },
   logo: {
     width: 150,

@@ -19,14 +19,17 @@ function AppNavigation() {
     const checkFirstLaunch = async () => {
       try {
         const hasLaunched = await AsyncStorage.getItem('hasLaunched');
-        if (hasLaunched === null) {
-          // First launch → show Intro
-          await AsyncStorage.setItem('hasLaunched', 'true');
-          setInitialRoute('Intro');
-        } else {
-          // Not first launch → go to Login
-          setInitialRoute('Login');
-        }
+        // Add delay 2 seconds
+        setTimeout(async () => {
+          if (hasLaunched === null) {
+            // First launch → show Intro
+            await AsyncStorage.setItem('hasLaunched', 'true');
+            setInitialRoute('Intro');
+          } else {
+            // Not first launch → go to Login
+            setInitialRoute('Login');
+          }
+        }, 2000);
       } catch (error) {
         console.log('Error checking first launch', error);
         setInitialRoute('Login');
@@ -36,15 +39,17 @@ function AppNavigation() {
     checkFirstLaunch();
   }, []);
 
-  if (!initialRoute) {
-    // Show splash screen while checking AsyncStorage
-    return <SplashScreen />;
-  }
+  // if (!initialRoute) {
+  //   // Show splash screen while checking AsyncStorage
+  //   return <SplashScreen />;
+  // }
 
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName={initialRoute}
+        // initialRouteName={initialRoute}
+        initialRouteName='Intro'
+
         screenOptions={{ headerShown: false }}
       >
         <Stack.Screen name="Intro" component={IntroScreen} />
