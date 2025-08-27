@@ -27,39 +27,39 @@ function ForgotPasswordScreen({ navigation }) {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.firstBox}>
-        {/* Back button */}
-        <TouchableOpacity
-          onPress={() => navigation.navigate('Login')}
-          style={styles.backButton}
-        >
-          <Text style={styles.backText}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>Forgot Password</Text>
-      </View>
+      <ScrollView style={styles.container}>
+        <View style={styles.firstBox}>
+          {/* Back button */}
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Login')}
+            style={styles.backButton}
+          >
+            <Text style={styles.backText}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.title}>Forgot Password</Text>
+        </View>
 
-      <View style={styles.content}>
-        <Text style={styles.heading}>Reset Your Password</Text>
-        <Text style={styles.subText}>
-          Enter the email address associated with your account, and we'll send
-          you a link to reset your password.
-        </Text>
+        <View style={styles.content}>
+          <Text style={styles.heading}>Reset Your Password</Text>
+          <Text style={styles.subText}>
+            Enter the email address associated with your account, and we'll send
+            you a link to reset your password.
+          </Text>
 
-        <Text style={styles.label}>Email Address</Text>
-        <TextInput
-          placeholderTextColor="light black"
-          style={styles.input}
-          placeholder="your.email@example.com"
-          keyboardType="email-address"
-          value={email}
-          onChangeText={setEmail}
-        />
-        <TouchableOpacity style={styles.button} onPress={handleResetPassword}>
-          <Text style={styles.buttonText}>Send Reset Link</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+          <Text style={styles.label}>Email Address</Text>
+          <TextInput
+            placeholderTextColor="light black"
+            style={styles.input}
+            placeholder="your.email@example.com"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
+          />
+          <TouchableOpacity style={styles.button} onPress={handleResetPassword}>
+            <Text style={styles.buttonText}>Send Reset Link</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
   );
 }
 

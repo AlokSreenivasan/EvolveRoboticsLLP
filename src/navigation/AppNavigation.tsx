@@ -9,36 +9,38 @@ import HomeScreen from '../screens/HomeScreen.tsx';
 import IntroScreen from '../screens/IntroScreen.tsx';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SplashScreen from '../screens/SplashScreen.tsx';
+import { RootStackParamList } from '../types/navigation';
 
-const Stack = createNativeStackNavigator();
+// const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function AppNavigation() {
   const [initialRoute, setInitialRoute] = useState<string | null>(null);
 
-  useEffect(() => {
-    const checkFirstLaunch = async () => {
-      try {
-        const hasLaunched = await AsyncStorage.getItem('hasLaunched');
-        // Add delay 2 seconds
-        setTimeout(async () => {
-          if (hasLaunched === null) {
-            // First launch → show Intro
-            await AsyncStorage.setItem('hasLaunched', 'true');
-            setInitialRoute('Intro');
-          } else {
-            // Not first launch → go to Login
-            setInitialRoute('Login');
-          }
-        }, 2000);
-      } catch (error) {
-        console.log('Error checking first launch', error);
-        setInitialRoute('Login');
-      }
-    };
-
-    checkFirstLaunch();
-  }, []);
-
+  // useEffect(() => {
+  //   const checkFirstLaunch = async () => {
+  //     try {
+  //       const hasLaunched = await AsyncStorage.getItem('hasLaunched');
+  //       // Add delay 2 seconds
+  //       setTimeout(async () => {
+  //         if (hasLaunched === null) {
+  //           // First launch → show Intro
+  //           await AsyncStorage.setItem('hasLaunched', 'true');
+  //           setInitialRoute('Intro');
+  //         } else {
+  //           // Not first launch → go to Login
+  //           setInitialRoute('Login');
+  //         }
+  //       }, 2000);
+  //     } catch (error) {
+  //       console.log('Error checking first launch', error);
+  //       setInitialRoute('Login');
+  //     }
+  //   };
+  //
+  //   checkFirstLaunch();
+  // }, []);
+  //
   // if (!initialRoute) {
   //   // Show splash screen while checking AsyncStorage
   //   return <SplashScreen />;

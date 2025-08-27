@@ -1,15 +1,19 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Dimensions,
   Image,
+  SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import Swiper from 'react-native-swiper';
 import { useNavigation } from '@react-navigation/native';
-
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../types/navigation';
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
 const { width, height } = Dimensions.get('window');
 
@@ -32,21 +36,34 @@ const slides = [
 ];
 
 function IntroScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const swiperRef = useRef<Swiper>(null);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      {/* Logo + Skip */}
       <View style={styles.logoContainer}>
         <Image source={require('../assets/LOGO__.png')} style={styles.logo} />
+        {currentIndex !== slides.length - 1 && (
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Login')}
+            style={styles.skipButton}
+          >
+            <Text style={styles.skipText}>Skip</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
+      {/* Swiper */}
       <View style={styles.swipeContainer}>
         <Swiper
+          ref={swiperRef}
           loop={false}
           dotStyle={styles.dot}
           activeDotStyle={styles.activeDot}
-          paginationStyle={{ bottom: height * 0.05 }}  // <-- Adjust position
-
+          paginationStyle={{ bottom: height * 0.05 }}
+          onIndexChanged={index => setCurrentIndex(index)}
         >
           {slides.map(slide => (
             <View style={styles.slide} key={slide.id}>
@@ -61,23 +78,36 @@ function IntroScreen() {
         </Swiper>
       </View>
 
+      {/* Buttons or Swipe Wrapper */}
       <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={styles.loginButton}
-          onPress={() => navigation.navigate('Login')}
-        >
-          <Text style={styles.loginText}>Login</Text>
-        </TouchableOpacity>
+        {currentIndex === slides.length - 1 ? (
+          <>
+            <TouchableOpacity
+              style={styles.loginButton}
+              onPress={() => navigation.navigate('Login')}
+            >
+              <Text style={styles.loginText}>Login</Text>
+            </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.signUpButton}
-          onPress={() => navigation.navigate('SignUp')}
-        >
-          <Text style={styles.signUpText}>Sign Up</Text>
-        </TouchableOpacity>
-
+            <TouchableOpacity
+              style={styles.signUpButton}
+              onPress={() => navigation.navigate('SignUp')}
+            >
+              <Text style={styles.signUpText}>Sign Up</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <TouchableWithoutFeedback
+            onPress={() => swiperRef.current?.scrollBy(1, true)}
+          >
+            <View style={styles.swipeWrapper}>
+              <Text style={styles.swipeText}>Swipe to explore</Text>
+              <Text style={styles.swipeArrow}>➔</Text>
+            </View>
+          </TouchableWithoutFeedback>
+        )}
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -86,10 +116,56 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+  logoContainer: {
+    flex: 1, // Takes small space
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 25,
+  },
   logo: {
     height: 120,
     width: 120,
     resizeMode: 'contain',
+  },
+  skipButton: {
+    position: 'absolute',
+    top: 10,
+    right: 20,
+  },
+  skipText: {
+    color: '#a42a8b',
+    fontWeight: '600',
+  },
+
+  swipeContainer: {
+    flex: 4, // Takes most space
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dot: {
+    backgroundColor: '#ccc',
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginHorizontal: 3,
+  },
+  activeDot: {
+    backgroundColor: '#a42a8b',
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginHorizontal: 3,
+  },
+  slide: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  image: {
+    width: width * 1,
+    height: height * 0.9,
+    marginBottom: 30,
   },
   title: {
     fontSize: 24,
@@ -109,65 +185,18 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
 
-
-
-
-
-  logoContainer: {
-    flex: 1,          // Takes small space
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 25,
-
-  },
-  swipeContainer: {
-    flex: 4,          // Takes most space
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: "yellow",
-  },
   buttonContainer: {
-    flex: 1,          // Bottom area
+    flex: 1, // Bottom area
     paddingHorizontal: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
-
-  slide: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  image: {
-    width: width * 1,
-    height: height * 0.9,
-    marginBottom: 30,
-
-  },
-  dot: {
-    backgroundColor: '#ccc',
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginHorizontal: 3,
-
-  },
-  activeDot: {
-    backgroundColor: '#a42a8b',
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginHorizontal: 3,
-  },
-
-
   loginButton: {
     backgroundColor: '#a42a8b',
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: 15,
     marginBottom: 10,
-    width: '100%',
+    width: '90%',
     height: 40,
   },
   loginText: {
@@ -180,8 +209,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#a42a8b',
     paddingVertical: 10,
-    borderRadius: 10,
-    width: '100%',
+    borderRadius: 15,
+    width: '90%',
     height: 40,
   },
   signUpText: {
@@ -190,7 +219,35 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 14,
   },
-
+  swipeWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#a42a8b', // translucent background
+    paddingHorizontal: 46,
+    paddingVertical: 14,
+    borderRadius: 26,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5, // Android shadow
+  },
+  swipeText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
+  swipeArrow: {
+    fontSize: 18,
+    color: '#fff',
+    marginLeft: 6,
+    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
 });
 
 export default IntroScreen;
