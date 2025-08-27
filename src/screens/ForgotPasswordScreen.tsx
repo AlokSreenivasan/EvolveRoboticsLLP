@@ -8,9 +8,15 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../types/navigation';
+import { useNavigation } from '@react-navigation/native';
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
-function ForgotPasswordScreen({ navigation }) {
+function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
+  const navigation = useNavigation<NavigationProp>();
+
 
   const handleResetPassword = () => {
     if (!email.trim()) {

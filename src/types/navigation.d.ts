@@ -2,10 +2,12 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 
 export type RootStackParamList = {
-  Home: undefined;
+  Intro: undefined;
   Login: undefined;
+  About: undefined;
   SignUp: undefined;
   ForgotPassword: undefined;
+  Home: undefined;
     // Add more screens here
 };
 
