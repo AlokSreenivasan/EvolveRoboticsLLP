@@ -6,7 +6,7 @@ const SplashScreen = () => {
     <View style={styles.container}>
       {/* App Logo */}
       <Image
-        source={require('../assets/LOGO__.png')}
+        source={require('../../../assets/LOGO__.png')}
         style={styles.logo}
         resizeMode="contain"
       />

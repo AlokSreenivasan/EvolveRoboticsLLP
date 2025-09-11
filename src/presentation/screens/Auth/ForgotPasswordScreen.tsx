@@ -9,8 +9,9 @@ import {
   View,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/navigation';
+import { RootStackParamList } from '../../../types/navigation';
 import { useNavigation } from '@react-navigation/native';
+import AppButton from '../../../components/AppButton.tsx';
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
 function ForgotPasswordScreen() {
@@ -61,9 +62,15 @@ function ForgotPasswordScreen() {
             value={email}
             onChangeText={setEmail}
           />
-          <TouchableOpacity style={styles.button} onPress={handleResetPassword}>
-            <Text style={styles.buttonText}>Send Reset Link</Text>
-          </TouchableOpacity>
+          {/*<TouchableOpacity style={styles.button} onPress={handleResetPassword}>*/}
+          {/*  <Text style={styles.buttonText}>Send Reset Link</Text>*/}
+          {/*</TouchableOpacity>*/}
+          <AppButton
+            title="Login to Account"
+            onPress={handleResetPassword}
+            buttonStyle={styles.button}
+            textStyle={styles.buttonText}
+          />
         </View>
       </ScrollView>
   );

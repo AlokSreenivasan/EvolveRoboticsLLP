@@ -9,7 +9,8 @@ import {
   ScrollView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import {LoginScreenNavigationProp} from "../types/navigation";
+import {LoginScreenNavigationProp} from "../../../types/navigation";
+import AppButton from '../../../components/AppButton.tsx';
 
 
 const SignUpScreen = () => {
@@ -92,13 +93,16 @@ const SignUpScreen = () => {
           <Text style={styles.error}>{errors.confirmPassword}</Text>
         )}
 
-        <TouchableOpacity style={styles.button} onPress={handleSignUp}>
-          <Text style={styles.buttonText}>Sign Up</Text>
-        </TouchableOpacity>
+
+        <AppButton
+          title="Sign Up"
+          onPress={handleSignUp}
+          buttonStyle={styles.button}
+          textStyle={styles.buttonText}
+        />
 
         <View style={styles.signupline}>
           <Text
-          // style={styles.footerText}
           >
             Already have an account?
           </Text>

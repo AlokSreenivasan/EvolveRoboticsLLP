@@ -12,7 +12,8 @@ import {
 import Swiper from 'react-native-swiper';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/navigation';
+import { RootStackParamList } from '../../../types/navigation';
+import AppButton from '../../../components/AppButton.tsx';
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
 const { width, height } = Dimensions.get('window');
@@ -21,17 +22,17 @@ const slides = [
   {
     id: 1,
     title: 'Explore the Future of Robotics',
-    image: require('../assets/swipeImages/swipe1.png'),
+    image: require('../../../assets/swipeImages/swipe1.png'),
   },
   {
     id: 2,
     title: 'Smart Automation for Everyone',
-    image: require('../assets/swipeImages/swipe2.png'),
+    image: require('../../../assets/swipeImages/swipe2.png'),
   },
   {
     id: 3,
     title: 'Innovating Tomorrow, Today',
-    image: require('../assets/swipeImages/swipe3.png'),
+    image: require('../../../assets/swipeImages/swipe3.png'),
   },
 ];
 
@@ -44,7 +45,7 @@ function IntroScreen() {
     <SafeAreaView style={styles.container}>
       {/* Logo + Skip */}
       <View style={styles.logoContainer}>
-        <Image source={require('../assets/LOGO__.png')} style={styles.logo} />
+        <Image source={require('../../../assets/LOGO__.png')} style={styles.logo} />
         {currentIndex !== slides.length - 1 && (
           <TouchableOpacity
             onPress={() => navigation.navigate('Login')}
@@ -82,19 +83,31 @@ function IntroScreen() {
       <View style={styles.buttonContainer}>
         {currentIndex === slides.length - 1 ? (
           <>
-            <TouchableOpacity
-              style={styles.loginButton}
+            {/*<TouchableOpacity*/}
+            {/*  style={styles.loginButton}*/}
+            {/*  onPress={() => navigation.navigate('Login')}*/}
+            {/*>*/}
+            {/*  <Text style={styles.loginText}>Login</Text>*/}
+            {/*</TouchableOpacity>*/}
+            <AppButton
+              title="Login"
               onPress={() => navigation.navigate('Login')}
-            >
-              <Text style={styles.loginText}>Login</Text>
-            </TouchableOpacity>
+              buttonStyle={styles.loginButton}
+              textStyle={styles.loginText}
+            />
 
-            <TouchableOpacity
-              style={styles.signUpButton}
+            {/*<TouchableOpacity*/}
+            {/*  style={styles.signUpButton}*/}
+            {/*  onPress={() => navigation.navigate('SignUp')}*/}
+            {/*>*/}
+            {/*  <Text style={styles.signUpText}>Sign Up</Text>*/}
+            {/*</TouchableOpacity>*/}
+            <AppButton
+              title="Sign Up"
               onPress={() => navigation.navigate('SignUp')}
-            >
-              <Text style={styles.signUpText}>Sign Up</Text>
-            </TouchableOpacity>
+              buttonStyle={styles.signUpButton}
+              textStyle={styles.signUpText}
+            />
           </>
         ) : (
           <TouchableWithoutFeedback

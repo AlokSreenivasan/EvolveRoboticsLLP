@@ -12,7 +12,8 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { LoginScreenNavigationProp } from '../types/navigation';
+import { LoginScreenNavigationProp } from '../../../types/navigation';
+import AppButton from '../../../components/AppButton.tsx';
 
 function LoginScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
@@ -32,7 +33,7 @@ function LoginScreen() {
         <ScrollView style={styles.scrollContainer}>
           <View style={styles.logoView}>
             <Image
-              source={require('../assets/LOGO__.png')}
+              source={require('../../../assets/LOGO__.png')}
               style={styles.logo}
             />
           </View>
@@ -75,9 +76,15 @@ function LoginScreen() {
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.loginButton} onPress={handleSignIn}>
-              <Text style={styles.loginText}>Login to Account</Text>
-            </TouchableOpacity>
+            {/*<TouchableOpacity style={styles.loginButton} onPress={handleSignIn}>*/}
+            {/*  <Text style={styles.loginText}>Login to Account</Text>*/}
+            {/*</TouchableOpacity>*/}
+            <AppButton
+              title="Login to Account"
+              onPress={handleSignIn}
+              buttonStyle={styles.loginButton}
+              textStyle={styles.loginText}
+            />
 
             <View style={styles.signupContainer}>
               <Text>Don't have an account?</Text>
