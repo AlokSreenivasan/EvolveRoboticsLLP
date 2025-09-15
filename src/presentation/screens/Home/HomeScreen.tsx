@@ -13,7 +13,10 @@ import { useNavigation } from '@react-navigation/native';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
 import Header from '../../../components/Header.tsx';
 import AppButton from '../../../components/AppButton.tsx';
-import { GraduationCap } from 'lucide-react-native';
+import CourseCard from '../../../components/Home/CourseCard.tsx';
+import QuickStatsCard from '../../../components/Home/QuickStatsCard.tsx';
+import UpcomingEventsCard from '../../../components/Home/UpcomingEventsCard.tsx';
+import NotificationCard from '../../../components/Home/NotificationCard.tsx';
 
 function HomeScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
@@ -46,61 +49,47 @@ function HomeScreen() {
           />
         </View>
 
-
         {/*Quick Stats*/}
-        <View style={styles.statsSection}>
-          <Text style={styles.heading}>Quick Stats</Text>
-          <View style={styles.statsCardView}>
-            {/*Stats card 1*/}
-            <View style={styles.statsCard}>
-              <View style={styles.statsLine1}>
-                <GraduationCap
-                  size={30}
-                  color="#4A90E2"
-                  style={styles.iconStyle}
-                />
-                <View style={styles.statsCourseHeading}>
-                  <Text style={styles.statsCourseHeadingText}>Courses</Text>
-                  <Text style={styles.statsCourseHeadingText}>Enrolled</Text>
-                </View>
-              </View>
-              <Text style={styles.coursesCount}>12</Text>
-              <Text style={styles.statsCourseText}>
-                Keep up the work great!
-              </Text>
-            </View>
-            {/*Stats card 2*/}
-            <View style={styles.statsCard}>
-              <View style={styles.statsLine1}>
-                <GraduationCap
-                  size={30}
-                  color="#4A90E2"
-                  style={styles.iconStyle}
-                />
-                <View style={styles.statsCourseHeading}>
-                  <Text style={styles.statsCourseHeadingText}>Completed</Text>
-                  <Text style={styles.statsCourseHeadingText}>Courses</Text>
-                </View>
-              </View>
-              <Text style={styles.coursesCount}>07</Text>
-              <Text style={styles.statsCourseText}>
-                Excellence progress so far
-              </Text>
-            </View>
-          </View>
-        </View>
+        <QuickStatsCard />
+
+        {/*Courses section*/}
         <View style={styles.coursesSection}>
           <Text style={styles.heading}>Your Courses</Text>
-          <ScrollView horizontal style={styles.coursesCardView}>
-            <View style={styles.courseCard}>
-              <Text>Hi</Text>
-            </View>
-            <View style={styles.courseCard}>
-              <Text>Hello</Text>
-            </View>
-            <View style={styles.courseCard}>
-              <Text>Hello1</Text>
-            </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.coursesCardView}
+          >
+            <CourseCard />
+            <CourseCard />
+            <CourseCard />
+          </ScrollView>
+        </View>
+
+        {/*Upcoming Events section*/}
+        <View style={styles.UpcomingEventsSection}>
+          <Text style={styles.heading}>Upcoming Events</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.coursesCardView}
+          >
+            <UpcomingEventsCard />
+            <UpcomingEventsCard />
+            <UpcomingEventsCard />
+          </ScrollView>
+        </View>
+
+        {/*Recent Notifications*/}
+        <View style={styles.notificationSection}>
+          <Text style={styles.heading}>Upcoming Notifications</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.notificationsView}
+          >
+            <NotificationCard/>
+            <Text style={styles.heading}>Your Notifications</Text>
           </ScrollView>
         </View>
       </ScrollView>
@@ -122,22 +111,17 @@ const styles = StyleSheet.create({
 
   scrollContent: {
     padding: 16,
-    // backgroundColor: 'red'
   },
   profileCard: {
     height: 170,
     padding: 16,
     borderRadius: 15,
-    // borderColor: '#d3d3d3',
-    // borderWidth: 1,
     backgroundColor: '#FAF2FF',
-    // borderColor: 'black',
   },
   avatarSmall: {
     width: 76,
     height: 76,
     borderRadius: 36,
-    // top: 15,
     left: 12,
   },
   userName: {
@@ -164,8 +148,6 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   signUpButton: {
-    // borderWidth: 1,
-    // borderColor: '#a42a8b',
     paddingVertical: 10,
     borderRadius: 10,
     width: '100%',
@@ -179,74 +161,48 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 14,
   },
-
-  statsSection: {
-    backgroundColor: 'white',
-    height: 240,
-  },
   heading: {
     fontSize: 20,
     fontWeight: 'bold',
-    top: 20,
   },
-  statsCardView: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  statsCard: {
-    backgroundColor: '#F5F5F5',
-    height: 170,
-    width: 170,
-    borderRadius: 15,
-    borderColor: '#E3E3E3',
-    top: 40,
-  },
-  statsLine1: {
-    flexDirection: 'row',
-    paddingTop: 20,
-    paddingLeft: 10,
-  },
-  iconStyle: {
-    left: 5,
-    top: 8,
-  },
-  statsCourseHeading: {
-    flexDirection: 'column',
-    paddingLeft: 22,
-    // backgroundColor: 'white',
-  },
-  statsCourseHeadingText: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  coursesCount: {
-    fontSize: 30,
-    fontWeight: 'bold',
-    left: 12,
-  },
-  statsCourseText: {
-    fontSize: 12,
-    left: 15,
-    top: 10,
-  },
+
   coursesSection: {
-    backgroundColor: 'yellow',
-    height: 400,
+    backgroundColor: 'white',
+    height: 300,
+    // top: 20
   },
-  coursesCardView : {
+  coursesCardView: {
     flexDirection: 'row',
-    paddingTop: 30,
-    // padding: 10,
+    // backgroundColor: 'yellow',
   },
-  courseCard : {
-    height: 240,
+  UpcomingEventsSection: {
+    // top: 20,
+    height: 300,
+    // borderWidth: 2,
+    // backgroundColor: 'yellow',
+  },
+  upcomingEventsView: {
+    flexDirection: 'row',
+    height: 250,
     width: 300,
     borderWidth: 1,
-    paddingLeft: 10,
-    marginRight: 12,
-    borderRadius: 15,
+  },
+  headingEvents: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    // top: 20,
+  },
+  notificationSection: {
+    height: 650,
+    // backgroundColor: 'yellow',
+  },
+  notificationsView: {
+    flexDirection: 'column',
+    height: 250,
+    width: '100%',
+    borderWidth: 1,
+    // borderColor: '#FAF2FF',
   }
-
 });
 
 export default HomeScreen;
