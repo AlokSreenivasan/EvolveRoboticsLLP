@@ -8,7 +8,7 @@ function NotificationCard() {
       <View style={styles.statsCardView}>
         <View style={styles.statsCard}>
           {/*Line 1*/}
-         <Text>Hii</Text>
+         <Text style={styles.NotificationAlert}>No Notifications</Text>
         </View>
       </View>
     </View>
@@ -87,6 +87,11 @@ const styles = StyleSheet.create({
   },
   eventDetailsText: {
     color: 'grey',
+  },
+  NotificationAlert: {
+    fontSize: 30,
+    fontWeight: 'bold',
+    textAlign: 'center',
   }
 });
 

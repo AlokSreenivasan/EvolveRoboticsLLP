@@ -89,7 +89,7 @@ function HomeScreen() {
             style={styles.notificationsView}
           >
             <NotificationCard/>
-            <Text style={styles.heading}>Your Notifications</Text>
+            {/*<Text style={styles.heading}>Your Notifications</Text>*/}
           </ScrollView>
         </View>
       </ScrollView>
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     height: 250,
     width: '100%',
-    borderWidth: 1,
+    // borderWidth: 1,
     // borderColor: '#FAF2FF',
   }
 });
