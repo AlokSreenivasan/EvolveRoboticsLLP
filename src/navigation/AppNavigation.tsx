@@ -51,7 +51,7 @@ function AppNavigation() {
     <NavigationContainer>
       <Stack.Navigator
         // initialRouteName={initialRoute}
-        initialRouteName='Home'
+        initialRouteName='Login'
 
         screenOptions={{ headerShown: false }}
       >

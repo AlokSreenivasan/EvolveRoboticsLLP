@@ -10,20 +10,43 @@ import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
 import AppButton from '../../../components/AppButton.tsx';
+import { isValidEmail } from '../../../domain/Auth/validation/isValidEmail.ts';
 
 function LoginScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
+  const [emailError, setEmailError] = useState('');
+  
   const handleSignIn = () => {
-    // You can add validation or API login logic here
+    // Validate email
+    if (!isValidEmail(email)) {
+      setEmailError('Please enter a valid email address');
+      return;
+    }
+    setEmailError('');
+
+    // Proceed with login (API, etc.)
+    if (password.trim() === '') {
+      Alert.alert('Error', 'Password cannot be empty');
+      return;
+    }
+
     navigation.navigate('Home');
   };
+
+  const handleEmailChange = (text: string) => {
+    setEmail(text);
+    if (emailError && isValidEmail(text)) {
+      setEmailError('');
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -50,11 +73,16 @@ function LoginScreen() {
               placeholder="Enter your email"
               placeholderTextColor="light black"
               value={email}
-              onChangeText={setEmail}
+              onChangeText={handleEmailChange}
               keyboardType="email-address"
               autoCapitalize="none"
-              style={styles.input}
+              style={[styles.input, emailError ? styles.inputError : null]}
             />
+            {emailError ? (
+              <Text style={styles.errorText}>{emailError}</Text>
+            ) : null}
+
+
             <Text style={styles.label}>Password</Text>
 
             <View style={styles.passwordContainer}>
@@ -70,15 +98,13 @@ function LoginScreen() {
               />
             </View>
 
+            {/* Forgot Password */}
             <TouchableOpacity
               onPress={() => navigation.navigate('ForgotPassword')}
             >
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>
 
-            {/*<TouchableOpacity style={styles.loginButton} onPress={handleSignIn}>*/}
-            {/*  <Text style={styles.loginText}>Login to Account</Text>*/}
-            {/*</TouchableOpacity>*/}
             <AppButton
               title="Login to Account"
               onPress={handleSignIn}
@@ -212,6 +238,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textDecorationLine: 'underline',
   },
+  inputError: {
+    borderColor: 'red',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 13,
+    marginBottom: 10,
+  },
+
 });
 
 export default LoginScreen;
