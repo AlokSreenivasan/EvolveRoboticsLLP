@@ -9,9 +9,15 @@ import {
   ScrollView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import {LoginScreenNavigationProp} from "../../../types/navigation";
+import { LoginScreenNavigationProp } from '../../../types/navigation';
 import AppButton from '../../../components/AppButton.tsx';
 
+type Errors = {
+  fullName?: string;
+  email?: string;
+  password?: string;
+  confirmPassword?: string;
+};
 
 const SignUpScreen = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
@@ -20,8 +26,20 @@ const SignUpScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Errors>({}); // ✅ fixed
 
+  const handleFullNameChange = (text: string) => {
+    const formatted = text
+      .split(' ')
+      .map(word =>
+        word.length > 0
+          ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          : '',
+      )
+      .join(' ');
+
+    setFullName(formatted);
+  };
   const validate = () => {
     const newErrors: any = {};
 
@@ -57,7 +75,7 @@ const SignUpScreen = () => {
           style={styles.input}
           placeholder="Enter your full name"
           value={fullName}
-          onChangeText={setFullName}
+          onChangeText={handleFullNameChange}
         />
         {errors.fullName && <Text style={styles.error}>{errors.fullName}</Text>}
 
@@ -93,7 +111,6 @@ const SignUpScreen = () => {
           <Text style={styles.error}>{errors.confirmPassword}</Text>
         )}
 
-
         <AppButton
           title="Sign Up"
           onPress={handleSignUp}
@@ -102,10 +119,7 @@ const SignUpScreen = () => {
         />
 
         <View style={styles.signupline}>
-          <Text
-          >
-            Already have an account?
-          </Text>
+          <Text>Already have an account?</Text>
           <TouchableOpacity onPress={() => navigation.navigate('Login')}>
             <Text style={styles.signinLink}>Sign In</Text>
           </TouchableOpacity>
@@ -143,7 +157,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     padding: 10,
     marginTop: 5,
-    color: '#a42a8b'
+    color: '#a42a8b',
   },
   error: { fontSize: 12, color: 'red', marginBottom: 5 },
   checkboxContainer: {
@@ -174,7 +188,7 @@ const styles = StyleSheet.create({
     color: '#9C27B0',
     fontWeight: '600',
     textDecorationLine: 'underline',
-  }
+  },
 });
 
 export default SignUpScreen;

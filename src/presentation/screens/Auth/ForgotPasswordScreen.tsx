@@ -12,6 +12,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../types/navigation';
 import { useNavigation } from '@react-navigation/native';
 import AppButton from '../../../components/AppButton.tsx';
+import { isValidEmail } from '../../../domain/Auth/validation/isValidEmail.ts';
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
 function ForgotPasswordScreen() {
@@ -24,14 +25,16 @@ function ForgotPasswordScreen() {
       Alert.alert('Error', 'Please enter your email address.');
       return;
     }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+
+    if (!isValidEmail(email)) {   // ✅ Reused function
       Alert.alert('Error', 'Please enter a valid email address.');
       return;
     }
     // Call API for sending reset link here
     Alert.alert('Success', 'Password reset link sent to your email.');
   };
+
+
 
   return (
       <ScrollView style={styles.container}>
@@ -62,11 +65,9 @@ function ForgotPasswordScreen() {
             value={email}
             onChangeText={setEmail}
           />
-          {/*<TouchableOpacity style={styles.button} onPress={handleResetPassword}>*/}
-          {/*  <Text style={styles.buttonText}>Send Reset Link</Text>*/}
-          {/*</TouchableOpacity>*/}
+
           <AppButton
-            title="Login to Account"
+            title="Send Reset Link"
             onPress={handleResetPassword}
             buttonStyle={styles.button}
             textStyle={styles.buttonText}
@@ -80,14 +81,12 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff', padding: 20 },
   firstBox: {
     flexDirection: 'row',
-    // backgroundColor: '#a42a8b',
     alignItems: 'center',
     alignContent: 'center',
     height: 100,
   },
   backButton: {
-    // paddingTop: 10,
-    // marginTop: 25
+
   },
   backText: { fontSize: 22, fontWeight: 'bold' },
   title: {

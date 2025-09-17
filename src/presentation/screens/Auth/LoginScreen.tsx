@@ -22,7 +22,7 @@ function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
-  
+
   const handleSignIn = () => {
     // Validate email
     if (!isValidEmail(email)) {
@@ -163,7 +163,6 @@ const styles = StyleSheet.create({
     color: '#a42a8b',
     marginBottom: 22,
     paddingTop: 15,
-    // textAlign: 'center',
   },
   welcomeText: {
     fontSize: 28,
@@ -239,7 +238,7 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
   inputError: {
-    borderColor: 'red',
+    // borderColor: 'red',
   },
   errorText: {
     color: 'red',
