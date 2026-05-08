@@ -43,7 +43,7 @@ function HomeScreen() {
 
           <AppButton
             title="Continue Learning"
-            onPress={() => navigation.navigate('SignUp')}
+            // onPress={() => navigation.navigate('SignUp')}
             buttonStyle={styles.signUpButton}
             textStyle={styles.signUpText}
           />

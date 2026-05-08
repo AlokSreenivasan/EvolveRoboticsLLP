@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "232814396673",
+    "project_id": "evolve-robotics-llp",
+    "storage_bucket": "evolve-robotics-llp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:232814396673:android:d7a4d295c7c8640322c700",
+        "android_client_info": {
+          "package_name": "com.evolve"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDu7GnunS-ZABYWsTNXGE7MXSlhYiv4fkk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -17,6 +17,11 @@ end
 target 'Evolve' do
   config = use_native_modules!
 
+  # Targeted modular headers to satisfy Swift Firebase pods when using static libraries,
+  # without forcing modular headers globally (which can break some React Native modulemaps).
+  pod 'GoogleUtilities', :modular_headers => true
+  pod 'FirebaseCoreInternal', :modular_headers => true
+
   use_react_native!(
     :path => config[:reactNativePath],
     # An absolute path to your application root.
