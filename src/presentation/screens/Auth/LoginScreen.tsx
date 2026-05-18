@@ -11,33 +11,59 @@ import {
   Platform,
   SafeAreaView,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import auth from '@react-native-firebase/auth';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
 import AppButton from '../../../components/AppButton.tsx';
 import { isValidEmail } from '../../../domain/Auth/validation/isValidEmail.ts';
+
+function getAuthErrorMessage(error: { code?: string; message?: string }) {
+  switch (error.code) {
+    case 'auth/invalid-email':
+      return 'Please enter a valid email address.';
+    case 'auth/user-disabled':
+      return 'This account has been disabled.';
+    case 'auth/user-not-found':
+    case 'auth/wrong-password':
+    case 'auth/invalid-credential':
+      return 'Invalid email or password.';
+    case 'auth/too-many-requests':
+      return 'Too many attempts. Please try again later.';
+    default:
+      return error.message ?? 'Login failed. Please try again.';
+  }
+}
 
 function LoginScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSignIn = () => {
-    // Validate email
+  const handleSignIn = async () => {
     if (!isValidEmail(email)) {
       setEmailError('Please enter a valid email address');
       return;
     }
     setEmailError('');
 
-    // Proceed with login (API, etc.)
     if (password.trim() === '') {
       Alert.alert('Error', 'Password cannot be empty');
       return;
     }
 
-    navigation.navigate('Home');
+    setLoading(true);
+    try {
+      await auth().signInWithEmailAndPassword(email.trim(), password);
+      // AppNavigation listens to auth state and switches to MainStack (Home).
+    } catch (error) {
+      Alert.alert('Login Error', getAuthErrorMessage(error as { code?: string; message?: string }));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEmailChange = (text: string) => {
@@ -106,11 +132,15 @@ function LoginScreen() {
             </TouchableOpacity>
 
             <AppButton
-              title="Login to Account"
+              title={loading ? 'Signing in...' : 'Login to Account'}
               onPress={handleSignIn}
               buttonStyle={styles.loginButton}
               textStyle={styles.loginText}
+              disabled={loading}
             />
+            {loading ? (
+              <ActivityIndicator color="#a42a8b" style={styles.loader} />
+            ) : null}
 
             <View style={styles.signupContainer}>
               <Text>Don't have an account?</Text>
@@ -220,6 +250,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
+  },
+  loader: {
+    marginTop: 12,
   },
   loginText: {
     color: '#fff',

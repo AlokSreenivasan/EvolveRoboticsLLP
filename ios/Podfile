@@ -8,11 +8,9 @@ require Pod::Executable.execute_command('node', ['-p',
 platform :ios, min_ios_version_supported
 prepare_react_native_project!
 
-linkage = ENV['USE_FRAMEWORKS']
-if linkage != nil
-  Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
-  use_frameworks! :linkage => linkage.to_sym
-end
+# Required for Firebase Auth (Swift) — generates FirebaseAuth-Swift.h for RNFB pods.
+use_frameworks! :linkage => :static
+$RNFirebaseAsStaticFramework = true
 
 target 'Evolve' do
   config = use_native_modules!
@@ -21,6 +19,9 @@ target 'Evolve' do
   # without forcing modular headers globally (which can break some React Native modulemaps).
   pod 'GoogleUtilities', :modular_headers => true
   pod 'FirebaseCoreInternal', :modular_headers => true
+  pod 'FirebaseAuthInterop', :modular_headers => true
+  pod 'FirebaseAppCheckInterop', :modular_headers => true
+  pod 'RecaptchaInterop', :modular_headers => true
 
   use_react_native!(
     :path => config[:reactNativePath],
@@ -36,5 +37,14 @@ target 'Evolve' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    # Xcode 26+ / Apple Clang 21: fmt 11.0.2 consteval fails unless built as C++17.
+    installer.pods_project.targets.each do |target|
+      next unless target.name == 'fmt'
+
+      target.build_configurations.each do |build_configuration|
+        build_configuration.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+      end
+    end
   end
 end

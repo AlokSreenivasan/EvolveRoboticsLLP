@@ -4,6 +4,61 @@ This is a new [**React Native**](https://reactnative.dev) project, bootstrapped 
 
 > **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
 
+## Firebase Auth (React Native Firebase)
+
+This project uses **React Native Firebase**:
+
+- `@react-native-firebase/app`
+- `@react-native-firebase/auth`
+
+### Install
+
+```sh
+npm i @react-native-firebase/app @react-native-firebase/auth
+
+# iOS only
+cd ios && bundle exec pod install && cd ..
+```
+
+### Native configuration
+
+- **Android**:
+  - Ensure `android/build.gradle` includes:
+    - `classpath 'com.google.gms:google-services:4.4.4'`
+  - Ensure `android/app/build.gradle` includes:
+    - `apply plugin: 'com.google.gms.google-services'`
+  - Ensure `android/app/google-services.json` exists (already present in this repo).
+- **iOS**:
+  - Ensure `ios/GoogleService-Info.plist` exists (already present in this repo).
+
+### Error + rectification (what was wrong here)
+
+- **Error**: `npm install` / `yarn` fails with a JSON parse error (commonly like `Unexpected token ... in JSON at position ...`).
+- **Cause**: `package.json` had an invalid stray character (`ˇ`) after the `react-native` version.
+- **Fix**: Removed the stray character so `package.json` is valid JSON again. After that, reinstall dependencies:
+
+```sh
+rm -rf node_modules
+npm i
+```
+
+### iOS Pod error + rectification (FirebaseAuth static libraries)
+
+- **Error**:
+  - `[!] The following Swift pods cannot yet be integrated as static libraries...`
+  - `FirebaseAuth` depends on `FirebaseAuthInterop`, `FirebaseAppCheckInterop`, `RecaptchaInterop` which “do not define modules”.
+- **Fix**: In `ios/Podfile`, enable modular headers **for those interop pods**:
+  - `pod 'FirebaseAuthInterop', :modular_headers => true`
+  - `pod 'FirebaseAppCheckInterop', :modular_headers => true`
+  - `pod 'RecaptchaInterop', :modular_headers => true`
+
+Then run:
+
+```sh
+cd ios
+bundle exec pod install
+```
+
 ## Step 1: Start Metro
 
 First, you will need to run **Metro**, the JavaScript build tool for React Native.

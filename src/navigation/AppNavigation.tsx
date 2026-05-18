@@ -1,70 +1,158 @@
-import React, { useEffect, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { StyleSheet, View } from 'react-native';
+
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/navigation';
-import LoginScreen from '../presentation/screens/Auth/LoginScreen.tsx';
-import AboutScreen from '../screens/AboutScreen.tsx';
-import SignUpScreen from '../presentation/screens/Auth/SignUpScreen.tsx';
-import ForgotPasswordScreen from '../presentation/screens/Auth/ForgotPasswordScreen.tsx';
-import HomeScreen from '../presentation/screens/Home/HomeScreen.tsx';
-import IntroScreen from '../presentation/screens/Intro/IntroScreen.tsx';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import SplashScreen from '../presentation/screens/Splash/SplashScreen.tsx';
-import ProfileScreen from '../presentation/screens/Profile/ProfileScreen.tsx';
 
-// const Stack = createNativeStackNavigator();
-const Stack = createNativeStackNavigator<RootStackParamList>();
+import IntroScreen from '../presentation/screens/Intro/IntroScreen';
+import SplashScreen from '../presentation/screens/Splash/SplashScreen';
+
+import AuthStack from './AuthStack';
+import MainStack from './MainStack';
+
+import { useAuth } from '../presentation/context/AuthContext';
+import {
+  AuthEntryRoute,
+  IntroFlowProvider,
+} from '../presentation/context/IntroFlowContext';
+import { MIN_SPLASH_DURATION_MS } from '../constants/appFlow';
+import {
+  isOnboardingComplete,
+  markOnboardingComplete,
+} from '../services/onboardingStorage';
+
+const Stack = createNativeStackNavigator();
+
+const fadeScreenOptions = {
+  headerShown: false,
+  animation: 'fade' as const,
+  animationDuration: 200,
+};
 
 function AppNavigation() {
-  const [initialRoute, setInitialRoute] = useState<string | null>(null);
+  const [bootstrapComplete, setBootstrapComplete] = useState(false);
+  const [showIntro, setShowIntro] = useState(false);
+  const [authInitialRoute, setAuthInitialRoute] =
+    useState<AuthEntryRoute>('Login');
+  /** After intro, stay on auth until the user signs in (ignore persisted session). */
+  const [introAuthRoute, setIntroAuthRoute] =
+    useState<AuthEntryRoute | null>(null);
+
+  const { user, initializing } = useAuth();
+  const userAtIntroFinishRef = useRef(user);
 
   useEffect(() => {
-    const checkFirstLaunch = async () => {
-      try {
-        const hasLaunched = await AsyncStorage.getItem('hasLaunched');
-        // Add delay 2 seconds
-        setTimeout(async () => {
-          if (hasLaunched === null) {
-            // First launch → show Intro
-            await AsyncStorage.setItem('hasLaunched', 'true');
-            setInitialRoute('Intro');
-          } else {
-            // Not first launch → go to Login
-            setInitialRoute('Login');
-          }
-        }, 2000);
-      } catch (error) {
-        console.log('Error checking first launch', error);
-        setInitialRoute('Login');
+    let cancelled = false;
+
+    const bootstrap = async () => {
+      const minSplashDelay = new Promise<void>(resolve => {
+        setTimeout(resolve, MIN_SPLASH_DURATION_MS);
+      });
+
+      const [, onboardingDone] = await Promise.all([
+        minSplashDelay,
+        isOnboardingComplete(),
+      ]);
+
+      if (cancelled) {
+        return;
       }
+
+      setShowIntro(!onboardingDone);
+      if (onboardingDone) {
+        setAuthInitialRoute('Login');
+      }
+      setBootstrapComplete(true);
     };
 
-    checkFirstLaunch();
+    bootstrap();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  if (!initialRoute) {
-    // Show splash screen while checking AsyncStorage
-    return <SplashScreen />;
-    // }SplashScreen
-  }
+  const finishIntro = useCallback(
+    async (route: AuthEntryRoute = 'Login') => {
+      await markOnboardingComplete();
+      userAtIntroFinishRef.current = user;
+      setAuthInitialRoute(route);
+      setIntroAuthRoute(route);
+      setShowIntro(false);
+    },
+    [user],
+  );
+
+  // Allow Home redirect only after a fresh sign-in from the intro auth handoff.
+  useEffect(() => {
+    if (!introAuthRoute || !user) {
+      return;
+    }
+    if (user !== userAtIntroFinishRef.current) {
+      setIntroAuthRoute(null);
+    }
+  }, [user, introAuthRoute]);
+
+  const showSplash = !bootstrapComplete || initializing;
+
+  const rootScreen = useMemo(() => {
+    if (showIntro) {
+      return 'intro';
+    }
+    if (introAuthRoute) {
+      return 'auth';
+    }
+    if (user) {
+      return 'main';
+    }
+    return 'auth';
+  }, [showIntro, user, introAuthRoute]);
+
   return (
-    <NavigationContainer>
-      <Stack.Navigator
-        // initialRouteName={initialRoute}
-        initialRouteName='Login'
+    <View style={styles.root}>
+      {bootstrapComplete && !initializing ? (
+        <NavigationContainer>
+          <IntroFlowProvider finishIntro={finishIntro}>
+            <Stack.Navigator screenOptions={fadeScreenOptions}>
+              {rootScreen === 'intro' ? (
+                <Stack.Screen name="Intro" component={IntroScreen} />
+              ) : rootScreen === 'main' ? (
+                <Stack.Screen name="MainStack" component={MainStack} />
+              ) : (
+                <Stack.Screen name="AuthStack">
+                  {() => <AuthStack initialRoute={authInitialRoute} />}
+                </Stack.Screen>
+              )}
+            </Stack.Navigator>
+          </IntroFlowProvider>
+        </NavigationContainer>
+      ) : null}
 
-        screenOptions={{ headerShown: false }}
-      >
-        <Stack.Screen name="Intro" component={IntroScreen} />
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="About" component={AboutScreen} />
-        <Stack.Screen name="SignUp" component={SignUpScreen} />
-        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-        <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="Profile" component={ProfileScreen} />
-
-      </Stack.Navigator>
-    </NavigationContainer>
+      {showSplash ? (
+        <View style={styles.splashOverlay} pointerEvents="auto">
+          <SplashScreen />
+        </View>
+      ) : null}
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  splashOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 10,
+    backgroundColor: '#fff',
+  },
+});
+
 export default AppNavigation;

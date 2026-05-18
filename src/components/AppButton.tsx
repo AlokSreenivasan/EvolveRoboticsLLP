@@ -7,11 +7,22 @@ interface AppButtonProps {
   onPress: (event: GestureResponderEvent) => void;
   buttonStyle?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
+  disabled?: boolean;
 }
 
-const AppButton: React.FC<AppButtonProps> = ({ title, onPress, buttonStyle, textStyle }) => {
+const AppButton: React.FC<AppButtonProps> = ({
+  title,
+  onPress,
+  buttonStyle,
+  textStyle,
+  disabled = false,
+}) => {
   return (
-    <TouchableOpacity style={[styles.button, buttonStyle]} onPress={onPress}>
+    <TouchableOpacity
+      style={[styles.button, buttonStyle, disabled && styles.disabled]}
+      onPress={onPress}
+      disabled={disabled}
+    >
       <Text style={[styles.text, textStyle]}>{title}</Text>
     </TouchableOpacity>
   );
@@ -30,6 +41,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#fff',
     textAlign: 'center',
+  },
+  disabled: {
+    opacity: 0.7,
   },
 });
 

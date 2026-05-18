@@ -7,10 +7,28 @@ import {
   StyleSheet,
   Alert,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import auth from '@react-native-firebase/auth';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
 import AppButton from '../../../components/AppButton.tsx';
+import { isValidEmail } from '../../../domain/Auth/validation/isValidEmail.ts';
+
+function getSignUpErrorMessage(error: { code?: string; message?: string }) {
+  switch (error.code) {
+    case 'auth/email-already-in-use':
+      return 'An account with this email already exists.';
+    case 'auth/invalid-email':
+      return 'Please enter a valid email address.';
+    case 'auth/weak-password':
+      return 'Password must be at least 6 characters.';
+    case 'auth/operation-not-allowed':
+      return 'Email/password sign-up is not enabled in Firebase.';
+    default:
+      return error.message ?? 'Sign up failed. Please try again.';
+  }
+}
 
 type Errors = {
   fullName?: string;
@@ -26,7 +44,8 @@ const SignUpScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [errors, setErrors] = useState<Errors>({}); // ✅ fixed
+  const [errors, setErrors] = useState<Errors>({});
+  const [loading, setLoading] = useState(false);
 
   const handleFullNameChange = (text: string) => {
     const formatted = text
@@ -43,8 +62,8 @@ const SignUpScreen = () => {
   const validate = () => {
     const newErrors: any = {};
 
-    if (!fullName) newErrors.fullName = 'Full name is required';
-    if (!email || !email.includes('@'))
+    if (!fullName.trim()) newErrors.fullName = 'Full name is required';
+    if (!email || !isValidEmail(email))
       newErrors.email = 'Valid email is required';
     if (!password || password.length < 8)
       newErrors.password = 'Minimum 8 characters';
@@ -55,14 +74,33 @@ const SignUpScreen = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSignUp = () => {
-    if (validate()) {
-      Alert.alert('Success', 'Form submitted!');
-      // Call API or navigate here
+  const handleSignUp = async () => {
+    if (!validate()) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const credential = await auth().createUserWithEmailAndPassword(
+        email.trim(),
+        password,
+      );
+
+      await credential.user.updateProfile({
+        displayName: fullName.trim(),
+      });
+
+      // AppNavigation switches to MainStack when auth state updates.
+    } catch (error) {
+      Alert.alert(
+        'Sign Up Error',
+        getSignUpErrorMessage(error as { code?: string; message?: string }),
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
-  // @ts-ignore
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Sign Up</Text>
@@ -112,11 +150,15 @@ const SignUpScreen = () => {
         )}
 
         <AppButton
-          title="Sign Up"
+          title={loading ? 'Creating account...' : 'Sign Up'}
           onPress={handleSignUp}
           buttonStyle={styles.button}
           textStyle={styles.buttonText}
+          disabled={loading}
         />
+        {loading ? (
+          <ActivityIndicator color="#a42a8b" style={styles.loader} />
+        ) : null}
 
         <View style={styles.signupline}>
           <Text>Already have an account?</Text>
@@ -188,6 +230,10 @@ const styles = StyleSheet.create({
     color: '#9C27B0',
     fontWeight: '600',
     textDecorationLine: 'underline',
+  },
+  loader: {
+    marginTop: 12,
+    alignSelf: 'center',
   },
 });
 

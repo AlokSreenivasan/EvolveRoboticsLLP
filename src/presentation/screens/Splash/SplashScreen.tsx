@@ -11,7 +11,7 @@ const SplashScreen = () => {
         resizeMode="contain"
       />
       {/* Loading Indicator */}
-      <ActivityIndicator size="large" color="#000" style={{ marginTop: 20 }} />
+      <ActivityIndicator size="large" color="#a42a8b" style={styles.loader} />
     </View>
   );
 };
@@ -29,5 +29,8 @@ const styles = StyleSheet.create({
   logo: {
     width: 150,
     height: 150,
+  },
+  loader: {
+    marginTop: 20,
   },
 });
