@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { emptyProfile, Profile } from '../../domain/Profile/models/Profile';
+import { formatContactNumberInput } from '../../domain/Profile/validation/formatContactNumber';
 import { formatFullName } from '../../domain/Profile/validation/formatFullName';
 import {
   hasProfileFormErrors,
@@ -8,8 +9,10 @@ import {
   validateProfileForm,
 } from '../../domain/Profile/validation/validateProfileForm';
 import {
+  getProfileContactNumber,
   getProfileFullName,
   getProfilePhotoUri,
+  saveProfileContactNumber,
 } from '../../services/profileStorage';
 import { useProfileDisplay } from '../context/ProfileDisplayContext';
 
@@ -24,15 +27,22 @@ export function useProfileForm() {
 
     const loadStoredProfile = async () => {
       try {
-        const [storedFullName, storedPhotoUri] = await Promise.all([
-          getProfileFullName(),
-          getProfilePhotoUri(),
-        ]);
+        const [storedFullName, storedPhotoUri, storedContactNumber] =
+          await Promise.all([
+            getProfileFullName(),
+            getProfilePhotoUri(),
+            getProfileContactNumber(),
+          ]);
         if (!cancelled) {
           setProfile(prev => ({
             ...prev,
             ...(storedFullName ? { fullName: storedFullName } : {}),
             ...(storedPhotoUri ? { photoUri: storedPhotoUri } : {}),
+            ...(storedContactNumber
+              ? {
+                  contactNumber: formatContactNumberInput(storedContactNumber),
+                }
+              : {}),
           }));
         }
       } finally {
@@ -55,7 +65,10 @@ export function useProfileForm() {
   }, []);
 
   const setContactNumber = useCallback((value: string) => {
-    setProfile(prev => ({ ...prev, contactNumber: value }));
+    setProfile(prev => ({
+      ...prev,
+      contactNumber: formatContactNumberInput(value),
+    }));
     setErrors(prev => ({ ...prev, contactNumber: undefined }));
   }, []);
 
@@ -76,8 +89,15 @@ export function useProfileForm() {
     await Promise.all([
       setDisplayName(profile.fullName),
       setProfilePhotoUri(profile.photoUri),
+      saveProfileContactNumber(profile.contactNumber),
     ]);
-  }, [profile.fullName, profile.photoUri, setDisplayName, setProfilePhotoUri]);
+  }, [
+    profile.contactNumber,
+    profile.fullName,
+    profile.photoUri,
+    setDisplayName,
+    setProfilePhotoUri,
+  ]);
 
   return {
     profile,

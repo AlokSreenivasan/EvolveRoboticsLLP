@@ -1,5 +1,6 @@
-/** Basic contact validation — digits only, 10–15 characters. */
+import { CONTACT_NUMBER_MAX_LENGTH } from './formatContactNumber';
+
+/** Contact number must be exactly 10 numeric digits. */
 export function isValidContactNumber(contactNumber: string): boolean {
-  const digits = contactNumber.replace(/\D/g, '');
-  return digits.length >= 10 && digits.length <= 15;
+  return new RegExp(`^\\d{${CONTACT_NUMBER_MAX_LENGTH}}$`).test(contactNumber);
 }

@@ -16,6 +16,7 @@ import { useNavigation } from '@react-navigation/native';
 import AppButton from '../../../components/AppButton.tsx';
 import Header from '../../../components/Header.tsx';
 import ProfilePhotoSection from '../../../components/Profile/ProfilePhotoSection.tsx';
+import { CONTACT_NUMBER_MAX_LENGTH } from '../../../domain/Profile/validation/formatContactNumber';
 import { useProfileForm } from '../../hooks/useProfileForm';
 import {
   pickProfilePhotoFromGallery,
@@ -110,11 +111,13 @@ function ProfileScreen() {
                 styles.input,
                 errors.contactNumber ? styles.inputError : null,
               ]}
-              placeholder="Enter your contact number"
+              placeholder="Enter 10-digit contact number"
               placeholderTextColor="#999"
               value={profile.contactNumber}
               onChangeText={setContactNumber}
-              keyboardType="phone-pad"
+              keyboardType="number-pad"
+              maxLength={CONTACT_NUMBER_MAX_LENGTH}
+              inputMode="numeric"
             />
             {errors.contactNumber ? (
               <Text style={styles.errorText}>{errors.contactNumber}</Text>

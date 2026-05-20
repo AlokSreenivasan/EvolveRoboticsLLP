@@ -22,7 +22,7 @@ export function validateProfileForm(
   if (!input.contactNumber.trim()) {
     errors.contactNumber = 'Contact number is required';
   } else if (!isValidContactNumber(input.contactNumber)) {
-    errors.contactNumber = 'Enter a valid contact number (10–15 digits)';
+    errors.contactNumber = 'Contact number must be exactly 10 digits';
   }
 
   return errors;
