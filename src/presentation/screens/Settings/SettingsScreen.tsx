@@ -67,7 +67,7 @@ function SettingsScreen() {
 
           <AppButton
             title="Edit Profile"
-            onPress={() => navigation.navigate('SignUp')}
+            onPress={() => navigation.navigate('Profile')}
             buttonStyle={styles.signUpButton}
             textStyle={styles.signUpText}
           />
