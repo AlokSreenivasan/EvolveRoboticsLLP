@@ -14,6 +14,7 @@ import auth from '@react-native-firebase/auth';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
 import AppButton from '../../../components/AppButton.tsx';
 import { isValidEmail } from '../../../domain/Auth/validation/isValidEmail.ts';
+import { saveProfileFullName } from '../../../services/profileStorage';
 import { useAuthFlow } from '../../context/AuthFlowContext';
 
 function getSignUpErrorMessage(error: { code?: string; message?: string }) {
@@ -88,9 +89,13 @@ const SignUpScreen = () => {
         password,
       );
 
+      const trimmedName = fullName.trim();
+
       await credential.user.updateProfile({
-        displayName: fullName.trim(),
+        displayName: trimmedName,
       });
+
+      await saveProfileFullName(trimmedName);
 
       notifyAuthSuccess();
     } catch (error) {

@@ -28,16 +28,20 @@ function ProfileScreen() {
   const {
     profile,
     errors,
+    isLoading,
     setFullName,
     setContactNumber,
     setPhotoUri,
     validate,
+    persistProfile,
   } = useProfileForm();
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validate()) {
       return;
     }
+
+    await persistProfile();
 
     Alert.alert(
       'Profile Updated',
@@ -97,6 +101,7 @@ function ProfileScreen() {
               value={profile.fullName}
               onChangeText={setFullName}
               autoCapitalize="words"
+              editable={!isLoading}
             />
             {errors.fullName ? (
               <Text style={styles.errorText}>{errors.fullName}</Text>

@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Image,
   SafeAreaView,
@@ -9,14 +10,33 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import auth from '@react-native-firebase/auth';
+import { useNavigation } from '@react-navigation/native';
 import Header from '../../../components/Header.tsx';
-import { useNavigation, useRoute } from '@react-navigation/native';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
 import AppButton from '../../../components/AppButton.tsx';
 
 function SettingsScreen() {
-  const route = useRoute();
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const performLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await auth().signOut();
+    } catch {
+      Alert.alert('Logout Failed', 'Could not sign out. Please try again.');
+    } finally {
+      setLoggingOut(false);
+    }
+  };
+
+  const handleLogoutPress = () => {
+    Alert.alert('Log Out', 'Are you sure you want to log out?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Log Out', style: 'destructive', onPress: performLogout },
+    ]);
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -68,8 +88,8 @@ function SettingsScreen() {
           <AppButton
             title="Edit Profile"
             onPress={() => navigation.navigate('Profile')}
-            buttonStyle={styles.signUpButton}
-            textStyle={styles.signUpText}
+            buttonStyle={[styles.outlineButton, styles.outlineButtonInCard]}
+            textStyle={styles.outlineButtonText}
           />
         </View>
         <View style={styles.section}>
@@ -103,6 +123,16 @@ function SettingsScreen() {
           </TouchableOpacity>
         </View>
 
+        <AppButton
+          title={loggingOut ? 'Logging out...' : 'Log Out'}
+          onPress={handleLogoutPress}
+          buttonStyle={[styles.outlineButton, styles.logoutButtonSpacing]}
+          textStyle={styles.outlineButtonText}
+          disabled={loggingOut}
+        />
+        {loggingOut ? (
+          <ActivityIndicator color="#a42a8b" style={styles.loader} />
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
@@ -173,20 +203,27 @@ const styles = StyleSheet.create({
     top: 60,
     left: 120,
   },
-  signUpButton: {
+  outlineButton: {
     borderWidth: 1,
     borderColor: '#a42a8b',
     paddingVertical: 10,
     borderRadius: 15,
     width: '100%',
     height: 40,
-    top: 15,
   },
-  signUpText: {
+  outlineButtonText: {
     color: '#a42a8b',
     textAlign: 'center',
     fontWeight: '600',
     fontSize: 14,
+  },
+  outlineButtonInCard: {
+    top: 15,
+  },
+  loader: {
+    marginTop: 12,
+    marginBottom: 24,
+    alignSelf: 'center',
   },
   section: {
     // borderWidth: 1,
@@ -235,7 +272,10 @@ const styles = StyleSheet.create({
   linkText: {
     fontSize: 15,
     color: '#a42a8b',
-  }
+  },
+  logoutButtonSpacing: {
+    marginTop: 8,
+  },
 });
 
 export default SettingsScreen;
