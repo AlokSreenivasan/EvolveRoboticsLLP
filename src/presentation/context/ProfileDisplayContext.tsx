@@ -9,15 +9,19 @@ import React, {
 
 import {
   getProfileFullName,
+  getProfilePhotoUri,
   saveProfileFullName,
+  saveProfilePhotoUri,
 } from '../../services/profileStorage';
 
 const DEFAULT_DISPLAY_NAME = 'Sarah Woods';
 
 type ProfileDisplayContextType = {
   displayName: string;
+  photoUri: string | null;
   setDisplayName: (name: string) => Promise<void>;
-  refreshDisplayName: () => Promise<void>;
+  setProfilePhotoUri: (uri: string | null) => Promise<void>;
+  refreshProfile: () => Promise<void>;
 };
 
 const ProfileDisplayContext = createContext<ProfileDisplayContextType | null>(
@@ -30,10 +34,15 @@ export function ProfileDisplayProvider({
   children: React.ReactNode;
 }) {
   const [displayName, setDisplayNameState] = useState(DEFAULT_DISPLAY_NAME);
+  const [photoUri, setPhotoUriState] = useState<string | null>(null);
 
-  const refreshDisplayName = useCallback(async () => {
-    const stored = await getProfileFullName();
-    setDisplayNameState(stored ?? DEFAULT_DISPLAY_NAME);
+  const refreshProfile = useCallback(async () => {
+    const [storedName, storedPhoto] = await Promise.all([
+      getProfileFullName(),
+      getProfilePhotoUri(),
+    ]);
+    setDisplayNameState(storedName ?? DEFAULT_DISPLAY_NAME);
+    setPhotoUriState(storedPhoto);
   }, []);
 
   const setDisplayName = useCallback(async (name: string) => {
@@ -42,13 +51,24 @@ export function ProfileDisplayProvider({
     setDisplayNameState(trimmed || DEFAULT_DISPLAY_NAME);
   }, []);
 
+  const setProfilePhotoUri = useCallback(async (uri: string | null) => {
+    await saveProfilePhotoUri(uri);
+    setPhotoUriState(uri?.trim() ? uri.trim() : null);
+  }, []);
+
   useEffect(() => {
-    refreshDisplayName();
-  }, [refreshDisplayName]);
+    refreshProfile();
+  }, [refreshProfile]);
 
   const value = useMemo(
-    () => ({ displayName, setDisplayName, refreshDisplayName }),
-    [displayName, setDisplayName, refreshDisplayName],
+    () => ({
+      displayName,
+      photoUri,
+      setDisplayName,
+      setProfilePhotoUri,
+      refreshProfile,
+    }),
+    [displayName, photoUri, setDisplayName, setProfilePhotoUri, refreshProfile],
   );
 
   return (

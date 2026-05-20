@@ -15,11 +15,14 @@ import { useNavigation } from '@react-navigation/native';
 import Header from '../../../components/Header.tsx';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
 import AppButton from '../../../components/AppButton.tsx';
+import { useProfileDisplay } from '../../context/ProfileDisplayContext';
 import { useStoredProfileFullName } from '../../hooks/useStoredProfileFullName';
 
 function SettingsScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const displayName = useStoredProfileFullName();
+  const { photoUri } = useProfileDisplay();
+  const hasProfilePhoto = Boolean(photoUri);
   const [loggingOut, setLoggingOut] = useState(false);
 
   const performLogout = async () => {
@@ -43,6 +46,11 @@ function SettingsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.screenHeader}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}>
+          <Text style={styles.backText}>← Back</Text>
+        </TouchableOpacity>
         <Header title="Settings" />
       </View>
 
@@ -77,10 +85,13 @@ function SettingsScreen() {
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.profileCard}>
-          <Image
-            source={{ uri: 'https://randomuser.me/api/portraits/women/44.jpg' }}
-            style={styles.avatarSmall}
-          />
+          <View style={styles.avatarFrame}>
+            {hasProfilePhoto ? (
+              <Image source={{ uri: photoUri! }} style={styles.avatarSmall} />
+            ) : (
+              <View style={styles.avatarPlaceholder} />
+            )}
+          </View>
           <Text style={styles.userName}>{displayName}</Text>
           <Text style={styles.userEmail}>sarahwoods@evolverobotics.com</Text>
 
@@ -95,16 +106,16 @@ function SettingsScreen() {
           <Text style={styles.sectionTitle}>Account Settings</Text>
 
           <TouchableOpacity style={styles.listItem}>
-            <Text style={styles.listText}>🔒 Change Password</Text>
+            <Text style={styles.listText}>Change Password</Text>
             <Text style={styles.arrow}>›</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.listItem}>
-            <Text style={styles.listText}>🛡 Privacy Settings</Text>
+            <Text style={styles.listText}>Privacy Settings</Text>
             <Text style={styles.arrow}>›</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.listItem}>
-            <Text style={styles.listText}>🔔 Notification Preferences</Text>
+            <Text style={styles.listText}>Notification Preferences</Text>
             <Text style={styles.arrow}>›</Text>
           </TouchableOpacity>
         </View>
@@ -113,11 +124,11 @@ function SettingsScreen() {
           <Text style={styles.sectionTitle}>App Information</Text>
           <Text style={styles.versionText}>Version 2.1.1</Text>
           <TouchableOpacity style={styles.listItem}>
-            <Text style={styles.linkText}>📄 Privacy Policy</Text>
+            <Text style={styles.linkText}>Privacy Policy</Text>
             <Text style={styles.arrow}>›</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.listItem}>
-            <Text style={styles.linkText}>📄 Terms of Service</Text>
+            <Text style={styles.linkText}>Terms of Service</Text>
             <Text style={styles.arrow}>›</Text>
           </TouchableOpacity>
         </View>
@@ -146,6 +157,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     height: 80,
     justifyContent: 'center',
+  },
+  backButton: {
+    position: 'absolute',
+    left: 16,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    zIndex: 2,
+  },
+  backText: {
+    color: '#a42a8b',
+    fontSize: 16,
+    fontWeight: '600',
   },
   scrollContent: {
     padding: 16,
@@ -180,12 +204,25 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     // borderColor: 'black',
   },
+  avatarFrame: {
+    width: 76,
+    height: 76,
+    borderRadius: 36,
+    left: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#eecdf4',
+  },
   avatarSmall: {
     width: 76,
     height: 76,
     borderRadius: 36,
-    // top: 15,
-    left: 12,
+  },
+  avatarPlaceholder: {
+    width: 76,
+    height: 76,
+    borderRadius: 36,
+    backgroundColor: '#FAF2FF',
   },
   userName: {
     fontSize: 30,

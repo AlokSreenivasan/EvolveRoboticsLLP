@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Alert,
   Image,
   SafeAreaView,
   ScrollView,
@@ -16,18 +15,22 @@ import CourseCard from '../../../components/Home/CourseCard.tsx';
 import QuickStatsCard from '../../../components/Home/QuickStatsCard.tsx';
 import UpcomingEventsCard from '../../../components/Home/UpcomingEventsCard.tsx';
 import NotificationCard from '../../../components/Home/NotificationCard.tsx';
+import { useProfileDisplay } from '../../context/ProfileDisplayContext';
 import { useStoredProfileFullName } from '../../hooks/useStoredProfileFullName';
+import { DEFAULT_PROFILE_AVATAR_URI } from '../../../services/profileStorage';
 
 function HomeScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const displayName = useStoredProfileFullName();
+  const { photoUri } = useProfileDisplay();
+  const profileImageUri = photoUri ?? DEFAULT_PROFILE_AVATAR_URI;
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.headerContainer}>
         <Header
           title="Learning Platform"
-          onBellPress={() => Alert.alert('Bell clicked!')}
+          avatarUrl={profileImageUri}
           onAvatarPress={() => navigation.navigate('Settings')}
         />
       </View>
@@ -35,7 +38,7 @@ function HomeScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.profileCard}>
           <Image
-            source={{ uri: 'https://randomuser.me/api/portraits/women/44.jpg' }}
+            source={{ uri: profileImageUri }}
             style={styles.avatarSmall}
           />
           <Text style={styles.userName}>{displayName}</Text>
@@ -94,7 +97,6 @@ function HomeScreen() {
           </ScrollView>
         </View>
       </ScrollView>
-      <Text>Home Screen</Text>
     </SafeAreaView>
   );
 }

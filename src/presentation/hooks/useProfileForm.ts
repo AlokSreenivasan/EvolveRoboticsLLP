@@ -7,11 +7,14 @@ import {
   ProfileFormErrors,
   validateProfileForm,
 } from '../../domain/Profile/validation/validateProfileForm';
-import { getProfileFullName } from '../../services/profileStorage';
+import {
+  getProfileFullName,
+  getProfilePhotoUri,
+} from '../../services/profileStorage';
 import { useProfileDisplay } from '../context/ProfileDisplayContext';
 
 export function useProfileForm() {
-  const { setDisplayName } = useProfileDisplay();
+  const { setDisplayName, setProfilePhotoUri } = useProfileDisplay();
   const [profile, setProfile] = useState<Profile>(emptyProfile);
   const [errors, setErrors] = useState<ProfileFormErrors>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -21,9 +24,16 @@ export function useProfileForm() {
 
     const loadStoredProfile = async () => {
       try {
-        const storedFullName = await getProfileFullName();
-        if (!cancelled && storedFullName) {
-          setProfile(prev => ({ ...prev, fullName: storedFullName }));
+        const [storedFullName, storedPhotoUri] = await Promise.all([
+          getProfileFullName(),
+          getProfilePhotoUri(),
+        ]);
+        if (!cancelled) {
+          setProfile(prev => ({
+            ...prev,
+            ...(storedFullName ? { fullName: storedFullName } : {}),
+            ...(storedPhotoUri ? { photoUri: storedPhotoUri } : {}),
+          }));
         }
       } finally {
         if (!cancelled) {
@@ -63,8 +73,11 @@ export function useProfileForm() {
   }, [profile.contactNumber, profile.fullName]);
 
   const persistProfile = useCallback(async (): Promise<void> => {
-    await setDisplayName(profile.fullName);
-  }, [profile.fullName, setDisplayName]);
+    await Promise.all([
+      setDisplayName(profile.fullName),
+      setProfilePhotoUri(profile.photoUri),
+    ]);
+  }, [profile.fullName, profile.photoUri, setDisplayName, setProfilePhotoUri]);
 
   return {
     profile,

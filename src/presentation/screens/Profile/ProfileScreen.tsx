@@ -79,7 +79,7 @@ function ProfileScreen() {
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled">
-          <Text style={styles.pageTitle}>Edit Profile</Text>
+          {/* <Text style={styles.pageTitle}>Edit Profile</Text> */}
           <Text style={styles.pageSubtitle}>
             Update your personal details below.
           </Text>

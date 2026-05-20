@@ -3,14 +3,14 @@ import { useFocusEffect } from '@react-navigation/native';
 
 import { useProfileDisplay } from '../context/ProfileDisplayContext';
 
-/** Shared display name for Home; refreshes from storage when the screen gains focus. */
+/** Shared display name; refreshes from storage when the screen gains focus. */
 export function useStoredProfileFullName(): string {
-  const { displayName, refreshDisplayName } = useProfileDisplay();
+  const { displayName, refreshProfile } = useProfileDisplay();
 
   useFocusEffect(
     useCallback(() => {
-      refreshDisplayName();
-    }, [refreshDisplayName]),
+      refreshProfile();
+    }, [refreshProfile]),
   );
 
   return displayName;
