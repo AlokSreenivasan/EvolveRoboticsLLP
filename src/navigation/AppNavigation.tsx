@@ -1,14 +1,9 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import auth from '@react-native-firebase/auth';
 
 import IntroScreen from '../presentation/screens/Intro/IntroScreen';
 import SplashScreen from '../presentation/screens/Splash/SplashScreen';
@@ -17,6 +12,7 @@ import AuthStack from './AuthStack';
 import MainStack from './MainStack';
 
 import { useAuth } from '../presentation/context/AuthContext';
+import { AuthFlowProvider } from '../presentation/context/AuthFlowContext';
 import {
   AuthEntryRoute,
   IntroFlowProvider,
@@ -40,12 +36,13 @@ function AppNavigation() {
   const [showIntro, setShowIntro] = useState(false);
   const [authInitialRoute, setAuthInitialRoute] =
     useState<AuthEntryRoute>('Login');
-  /** After intro, stay on auth until the user signs in (ignore persisted session). */
-  const [introAuthRoute, setIntroAuthRoute] =
-    useState<AuthEntryRoute | null>(null);
+  /**
+   * Set when leaving intro so we always show Login/SignUp first.
+   * Cleared after explicit auth success (login/sign-up) so Home is reachable.
+   */
+  const [awaitingAuthFromIntro, setAwaitingAuthFromIntro] = useState(false);
 
   const { user, initializing } = useAuth();
-  const userAtIntroFinishRef = useRef(user);
 
   useEffect(() => {
     let cancelled = false;
@@ -55,10 +52,16 @@ function AppNavigation() {
         setTimeout(resolve, MIN_SPLASH_DURATION_MS);
       });
 
-      const [, onboardingDone] = await Promise.all([
-        minSplashDelay,
-        isOnboardingComplete(),
-      ]);
+      const onboardingDone = await isOnboardingComplete();
+
+      // Reinstall clears AsyncStorage but Firebase may still restore a session
+      // from the device keychain — sign out so intro → login flow works cleanly.
+      const clearStaleSession =
+        !onboardingDone && auth().currentUser
+          ? auth().signOut()
+          : Promise.resolve();
+
+      await Promise.all([minSplashDelay, clearStaleSession]);
 
       if (cancelled) {
         return;
@@ -67,6 +70,7 @@ function AppNavigation() {
       setShowIntro(!onboardingDone);
       if (onboardingDone) {
         setAuthInitialRoute('Login');
+        setAwaitingAuthFromIntro(false);
       }
       setBootstrapComplete(true);
     };
@@ -78,26 +82,16 @@ function AppNavigation() {
     };
   }, []);
 
-  const finishIntro = useCallback(
-    async (route: AuthEntryRoute = 'Login') => {
-      await markOnboardingComplete();
-      userAtIntroFinishRef.current = user;
-      setAuthInitialRoute(route);
-      setIntroAuthRoute(route);
-      setShowIntro(false);
-    },
-    [user],
-  );
+  const finishIntro = useCallback(async (route: AuthEntryRoute = 'Login') => {
+    await markOnboardingComplete();
+    setAuthInitialRoute(route);
+    setAwaitingAuthFromIntro(true);
+    setShowIntro(false);
+  }, []);
 
-  // Allow Home redirect only after a fresh sign-in from the intro auth handoff.
-  useEffect(() => {
-    if (!introAuthRoute || !user) {
-      return;
-    }
-    if (user !== userAtIntroFinishRef.current) {
-      setIntroAuthRoute(null);
-    }
-  }, [user, introAuthRoute]);
+  const handleAuthSuccess = useCallback(() => {
+    setAwaitingAuthFromIntro(false);
+  }, []);
 
   const showSplash = !bootstrapComplete || initializing;
 
@@ -105,31 +99,33 @@ function AppNavigation() {
     if (showIntro) {
       return 'intro';
     }
-    if (introAuthRoute) {
+    if (awaitingAuthFromIntro) {
       return 'auth';
     }
     if (user) {
       return 'main';
     }
     return 'auth';
-  }, [showIntro, user, introAuthRoute]);
+  }, [showIntro, user, awaitingAuthFromIntro]);
 
   return (
     <View style={styles.root}>
       {bootstrapComplete && !initializing ? (
         <NavigationContainer>
           <IntroFlowProvider finishIntro={finishIntro}>
-            <Stack.Navigator screenOptions={fadeScreenOptions}>
-              {rootScreen === 'intro' ? (
-                <Stack.Screen name="Intro" component={IntroScreen} />
-              ) : rootScreen === 'main' ? (
-                <Stack.Screen name="MainStack" component={MainStack} />
-              ) : (
-                <Stack.Screen name="AuthStack">
-                  {() => <AuthStack initialRoute={authInitialRoute} />}
-                </Stack.Screen>
-              )}
-            </Stack.Navigator>
+            <AuthFlowProvider onAuthSuccess={handleAuthSuccess}>
+              <Stack.Navigator screenOptions={fadeScreenOptions}>
+                {rootScreen === 'intro' ? (
+                  <Stack.Screen name="Intro" component={IntroScreen} />
+                ) : rootScreen === 'main' ? (
+                  <Stack.Screen name="MainStack" component={MainStack} />
+                ) : (
+                  <Stack.Screen name="AuthStack">
+                    {() => <AuthStack initialRoute={authInitialRoute} />}
+                  </Stack.Screen>
+                )}
+              </Stack.Navigator>
+            </AuthFlowProvider>
           </IntroFlowProvider>
         </NavigationContainer>
       ) : null}

@@ -14,7 +14,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
 import AppButton from '../../../components/AppButton.tsx';
 
-function ProfileScreen() {
+function SettingsScreen() {
   const route = useRoute();
   const navigation = useNavigation<LoginScreenNavigationProp>();
 
@@ -22,12 +22,12 @@ function ProfileScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.headerContainer}>
         <Header
-          title="Profile"
+          title="Settings"
           onBellPress={() => Alert.alert('Bell clicked!')}
         />
       </View>
 
-      <View style={styles.headerClicks}>
+      {/* <View style={styles.headerClicks}>
         <View style={styles.headerSubClicks}>
           <TouchableOpacity onPress={() => navigation.navigate('Home')}>
             <Text
@@ -40,6 +40,8 @@ function ProfileScreen() {
             </Text>
           </TouchableOpacity>
         </View>
+
+
         <View style={styles.headerSubClicks}>
           <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
             <Text
@@ -48,11 +50,11 @@ function ProfileScreen() {
                 route.name === 'Profile' && styles.activeTabText,
               ]}
             >
-              Profile
+              Settings
             </Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </View> */}
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.profileCard}>
@@ -101,9 +103,6 @@ function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        <Text>Profile Content...</Text>
-        <Text>More text...</Text>
-        <Text>Even more...</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -239,4 +238,4 @@ const styles = StyleSheet.create({
   }
 });
 
-export default ProfileScreen;
+export default SettingsScreen;

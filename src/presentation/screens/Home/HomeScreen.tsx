@@ -6,7 +6,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  // TouchableOpacity,
   View,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -27,7 +26,7 @@ function HomeScreen() {
         <Header
           title="Learning Platform"
           onBellPress={() => Alert.alert('Bell clicked!')}
-          onAvatarPress={() => navigation.navigate('Profile')}
+          onAvatarPress={() => navigation.navigate('Settings')}
         />
       </View>
 

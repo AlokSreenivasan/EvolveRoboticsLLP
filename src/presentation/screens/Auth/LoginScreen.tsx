@@ -18,6 +18,7 @@ import auth from '@react-native-firebase/auth';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
 import AppButton from '../../../components/AppButton.tsx';
 import { isValidEmail } from '../../../domain/Auth/validation/isValidEmail.ts';
+import { useAuthFlow } from '../../context/AuthFlowContext';
 
 function getAuthErrorMessage(error: { code?: string; message?: string }) {
   switch (error.code) {
@@ -38,6 +39,7 @@ function getAuthErrorMessage(error: { code?: string; message?: string }) {
 
 function LoginScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const { notifyAuthSuccess } = useAuthFlow();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -58,7 +60,7 @@ function LoginScreen() {
     setLoading(true);
     try {
       await auth().signInWithEmailAndPassword(email.trim(), password);
-      // AppNavigation listens to auth state and switches to MainStack (Home).
+      notifyAuthSuccess();
     } catch (error) {
       Alert.alert('Login Error', getAuthErrorMessage(error as { code?: string; message?: string }));
     } finally {

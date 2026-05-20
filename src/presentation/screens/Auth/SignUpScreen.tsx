@@ -14,6 +14,7 @@ import auth from '@react-native-firebase/auth';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
 import AppButton from '../../../components/AppButton.tsx';
 import { isValidEmail } from '../../../domain/Auth/validation/isValidEmail.ts';
+import { useAuthFlow } from '../../context/AuthFlowContext';
 
 function getSignUpErrorMessage(error: { code?: string; message?: string }) {
   switch (error.code) {
@@ -39,6 +40,7 @@ type Errors = {
 
 const SignUpScreen = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const { notifyAuthSuccess } = useAuthFlow();
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -90,7 +92,7 @@ const SignUpScreen = () => {
         displayName: fullName.trim(),
       });
 
-      // AppNavigation switches to MainStack when auth state updates.
+      notifyAuthSuccess();
     } catch (error) {
       Alert.alert(
         'Sign Up Error',

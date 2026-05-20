@@ -10,3 +10,8 @@ export async function isOnboardingComplete(): Promise<boolean> {
 export async function markOnboardingComplete(): Promise<void> {
   await AsyncStorage.setItem(ONBOARDING_COMPLETE_KEY, 'true');
 }
+
+/** Clears onboarding flag — useful for dev/testing first-launch flow. */
+export async function resetOnboarding(): Promise<void> {
+  await AsyncStorage.removeItem(ONBOARDING_COMPLETE_KEY);
+}
