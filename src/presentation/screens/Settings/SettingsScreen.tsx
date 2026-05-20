@@ -15,13 +15,16 @@ import { useNavigation } from '@react-navigation/native';
 import Header from '../../../components/Header.tsx';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
 import AppButton from '../../../components/AppButton.tsx';
+import { useAuth } from '../../context/AuthContext';
 import { useProfileDisplay } from '../../context/ProfileDisplayContext';
 import { useStoredProfileFullName } from '../../hooks/useStoredProfileFullName';
 
 function SettingsScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const { user } = useAuth();
   const displayName = useStoredProfileFullName();
   const { photoUri } = useProfileDisplay();
+  const userEmail = user?.email ?? '';
   const hasProfilePhoto = Boolean(photoUri);
   const [loggingOut, setLoggingOut] = useState(false);
 
@@ -93,7 +96,9 @@ function SettingsScreen() {
             )}
           </View>
           <Text style={styles.userName}>{displayName}</Text>
-          <Text style={styles.userEmail}>sarahwoods@evolverobotics.com</Text>
+          <Text style={styles.userEmail} numberOfLines={1}>
+            {userEmail}
+          </Text>
 
           <AppButton
             title="Edit Profile"
