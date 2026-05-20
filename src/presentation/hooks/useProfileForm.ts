@@ -7,12 +7,11 @@ import {
   ProfileFormErrors,
   validateProfileForm,
 } from '../../domain/Profile/validation/validateProfileForm';
-import {
-  getProfileFullName,
-  saveProfileFullName,
-} from '../../services/profileStorage';
+import { getProfileFullName } from '../../services/profileStorage';
+import { useProfileDisplay } from '../context/ProfileDisplayContext';
 
 export function useProfileForm() {
+  const { setDisplayName } = useProfileDisplay();
   const [profile, setProfile] = useState<Profile>(emptyProfile);
   const [errors, setErrors] = useState<ProfileFormErrors>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -64,8 +63,8 @@ export function useProfileForm() {
   }, [profile.contactNumber, profile.fullName]);
 
   const persistProfile = useCallback(async (): Promise<void> => {
-    await saveProfileFullName(profile.fullName);
-  }, [profile.fullName]);
+    await setDisplayName(profile.fullName);
+  }, [profile.fullName, setDisplayName]);
 
   return {
     profile,

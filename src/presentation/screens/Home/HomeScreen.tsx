@@ -16,9 +16,11 @@ import CourseCard from '../../../components/Home/CourseCard.tsx';
 import QuickStatsCard from '../../../components/Home/QuickStatsCard.tsx';
 import UpcomingEventsCard from '../../../components/Home/UpcomingEventsCard.tsx';
 import NotificationCard from '../../../components/Home/NotificationCard.tsx';
+import { useStoredProfileFullName } from '../../hooks/useStoredProfileFullName';
 
 function HomeScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const displayName = useStoredProfileFullName();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -36,7 +38,7 @@ function HomeScreen() {
             source={{ uri: 'https://randomuser.me/api/portraits/women/44.jpg' }}
             style={styles.avatarSmall}
           />
-          <Text style={styles.userName}>Sarah Woods</Text>
+          <Text style={styles.userName}>{displayName}</Text>
           <Text style={styles.userEmail}>Welcome back to your learning</Text>
           <Text style={styles.userEmail1}>journey!</Text>
 

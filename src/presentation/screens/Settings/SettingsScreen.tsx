@@ -15,9 +15,11 @@ import { useNavigation } from '@react-navigation/native';
 import Header from '../../../components/Header.tsx';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
 import AppButton from '../../../components/AppButton.tsx';
+import { useStoredProfileFullName } from '../../hooks/useStoredProfileFullName';
 
 function SettingsScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const displayName = useStoredProfileFullName();
   const [loggingOut, setLoggingOut] = useState(false);
 
   const performLogout = async () => {
@@ -82,7 +84,7 @@ function SettingsScreen() {
             source={{ uri: 'https://randomuser.me/api/portraits/women/44.jpg' }}
             style={styles.avatarSmall}
           />
-          <Text style={styles.userName}>Sarah Woods</Text>
+          <Text style={styles.userName}>{displayName}</Text>
           <Text style={styles.userEmail}>sarahwoods@evolverobotics.com</Text>
 
           <AppButton
