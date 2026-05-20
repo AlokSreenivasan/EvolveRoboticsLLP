@@ -17,6 +17,7 @@ import AppButton from '../../../components/AppButton.tsx';
 import Header from '../../../components/Header.tsx';
 import ProfilePhotoSection from '../../../components/Profile/ProfilePhotoSection.tsx';
 import { CONTACT_NUMBER_MAX_LENGTH } from '../../../domain/Profile/validation/formatContactNumber';
+import { useAuth } from '../../context/AuthContext';
 import { useProfileForm } from '../../hooks/useProfileForm';
 import {
   pickProfilePhotoFromGallery,
@@ -26,6 +27,8 @@ import type { LoginScreenNavigationProp } from '../../../types/navigation';
 
 function ProfileScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const { user } = useAuth();
+  const userEmail = user?.email ?? '';
   const {
     profile,
     errors,
@@ -79,18 +82,22 @@ function ProfileScreen() {
 
         <ScrollView
           contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled">
-          {/* <Text style={styles.pageTitle}>Edit Profile</Text> */}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}>
           <Text style={styles.pageSubtitle}>
             Update your personal details below.
           </Text>
 
-          <ProfilePhotoSection
-            photoUri={profile.photoUri}
-            onChangePhotoPress={handleChangePhoto}
-          />
+          <View style={styles.photoCard}>
+            <ProfilePhotoSection
+              photoUri={profile.photoUri}
+              onChangePhotoPress={handleChangePhoto}
+            />
+          </View>
 
           <View style={styles.formCard}>
+            <Text style={styles.sectionTitle}>Personal Details</Text>
+
             <Text style={styles.label}>Full Name</Text>
             <TextInput
               style={[styles.input, errors.fullName ? styles.inputError : null]}
@@ -104,6 +111,16 @@ function ProfileScreen() {
             {errors.fullName ? (
               <Text style={styles.errorText}>{errors.fullName}</Text>
             ) : null}
+
+            <View style={styles.labelRow}>
+              <Text style={styles.labelInRow}>Email</Text>
+              <Text style={styles.readOnlyBadge}>Read only</Text>
+            </View>
+            <View style={styles.readOnlyField}>
+              <Text style={styles.readOnlyText} numberOfLines={2}>
+                {userEmail || '—'}
+              </Text>
+            </View>
 
             <Text style={styles.label}>Contact Number</Text>
             <TextInput
@@ -164,37 +181,96 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   pageTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#000',
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#a42a8b',
     textAlign: 'center',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   pageSubtitle: {
     fontSize: 14,
     color: '#555',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 20,
+  },
+  photoCard: {
+    backgroundColor: '#FAF2FF',
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: '#eecdf4',
+    paddingVertical: 8,
+    marginBottom: 16,
   },
   formCard: {
-    backgroundColor: '#fafafa',
+    backgroundColor: '#fff',
     borderRadius: 15,
     padding: 16,
     borderWidth: 1,
     borderColor: '#eecdf4',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#a42a8b',
+    paddingBottom: 12,
+    marginBottom: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eecdf4',
   },
   label: {
     fontWeight: '600',
     marginBottom: 8,
-    marginTop: 4,
+    marginTop: 12,
     fontSize: 14,
     color: '#a42a8b',
+  },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  labelInRow: {
+    fontWeight: '600',
+    fontSize: 14,
+    color: '#a42a8b',
+  },
+  readOnlyBadge: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#a42a8b',
+    backgroundColor: '#FAF2FF',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#eecdf4',
+    overflow: 'hidden',
+  },
+  readOnlyField: {
+    borderWidth: 1,
+    borderColor: '#eecdf4',
+    borderRadius: 15,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    backgroundColor: '#FAF2FF',
+    marginBottom: 4,
+  },
+  readOnlyText: {
+    fontSize: 16,
+    color: '#555',
   },
   input: {
     borderWidth: 1,
     borderColor: '#eecdf4',
-    borderRadius: 12,
-    paddingHorizontal: 14,
+    borderRadius: 15,
+    paddingHorizontal: 15,
     paddingVertical: 12,
     fontSize: 16,
     color: '#000',
@@ -205,15 +281,15 @@ const styles = StyleSheet.create({
     borderColor: '#e57373',
   },
   errorText: {
-    color: '#d32f2f',
+    color: 'red',
     fontSize: 13,
-    marginBottom: 10,
+    marginBottom: 8,
   },
   saveButton: {
     backgroundColor: '#a42a8b',
     paddingVertical: 14,
     borderRadius: 12,
-    marginTop: 16,
+    marginTop: 20,
   },
   saveButtonText: {
     color: '#fff',
