@@ -19,15 +19,20 @@ export default function Header({
       {/* Title in center */}
       <Text style={styles.headerTitle}>{title}</Text>
 
-      {/* Right side actions */}
-      <View style={styles.headerRight}>
-        <TouchableOpacity onPress={onBellPress}>
-          <Text style={styles.bell}>🔔</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={onAvatarPress}>
-          <Image source={{ uri: avatarUrl }} style={styles.avatarSmall} />
-        </TouchableOpacity>
-      </View>
+      {(onBellPress || onAvatarPress) ? (
+        <View style={styles.headerRight}>
+          {onBellPress ? (
+            <TouchableOpacity onPress={onBellPress}>
+              <Text style={styles.bell}>🔔</Text>
+            </TouchableOpacity>
+          ) : null}
+          {onAvatarPress ? (
+            <TouchableOpacity onPress={onAvatarPress}>
+              <Image source={{ uri: avatarUrl }} style={styles.avatarSmall} />
+            </TouchableOpacity>
+          ) : null}
+        </View>
+      ) : null}
     </View>
   );
 }

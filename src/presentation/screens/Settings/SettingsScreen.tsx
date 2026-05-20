@@ -42,11 +42,8 @@ function SettingsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.headerContainer}>
-        <Header
-          title="Settings"
-          onBellPress={() => Alert.alert('Bell clicked!')}
-        />
+      <View style={styles.screenHeader}>
+        <Header title="Settings" />
       </View>
 
       {/* <View style={styles.headerClicks}>
@@ -145,15 +142,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  headerContainer: {
-    backgroundColor: 'white',
+  screenHeader: {
+    backgroundColor: '#fff',
     height: 80,
-    justifyContent: 'center', // centers title vertically
+    justifyContent: 'center',
   },
-
   scrollContent: {
     padding: 16,
-    // backgroundColor: 'red'
+    paddingBottom: 32,
   },
   headerClicks: {
     flexDirection: 'row',
