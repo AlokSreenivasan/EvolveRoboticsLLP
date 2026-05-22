@@ -28,7 +28,7 @@ function HomeScreen() {
       <View style={styles.headerContainer}>
         <Header
           title="Learning Platform"
-          avatarUrl={avatarUri}
+          rightAction="settings"
           onAvatarPress={() => navigation.navigate('Settings')}
         />
       </View>

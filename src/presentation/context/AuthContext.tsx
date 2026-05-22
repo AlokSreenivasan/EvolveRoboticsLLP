@@ -27,6 +27,7 @@ import type { UserProfile } from '../../store/user/types';
 import { getErrorMessage } from '../../utils/firebase';
 import {
   buildFallbackUserProfile,
+  isRicherUserProfile,
   resolveAvatarUri,
   resolveDisplayName,
 } from '../../utils/profile/mapUserProfile';
@@ -44,6 +45,8 @@ export interface AuthContextType {
   avatarUri: string;
   refreshProfile: () => Promise<void>;
   setProfileState: (profile: UserProfile | null) => void;
+  /** Apply profile immediately after sign-up (before navigation). */
+  establishSessionProfile: (profile: UserProfile) => void;
   updateSessionProfile: (payload: ProfileEditPayload) => Promise<boolean>;
 }
 
@@ -58,8 +61,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profileError, setProfileError] = useState<string | null>(null);
 
   const mountedRef = useRef(true);
+  const profileRef = useRef<UserProfile | null>(null);
   const hydratePromiseRef = useRef<Promise<void> | null>(null);
   const hydratedUidRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    profileRef.current = profile;
+  }, [profile]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -80,6 +88,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await clearCachedUserProfile();
   }, []);
 
+  const applyProfileIfRicher = useCallback((next: UserProfile | null) => {
+    if (!mountedRef.current || !next) {
+      return;
+    }
+    const current = profileRef.current;
+    if (!isRicherUserProfile(next, current)) {
+      return;
+    }
+    setProfile(next);
+  }, []);
+
   const applyRemoteProfile = useCallback(
     async (
       firebaseUser: FirebaseAuthTypes.User,
@@ -91,16 +110,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (remote) {
-        setProfile(remote);
+        applyProfileIfRicher(remote);
         await setCachedUserProfile(remote);
         return;
       }
 
-      if (!cachedProfile) {
-        setProfile(buildFallbackUserProfile(firebaseUser));
+      let resolvedCache = cachedProfile;
+      if (!resolvedCache) {
+        const rechecked = await getCachedUserProfile(firebaseUser.uid);
+        resolvedCache = rechecked?.profile ?? null;
       }
+
+      if (resolvedCache) {
+        applyProfileIfRicher(resolvedCache);
+        return;
+      }
+
+      const fallback = buildFallbackUserProfile(firebaseUser);
+      applyProfileIfRicher(fallback);
     },
-    [],
+    [applyProfileIfRicher],
   );
 
   const fetchRemoteProfile = useCallback(
@@ -133,6 +162,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return hydratePromiseRef.current;
       }
 
+      const existing = profileRef.current;
+      if (
+        !forceNetwork &&
+        hydratedUidRef.current === uid &&
+        existing?.uid === uid &&
+        existing.phoneNumber?.trim()
+      ) {
+        setProfileLoading(false);
+        return;
+      }
+
       const run = async () => {
         if (!mountedRef.current) {
           return;
@@ -146,7 +186,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           cached != null && isProfileCacheFresh(cached.cachedAt);
 
         if (cachedProfile) {
-          setProfile(cachedProfile);
+          applyProfileIfRicher(cachedProfile);
         }
 
         if (!forceNetwork && cacheIsFresh) {
@@ -158,7 +198,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (!mountedRef.current || !remote) {
               return;
             }
-            setProfile(remote);
+            applyProfileIfRicher(remote);
             setCachedUserProfile(remote).catch(() => undefined);
           });
 
@@ -181,7 +221,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       hydratePromiseRef.current = run();
       return hydratePromiseRef.current;
     },
-    [applyRemoteProfile, fetchRemoteProfile],
+    [applyProfileIfRicher, applyRemoteProfile, fetchRemoteProfile],
   );
 
   const refreshProfile = useCallback(async () => {
@@ -203,9 +243,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfile(next);
     if (next) {
       hydratedUidRef.current = next.uid;
+      hydratePromiseRef.current = Promise.resolve();
+      setProfileLoading(false);
       setCachedUserProfile(next).catch(() => undefined);
     }
   }, []);
+
+  const establishSessionProfile = useCallback((next: UserProfile) => {
+    setProfileState(next);
+  }, [setProfileState]);
 
   const updateSessionProfile = useCallback(
     async (payload: ProfileEditPayload): Promise<boolean> => {
@@ -295,6 +341,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       avatarUri,
       refreshProfile,
       setProfileState,
+      establishSessionProfile,
       updateSessionProfile,
     }),
     [
@@ -309,6 +356,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       avatarUri,
       refreshProfile,
       setProfileState,
+      establishSessionProfile,
       updateSessionProfile,
     ],
   );

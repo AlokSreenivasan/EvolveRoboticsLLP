@@ -25,9 +25,23 @@ export function useProfileForm() {
   const isDirtyRef = useRef(false);
 
   useEffect(() => {
-    if (sessionProfile && !isDirtyRef.current) {
-      setProfileForm(userProfileToFormProfile(sessionProfile));
+    if (!sessionProfile) {
+      return;
     }
+
+    const nextForm = userProfileToFormProfile(sessionProfile);
+
+    if (!isDirtyRef.current) {
+      setProfileForm(nextForm);
+      return;
+    }
+
+    // Sign-up hydration can complete after Profile mounts — sync empty fields only.
+    setProfileForm(prev => ({
+      fullName: prev.fullName || nextForm.fullName,
+      contactNumber: prev.contactNumber || nextForm.contactNumber,
+      photoUri: prev.photoUri ?? nextForm.photoUri,
+    }));
   }, [sessionProfile]);
 
   const markDirty = useCallback(() => {

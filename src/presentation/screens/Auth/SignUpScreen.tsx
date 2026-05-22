@@ -19,7 +19,7 @@ import {
 } from '../../../domain/Profile/validation/formatContactNumber';
 import { isValidContactNumber } from '../../../domain/Profile/validation/isValidContactNumber';
 import { signUpWithProfile } from '../../../services/firebase/signUpService';
-import { setCachedUserProfile } from '../../../services/profileCache';
+import { useAuth } from '../../context/AuthContext';
 import { useAuthFlow } from '../../context/AuthFlowContext';
 
 type Errors = {
@@ -32,6 +32,7 @@ type Errors = {
 
 const SignUpScreen = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const { establishSessionProfile } = useAuth();
   const { notifyAuthSuccess } = useAuthFlow();
 
   const [fullName, setFullName] = useState('');
@@ -96,7 +97,7 @@ const SignUpScreen = () => {
         phoneNumber: contactNumber,
       });
 
-      await setCachedUserProfile(profile);
+      establishSessionProfile(profile);
       notifyAuthSuccess();
     } catch (error) {
       Alert.alert(

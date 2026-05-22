@@ -1,16 +1,20 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { Settings } from 'lucide-react-native';
 
 type HeaderProps = {
   title: string;
   avatarUrl?: string;
   onAvatarPress?: () => void;
+  /** Use a settings gear in the header instead of a profile image. */
+  rightAction?: 'avatar' | 'settings';
 };
 
 export default function Header({
   title,
   avatarUrl = 'https://randomuser.me/api/portraits/women/44.jpg',
   onAvatarPress,
+  rightAction = 'avatar',
 }: HeaderProps) {
   return (
     <View style={styles.headerContainer}>
@@ -20,8 +24,14 @@ export default function Header({
         <TouchableOpacity
           style={styles.avatarButton}
           onPress={onAvatarPress}
-          activeOpacity={0.8}>
-          <Image source={{ uri: avatarUrl }} style={styles.avatarSmall} />
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Open settings">
+          {rightAction === 'settings' ? (
+            <Settings size={26} color="#a42a8b" strokeWidth={2} />
+          ) : (
+            <Image source={{ uri: avatarUrl }} style={styles.avatarSmall} />
+          )}
         </TouchableOpacity>
       ) : null}
     </View>

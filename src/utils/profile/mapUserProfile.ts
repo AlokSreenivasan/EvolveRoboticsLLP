@@ -66,6 +66,26 @@ export function userProfileToFormProfile(profile: UserProfile | null): Profile {
   };
 }
 
+/** Prefer profiles with more registration fields populated (avoids fallback overwriting signup data). */
+export function isRicherUserProfile(
+  candidate: UserProfile | null | undefined,
+  baseline: UserProfile | null | undefined,
+): boolean {
+  if (!candidate) {
+    return false;
+  }
+  if (!baseline || candidate.uid !== baseline.uid) {
+    return true;
+  }
+
+  const score = (profile: UserProfile) =>
+    (profile.fullName?.trim() ? 1 : 0) +
+    (profile.phoneNumber?.trim() ? 1 : 0) +
+    (profile.profileImage?.trim() ? 1 : 0);
+
+  return score(candidate) > score(baseline);
+}
+
 export function isLocalImageUri(uri: string | null | undefined): boolean {
   if (!uri?.trim()) {
     return false;
