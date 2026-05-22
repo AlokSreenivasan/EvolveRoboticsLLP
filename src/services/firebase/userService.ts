@@ -10,6 +10,16 @@ import type {
 } from '../../store/user/types';
 import { assertAuthenticatedUserId } from '../../utils/firebase/assertAuthenticated';
 import {
+  extractFirebaseErrorDetails,
+  isFirebaseNotFoundError,
+  logFirebaseOperationError,
+  normalizeFirebaseErrorCode,
+} from '../../utils/firebase/extractFirebaseError';
+import {
+  assertAuthUidMatches,
+  syncFirestoreAuthSession,
+} from '../../utils/firebase/firestoreSessionSync';
+import {
   FirebaseServiceError,
   wrapFirebaseError,
 } from '../../utils/firebase/errors';
@@ -196,4 +206,103 @@ export async function updateCurrentUserProfile(
 ): Promise<UserProfile> {
   const uid = assertAuthenticatedUserId();
   return updateUserProfile(uid, input, baseProfile);
+}
+
+/**
+ * Permanently deletes users/{uid}. Caller must be authenticated as that user.
+ * Idempotent: missing documents are treated as already deleted.
+ */
+function mapDeleteProfileFirestoreError(
+  error: unknown,
+  message?: string,
+): FirebaseServiceError {
+  const normalized = normalizeFirebaseErrorCode(
+    extractFirebaseErrorDetails(error).code,
+  );
+
+  if (normalized === 'permission-denied') {
+    return new FirebaseServiceError(
+      'FIRESTORE_ERROR',
+      'Firestore denied profile deletion. Deploy security rules (firebase deploy --only firestore:rules), sign in again, and retry.',
+      error,
+    );
+  }
+
+  if (normalized === 'unauthenticated') {
+    return new FirebaseServiceError(
+      'NOT_AUTHENTICATED',
+      message ?? 'Your session has expired. Please sign in again.',
+      error,
+    );
+  }
+
+  return wrapFirebaseError(
+    error,
+    'FIRESTORE_ERROR',
+    message ?? 'Failed to delete user profile.',
+  );
+}
+
+/**
+ * Permanently deletes users/{uid} using a transaction so read+delete share the same
+ * authenticated server context (more reliable on iOS than a standalone delete() call).
+ */
+export async function deleteUserProfile(uid: string): Promise<void> {
+  assertAuthUidMatches(uid);
+  const ref = userDocRef(uid);
+
+  try {
+    const serverSnapshot = await ref.get({ source: 'server' });
+    if (!serverSnapshot.exists) {
+      return;
+    }
+  } catch (error) {
+    const { code, message } = extractFirebaseErrorDetails(error);
+    const normalized = normalizeFirebaseErrorCode(code);
+
+    if (isFirebaseNotFoundError(code)) {
+      return;
+    }
+
+    logFirebaseOperationError('deleteUserProfile', 'serverRead', error);
+
+    if (normalized === 'permission-denied' || normalized === 'unauthenticated') {
+      throw mapDeleteProfileFirestoreError(error, message);
+    }
+  }
+
+  try {
+    await firestore().runTransaction(async transaction => {
+      const snapshot = await transaction.get(ref);
+      if (snapshot.exists) {
+        transaction.delete(ref);
+      }
+    });
+  } catch (error) {
+    const { code, message } = extractFirebaseErrorDetails(error);
+
+    if (isFirebaseNotFoundError(code)) {
+      return;
+    }
+
+    logFirebaseOperationError('deleteUserProfile', 'transactionDelete', error);
+    throw mapDeleteProfileFirestoreError(error, message);
+  }
+}
+
+/**
+ * Deletes users/{uid} after forcing a server-side auth handshake (iOS recovery path).
+ */
+export async function deleteUserProfileWithSessionSync(uid: string): Promise<void> {
+  const syncedUid = await syncFirestoreAuthSession();
+  assertAuthUidMatches(uid);
+
+  if (syncedUid !== uid) {
+    throw new FirebaseServiceError(
+      'NOT_AUTHENTICATED',
+      'Session mismatch detected. Sign in again and retry account deletion.',
+    );
+  }
+
+  await deleteUserProfile(uid);
 }

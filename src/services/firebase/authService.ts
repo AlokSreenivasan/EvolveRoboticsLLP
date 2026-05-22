@@ -60,6 +60,92 @@ export async function signOut(): Promise<void> {
   await auth().signOut();
 }
 
+export function hasEmailPasswordProvider(): boolean {
+  const user = getCurrentUser();
+  if (!user) {
+    return false;
+  }
+  return user.providerData.some(
+    provider => provider.providerId === 'password',
+  );
+}
+
+function mapReauthenticateAuthError(error: {
+  code?: string;
+  message?: string;
+}): string {
+  switch (error.code) {
+    case 'auth/wrong-password':
+    case 'auth/invalid-credential':
+      return 'Password is incorrect.';
+    case 'auth/too-many-requests':
+      return 'Too many attempts. Please wait a moment and try again.';
+    case 'auth/network-request-failed':
+      return 'Network error. Check your connection and try again.';
+    case 'auth/user-mismatch':
+      return 'Account mismatch. Please sign in again.';
+    default:
+      return error.message ?? 'Could not verify your identity. Please try again.';
+  }
+}
+
+function toReauthenticateError(error: unknown): Error {
+  const firebaseAuthError = error as { code?: string; message?: string };
+  if (firebaseAuthError?.code?.startsWith('auth/')) {
+    return new Error(mapReauthenticateAuthError(firebaseAuthError));
+  }
+  return new Error(getErrorMessage(error));
+}
+
+/**
+ * Re-authenticates the current user with email/password (required before sensitive actions).
+ */
+export async function reauthenticateWithPassword(
+  currentPassword: string,
+): Promise<void> {
+  const user = getCurrentUser();
+  const email = getCurrentUserEmail();
+
+  if (!user || !email) {
+    throw new Error('You must be signed in to continue.');
+  }
+
+  if (!hasEmailPasswordProvider()) {
+    throw new Error(
+      'Re-authentication is only available for email and password accounts.',
+    );
+  }
+
+  try {
+    const credential = auth.EmailAuthProvider.credential(
+      email,
+      currentPassword,
+    );
+    await user.reauthenticateWithCredential(credential);
+    await refreshAuthSessionForSensitiveOperation();
+  } catch (error) {
+    throw toReauthenticateError(error);
+  }
+}
+
+/**
+ * Refreshes the auth session so Firestore/Storage on iOS use a current ID token
+ * immediately after re-authentication (avoids permission-denied on delete).
+ */
+export async function refreshAuthSessionForSensitiveOperation(): Promise<void> {
+  const user = getCurrentUser();
+  if (!user) {
+    return;
+  }
+
+  await user.reload();
+  await user.getIdToken(true);
+
+  if (__DEV__) {
+    console.log('[refreshAuthSessionForSensitiveOperation]', { uid: user.uid });
+  }
+}
+
 /**
  * Sends a Firebase password reset email to the given address.
  * Does not sign the user in or out; safe for the forgot-password flow.

@@ -111,7 +111,9 @@ function SettingsScreen() {
             <Text style={styles.listText}>Change Password</Text>
             <Text style={styles.arrow}>›</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.listItem}>
+          <TouchableOpacity
+            style={styles.listItem}
+            onPress={() => navigation.navigate('PrivacySettings')}>
             <Text style={styles.listText}>Privacy Settings</Text>
             <Text style={styles.arrow}>›</Text>
           </TouchableOpacity>

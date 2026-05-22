@@ -1,22 +1,16 @@
 import auth from '@react-native-firebase/auth';
 
-import { getCurrentUser, getCurrentUserEmail } from './authService';
+import {
+  getCurrentUser,
+  getCurrentUserEmail,
+  hasEmailPasswordProvider,
+} from './authService';
 import { getErrorMessage } from '../../utils/firebase/errors';
 
 export type ChangePasswordInput = {
   currentPassword: string;
   newPassword: string;
 };
-
-function hasPasswordProvider(): boolean {
-  const user = getCurrentUser();
-  if (!user) {
-    return false;
-  }
-  return user.providerData.some(
-    provider => provider.providerId === 'password',
-  );
-}
 
 function mapChangePasswordAuthError(error: {
   code?: string;
@@ -63,7 +57,7 @@ export async function changePassword(input: ChangePasswordInput): Promise<void> 
     throw new Error('You must be signed in to change your password.');
   }
 
-  if (!hasPasswordProvider()) {
+  if (!hasEmailPasswordProvider()) {
     throw new Error(
       'Password change is only available for accounts signed in with email and password.',
     );

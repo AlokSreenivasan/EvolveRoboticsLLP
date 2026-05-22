@@ -1,6 +1,11 @@
 import storage from '@react-native-firebase/storage';
 
 import { assertAuthenticatedUserId } from '../../utils/firebase/assertAuthenticated';
+import {
+  extractFirebaseErrorDetails,
+  isFirebaseNotFoundError,
+  logFirebaseOperationError,
+} from '../../utils/firebase/extractFirebaseError';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { isFirebaseStorageUrl } from '../../utils/profile/isFirebaseStorageUrl';
 import { STORAGE_PATHS } from './constants';
@@ -88,7 +93,56 @@ export async function deleteProfileImageByUrlSafe(
 
   try {
     await storage().refFromURL(imageUrl!.trim()).delete();
-  } catch {
-    // Best-effort cleanup when replacing or removing profile photos.
+  } catch (error) {
+    const { code } = extractFirebaseErrorDetails(error);
+    if (isFirebaseNotFoundError(code)) {
+      return;
+    }
+    logFirebaseOperationError(
+      'deleteProfileImageByUrlSafe',
+      'deleteByUrl',
+      error,
+    );
+  }
+}
+
+const PROFILE_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'] as const;
+
+async function deleteProfileImageRefSafe(
+  uid: string,
+  extension: string,
+): Promise<void> {
+  try {
+    await storage()
+      .ref(STORAGE_PATHS.userProfileImage(uid, extension))
+      .delete();
+  } catch (error) {
+    const { code } = extractFirebaseErrorDetails(error);
+    if (isFirebaseNotFoundError(code)) {
+      return;
+    }
+    logFirebaseOperationError(
+      'deleteAllUserProfileImages',
+      `deleteRef:${extension}`,
+      error,
+    );
+  }
+}
+
+/**
+ * Removes all known profile image objects for a user (best-effort, never throws).
+ */
+export async function deleteAllUserProfileImages(
+  uid: string,
+  profileImageUrl?: string | null,
+): Promise<void> {
+  try {
+    await deleteProfileImageByUrlSafe(profileImageUrl);
+
+    for (const extension of PROFILE_IMAGE_EXTENSIONS) {
+      await deleteProfileImageRefSafe(uid, extension);
+    }
+  } catch (error) {
+    logFirebaseOperationError('deleteAllUserProfileImages', 'cleanup', error);
   }
 }

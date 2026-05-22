@@ -10,6 +10,7 @@ export type RootStackParamList = {
   Home: undefined;
   Settings: undefined;
   ChangePassword: undefined;
+  PrivacySettings: undefined;
   Profile: undefined;
     // Add more screens here
 };
