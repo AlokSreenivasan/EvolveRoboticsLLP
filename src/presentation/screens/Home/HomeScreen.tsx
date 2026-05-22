@@ -15,22 +15,20 @@ import CourseCard from '../../../components/Home/CourseCard.tsx';
 import QuickStatsCard from '../../../components/Home/QuickStatsCard.tsx';
 import UpcomingEventsCard from '../../../components/Home/UpcomingEventsCard.tsx';
 import NotificationCard from '../../../components/Home/NotificationCard.tsx';
-import { useProfileDisplay } from '../../context/ProfileDisplayContext';
+import { useAuth } from '../../context/AuthContext';
 import { useStoredProfileFullName } from '../../hooks/useStoredProfileFullName';
-import { DEFAULT_PROFILE_AVATAR_URI } from '../../../services/profileStorage';
 
 function HomeScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const displayName = useStoredProfileFullName();
-  const { photoUri } = useProfileDisplay();
-  const profileImageUri = photoUri ?? DEFAULT_PROFILE_AVATAR_URI;
+  const { avatarUri } = useAuth();
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.headerContainer}>
         <Header
           title="Learning Platform"
-          avatarUrl={profileImageUri}
+          avatarUrl={avatarUri}
           onAvatarPress={() => navigation.navigate('Settings')}
         />
       </View>
@@ -38,7 +36,7 @@ function HomeScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.profileCard}>
           <Image
-            source={{ uri: profileImageUri }}
+            source={{ uri: avatarUri }}
             style={styles.avatarSmall}
           />
           <Text style={styles.userName}>{displayName}</Text>

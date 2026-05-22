@@ -10,30 +10,21 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import auth from '@react-native-firebase/auth';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
 import AppButton from '../../../components/AppButton.tsx';
 import { isValidEmail } from '../../../domain/Auth/validation/isValidEmail.ts';
-import { saveProfileFullName } from '../../../services/profileStorage';
+import {
+  CONTACT_NUMBER_MAX_LENGTH,
+  formatContactNumberInput,
+} from '../../../domain/Profile/validation/formatContactNumber';
+import { isValidContactNumber } from '../../../domain/Profile/validation/isValidContactNumber';
+import { signUpWithProfile } from '../../../services/firebase/signUpService';
+import { setCachedUserProfile } from '../../../services/profileCache';
 import { useAuthFlow } from '../../context/AuthFlowContext';
-
-function getSignUpErrorMessage(error: { code?: string; message?: string }) {
-  switch (error.code) {
-    case 'auth/email-already-in-use':
-      return 'An account with this email already exists.';
-    case 'auth/invalid-email':
-      return 'Please enter a valid email address.';
-    case 'auth/weak-password':
-      return 'Password must be at least 6 characters.';
-    case 'auth/operation-not-allowed':
-      return 'Email/password sign-up is not enabled in Firebase.';
-    default:
-      return error.message ?? 'Sign up failed. Please try again.';
-  }
-}
 
 type Errors = {
   fullName?: string;
+  contactNumber?: string;
   email?: string;
   password?: string;
   confirmPassword?: string;
@@ -44,6 +35,7 @@ const SignUpScreen = () => {
   const { notifyAuthSuccess } = useAuthFlow();
 
   const [fullName, setFullName] = useState('');
+  const [contactNumber, setContactNumber] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -62,10 +54,23 @@ const SignUpScreen = () => {
 
     setFullName(formatted);
   };
+
+  const handleContactNumberChange = (text: string) => {
+    setContactNumber(formatContactNumberInput(text));
+    if (errors.contactNumber) {
+      setErrors(prev => ({ ...prev, contactNumber: undefined }));
+    }
+  };
+
   const validate = () => {
-    const newErrors: any = {};
+    const newErrors: Errors = {};
 
     if (!fullName.trim()) newErrors.fullName = 'Full name is required';
+    if (!contactNumber.trim()) {
+      newErrors.contactNumber = 'Contact number is required';
+    } else if (!isValidContactNumber(contactNumber)) {
+      newErrors.contactNumber = 'Contact number must be exactly 10 digits';
+    }
     if (!email || !isValidEmail(email))
       newErrors.email = 'Valid email is required';
     if (!password || password.length < 8)
@@ -84,24 +89,21 @@ const SignUpScreen = () => {
 
     setLoading(true);
     try {
-      const credential = await auth().createUserWithEmailAndPassword(
-        email.trim(),
+      const profile = await signUpWithProfile({
+        fullName,
+        email,
         password,
-      );
-
-      const trimmedName = fullName.trim();
-
-      await credential.user.updateProfile({
-        displayName: trimmedName,
+        phoneNumber: contactNumber,
       });
 
-      await saveProfileFullName(trimmedName);
-
+      await setCachedUserProfile(profile);
       notifyAuthSuccess();
     } catch (error) {
       Alert.alert(
         'Sign Up Error',
-        getSignUpErrorMessage(error as { code?: string; message?: string }),
+        error instanceof Error
+          ? error.message
+          : 'Sign up failed. Please try again.',
       );
     } finally {
       setLoading(false);
@@ -123,6 +125,24 @@ const SignUpScreen = () => {
           onChangeText={handleFullNameChange}
         />
         {errors.fullName && <Text style={styles.error}>{errors.fullName}</Text>}
+
+        <Text style={styles.label}>Contact Number</Text>
+        <TextInput
+          style={[
+            styles.input,
+            errors.contactNumber ? styles.inputError : null,
+          ]}
+          placeholder="Enter 10-digit contact number"
+          placeholderTextColor="#999"
+          value={contactNumber}
+          onChangeText={handleContactNumberChange}
+          keyboardType="number-pad"
+          maxLength={CONTACT_NUMBER_MAX_LENGTH}
+          inputMode="numeric"
+        />
+        {errors.contactNumber && (
+          <Text style={styles.error}>{errors.contactNumber}</Text>
+        )}
 
         <Text style={styles.label}>Email</Text>
         <TextInput
@@ -209,6 +229,9 @@ const styles = StyleSheet.create({
     color: '#a42a8b',
   },
   error: { fontSize: 12, color: 'red', marginBottom: 5 },
+  inputError: {
+    borderColor: '#e57373',
+  },
   checkboxContainer: {
     flexDirection: 'row',
     alignItems: 'center',

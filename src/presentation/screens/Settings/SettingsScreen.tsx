@@ -10,28 +10,27 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import auth from '@react-native-firebase/auth';
+import { signOut } from '../../../services/firebase/authService';
 import { useNavigation } from '@react-navigation/native';
 import Header from '../../../components/Header.tsx';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
 import AppButton from '../../../components/AppButton.tsx';
 import { useAuth } from '../../context/AuthContext';
-import { useProfileDisplay } from '../../context/ProfileDisplayContext';
 import { useStoredProfileFullName } from '../../hooks/useStoredProfileFullName';
+import { hasRemoteProfileImage } from '../../../utils/profile/mapUserProfile';
 
 function SettingsScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
-  const { user } = useAuth();
+  const { user, profile, profileImage } = useAuth();
   const displayName = useStoredProfileFullName();
-  const { photoUri } = useProfileDisplay();
-  const userEmail = user?.email ?? '';
-  const hasProfilePhoto = Boolean(photoUri);
+  const userEmail = profile?.email ?? user?.email ?? '';
+  const hasProfilePhoto = hasRemoteProfileImage(profile);
   const [loggingOut, setLoggingOut] = useState(false);
 
   const performLogout = async () => {
     setLoggingOut(true);
     try {
-      await auth().signOut();
+      await signOut();
     } catch {
       Alert.alert('Logout Failed', 'Could not sign out. Please try again.');
     } finally {
@@ -89,8 +88,8 @@ function SettingsScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.profileCard}>
           <View style={styles.avatarFrame}>
-            {hasProfilePhoto ? (
-              <Image source={{ uri: photoUri! }} style={styles.avatarSmall} />
+            {hasProfilePhoto && profileImage ? (
+              <Image source={{ uri: profileImage }} style={styles.avatarSmall} />
             ) : (
               <View style={styles.avatarPlaceholder} />
             )}

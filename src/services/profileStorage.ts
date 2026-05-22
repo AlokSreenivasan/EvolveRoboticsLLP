@@ -1,11 +1,17 @@
+/**
+ * @deprecated Legacy AsyncStorage profile keys.
+ * Production flows use Firestore + profileCache.ts (session cache only).
+ */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const PROFILE_FULL_NAME_KEY = '@evolve/profile_full_name';
 const PROFILE_PHOTO_URI_KEY = '@evolve/profile_photo_uri';
 const PROFILE_CONTACT_NUMBER_KEY = '@evolve/profile_contact_number';
 
-export const DEFAULT_PROFILE_AVATAR_URI =
-  'https://randomuser.me/api/portraits/women/44.jpg';
+export {
+  DEFAULT_DISPLAY_NAME,
+  DEFAULT_PROFILE_AVATAR_URI,
+} from '../constants/profileDefaults';
 
 export async function getProfileFullName(): Promise<string | null> {
   const value = await AsyncStorage.getItem(PROFILE_FULL_NAME_KEY);

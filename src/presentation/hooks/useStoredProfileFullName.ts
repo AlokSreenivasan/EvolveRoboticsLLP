@@ -1,17 +1,7 @@
-import { useCallback } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
+import { useAuth } from '../context/AuthContext';
 
-import { useProfileDisplay } from '../context/ProfileDisplayContext';
-
-/** Shared display name; refreshes from storage when the screen gains focus. */
+/** Display name from centralized session state (no extra Firestore fetch). */
 export function useStoredProfileFullName(): string {
-  const { displayName, refreshProfile } = useProfileDisplay();
-
-  useFocusEffect(
-    useCallback(() => {
-      refreshProfile();
-    }, [refreshProfile]),
-  );
-
+  const { displayName } = useAuth();
   return displayName;
 }

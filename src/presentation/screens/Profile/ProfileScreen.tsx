@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -27,12 +28,14 @@ import type { LoginScreenNavigationProp } from '../../../types/navigation';
 
 function ProfileScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
-  const { user } = useAuth();
-  const userEmail = user?.email ?? '';
+  const { user, profile: userProfile } = useAuth();
+  const userEmail = userProfile?.email ?? user?.email ?? '';
   const {
     profile,
     errors,
     isLoading,
+    isSaving,
+    saveError,
     setFullName,
     setContactNumber,
     setPhotoUri,
@@ -40,20 +43,33 @@ function ProfileScreen() {
     persistProfile,
   } = useProfileForm();
 
+  const isFormDisabled = isLoading || isSaving;
+
   const handleSave = async () => {
     if (!validate()) {
       return;
     }
 
-    await persistProfile();
+    const success = await persistProfile();
+
+    if (success) {
+      Alert.alert(
+        'Profile Updated',
+        'Your changes have been saved and synced across the app.',
+      );
+      return;
+    }
 
     Alert.alert(
-      'Profile Updated',
-      'Your changes have been saved locally. Syncing across the app will be added in a later update.',
+      'Save Failed',
+      saveError ?? 'Could not save your profile. Please try again.',
     );
   };
 
   const handleChangePhoto = async () => {
+    if (isFormDisabled) {
+      return;
+    }
     const result = await pickProfilePhotoFromGallery();
 
     if (result.success) {
@@ -91,7 +107,7 @@ function ProfileScreen() {
           <View style={styles.photoCard}>
             <ProfilePhotoSection
               photoUri={profile.photoUri}
-              onChangePhotoPress={handleChangePhoto}
+              onChangePhotoPress={isFormDisabled ? undefined : handleChangePhoto}
             />
           </View>
 
@@ -106,7 +122,7 @@ function ProfileScreen() {
               value={profile.fullName}
               onChangeText={setFullName}
               autoCapitalize="words"
-              editable={!isLoading}
+              editable={!isFormDisabled}
             />
             {errors.fullName ? (
               <Text style={styles.errorText}>{errors.fullName}</Text>
@@ -135,17 +151,26 @@ function ProfileScreen() {
               keyboardType="number-pad"
               maxLength={CONTACT_NUMBER_MAX_LENGTH}
               inputMode="numeric"
+              editable={!isFormDisabled}
             />
             {errors.contactNumber ? (
               <Text style={styles.errorText}>{errors.contactNumber}</Text>
             ) : null}
 
+            {saveError && !isSaving ? (
+              <Text style={styles.errorText}>{saveError}</Text>
+            ) : null}
+
             <AppButton
-              title="Save Changes"
+              title={isSaving ? 'Saving...' : 'Save Changes'}
               onPress={handleSave}
               buttonStyle={styles.saveButton}
               textStyle={styles.saveButtonText}
+              disabled={isFormDisabled}
             />
+            {isSaving ? (
+              <ActivityIndicator color="#a42a8b" style={styles.saveLoader} />
+            ) : null}
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -295,6 +320,10 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  saveLoader: {
+    marginTop: 12,
+    alignSelf: 'center',
   },
 });
 

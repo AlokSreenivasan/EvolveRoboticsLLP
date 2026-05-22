@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { emptyProfile, Profile } from '../../domain/Profile/models/Profile';
 import { formatContactNumberInput } from '../../domain/Profile/validation/formatContactNumber';
@@ -8,105 +8,85 @@ import {
   ProfileFormErrors,
   validateProfileForm,
 } from '../../domain/Profile/validation/validateProfileForm';
-import {
-  getProfileContactNumber,
-  getProfileFullName,
-  getProfilePhotoUri,
-  saveProfileContactNumber,
-} from '../../services/profileStorage';
-import { useProfileDisplay } from '../context/ProfileDisplayContext';
+import { useAuth } from '../context/AuthContext';
+import { userProfileToFormProfile } from '../../utils/profile/mapUserProfile';
 
 export function useProfileForm() {
-  const { setDisplayName, setProfilePhotoUri } = useProfileDisplay();
-  const [profile, setProfile] = useState<Profile>(emptyProfile);
+  const {
+    profile: sessionProfile,
+    profileLoading,
+    profileSaving,
+    profileError,
+    updateSessionProfile,
+  } = useAuth();
+
+  const [profileForm, setProfileForm] = useState<Profile>(emptyProfile);
   const [errors, setErrors] = useState<ProfileFormErrors>({});
-  const [isLoading, setIsLoading] = useState(true);
+  const isDirtyRef = useRef(false);
 
   useEffect(() => {
-    let cancelled = false;
+    if (sessionProfile && !isDirtyRef.current) {
+      setProfileForm(userProfileToFormProfile(sessionProfile));
+    }
+  }, [sessionProfile]);
 
-    const loadStoredProfile = async () => {
-      try {
-        const [storedFullName, storedPhotoUri, storedContactNumber] =
-          await Promise.all([
-            getProfileFullName(),
-            getProfilePhotoUri(),
-            getProfileContactNumber(),
-          ]);
-        if (!cancelled) {
-          setProfile(prev => ({
-            ...prev,
-            ...(storedFullName ? { fullName: storedFullName } : {}),
-            ...(storedPhotoUri ? { photoUri: storedPhotoUri } : {}),
-            ...(storedContactNumber
-              ? {
-                  contactNumber: formatContactNumberInput(storedContactNumber),
-                }
-              : {}),
-          }));
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    loadStoredProfile();
-
-    return () => {
-      cancelled = true;
-    };
+  const markDirty = useCallback(() => {
+    isDirtyRef.current = true;
   }, []);
 
   const setFullName = useCallback((value: string) => {
-    setProfile(prev => ({ ...prev, fullName: formatFullName(value) }));
+    markDirty();
+    setProfileForm(prev => ({ ...prev, fullName: formatFullName(value) }));
     setErrors(prev => ({ ...prev, fullName: undefined }));
-  }, []);
+  }, [markDirty]);
 
   const setContactNumber = useCallback((value: string) => {
-    setProfile(prev => ({
+    markDirty();
+    setProfileForm(prev => ({
       ...prev,
       contactNumber: formatContactNumberInput(value),
     }));
     setErrors(prev => ({ ...prev, contactNumber: undefined }));
-  }, []);
+  }, [markDirty]);
 
   const setPhotoUri = useCallback((uri: string | null) => {
-    setProfile(prev => ({ ...prev, photoUri: uri }));
-  }, []);
+    markDirty();
+    setProfileForm(prev => ({ ...prev, photoUri: uri }));
+  }, [markDirty]);
 
   const validate = useCallback((): boolean => {
     const nextErrors = validateProfileForm({
-      fullName: profile.fullName,
-      contactNumber: profile.contactNumber,
+      fullName: profileForm.fullName,
+      contactNumber: profileForm.contactNumber,
     });
     setErrors(nextErrors);
     return !hasProfileFormErrors(nextErrors);
-  }, [profile.contactNumber, profile.fullName]);
+  }, [profileForm.contactNumber, profileForm.fullName]);
 
-  const persistProfile = useCallback(async (): Promise<void> => {
-    await Promise.all([
-      setDisplayName(profile.fullName),
-      setProfilePhotoUri(profile.photoUri),
-      saveProfileContactNumber(profile.contactNumber),
-    ]);
-  }, [
-    profile.contactNumber,
-    profile.fullName,
-    profile.photoUri,
-    setDisplayName,
-    setProfilePhotoUri,
-  ]);
+  const persistProfile = useCallback(async (): Promise<boolean> => {
+    const success = await updateSessionProfile({
+      fullName: profileForm.fullName,
+      phoneNumber: profileForm.contactNumber,
+      photoUri: profileForm.photoUri,
+    });
+
+    if (success) {
+      isDirtyRef.current = false;
+    }
+
+    return success;
+  }, [profileForm, updateSessionProfile]);
 
   return {
-    profile,
+    profile: profileForm,
     errors,
-    isLoading,
+    isLoading: profileLoading,
+    isSaving: profileSaving,
+    saveError: profileError,
     setFullName,
     setContactNumber,
     setPhotoUri,
     validate,
     persistProfile,
   };
-};
+}

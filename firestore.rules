@@ -1,0 +1,77 @@
+rules_version = '2';
+
+// Deploy after changes: firebase deploy --only firestore:rules
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+
+      allow create: if isOwner(userId)
+        && hasRequiredProfileFields()
+        && isValidProfileData()
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      allow update: if isOwner(userId)
+        && onlyProfileFieldsChanged()
+        && isValidProfileDataAfterUpdate();
+
+      allow delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
+function isOwner(userId) {
+  return request.auth != null && request.auth.uid == userId;
+}
+
+function hasRequiredProfileFields() {
+  return request.resource.data.keys().hasAll([
+    'fullName',
+    'email',
+    'phoneNumber',
+    'profileImage',
+    'createdAt',
+    'updatedAt',
+  ]);
+}
+
+function isValidProfileData() {
+  let data = request.resource.data;
+  return data.fullName is string
+    && data.fullName.size() > 0
+    && data.fullName.size() <= 120
+    && data.email is string
+    && data.email.size() > 0
+    && data.email.size() <= 320
+    && data.phoneNumber is string
+    && data.phoneNumber.size() >= 10
+    && data.phoneNumber.size() <= 15
+    && isOptionalProfileImage(data.profileImage);
+}
+
+// Updates use .update() with partial fields — validate merged document, not serverTimestamp equality.
+function onlyProfileFieldsChanged() {
+  return request.resource.data.diff(resource.data).affectedKeys()
+    .hasOnly(['fullName', 'phoneNumber', 'profileImage', 'updatedAt']);
+}
+
+function isValidProfileDataAfterUpdate() {
+  let data = request.resource.data;
+  return data.fullName is string
+    && data.fullName.size() > 0
+    && data.fullName.size() <= 120
+    && data.phoneNumber is string
+    && data.phoneNumber.size() >= 10
+    && data.phoneNumber.size() <= 15
+    && isOptionalProfileImage(data.profileImage);
+}
+
+function isOptionalProfileImage(value) {
+  return value == null
+    || (value is string && value.size() <= 8192);
+}

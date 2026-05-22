@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { NavigationContainer } from '@react-navigation/native';
@@ -43,6 +43,15 @@ function AppNavigation() {
   const [awaitingAuthFromIntro, setAwaitingAuthFromIntro] = useState(false);
 
   const { user, initializing } = useAuth();
+  const hadUserRef = useRef(false);
+
+  useEffect(() => {
+    if (hadUserRef.current && !user) {
+      setAuthInitialRoute('Login');
+      setAwaitingAuthFromIntro(false);
+    }
+    hadUserRef.current = Boolean(user);
+  }, [user]);
 
   useEffect(() => {
     let cancelled = false;
