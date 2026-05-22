@@ -4,6 +4,7 @@ export {
   getCurrentUserEmail,
   getCurrentUserId,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   signOut as signOutUser,
 } from './authService';
 export { FIRESTORE_COLLECTIONS, STORAGE_PATHS } from './constants';
@@ -18,6 +19,8 @@ export {
   uploadCurrentUserProfileImage,
   uploadProfileImage,
 } from './storageService';
+export { changePassword } from './changePasswordService';
+export type { ChangePasswordInput } from './changePasswordService';
 export { signUpWithProfile } from './signUpService';
 export type { SignUpWithProfileInput } from './signUpService';
 export {

@@ -1,9 +1,39 @@
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 
+import { getErrorMessage } from '../../utils/firebase/errors';
+
 /**
- * Thin auth helpers for profile services.
- * Login/sign-up screens continue to use Firebase Auth directly.
+ * Auth helpers and Firebase Authentication flows (session, password reset).
+ * Login still uses sign-in directly on the login screen.
  */
+
+function mapPasswordResetAuthError(error: {
+  code?: string;
+  message?: string;
+}): string {
+  switch (error.code) {
+    case 'auth/invalid-email':
+      return 'Please enter a valid email address.';
+    case 'auth/missing-email':
+      return 'Please enter your email address.';
+    case 'auth/user-not-found':
+      return 'No account found with this email address.';
+    case 'auth/network-request-failed':
+      return 'Network error. Check your connection and try again.';
+    case 'auth/too-many-requests':
+      return 'Too many attempts. Please wait a moment and try again.';
+    default:
+      return error.message ?? 'Could not send reset email. Please try again.';
+  }
+}
+
+function toPasswordResetError(error: unknown): Error {
+  const firebaseAuthError = error as { code?: string; message?: string };
+  if (firebaseAuthError?.code?.startsWith('auth/')) {
+    return new Error(mapPasswordResetAuthError(firebaseAuthError));
+  }
+  return new Error(getErrorMessage(error));
+}
 export function getAuthInstance() {
   return auth();
 }
@@ -28,4 +58,22 @@ export function onAuthStateChanged(
 
 export async function signOut(): Promise<void> {
   await auth().signOut();
+}
+
+/**
+ * Sends a Firebase password reset email to the given address.
+ * Does not sign the user in or out; safe for the forgot-password flow.
+ */
+export async function sendPasswordResetEmail(email: string): Promise<void> {
+  const trimmedEmail = email.trim();
+
+  if (!trimmedEmail) {
+    throw new Error('Please enter your email address.');
+  }
+
+  try {
+    await auth().sendPasswordResetEmail(trimmedEmail);
+  } catch (error) {
+    throw toPasswordResetError(error);
+  }
 }

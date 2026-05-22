@@ -105,7 +105,9 @@ function SettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account Settings</Text>
 
-          <TouchableOpacity style={styles.listItem}>
+          <TouchableOpacity
+            style={styles.listItem}
+            onPress={() => navigation.navigate('ChangePassword')}>
             <Text style={styles.listText}>Change Password</Text>
             <Text style={styles.arrow}>›</Text>
           </TouchableOpacity>

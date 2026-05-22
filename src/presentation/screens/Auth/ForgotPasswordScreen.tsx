@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   ScrollView,
   StyleSheet,
@@ -13,25 +14,56 @@ import { RootStackParamList } from '../../../types/navigation';
 import { useNavigation } from '@react-navigation/native';
 import AppButton from '../../../components/AppButton.tsx';
 import { isValidEmail } from '../../../domain/Auth/validation/isValidEmail.ts';
-type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
+import { sendPasswordResetEmail } from '../../../services/firebase/authService';
+
+type NavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  'ForgotPassword'
+>;
 
 function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigation = useNavigation<NavigationProp>();
 
+  const handleEmailChange = (text: string) => {
+    setEmail(text);
+    if (emailError && isValidEmail(text)) {
+      setEmailError('');
+    }
+  };
 
-  const handleResetPassword = () => {
+  const handleResetPassword = async () => {
     if (!email.trim()) {
-      Alert.alert('Error', 'Please enter your email address.');
+      setEmailError('Please enter your email address');
       return;
     }
 
-    if (!isValidEmail(email)) {   // ✅ Reused function
-      Alert.alert('Error', 'Please enter a valid email address.');
+    if (!isValidEmail(email)) {
+      setEmailError('Please enter a valid email address');
       return;
     }
-    // Call API for sending reset link here
-    Alert.alert('Success', 'Password reset link sent to your email.');
+
+    setEmailError('');
+    setLoading(true);
+
+    try {
+      await sendPasswordResetEmail(email);
+      Alert.alert(
+        'Reset Email Sent',
+        'If an account exists for this email, you will receive a password reset link shortly. Check your inbox and spam folder.',
+      );
+    } catch (error) {
+      Alert.alert(
+        'Reset Failed',
+        error instanceof Error
+          ? error.message
+          : 'Could not send reset email. Please try again.',
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
 
@@ -59,19 +91,27 @@ function ForgotPasswordScreen() {
           <Text style={styles.label}>Email Address</Text>
           <TextInput
             placeholderTextColor="light black"
-            style={styles.input}
+            style={[styles.input, emailError ? styles.inputError : null]}
             placeholder="your.email@example.com"
             keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
             value={email}
-            onChangeText={setEmail}
+            onChangeText={handleEmailChange}
+            editable={!loading}
           />
+          {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
 
           <AppButton
-            title="Send Reset Link"
+            title={loading ? 'Sending...' : 'Send Reset Link'}
             onPress={handleResetPassword}
             buttonStyle={styles.button}
             textStyle={styles.buttonText}
+            disabled={loading}
           />
+          {loading ? (
+            <ActivityIndicator color="#a42a8b" style={styles.loader} />
+          ) : null}
         </View>
       </ScrollView>
   );
@@ -104,7 +144,19 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     borderRadius: 6,
     padding: 10,
-    marginBottom: 20,
+    marginBottom: 4,
+  },
+  inputError: {
+    borderColor: '#e57373',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 13,
+    marginBottom: 16,
+  },
+  loader: {
+    marginTop: 12,
+    alignSelf: 'center',
   },
   button: {
     backgroundColor: '#a42a8b',
