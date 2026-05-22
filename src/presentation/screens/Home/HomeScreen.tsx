@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Image,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -10,6 +9,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
 import Header from '../../../components/Header.tsx';
+import ProfileAvatar from '../../../components/Profile/ProfileAvatar.tsx';
 import AppButton from '../../../components/AppButton.tsx';
 import CourseCard from '../../../components/Home/CourseCard.tsx';
 import QuickStatsCard from '../../../components/Home/QuickStatsCard.tsx';
@@ -21,7 +21,7 @@ import { useStoredProfileFullName } from '../../hooks/useStoredProfileFullName';
 function HomeScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const displayName = useStoredProfileFullName();
-  const { avatarUri } = useAuth();
+  const { profileImage } = useAuth();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -35,8 +35,9 @@ function HomeScreen() {
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.profileCard}>
-          <Image
-            source={{ uri: avatarUri }}
+          <ProfileAvatar
+            imageUri={profileImage}
+            size={76}
             style={styles.avatarSmall}
           />
           <Text style={styles.userName}>{displayName}</Text>
@@ -120,9 +121,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#FAF2FF',
   },
   avatarSmall: {
-    width: 76,
-    height: 76,
-    borderRadius: 36,
     left: 12,
   },
   userName: {

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Image,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -13,18 +12,17 @@ import {
 import { signOut } from '../../../services/firebase/authService';
 import { useNavigation } from '@react-navigation/native';
 import Header from '../../../components/Header.tsx';
+import ProfileAvatar from '../../../components/Profile/ProfileAvatar.tsx';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
 import AppButton from '../../../components/AppButton.tsx';
 import { useAuth } from '../../context/AuthContext';
 import { useStoredProfileFullName } from '../../hooks/useStoredProfileFullName';
-import { hasRemoteProfileImage } from '../../../utils/profile/mapUserProfile';
 
 function SettingsScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const { user, profile, profileImage } = useAuth();
   const displayName = useStoredProfileFullName();
   const userEmail = profile?.email ?? user?.email ?? '';
-  const hasProfilePhoto = hasRemoteProfileImage(profile);
   const [loggingOut, setLoggingOut] = useState(false);
 
   const performLogout = async () => {
@@ -87,13 +85,11 @@ function SettingsScreen() {
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.profileCard}>
-          <View style={styles.avatarFrame}>
-            {hasProfilePhoto && profileImage ? (
-              <Image source={{ uri: profileImage }} style={styles.avatarSmall} />
-            ) : (
-              <View style={styles.avatarPlaceholder} />
-            )}
-          </View>
+          <ProfileAvatar
+            imageUri={profileImage}
+            size={76}
+            style={styles.avatarSmall}
+          />
           <Text style={styles.userName}>{displayName}</Text>
           <Text style={styles.userEmail} numberOfLines={1}>
             {userEmail}
@@ -208,25 +204,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     // borderColor: 'black',
   },
-  avatarFrame: {
-    width: 76,
-    height: 76,
-    borderRadius: 36,
-    left: 12,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#eecdf4',
-  },
   avatarSmall: {
-    width: 76,
-    height: 76,
-    borderRadius: 36,
-  },
-  avatarPlaceholder: {
-    width: 76,
-    height: 76,
-    borderRadius: 36,
-    backgroundColor: '#FAF2FF',
+    left: 12,
   },
   userName: {
     fontSize: 30,
