@@ -7,95 +7,134 @@ import {
   View,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { Calendar } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import ContinueLearningCard from '../../../components/Home/ContinueLearningCard';
+import HeroBannerCarousel from '../../../components/Home/HeroBannerCarousel';
+import HomeBottomTabBar, {
+  type HomeTabKey,
+} from '../../../components/Home/HomeBottomTabBar';
+import HomeHeader from '../../../components/Home/HomeHeader';
+import HomeSectionHeader from '../../../components/Home/HomeSectionHeader';
+import ImportantUpdatesCard from '../../../components/Home/ImportantUpdatesCard';
+import QuickAccessGrid from '../../../components/Home/QuickAccessGrid';
+import ScheduleCard from '../../../components/Home/ScheduleCard';
+import UpcomingEventBanner from '../../../components/Home/UpcomingEventBanner';
+import {
+  CONTINUE_LEARNING_COURSES,
+  TODAYS_SCHEDULE,
+} from '../../../constants/homeScreenData';
+import { colors, spacing } from '../../../constants/theme';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
-import Header from '../../../components/Header.tsx';
-import ProfileAvatar from '../../../components/Profile/ProfileAvatar.tsx';
-import AppButton from '../../../components/AppButton.tsx';
-import CourseCard from '../../../components/Home/CourseCard.tsx';
-import QuickStatsCard from '../../../components/Home/QuickStatsCard.tsx';
-import UpcomingEventsCard from '../../../components/Home/UpcomingEventsCard.tsx';
-import NotificationCard from '../../../components/Home/NotificationCard.tsx';
 import { useAuth } from '../../context/AuthContext';
 import { useStoredProfileFullName } from '../../hooks/useStoredProfileFullName';
 
+const TAB_BAR_HEIGHT = 64;
+const NOTIFICATION_COUNT = 3;
+
 function HomeScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const insets = useSafeAreaInsets();
   const displayName = useStoredProfileFullName();
   const { profileImage } = useAuth();
 
+  const handleTabPress = (tab: HomeTabKey) => {
+    switch (tab) {
+      case 'profile':
+        navigation.navigate('Profile');
+        break;
+      case 'notifications':
+        navigation.navigate('NotificationPreferences');
+        break;
+      case 'home':
+      default:
+        break;
+    }
+  };
+
+  const scrollBottomPadding = TAB_BAR_HEIGHT + Math.max(insets.bottom, 8) + 16;
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.headerContainer}>
-        <Header
-          title="Learning Platform"
-          rightAction="settings"
-          onAvatarPress={() => navigation.navigate('Settings')}
-        />
-      </View>
+      <HomeHeader
+        displayName={displayName}
+        profileImage={profileImage}
+        notificationCount={NOTIFICATION_COUNT}
+        onMenuPress={() => navigation.navigate('Settings')}
+        onNotificationsPress={() =>
+          navigation.navigate('NotificationPreferences')
+        }
+        onProfilePress={() => navigation.navigate('Profile')}
+      />
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.profileCard}>
-          <ProfileAvatar
-            imageUri={profileImage}
-            size={76}
-            style={styles.avatarSmall}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: scrollBottomPadding },
+        ]}>
+        <HeroBannerCarousel />
+
+        <View style={styles.section}>
+          <HomeSectionHeader title="Continue Learning" actionLabel="View All" />
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalList}>
+            {CONTINUE_LEARNING_COURSES.map(course => (
+              <ContinueLearningCard key={course.id} course={course} />
+            ))}
+          </ScrollView>
+        </View>
+
+        <View style={styles.section}>
+          <HomeSectionHeader
+            title="Important Updates"
+            actionLabel="View All"
           />
-          <Text style={styles.userName}>{displayName}</Text>
-          <Text style={styles.userEmail}>Welcome back to your learning</Text>
-          <Text style={styles.userEmail1}>journey!</Text>
+          <ImportantUpdatesCard />
+        </View>
 
-          <AppButton
-            title="Continue Learning"
-            // onPress={() => navigation.navigate('SignUp')}
-            buttonStyle={styles.signUpButton}
-            textStyle={styles.signUpText}
+        <View style={styles.section}>
+          <View style={styles.scheduleHeader}>
+            <Text style={styles.scheduleTitle}>Today's Schedule</Text>
+            <View style={styles.scheduleDateRow}>
+              <Calendar size={14} color={colors.primary} strokeWidth={2} />
+              <Text style={styles.scheduleDate}>20 May 2025, Mon</Text>
+            </View>
+          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalList}>
+            {TODAYS_SCHEDULE.map(item => (
+              <ScheduleCard key={item.id} item={item} />
+            ))}
+          </ScrollView>
+        </View>
+
+        <View style={styles.section}>
+          <HomeSectionHeader title="Quick Access" />
+          <QuickAccessGrid />
+        </View>
+
+        <View style={styles.section}>
+          <HomeSectionHeader
+            title="Upcoming Events"
+            actionLabel="View Calendar"
           />
-        </View>
-
-        {/*Quick Stats*/}
-        <QuickStatsCard />
-
-        {/*Courses section*/}
-        <View style={styles.coursesSection}>
-          <Text style={styles.heading}>Your Courses</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.coursesCardView}
-          >
-            <CourseCard />
-            <CourseCard />
-            <CourseCard />
-          </ScrollView>
-        </View>
-
-        {/*Upcoming Events section*/}
-        <View style={styles.UpcomingEventsSection}>
-          <Text style={styles.heading}>Upcoming Events</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.coursesCardView}
-          >
-            <UpcomingEventsCard />
-            <UpcomingEventsCard />
-            <UpcomingEventsCard />
-          </ScrollView>
-        </View>
-
-        {/*Recent Notifications*/}
-        <View style={styles.notificationSection}>
-          <Text style={styles.heading}>Upcoming Notifications</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.notificationsView}
-          >
-            <NotificationCard/>
-            {/*<Text style={styles.heading}>Your Notifications</Text>*/}
-          </ScrollView>
+          <UpcomingEventBanner />
         </View>
       </ScrollView>
+
+      <View style={styles.tabBarWrap}>
+        <HomeBottomTabBar
+          activeTab="home"
+          notificationCount={NOTIFICATION_COUNT}
+          onTabPress={handleTabPress}
+        />
+      </View>
     </SafeAreaView>
   );
 }
@@ -103,105 +142,46 @@ function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
   },
-  headerContainer: {
-    backgroundColor: 'white',
-    height: 80,
-    justifyContent: 'center', // centers title vertically
-  },
-
   scrollContent: {
-    padding: 16,
+    paddingHorizontal: spacing.screenHorizontal,
+    paddingTop: 4,
   },
-  profileCard: {
-    height: 170,
-    padding: 16,
-    borderRadius: 15,
-    backgroundColor: '#FAF2FF',
+  section: {
+    marginBottom: spacing.sectionGap,
   },
-  avatarSmall: {
-    left: 12,
+  horizontalList: {
+    paddingRight: 4,
   },
-  userName: {
-    fontSize: 30,
-    fontWeight: 'bold',
-    position: 'absolute',
-    top: 20,
-    left: 120,
-  },
-  userEmail: {
-    fontSize: 15,
-    fontWeight: '400',
-    position: 'absolute',
-    top: 60,
-    left: 120,
-    flexWrap: 'wrap',
-  },
-  userEmail1: {
-    fontSize: 15,
-    fontWeight: '400',
-    position: 'absolute',
-    top: 78,
-    left: 120,
-    flexWrap: 'wrap',
-  },
-  signUpButton: {
-    paddingVertical: 10,
-    borderRadius: 10,
-    width: '100%',
-    height: 40,
-    top: 15,
-    backgroundColor: '#a42a8b',
-  },
-  signUpText: {
-    color: 'white',
-    textAlign: 'center',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  heading: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-
-  coursesSection: {
-    backgroundColor: 'white',
-    height: 300,
-    // top: 20
-  },
-  coursesCardView: {
+  scheduleHeader: {
     flexDirection: 'row',
-    // backgroundColor: 'yellow',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+    paddingHorizontal: 4,
   },
-  UpcomingEventsSection: {
-    // top: 20,
-    height: 300,
-    // borderWidth: 2,
-    // backgroundColor: 'yellow',
+  scheduleTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.textPrimary,
   },
-  upcomingEventsView: {
+  scheduleDateRow: {
     flexDirection: 'row',
-    height: 250,
-    width: 300,
-    borderWidth: 1,
+    alignItems: 'center',
+    gap: 4,
   },
-  headingEvents: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    // top: 20,
+  scheduleDate: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontWeight: '500',
   },
-  notificationSection: {
-    height: 650,
-    // backgroundColor: 'yellow',
+  tabBarWrap: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
-  notificationsView: {
-    flexDirection: 'column',
-    height: 250,
-    width: '100%',
-    // borderWidth: 1,
-    // borderColor: '#FAF2FF',
-  }
 });
 
 export default HomeScreen;

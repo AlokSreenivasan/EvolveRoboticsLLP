@@ -1,6 +1,8 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
+import { colors } from '../../constants/theme';
+
 type SettingsSectionHeaderProps = {
   title: string;
   actionLabel?: string;
@@ -35,12 +37,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1a1a2e',
+    color: colors.textPrimary,
   },
   action: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#4A90E2',
+    color: colors.link,
   },
 });
 
