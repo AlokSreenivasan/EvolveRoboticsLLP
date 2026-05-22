@@ -118,7 +118,9 @@ function SettingsScreen() {
             <Text style={styles.arrow}>›</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.listItem}>
+          <TouchableOpacity
+            style={styles.listItem}
+            onPress={() => navigation.navigate('NotificationPreferences')}>
             <Text style={styles.listText}>Notification Preferences</Text>
             <Text style={styles.arrow}>›</Text>
           </TouchableOpacity>

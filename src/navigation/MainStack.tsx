@@ -7,6 +7,7 @@ import ProfileScreen from '../presentation/screens/Profile/ProfileScreen';
 import SettingsScreen from '../presentation/screens/Settings/SettingsScreen';
 import ChangePasswordScreen from '../presentation/screens/Settings/ChangePasswordScreen';
 import PrivacySettingsScreen from '../presentation/screens/Settings/PrivacySettingsScreen';
+import NotificationPreferencesScreen from '../presentation/screens/Settings/NotificationPreferencesScreen';
 
 import type { RootStackParamList } from '../types/navigation';
 
@@ -19,6 +20,10 @@ function MainStack() {
       <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
       <Stack.Screen name="PrivacySettings" component={PrivacySettingsScreen} />
+      <Stack.Screen
+        name="NotificationPreferences"
+        component={NotificationPreferencesScreen}
+      />
       <Stack.Screen name="Profile" component={ProfileScreen} />
       <Stack.Screen name="About" component={AboutScreen} />
     </Stack.Navigator>
