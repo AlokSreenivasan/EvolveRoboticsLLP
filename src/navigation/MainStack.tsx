@@ -8,12 +8,18 @@ import SettingsScreen from '../presentation/screens/Settings/SettingsScreen';
 import ChangePasswordScreen from '../presentation/screens/Settings/ChangePasswordScreen';
 import PrivacySettingsScreen from '../presentation/screens/Settings/PrivacySettingsScreen';
 import NotificationPreferencesScreen from '../presentation/screens/Settings/NotificationPreferencesScreen';
+import { useUserRole } from '../presentation/hooks/useUserRole';
 
+import AdminStackNavigator from './AdminStack';
+import UnauthorizedRoute from './UnauthorizedRoute';
 import type { RootStackParamList } from '../types/navigation';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function MainStack() {
+  const { isAdmin, roleLoading } = useUserRole();
+  const showAdminStack = !roleLoading && isAdmin;
+
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Home" component={HomeScreen} />
@@ -26,6 +32,10 @@ function MainStack() {
       />
       <Stack.Screen name="Profile" component={ProfileScreen} />
       <Stack.Screen name="About" component={AboutScreen} />
+      <Stack.Screen name="Unauthorized" component={UnauthorizedRoute} />
+      {showAdminStack ? (
+        <Stack.Screen name="AdminStack" component={AdminStackNavigator} />
+      ) : null}
     </Stack.Navigator>
   );
 }

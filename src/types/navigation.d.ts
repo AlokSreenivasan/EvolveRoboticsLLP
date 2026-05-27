@@ -1,6 +1,14 @@
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 
+export type AdminStackParamList = {
+  AdminDashboard: undefined;
+  ManageCourses: undefined;
+  ManageBanners: undefined;
+  ManageUsers: undefined;
+  AdminNotifications: undefined;
+};
+
 export type RootStackParamList = {
   Intro: undefined;
   Login: undefined;
@@ -13,7 +21,10 @@ export type RootStackParamList = {
   PrivacySettings: undefined;
   NotificationPreferences: undefined;
   Profile: undefined;
-    // Add more screens here
+  /** Registered only for admin users after role resolves. */
+  AdminStack: undefined;
+  /** Fallback when a non-admin attempts restricted navigation. */
+  Unauthorized: undefined;
 };
 
 // Navigation prop for a specific screen

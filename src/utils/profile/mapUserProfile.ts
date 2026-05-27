@@ -6,6 +6,7 @@ import {
 } from '../../constants/profileDefaults';
 import type { Profile } from '../../domain/Profile/models/Profile';
 import type { UserProfile } from '../../store/user/types';
+import { DEFAULT_USER_ROLE } from '../../store/user/types/role.types';
 
 export function buildFallbackUserProfile(
   user: FirebaseAuthTypes.User,
@@ -16,6 +17,7 @@ export function buildFallbackUserProfile(
     email: user.email?.trim() ?? '',
     phoneNumber: '',
     profileImage: null,
+    role: DEFAULT_USER_ROLE,
     createdAt: null,
     updatedAt: null,
   };

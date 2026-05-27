@@ -1,11 +1,14 @@
 import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
+import type { UserRole } from './role.types';
+
 /** Firestore document shape at users/{uid} */
 export interface UserProfileDocument {
   fullName: string;
   email: string;
   phoneNumber: string;
   profileImage: string | null;
+  role: UserRole;
   createdAt: FirebaseFirestoreTypes.Timestamp | FirebaseFirestoreTypes.FieldValue;
   updatedAt: FirebaseFirestoreTypes.Timestamp | FirebaseFirestoreTypes.FieldValue;
 }
@@ -17,6 +20,7 @@ export interface UserProfile {
   email: string;
   phoneNumber: string;
   profileImage: string | null;
+  role: UserRole;
   createdAt: FirebaseFirestoreTypes.Timestamp | null;
   updatedAt: FirebaseFirestoreTypes.Timestamp | null;
 }

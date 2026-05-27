@@ -36,7 +36,7 @@ function HomeHeader({
       </TouchableOpacity>
 
       <View style={styles.greetingBlock}>
-        <Text style={styles.greeting}>Hello, {firstName} 👋</Text>
+        <Text style={styles.greeting}>Hello, {firstName}</Text>
         <Text style={styles.tagline}>
           Keep learning, keep building the future!
         </Text>

@@ -16,7 +16,7 @@ import {
   updateUserProfileWithSync,
 } from '../../services/firebase/profileUpdateService';
 import type { ProfileEditPayload } from '../../services/firebase/profileUpdateService';
-import { getUserProfile } from '../../services/firebase/userService';
+import { getUserProfileWithRoleResolution } from '../../services/firebase/userService';
 import {
   clearCachedUserProfile,
   getCachedUserProfile,
@@ -24,7 +24,17 @@ import {
   setCachedUserProfile,
 } from '../../services/profileCache';
 import type { UserProfile } from '../../store/user/types';
+import type {
+  RoleResolutionIssue,
+  UserRole,
+} from '../../store/user/types/role.types';
+import { DEFAULT_USER_ROLE } from '../../store/user/types/role.types';
 import { getErrorMessage } from '../../utils/firebase';
+import {
+  getRoleFromProfile,
+  isAdminRole,
+  roleIssueMessage,
+} from '../../utils/role/normalizeUserRole';
 import {
   buildFallbackUserProfile,
   isRicherUserProfile,
@@ -43,6 +53,16 @@ export interface AuthContextType {
   displayName: string;
   profileImage: string | null;
   avatarUri: string;
+  /** Normalized role for the signed-in user (defaults to "user" when unsigned in). */
+  role: UserRole;
+  /** True while the role is being loaded from cache or Firestore after sign-in. */
+  roleLoading: boolean;
+  /** True when {@link role} is "admin". */
+  isAdmin: boolean;
+  /** Set when role was defaulted due to missing/invalid data or a missing profile document. */
+  roleIssue: RoleResolutionIssue | null;
+  /** Human-readable message for {@link roleIssue}, if any. */
+  roleIssueMessage: string | null;
   refreshProfile: () => Promise<void>;
   setProfileState: (profile: UserProfile | null) => void;
   /** Apply profile immediately after sign-up (before navigation). */
@@ -59,6 +79,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
+  const [roleLoading, setRoleLoading] = useState(false);
+  const [roleIssue, setRoleIssue] = useState<RoleResolutionIssue | null>(null);
+  const [roleResolved, setRoleResolved] = useState(false);
 
   const mountedRef = useRef(true);
   const profileRef = useRef<UserProfile | null>(null);
@@ -85,6 +108,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfile(null);
     setProfileError(null);
     setProfileLoading(false);
+    setRoleLoading(false);
+    setRoleIssue(null);
+    setRoleResolved(false);
     await clearCachedUserProfile();
   }, []);
 
@@ -99,10 +125,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfile(next);
   }, []);
 
+  const applyRoleResolution = useCallback((issue: RoleResolutionIssue | null) => {
+    if (!mountedRef.current) {
+      return;
+    }
+    setRoleIssue(issue);
+    setRoleResolved(true);
+    setRoleLoading(false);
+  }, []);
+
   const applyRemoteProfile = useCallback(
     async (
       firebaseUser: FirebaseAuthTypes.User,
       remote: UserProfile | null,
+      roleResolutionIssue: RoleResolutionIssue | null,
       cachedProfile: UserProfile | null,
     ) => {
       if (!mountedRef.current) {
@@ -112,6 +148,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (remote) {
         applyProfileIfRicher(remote);
         await setCachedUserProfile(remote);
+        applyRoleResolution(roleResolutionIssue);
         return;
       }
 
@@ -123,28 +160,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (resolvedCache) {
         applyProfileIfRicher(resolvedCache);
+        applyRoleResolution('profile_document_missing');
         return;
       }
 
       const fallback = buildFallbackUserProfile(firebaseUser);
       applyProfileIfRicher(fallback);
+      applyRoleResolution('profile_document_missing');
     },
-    [applyProfileIfRicher],
+    [applyProfileIfRicher, applyRoleResolution],
   );
 
-  const fetchRemoteProfile = useCallback(
-    async (uid: string): Promise<UserProfile | null> => {
-      try {
-        return await getUserProfile(uid);
-      } catch (error) {
-        if (mountedRef.current) {
-          setProfileError(getErrorMessage(error));
-        }
-        return null;
+  const fetchRemoteProfile = useCallback(async (uid: string) => {
+    try {
+      return await getUserProfileWithRoleResolution(uid);
+    } catch (error) {
+      if (mountedRef.current) {
+        setProfileError(getErrorMessage(error));
       }
-    },
-    [],
-  );
+      return null;
+    }
+  }, []);
 
   const hydrateProfile = useCallback(
     async (
@@ -179,6 +215,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         setProfileError(null);
+        setRoleIssue(null);
+        setRoleResolved(false);
+        setRoleLoading(true);
 
         const cached = await getCachedUserProfile(uid);
         const cachedProfile = cached?.profile ?? null;
@@ -187,6 +226,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (cachedProfile) {
           applyProfileIfRicher(cachedProfile);
+          setRoleResolved(true);
+          setRoleLoading(false);
         }
 
         if (!forceNetwork && cacheIsFresh) {
@@ -194,22 +235,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           hydratedUidRef.current = uid;
 
           // Non-blocking sync so UI stays instant without stale data long-term.
-          fetchRemoteProfile(uid).then(remote => {
-            if (!mountedRef.current || !remote) {
+          fetchRemoteProfile(uid).then(result => {
+            if (!mountedRef.current || !result) {
               return;
             }
-            applyProfileIfRicher(remote);
-            setCachedUserProfile(remote).catch(() => undefined);
+            if (result.profile) {
+              applyProfileIfRicher(result.profile);
+              setCachedUserProfile(result.profile).catch(() => undefined);
+            }
+            applyRoleResolution(result.roleResolution.issue ?? null);
           });
 
           return;
         }
 
         setProfileLoading(true);
+        if (!cachedProfile) {
+          setRoleLoading(true);
+        }
 
         try {
-          const remote = await fetchRemoteProfile(uid);
-          await applyRemoteProfile(firebaseUser, remote, cachedProfile);
+          const result = await fetchRemoteProfile(uid);
+          if (result) {
+            await applyRemoteProfile(
+              firebaseUser,
+              result.profile,
+              result.roleResolution.issue ?? null,
+              cachedProfile,
+            );
+          } else if (mountedRef.current) {
+            applyRoleResolution(null);
+          }
         } finally {
           if (mountedRef.current) {
             setProfileLoading(false);
@@ -221,7 +277,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       hydratePromiseRef.current = run();
       return hydratePromiseRef.current;
     },
-    [applyProfileIfRicher, applyRemoteProfile, fetchRemoteProfile],
+    [
+      applyProfileIfRicher,
+      applyRemoteProfile,
+      applyRoleResolution,
+      fetchRemoteProfile,
+    ],
   );
 
   const refreshProfile = useCallback(async () => {
@@ -245,6 +306,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       hydratedUidRef.current = next.uid;
       hydratePromiseRef.current = Promise.resolve();
       setProfileLoading(false);
+      setRoleLoading(false);
+      setRoleResolved(true);
+      setRoleIssue(null);
       setCachedUserProfile(next).catch(() => undefined);
     }
   }, []);
@@ -328,6 +392,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const avatarUri = useMemo(() => resolveAvatarUri(profile), [profile]);
 
+  const role = useMemo(
+    () => (user ? getRoleFromProfile(profile) : DEFAULT_USER_ROLE),
+    [profile, user],
+  );
+
+  const isAdmin = useMemo(() => isAdminRole(role), [role]);
+
+  const resolvedRoleIssueMessage = useMemo(
+    () => roleIssueMessage(roleIssue),
+    [roleIssue],
+  );
+
+  const effectiveRoleLoading = useMemo(
+    () => Boolean(user) && (roleLoading || (!roleResolved && profileLoading)),
+    [user, roleLoading, roleResolved, profileLoading],
+  );
+
   const value = useMemo<AuthContextType>(
     () => ({
       user,
@@ -339,6 +420,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       displayName,
       profileImage,
       avatarUri,
+      role,
+      roleLoading: effectiveRoleLoading,
+      isAdmin,
+      roleIssue,
+      roleIssueMessage: resolvedRoleIssueMessage,
       refreshProfile,
       setProfileState,
       establishSessionProfile,
@@ -354,6 +440,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       displayName,
       profileImage,
       avatarUri,
+      role,
+      effectiveRoleLoading,
+      isAdmin,
+      roleIssue,
+      resolvedRoleIssueMessage,
       refreshProfile,
       setProfileState,
       establishSessionProfile,

@@ -1,8 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import type { UserProfile } from '../store/user/types';
+import { DEFAULT_USER_ROLE, type UserRole } from '../store/user/types/role.types';
+import { normalizeUserRole } from '../utils/role/normalizeUserRole';
 
-const CACHE_KEY_PREFIX = '@evolve/profile_cache_v1';
+const CACHE_KEY_PREFIX = '@evolve/profile_cache_v2';
 const CACHE_UID_KEY = '@evolve/profile_cache_uid';
 
 /** Skip blocking Firestore fetch when cache is newer than this (ms). */
@@ -14,6 +16,7 @@ type CachedUserProfilePayload = {
   email: string;
   phoneNumber: string;
   profileImage: string | null;
+  role?: UserRole;
   cachedAt: number;
 };
 
@@ -33,17 +36,21 @@ function toCachePayload(profile: UserProfile): CachedUserProfilePayload {
     email: profile.email,
     phoneNumber: profile.phoneNumber,
     profileImage: profile.profileImage,
+    role: profile.role,
     cachedAt: Date.now(),
   };
 }
 
 function fromCachePayload(payload: CachedUserProfilePayload): UserProfile {
+  const { role } = normalizeUserRole(payload.role ?? DEFAULT_USER_ROLE);
+
   return {
     uid: payload.uid,
     fullName: payload.fullName,
     email: payload.email,
     phoneNumber: payload.phoneNumber,
     profileImage: payload.profileImage,
+    role,
     createdAt: null,
     updatedAt: null,
   };

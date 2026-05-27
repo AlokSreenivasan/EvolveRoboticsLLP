@@ -6,20 +6,29 @@ import {
   BookOpen,
   Calendar,
   Home,
+  Shield,
   User,
 } from 'lucide-react-native';
 
 import { colors } from '../../constants/theme';
 
-export type HomeTabKey = 'home' | 'courses' | 'calendar' | 'notifications' | 'profile';
+export type HomeTabKey =
+  | 'home'
+  | 'courses'
+  | 'calendar'
+  | 'notifications'
+  | 'profile'
+  | 'admin';
 
 type HomeBottomTabBarProps = {
   activeTab?: HomeTabKey;
   notificationCount?: number;
+  /** When true, shows the Admin tab (admin users only). */
+  showAdminTab?: boolean;
   onTabPress?: (tab: HomeTabKey) => void;
 };
 
-const TABS: { key: HomeTabKey; label: string; icon: typeof Home }[] = [
+const BASE_TABS: { key: HomeTabKey; label: string; icon: typeof Home }[] = [
   { key: 'home', label: 'Home', icon: Home },
   { key: 'courses', label: 'Courses', icon: BookOpen },
   { key: 'calendar', label: 'Calendar', icon: Calendar },
@@ -27,15 +36,28 @@ const TABS: { key: HomeTabKey; label: string; icon: typeof Home }[] = [
   { key: 'profile', label: 'Profile', icon: User },
 ];
 
+const ADMIN_TAB = { key: 'admin' as const, label: 'Admin', icon: Shield };
+
 const ACTIVE_COLOR = colors.primary;
 const INACTIVE_COLOR = colors.textMuted;
 
 function HomeBottomTabBar({
   activeTab = 'home',
   notificationCount = 3,
+  showAdminTab = false,
   onTabPress,
 }: HomeBottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const tabs = showAdminTab
+    ? [
+        BASE_TABS[0],
+        BASE_TABS[1],
+        ADMIN_TAB,
+        BASE_TABS[2],
+        BASE_TABS[3],
+        BASE_TABS[4],
+      ]
+    : BASE_TABS;
 
   return (
     <View
@@ -43,7 +65,7 @@ function HomeBottomTabBar({
         styles.container,
         { paddingBottom: Math.max(insets.bottom, 8) },
       ]}>
-      {TABS.map(tab => {
+      {tabs.map(tab => {
         const isActive = tab.key === activeTab;
         const Icon = tab.icon;
         const color = isActive ? ACTIVE_COLOR : INACTIVE_COLOR;

@@ -29,13 +29,16 @@ export { changePassword } from './changePasswordService';
 export type { ChangePasswordInput } from './changePasswordService';
 export { signUpWithProfile } from './signUpService';
 export type { SignUpWithProfileInput } from './signUpService';
+export { getCurrentUserRole, isAdmin } from './roleService';
 export {
   createUserProfile,
   createUserProfileIfNotExists,
   deleteUserProfile,
   getCurrentUserProfile,
   getUserProfile,
+  getUserProfileWithRoleResolution,
   updateCurrentUserProfile,
   updateUserProfile,
 } from './userService';
+export type { UserProfileFetchResult } from './userService';
 // updateCurrentUserProfile requires baseProfile — prefer updateUserProfileWithSync

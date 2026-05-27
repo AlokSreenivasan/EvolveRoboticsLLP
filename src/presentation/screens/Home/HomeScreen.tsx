@@ -28,7 +28,9 @@ import {
 import { colors, spacing } from '../../../constants/theme';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
 import { useAuth } from '../../context/AuthContext';
+import { useAdminNavigation } from '../../hooks/useAdminNavigation';
 import { useStoredProfileFullName } from '../../hooks/useStoredProfileFullName';
+import { useUserRole } from '../../hooks/useUserRole';
 
 const TAB_BAR_HEIGHT = 64;
 const NOTIFICATION_COUNT = 3;
@@ -38,9 +40,14 @@ function HomeScreen() {
   const insets = useSafeAreaInsets();
   const displayName = useStoredProfileFullName();
   const { profileImage } = useAuth();
+  const { isAdmin, roleLoading } = useUserRole();
+  const { openAdmin } = useAdminNavigation();
 
   const handleTabPress = (tab: HomeTabKey) => {
     switch (tab) {
+      case 'admin':
+        openAdmin();
+        break;
       case 'profile':
         navigation.navigate('Profile');
         break;
@@ -132,6 +139,7 @@ function HomeScreen() {
         <HomeBottomTabBar
           activeTab="home"
           notificationCount={NOTIFICATION_COUNT}
+          showAdminTab={!roleLoading && isAdmin}
           onTabPress={handleTabPress}
         />
       </View>

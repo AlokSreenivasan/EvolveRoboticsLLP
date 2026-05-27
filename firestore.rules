@@ -35,6 +35,7 @@ function hasRequiredProfileFields() {
     'email',
     'phoneNumber',
     'profileImage',
+    'role',
     'createdAt',
     'updatedAt',
   ]);
@@ -51,6 +52,7 @@ function isValidProfileData() {
     && data.phoneNumber is string
     && data.phoneNumber.size() >= 10
     && data.phoneNumber.size() <= 15
+    && isValidUserRole(data.role)
     && isOptionalProfileImage(data.profileImage);
 }
 
@@ -68,7 +70,12 @@ function isValidProfileDataAfterUpdate() {
     && data.phoneNumber is string
     && data.phoneNumber.size() >= 10
     && data.phoneNumber.size() <= 15
+    && isValidUserRole(data.role)
     && isOptionalProfileImage(data.profileImage);
+}
+
+function isValidUserRole(value) {
+  return value == 'user' || value == 'admin';
 }
 
 function isOptionalProfileImage(value) {

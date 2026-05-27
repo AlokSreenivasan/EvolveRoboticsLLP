@@ -16,13 +16,17 @@ import ProfileAvatar from '../../../components/Profile/ProfileAvatar.tsx';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
 import AppButton from '../../../components/AppButton.tsx';
 import { useAuth } from '../../context/AuthContext';
+import { useAdminNavigation } from '../../hooks/useAdminNavigation';
 import { useStoredProfileFullName } from '../../hooks/useStoredProfileFullName';
+import { useUserRole } from '../../hooks/useUserRole';
 
 function SettingsScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const { user, profile, profileImage } = useAuth();
   const displayName = useStoredProfileFullName();
   const userEmail = profile?.email ?? user?.email ?? '';
+  const { isAdmin, roleLoading } = useUserRole();
+  const { openAdmin } = useAdminNavigation();
   const [loggingOut, setLoggingOut] = useState(false);
 
   const performLogout = async () => {
@@ -102,6 +106,18 @@ function SettingsScreen() {
             textStyle={styles.outlineButtonText}
           />
         </View>
+        {!roleLoading && isAdmin ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Administrator</Text>
+            <TouchableOpacity
+              style={styles.listItem}
+              onPress={() => openAdmin()}>
+              <Text style={styles.linkText}>Admin Dashboard</Text>
+              <Text style={styles.arrow}>›</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account Settings</Text>
 

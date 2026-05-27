@@ -8,6 +8,16 @@ import type {
   UserProfile,
   UserProfileDocument,
 } from '../../store/user/types';
+import {
+  DEFAULT_USER_ROLE,
+  type RoleResolution,
+} from '../../store/user/types/role.types';
+import { normalizeUserRole } from '../../utils/role/normalizeUserRole';
+
+export type UserProfileFetchResult = {
+  profile: UserProfile | null;
+  roleResolution: RoleResolution;
+};
 import { assertAuthenticatedUserId } from '../../utils/firebase/assertAuthenticated';
 import {
   extractFirebaseErrorDetails,
@@ -33,12 +43,15 @@ function mapDocumentToUserProfile(
   uid: string,
   data: UserProfileDocument,
 ): UserProfile {
+  const { role } = normalizeUserRole(data.role);
+
   return {
     uid,
     fullName: data.fullName ?? '',
     email: data.email ?? '',
     phoneNumber: data.phoneNumber ?? '',
     profileImage: data.profileImage ?? null,
+    role,
     createdAt: isTimestamp(data.createdAt) ? data.createdAt : null,
     updatedAt: isTimestamp(data.updatedAt) ? data.updatedAt : null,
   };
@@ -87,6 +100,7 @@ export async function createUserProfile(
       email: input.email.trim(),
       phoneNumber: input.phoneNumber.trim(),
       profileImage: input.profileImage ?? null,
+      role: DEFAULT_USER_ROLE,
       createdAt: firestore.FieldValue.serverTimestamp(),
       updatedAt: firestore.FieldValue.serverTimestamp(),
     };
@@ -100,6 +114,7 @@ export async function createUserProfile(
       email: payload.email,
       phoneNumber: payload.phoneNumber,
       profileImage: payload.profileImage ?? null,
+      role: DEFAULT_USER_ROLE,
       createdAt: null,
       updatedAt: null,
     };
@@ -113,19 +128,36 @@ export async function createUserProfile(
 }
 
 /**
- * Reads users/{uid}. Returns null if the document does not exist.
+ * Reads users/{uid} with role normalization metadata (single Firestore read).
  */
-export async function getUserProfile(uid: string): Promise<UserProfile | null> {
+export async function getUserProfileWithRoleResolution(
+  uid: string,
+): Promise<UserProfileFetchResult> {
   try {
     const snapshot = await userDocRef(uid).get();
     if (!snapshot.exists) {
-      return null;
+      return {
+        profile: null,
+        roleResolution: normalizeUserRole(undefined, {
+          profileDocumentMissing: true,
+        }),
+      };
     }
+
     const data = snapshot.data() as UserProfileDocument | undefined;
     if (!data) {
-      return null;
+      return {
+        profile: null,
+        roleResolution: normalizeUserRole(undefined, {
+          profileDocumentMissing: true,
+        }),
+      };
     }
-    return mapDocumentToUserProfile(snapshot.id, data);
+
+    return {
+      profile: mapDocumentToUserProfile(snapshot.id, data),
+      roleResolution: normalizeUserRole(data.role),
+    };
   } catch (error) {
     throw wrapFirebaseError(
       error,
@@ -133,6 +165,14 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
       'Failed to load user profile.',
     );
   }
+}
+
+/**
+ * Reads users/{uid}. Returns null if the document does not exist.
+ */
+export async function getUserProfile(uid: string): Promise<UserProfile | null> {
+  const { profile } = await getUserProfileWithRoleResolution(uid);
+  return profile;
 }
 
 /**
