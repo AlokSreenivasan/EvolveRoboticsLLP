@@ -2,20 +2,41 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ChevronRight, Megaphone } from 'lucide-react-native';
 
-import { IMPORTANT_UPDATE } from '../../constants/homeScreenData';
 import { cardShadowLight, colors } from '../../constants/theme';
+import type { ImportantUpdateNotice } from '../../store/content/types/importantUpdates.types';
 
-function ImportantUpdatesCard() {
+type ImportantUpdatesCardProps = {
+  notice: Pick<
+    ImportantUpdateNotice,
+    'tag' | 'title' | 'subtitle' | 'description'
+  >;
+  onPress?: () => void;
+};
+
+function ImportantUpdatesCard({ notice, onPress }: ImportantUpdatesCardProps) {
+  const bodyText = notice.description?.trim() || notice.subtitle?.trim();
+
   return (
-    <TouchableOpacity style={styles.card} activeOpacity={0.9}>
+    <TouchableOpacity
+      style={styles.card}
+      activeOpacity={0.9}
+      onPress={onPress}
+      disabled={!onPress}>
       <View style={styles.iconWrap}>
         <Megaphone size={22} color={colors.primary} strokeWidth={2} />
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.tag}>{IMPORTANT_UPDATE.tag}</Text>
-        <Text style={styles.title}>{IMPORTANT_UPDATE.title}</Text>
-        <Text style={styles.description}>{IMPORTANT_UPDATE.description}</Text>
+        {notice.tag?.trim() ? (
+          <Text style={styles.tag}>{notice.tag.trim()}</Text>
+        ) : null}
+        <Text style={styles.title}>{notice.title}</Text>
+        {notice.subtitle?.trim() ? (
+          <Text style={styles.subtitle}>{notice.subtitle.trim()}</Text>
+        ) : null}
+        {bodyText ? (
+          <Text style={styles.description}>{bodyText}</Text>
+        ) : null}
       </View>
 
       <ChevronRight size={20} color={colors.textMuted} strokeWidth={2} />
@@ -58,6 +79,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.textPrimary,
     marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    marginBottom: 4,
+    lineHeight: 18,
   },
   description: {
     fontSize: 13,

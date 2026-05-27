@@ -200,8 +200,3 @@ export const UPCOMING_EVENT = {
   daysLeft: '2 Days Left',
 };
 
-export const IMPORTANT_UPDATE = {
-  tag: 'New Notice',
-  title: 'Robotics Workshop on 25 May 2025',
-  description: 'Hands-on session for all students. Register now!',
-};

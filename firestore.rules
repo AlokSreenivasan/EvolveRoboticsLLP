@@ -19,14 +19,82 @@ service cloud.firestore {
       allow delete: if isOwner(userId);
     }
 
+    match /appContent/{docId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAdmin() && isValidAppContentSection();
+      allow delete: if isAdmin();
+    }
+
+    match /importantUpdates/{noticeId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin() && isValidImportantUpdateNoticeCreate();
+      allow update: if isAdmin() && isValidImportantUpdateNoticeUpdate();
+      allow delete: if isAdmin();
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
   }
 }
 
+function isAuthenticated() {
+  return request.auth != null;
+}
+
+function isAdmin() {
+  return isAuthenticated()
+    && exists(/databases/(default)/documents/users/$(request.auth.uid))
+    && get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
+}
+
 function isOwner(userId) {
   return request.auth != null && request.auth.uid == userId;
+}
+
+function isValidAppContentSection() {
+  let data = request.resource.data;
+  return data.sectionTitle is string
+    && data.sectionTitle.size() > 0
+    && data.sectionTitle.size() <= 120
+    && data.sectionSubtitle is string
+    && data.sectionSubtitle.size() <= 200
+    && data.actionLabel is string
+    && data.actionLabel.size() <= 60;
+}
+
+function isValidImportantUpdateNoticeFields(data) {
+  return data.tag is string
+    && data.tag.size() <= 60
+    && data.title is string
+    && data.title.size() > 0
+    && data.title.size() <= 200
+    && data.subtitle is string
+    && data.subtitle.size() <= 300
+    && data.description is string
+    && data.description.size() <= 600
+    && data.sortOrder is number
+    && data.sortOrder >= 0
+    && data.isPublished is bool;
+}
+
+function isValidImportantUpdateNoticeCreate() {
+  let data = request.resource.data;
+  return data.keys().hasAll([
+      'tag',
+      'title',
+      'subtitle',
+      'description',
+      'sortOrder',
+      'isPublished',
+      'createdAt',
+      'updatedAt',
+    ])
+    && isValidImportantUpdateNoticeFields(data);
+}
+
+function isValidImportantUpdateNoticeUpdate() {
+  return isValidImportantUpdateNoticeFields(request.resource.data);
 }
 
 function hasRequiredProfileFields() {

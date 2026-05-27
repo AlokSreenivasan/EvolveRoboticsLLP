@@ -5,6 +5,7 @@ import {
   BookOpen,
   ImageIcon,
   LayoutDashboard,
+  Megaphone,
   Users,
 } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -24,6 +25,12 @@ type AdminMenuItem = {
 };
 
 const MENU_ITEMS: AdminMenuItem[] = [
+  {
+    key: 'ManageImportantUpdates',
+    title: 'Important Updates',
+    description: 'Edit home notices, titles, and section order',
+    icon: Megaphone,
+  },
   {
     key: 'ManageCourses',
     title: 'Manage Courses',

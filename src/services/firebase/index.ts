@@ -31,6 +31,17 @@ export { signUpWithProfile } from './signUpService';
 export type { SignUpWithProfileInput } from './signUpService';
 export { getCurrentUserRole, isAdmin } from './roleService';
 export {
+  createImportantUpdateNotice,
+  deleteImportantUpdateNotice,
+  ensureImportantUpdatesSectionDefaults,
+  moveImportantUpdateNotice,
+  reorderImportantUpdateNotices,
+  subscribeImportantUpdates,
+  subscribeImportantUpdatesSection,
+  updateImportantUpdateNotice,
+  updateImportantUpdatesSection,
+} from './importantUpdatesService';
+export {
   createUserProfile,
   createUserProfileIfNotExists,
   deleteUserProfile,

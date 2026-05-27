@@ -17,7 +17,7 @@ import HomeBottomTabBar, {
 } from '../../../components/Home/HomeBottomTabBar';
 import HomeHeader from '../../../components/Home/HomeHeader';
 import HomeSectionHeader from '../../../components/Home/HomeSectionHeader';
-import ImportantUpdatesCard from '../../../components/Home/ImportantUpdatesCard';
+import ImportantUpdatesSection from '../../../components/Home/ImportantUpdatesSection';
 import QuickAccessGrid from '../../../components/Home/QuickAccessGrid';
 import ScheduleCard from '../../../components/Home/ScheduleCard';
 import UpcomingEventBanner from '../../../components/Home/UpcomingEventBanner';
@@ -95,13 +95,7 @@ function HomeScreen() {
           </ScrollView>
         </View>
 
-        <View style={styles.section}>
-          <HomeSectionHeader
-            title="Important Updates"
-            actionLabel="View All"
-          />
-          <ImportantUpdatesCard />
-        </View>
+        <ImportantUpdatesSection />
 
         <View style={styles.section}>
           <View style={styles.scheduleHeader}>
