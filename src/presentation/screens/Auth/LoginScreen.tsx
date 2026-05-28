@@ -19,6 +19,10 @@ import { LoginScreenNavigationProp } from '../../../types/navigation';
 import AppButton from '../../../components/AppButton.tsx';
 import { isValidEmail } from '../../../domain/Auth/validation/isValidEmail.ts';
 import { useAuthFlow } from '../../context/AuthFlowContext';
+import {
+  isGoogleSignInCancelled,
+  signInWithGoogle,
+} from '../../../services/auth/googleSignInService';
 
 function getAuthErrorMessage(error: { code?: string; message?: string }) {
   switch (error.code) {
@@ -44,6 +48,7 @@ function LoginScreen() {
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const handleSignIn = async () => {
     if (!isValidEmail(email)) {
@@ -65,6 +70,24 @@ function LoginScreen() {
       Alert.alert('Login Error', getAuthErrorMessage(error as { code?: string; message?: string }));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    if (googleLoading) {
+      return;
+    }
+
+    setGoogleLoading(true);
+    try {
+      await signInWithGoogle();
+      notifyAuthSuccess();
+    } catch (error) {
+      if (!isGoogleSignInCancelled(error)) {
+        Alert.alert('Google Sign-In Error', (error as Error)?.message ?? 'Google Sign-In failed.');
+      }
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -138,11 +161,24 @@ function LoginScreen() {
               onPress={handleSignIn}
               buttonStyle={styles.loginButton}
               textStyle={styles.loginText}
-              disabled={loading}
+              disabled={loading || googleLoading}
             />
             {loading ? (
               <ActivityIndicator color="#a42a8b" style={styles.loader} />
             ) : null}
+
+            <TouchableOpacity
+              onPress={handleGoogleSignIn}
+              disabled={loading || googleLoading}
+              style={[
+                styles.googleButton,
+                loading || googleLoading ? styles.googleButtonDisabled : null,
+              ]}
+            >
+              <Text style={styles.googleButtonText}>
+                {googleLoading ? 'Signing in with Google...' : 'Continue with Google'}
+              </Text>
+            </TouchableOpacity>
 
             <View style={styles.signupContainer}>
               <Text>Don't have an account?</Text>
@@ -260,6 +296,23 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  googleButton: {
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: '#eecdf4',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  googleButtonDisabled: {
+    opacity: 0.6,
+  },
+  googleButtonText: {
+    color: '#111',
+    fontSize: 15,
+    fontWeight: '600',
   },
   signupContainer: {
     flexDirection: 'row',
