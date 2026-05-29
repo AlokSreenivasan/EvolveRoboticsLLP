@@ -9,17 +9,14 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-import ContinueLearningCard from '../../../components/Home/ContinueLearningCard';
-import HomeSectionHeader from '../../../components/Home/HomeSectionHeader';
+import CourseCatalogCard from '../../../components/Courses/CourseCatalogCard';
 import { colors, spacing } from '../../../constants/theme';
 import type { LoginScreenNavigationProp } from '../../../types/navigation';
-import { useContinueLearningPlaylists } from '../../hooks/useContinueLearningPlaylists';
-import { useContinueLearningProgress } from '../../hooks/useContinueLearningProgress';
+import { useCourses } from '../../hooks/useCourses';
 
 function CoursesScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
-  const { playlists, loading } = useContinueLearningPlaylists();
-  const { getVideosWatched } = useContinueLearningProgress();
+  const { courses, loading, error } = useCourses();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -28,35 +25,36 @@ function CoursesScreen() {
           ← Back
         </Text>
         <Text style={styles.title}>Courses</Text>
+        <Text style={styles.subtitle}>
+          Browse all available courses and their duration.
+        </Text>
       </View>
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
-        <HomeSectionHeader title="All courses" />
         {loading ? (
           <ActivityIndicator color={colors.primary} style={styles.loader} />
-        ) : playlists.length === 0 ? (
-          <Text style={styles.empty}>
-            Course playlists will appear here once they are published.
-          </Text>
+        ) : error ? (
+          <View style={styles.messageCard}>
+            <Text style={styles.messageTitle}>Could not load courses</Text>
+            <Text style={styles.messageText}>
+              Pull to refresh or try again later.
+            </Text>
+          </View>
+        ) : courses.length === 0 ? (
+          <View style={styles.messageCard}>
+            <Text style={styles.messageTitle}>No courses yet</Text>
+            <Text style={styles.messageText}>
+              New courses will appear here once they are published by an admin.
+            </Text>
+          </View>
         ) : (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.horizontalList}>
-            {playlists.map((playlist, index) => (
-              <ContinueLearningCard
-                key={playlist.id}
-                playlist={playlist}
-                videosWatched={getVideosWatched(playlist.id)}
-                accentIndex={index}
-                onPress={() =>
-                  navigation.navigate('CoursePlaylist', { playlist })
-                }
-              />
+          <View style={styles.list}>
+            {courses.map(course => (
+              <CourseCatalogCard key={course.id} course={course} />
             ))}
-          </ScrollView>
+          </View>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -87,6 +85,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.textPrimary,
   },
+  subtitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginTop: 6,
+    lineHeight: 20,
+  },
   scrollContent: {
     paddingHorizontal: spacing.screenHorizontal,
     paddingTop: 16,
@@ -95,13 +99,26 @@ const styles = StyleSheet.create({
   loader: {
     marginVertical: 32,
   },
-  empty: {
+  list: {
+    gap: 12,
+  },
+  messageCard: {
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  messageTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginBottom: 6,
+  },
+  messageText: {
     fontSize: 14,
     color: colors.textSecondary,
     lineHeight: 20,
-  },
-  horizontalList: {
-    paddingRight: 4,
   },
 });
 

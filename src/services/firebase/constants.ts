@@ -4,6 +4,7 @@ export const FIRESTORE_COLLECTIONS = {
   importantUpdates: 'importantUpdates',
   upcomingEvents: 'upcomingEvents',
   continueLearningPlaylists: 'continueLearningPlaylists',
+  courses: 'courses',
 } as const;
 
 /** Document IDs inside {@link FIRESTORE_COLLECTIONS.appContent}. */
@@ -22,4 +23,6 @@ export const STORAGE_PATHS = {
     playlistId: string,
     extension = '.jpg',
   ) => `continueLearningThumbnails/${uid}/${playlistId}${extension}`,
+  courseThumbnail: (uid: string, courseId: string, extension = '.jpg') =>
+    `courseThumbnails/${uid}/${courseId}${extension}`,
 } as const;

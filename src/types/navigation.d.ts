@@ -35,7 +35,7 @@ export type RootStackParamList = {
     videoTitle: string;
     videoIndex: number;
   };
-  /** All course playlists (same data as home carousel). */
+  /** Course catalog — admin-managed list with thumbnails and duration. */
   Courses: undefined;
   /** Registered only for admin users after role resolves. */
   AdminStack: undefined;

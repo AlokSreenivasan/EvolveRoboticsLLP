@@ -53,6 +53,17 @@ function buildContinueLearningThumbnailRef(
   );
 }
 
+function buildCourseThumbnailRef(
+  uid: string,
+  courseId: string,
+  localUri: string,
+) {
+  const extension = resolveFileExtension(localUri);
+  return storage().ref(
+    STORAGE_PATHS.courseThumbnail(uid, courseId, extension),
+  );
+}
+
 /**
  * Uploads a local image URI to Firebase Storage and returns the download URL.
  * Works with file paths returned by react-native-image-picker on iOS and Android.
@@ -121,6 +132,36 @@ export async function uploadContinueLearningThumbnail(
       error,
       'UPLOAD_FAILED',
       'Failed to upload playlist thumbnail.',
+    );
+  }
+}
+
+/** Uploads a course catalog thumbnail; requires Storage rules for courseThumbnails. */
+export async function uploadCourseThumbnail(
+  courseId: string,
+  localFileUri: string,
+): Promise<string> {
+  try {
+    const trimmedUri = localFileUri.trim();
+    if (!trimmedUri) {
+      throw new Error('A valid local image URI is required.');
+    }
+    if (!courseId.trim()) {
+      throw new Error('A course id is required.');
+    }
+
+    const uid = await syncFirestoreAuthSession();
+
+    const reference = buildCourseThumbnailRef(uid, courseId.trim(), trimmedUri);
+    await reference.putFile(trimmedUri, {
+      contentType: resolveContentType(trimmedUri),
+    });
+    return reference.getDownloadURL();
+  } catch (error) {
+    throw wrapFirebaseError(
+      error,
+      'UPLOAD_FAILED',
+      'Failed to upload course thumbnail.',
     );
   }
 }

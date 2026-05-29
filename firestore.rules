@@ -52,6 +52,13 @@ service cloud.firestore {
       allow delete: if isAdmin(database);
     }
 
+    match /courses/{courseId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin(database) && isValidCourseCreate();
+      allow update: if isAdmin(database) && isValidCourseUpdate();
+      allow delete: if isAdmin(database);
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
@@ -172,6 +179,31 @@ function isValidContinueLearningPlaylistCreate() {
 
 function isValidContinueLearningPlaylistUpdate() {
   return isValidContinueLearningPlaylistFields(request.resource.data);
+}
+
+function isValidCourseFields(data) {
+  return data.title is string
+    && data.title.size() > 0
+    && data.title.size() <= 200
+    && data.subtitle is string
+    && data.subtitle.size() <= 300
+    && data.imageUri is string
+    && data.imageUri.size() <= 8192
+    && data.durationLabel is string
+    && data.durationLabel.size() <= 40
+    && data.description is string
+    && data.description.size() <= 600
+    && data.sortOrder is number
+    && data.sortOrder >= 0
+    && data.isPublished is bool;
+}
+
+function isValidCourseCreate() {
+  return isValidCourseFields(request.resource.data);
+}
+
+function isValidCourseUpdate() {
+  return isValidCourseFields(request.resource.data);
 }
 
 function isValidContinueLearningProgress() {

@@ -21,6 +21,7 @@ export {
   deleteProfileImage,
   deleteProfileImageByUrlSafe,
   uploadContinueLearningThumbnail,
+  uploadCourseThumbnail,
   uploadCurrentUserProfileImage,
   uploadProfileImage,
 } from './storageService';
@@ -64,6 +65,14 @@ export {
   subscribeContinueLearningPlaylists,
   updateContinueLearningPlaylist,
 } from './continueLearningPlaylistsService';
+export {
+  createCourse,
+  deleteCourse,
+  moveCourse,
+  reorderCourses,
+  subscribeCourses,
+  updateCourse,
+} from './coursesService';
 export {
   recordPlaylistVideoEngagement,
   recordPlaylistVideoProgress,
