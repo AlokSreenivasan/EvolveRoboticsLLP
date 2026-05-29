@@ -65,6 +65,47 @@ export function subscribeContinueLearningProgress(
   );
 }
 
+/** Sets progress to at least the given 1-based video number (capped at videoCount). */
+export async function recordPlaylistVideoProgress(
+  playlistId: string,
+  videoNumber: number,
+  videoCount: number,
+): Promise<void> {
+  try {
+    const uid = await syncFirestoreAuthSession();
+    const { total } = clampVideoProgress(0, videoCount);
+    const target = Math.min(total, Math.max(1, Math.trunc(videoNumber)));
+    const ref = progressCollection(uid).doc(playlistId);
+
+    await firestore().runTransaction(async transaction => {
+      const snapshot = await transaction.get(ref);
+      const current = snapshot.exists
+        ? Math.max(0, Math.trunc(snapshot.data()?.videosWatched ?? 0))
+        : 0;
+      const next = Math.min(total, Math.max(current, target));
+
+      if (snapshot.exists && next === current) {
+        return;
+      }
+
+      transaction.set(
+        ref,
+        {
+          videosWatched: next,
+          updatedAt: firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true },
+      );
+    });
+  } catch (error) {
+    throw wrapFirebaseError(
+      error,
+      'FIRESTORE_ERROR',
+      'Failed to update playlist progress.',
+    );
+  }
+}
+
 /** Increments watched count when the user opens the playlist (capped at videoCount). */
 export async function recordPlaylistVideoEngagement(
   playlistId: string,

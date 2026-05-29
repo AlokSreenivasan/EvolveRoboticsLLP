@@ -66,6 +66,7 @@ export {
 } from './continueLearningPlaylistsService';
 export {
   recordPlaylistVideoEngagement,
+  recordPlaylistVideoProgress,
   subscribeContinueLearningProgress,
 } from './continueLearningProgressService';
 export {

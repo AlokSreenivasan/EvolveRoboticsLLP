@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   Image,
-  Linking,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -10,7 +9,6 @@ import {
 import { BookOpen, Play } from 'lucide-react-native';
 
 import { cardShadow, colors } from '../../constants/theme';
-import { recordPlaylistVideoEngagement } from '../../services/firebase/continueLearningProgressService';
 import type { ContinueLearningPlaylist } from '../../store/content/types/continueLearningPlaylists.types';
 import {
   computeProgressPercent,
@@ -27,12 +25,14 @@ type ContinueLearningCardProps = {
   playlist: ContinueLearningPlaylist;
   videosWatched: number;
   accentIndex?: number;
+  onPress?: () => void;
 };
 
 function ContinueLearningCard({
   playlist,
   videosWatched,
   accentIndex = 0,
+  onPress,
 }: ContinueLearningCardProps) {
   const accent = CARD_ACCENTS[accentIndex % CARD_ACCENTS.length];
   const progress = computeProgressPercent(videosWatched, playlist.videoCount);
@@ -41,18 +41,14 @@ function ContinueLearningCard({
     playlist.videoCount,
   );
 
-  const handlePlay = () => {
-    if (!playlist.playlistUrl) {
-      return;
-    }
-    void recordPlaylistVideoEngagement(playlist.id, playlist.videoCount).catch(
-      () => undefined,
-    );
-    Linking.openURL(playlist.playlistUrl).catch(() => undefined);
-  };
-
   return (
-    <View style={styles.card}>
+    <TouchableOpacity
+      style={styles.card}
+      activeOpacity={0.9}
+      onPress={onPress}
+      disabled={!onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`Open course ${playlist.title}`}>
       <View style={styles.imageWrap}>
         {playlist.imageUri ? (
           <Image source={{ uri: playlist.imageUri }} style={styles.image} />
@@ -64,14 +60,9 @@ function ContinueLearningCard({
             {progress}%
           </Text>
         </View>
-        <TouchableOpacity
-          style={styles.playButton}
-          activeOpacity={0.85}
-          onPress={handlePlay}
-          accessibilityRole="button"
-          accessibilityLabel={`Open ${playlist.title} playlist`}>
+        <View style={styles.playButton} accessibilityElementsHidden>
           <Play size={18} color="#fff" fill="#fff" strokeWidth={0} />
-        </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.body}>
@@ -101,7 +92,7 @@ function ContinueLearningCard({
           <Text style={styles.videos}>{progressLabel}</Text>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 

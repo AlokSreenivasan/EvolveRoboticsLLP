@@ -1,6 +1,8 @@
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 
+import type { ContinueLearningPlaylist } from '../store/content/types/continueLearningPlaylists.types';
+
 export type AdminStackParamList = {
   AdminDashboard: undefined;
   ManageContinueLearningPlaylists: undefined;
@@ -24,6 +26,10 @@ export type RootStackParamList = {
   PrivacySettings: undefined;
   NotificationPreferences: undefined;
   Profile: undefined;
+  /** YouTube playlist course — video list and in-app player. */
+  CoursePlaylist: { playlist: ContinueLearningPlaylist };
+  /** All course playlists (same data as home carousel). */
+  Courses: undefined;
   /** Registered only for admin users after role resolves. */
   AdminStack: undefined;
   /** Fallback when a non-admin attempts restricted navigation. */

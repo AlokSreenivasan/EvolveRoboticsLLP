@@ -56,6 +56,9 @@ function HomeScreen() {
       case 'notifications':
         navigation.navigate('NotificationPreferences');
         break;
+      case 'courses':
+        navigation.navigate('Courses');
+        break;
       case 'home':
       default:
         break;
@@ -86,7 +89,11 @@ function HomeScreen() {
         <HeroBannerCarousel />
 
         <View style={styles.section}>
-          <HomeSectionHeader title="Continue Learning" actionLabel="View All" />
+          <HomeSectionHeader
+            title="Courses"
+            actionLabel="View All"
+            onActionPress={() => navigation.navigate('Courses')}
+          />
           {playlistsLoading ? (
             <ActivityIndicator
               color={colors.primary}
@@ -94,7 +101,7 @@ function HomeScreen() {
             />
           ) : playlists.length === 0 ? (
             <Text style={styles.playlistsEmpty}>
-              New learning playlists will appear here soon.
+              New courses will appear here soon.
             </Text>
           ) : (
             <ScrollView
@@ -107,6 +114,9 @@ function HomeScreen() {
                   playlist={playlist}
                   videosWatched={getVideosWatched(playlist.id)}
                   accentIndex={index}
+                  onPress={() =>
+                    navigation.navigate('CoursePlaylist', { playlist })
+                  }
                 />
               ))}
             </ScrollView>
