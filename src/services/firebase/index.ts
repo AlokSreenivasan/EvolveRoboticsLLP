@@ -65,6 +65,10 @@ export {
   updateContinueLearningPlaylist,
 } from './continueLearningPlaylistsService';
 export {
+  recordPlaylistVideoEngagement,
+  subscribeContinueLearningProgress,
+} from './continueLearningProgressService';
+export {
   createUserProfile,
   createUserProfileIfNotExists,
   deleteUserProfile,

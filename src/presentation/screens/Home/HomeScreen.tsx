@@ -28,6 +28,7 @@ import { LoginScreenNavigationProp } from '../../../types/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { useAdminNavigation } from '../../hooks/useAdminNavigation';
 import { useContinueLearningPlaylists } from '../../hooks/useContinueLearningPlaylists';
+import { useContinueLearningProgress } from '../../hooks/useContinueLearningProgress';
 import { useStoredProfileFullName } from '../../hooks/useStoredProfileFullName';
 import { useUserRole } from '../../hooks/useUserRole';
 
@@ -42,6 +43,7 @@ function HomeScreen() {
   const { isAdmin, roleLoading } = useUserRole();
   const { openAdmin } = useAdminNavigation();
   const { playlists, loading: playlistsLoading } = useContinueLearningPlaylists();
+  const { getVideosWatched } = useContinueLearningProgress();
 
   const handleTabPress = (tab: HomeTabKey) => {
     switch (tab) {
@@ -99,8 +101,13 @@ function HomeScreen() {
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.horizontalList}>
-              {playlists.map(playlist => (
-                <ContinueLearningCard key={playlist.id} playlist={playlist} />
+              {playlists.map((playlist, index) => (
+                <ContinueLearningCard
+                  key={playlist.id}
+                  playlist={playlist}
+                  videosWatched={getVideosWatched(playlist.id)}
+                  accentIndex={index}
+                />
               ))}
             </ScrollView>
           )}

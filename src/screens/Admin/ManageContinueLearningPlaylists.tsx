@@ -50,6 +50,7 @@ type PlaylistFormState = {
   subtitle: string;
   imageUri: string;
   playlistUrl: string;
+  videoCount: string;
   isPublished: boolean;
 };
 
@@ -58,8 +59,17 @@ const EMPTY_FORM: PlaylistFormState = {
   subtitle: '',
   imageUri: '',
   playlistUrl: '',
+  videoCount: '1',
   isPublished: true,
 };
+
+function parseVideoCount(value: string): number | null {
+  const parsed = Math.trunc(Number(value.trim()));
+  if (!Number.isFinite(parsed) || parsed < 1 || parsed > 500) {
+    return null;
+  }
+  return parsed;
+}
 
 function isPermissionDenied(error: unknown): boolean {
   const code = (error as { code?: string } | null)?.code;
@@ -132,6 +142,7 @@ function ManageContinueLearningPlaylists() {
       subtitle: playlist.subtitle,
       imageUri: playlist.imageUri,
       playlistUrl: playlist.playlistUrl,
+      videoCount: String(playlist.videoCount),
       isPublished: playlist.isPublished,
     });
     setLocalThumbnailUri(null);
@@ -182,6 +193,15 @@ function ManageContinueLearningPlaylists() {
       return;
     }
 
+    const videoCount = parseVideoCount(current.videoCount);
+    if (videoCount == null) {
+      Alert.alert(
+        'Video count required',
+        'Enter the total number of videos in this YouTube playlist (1–500).',
+      );
+      return;
+    }
+
     const hasAdmin = await isAdmin();
     if (!hasAdmin) {
       const uid = getCurrentUserId();
@@ -215,6 +235,7 @@ function ManageContinueLearningPlaylists() {
         subtitle: current.subtitle.trim(),
         imageUri,
         playlistUrl,
+        videoCount,
         isPublished: current.isPublished,
       };
 
@@ -323,6 +344,10 @@ function ManageContinueLearningPlaylists() {
                   {playlist.subtitle ? (
                     <Text style={styles.cardSubtitle}>{playlist.subtitle}</Text>
                   ) : null}
+                  <Text style={styles.cardMeta}>
+                    {playlist.videoCount} video
+                    {playlist.videoCount === 1 ? '' : 's'}
+                  </Text>
                   {!playlist.isPublished ? (
                     <Text style={styles.draftBadge}>Draft</Text>
                   ) : null}
@@ -391,6 +416,15 @@ function ManageContinueLearningPlaylists() {
                 setForm(prev => ({ ...prev, subtitle }))
               }
               placeholder="Introduction to Robotics"
+            />
+            <FormField
+              label="Number of videos in playlist"
+              value={form.videoCount}
+              onChangeText={videoCount =>
+                setForm(prev => ({ ...prev, videoCount }))
+              }
+              placeholder="18"
+              keyboardType="number-pad"
             />
             <Text style={styles.fieldLabel}>Thumbnail</Text>
             <TouchableOpacity
@@ -464,7 +498,7 @@ type FormFieldProps = {
   onChangeText: (value: string) => void;
   placeholder?: string;
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
-  keyboardType?: 'default' | 'url';
+  keyboardType?: 'default' | 'url' | 'number-pad';
 };
 
 function FormField({
@@ -598,6 +632,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textSecondary,
     marginTop: 2,
+  },
+  cardMeta: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginTop: 4,
   },
   draftBadge: {
     marginTop: 6,

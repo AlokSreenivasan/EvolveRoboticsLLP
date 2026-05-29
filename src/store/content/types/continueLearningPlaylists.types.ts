@@ -5,6 +5,7 @@ export type ContinueLearningPlaylistDocument = {
   subtitle: string;
   imageUri: string;
   playlistUrl: string;
+  videoCount: number;
   sortOrder: number;
   isPublished: boolean;
   createdAt: FirebaseFirestoreTypes.FieldValue;
@@ -17,6 +18,7 @@ export type ContinueLearningPlaylist = {
   subtitle: string;
   imageUri: string;
   playlistUrl: string;
+  videoCount: number;
   sortOrder: number;
   isPublished: boolean;
   createdAt: FirebaseFirestoreTypes.Timestamp | null;
@@ -28,6 +30,7 @@ export type CreateContinueLearningPlaylistInput = {
   subtitle: string;
   imageUri: string;
   playlistUrl: string;
+  videoCount: number;
   isPublished?: boolean;
 };
 

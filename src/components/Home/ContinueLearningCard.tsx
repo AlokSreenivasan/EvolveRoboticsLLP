@@ -7,20 +7,47 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Play, Youtube } from 'lucide-react-native';
+import { BookOpen, Play } from 'lucide-react-native';
 
 import { cardShadow, colors } from '../../constants/theme';
+import { recordPlaylistVideoEngagement } from '../../services/firebase/continueLearningProgressService';
 import type { ContinueLearningPlaylist } from '../../store/content/types/continueLearningPlaylists.types';
+import {
+  computeProgressPercent,
+  formatVideoProgressLabel,
+} from '../../utils/continueLearning/formatVideoProgress';
+
+const CARD_ACCENTS = [
+  { progressColor: colors.primary, badgeColor: colors.primaryLight },
+  { progressColor: colors.accentGreen, badgeColor: '#E8F5E9' },
+  { progressColor: '#9C27B0', badgeColor: '#F3E5F5' },
+] as const;
 
 type ContinueLearningCardProps = {
   playlist: ContinueLearningPlaylist;
+  videosWatched: number;
+  accentIndex?: number;
 };
 
-function ContinueLearningCard({ playlist }: ContinueLearningCardProps) {
+function ContinueLearningCard({
+  playlist,
+  videosWatched,
+  accentIndex = 0,
+}: ContinueLearningCardProps) {
+  const accent = CARD_ACCENTS[accentIndex % CARD_ACCENTS.length];
+  const progress = computeProgressPercent(videosWatched, playlist.videoCount);
+  const progressLabel = formatVideoProgressLabel(
+    videosWatched,
+    playlist.videoCount,
+  );
+
   const handlePlay = () => {
     if (!playlist.playlistUrl) {
       return;
     }
+    void recordPlaylistVideoEngagement(playlist.id, playlist.videoCount).catch(
+      () => undefined,
+    );
     Linking.openURL(playlist.playlistUrl).catch(() => undefined);
   };
 
@@ -32,9 +59,10 @@ function ContinueLearningCard({ playlist }: ContinueLearningCardProps) {
         ) : (
           <View style={[styles.image, styles.imagePlaceholder]} />
         )}
-        <View style={styles.badge}>
-          <Youtube size={12} color={colors.primary} strokeWidth={2} />
-          <Text style={styles.badgeText}>Playlist</Text>
+        <View style={[styles.badge, { backgroundColor: accent.badgeColor }]}>
+          <Text style={[styles.badgeText, { color: accent.progressColor }]}>
+            {progress}%
+          </Text>
         </View>
         <TouchableOpacity
           style={styles.playButton}
@@ -51,10 +79,27 @@ function ContinueLearningCard({ playlist }: ContinueLearningCardProps) {
           {playlist.title}
         </Text>
         {playlist.subtitle ? (
-          <Text style={styles.subtitle} numberOfLines={2}>
+          <Text style={styles.subtitle} numberOfLines={1}>
             {playlist.subtitle}
           </Text>
         ) : null}
+
+        <View style={styles.progressTrack}>
+          <View
+            style={[
+              styles.progressFill,
+              {
+                width: `${progress}%`,
+                backgroundColor: accent.progressColor,
+              },
+            ]}
+          />
+        </View>
+
+        <View style={styles.footer}>
+          <BookOpen size={14} color={colors.primary} strokeWidth={2} />
+          <Text style={styles.videos}>{progressLabel}</Text>
+        </View>
       </View>
     </View>
   );
@@ -87,18 +132,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     left: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
-    backgroundColor: colors.primaryLight,
   },
   badgeText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
-    color: colors.primary,
   },
   playButton: {
     position: 'absolute',
@@ -122,6 +162,27 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   subtitle: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginBottom: 10,
+  },
+  progressTrack: {
+    height: 4,
+    backgroundColor: colors.primaryMuted,
+    borderRadius: 2,
+    overflow: 'hidden',
+    marginBottom: 10,
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  videos: {
     fontSize: 12,
     color: colors.textSecondary,
   },

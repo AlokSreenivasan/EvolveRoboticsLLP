@@ -37,6 +37,10 @@ function mapPlaylist(
     subtitle: data?.subtitle?.trim() ?? '',
     imageUri: data?.imageUri?.trim() ?? '',
     playlistUrl: data?.playlistUrl?.trim() ?? '',
+    videoCount:
+      typeof data?.videoCount === 'number' && data.videoCount > 0
+        ? Math.trunc(data.videoCount)
+        : 1,
     sortOrder: typeof data?.sortOrder === 'number' ? data.sortOrder : 0,
     isPublished: data?.isPublished === true,
     createdAt: isTimestamp(data?.createdAt) ? data?.createdAt : null,
@@ -108,6 +112,7 @@ export async function createContinueLearningPlaylist(
       subtitle: input.subtitle.trim(),
       imageUri: input.imageUri.trim(),
       playlistUrl: input.playlistUrl.trim(),
+      videoCount: Math.max(1, Math.trunc(input.videoCount)),
       sortOrder,
       isPublished: input.isPublished ?? true,
       createdAt: firestore.FieldValue.serverTimestamp(),
@@ -151,6 +156,9 @@ export async function updateContinueLearningPlaylist(
     }
     if (input.playlistUrl !== undefined) {
       updates.playlistUrl = input.playlistUrl.trim();
+    }
+    if (input.videoCount !== undefined) {
+      updates.videoCount = Math.max(1, Math.trunc(input.videoCount));
     }
     if (input.sortOrder !== undefined) {
       updates.sortOrder = input.sortOrder;

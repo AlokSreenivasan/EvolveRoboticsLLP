@@ -17,6 +17,12 @@ service cloud.firestore {
         && isValidProfileDataAfterUpdate();
 
       allow delete: if isOwner(userId);
+
+      match /continueLearningProgress/{playlistId} {
+        allow read: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidContinueLearningProgress();
+        allow delete: if isOwner(userId);
+      }
     }
 
     match /appContent/{docId} {
@@ -151,6 +157,9 @@ function isValidContinueLearningPlaylistFields(data) {
     && data.playlistUrl is string
     && data.playlistUrl.size() > 0
     && data.playlistUrl.size() <= 8192
+    && data.videoCount is number
+    && data.videoCount >= 1
+    && data.videoCount <= 500
     && data.sortOrder is number
     && data.sortOrder >= 0
     && data.isPublished is bool;
@@ -162,20 +171,14 @@ function isValidContinueLearningPlaylistCreate() {
 }
 
 function isValidContinueLearningPlaylistUpdate() {
+  return isValidContinueLearningPlaylistFields(request.resource.data);
+}
+
+function isValidContinueLearningProgress() {
   let data = request.resource.data;
-  return data.title is string
-    && data.title.size() > 0
-    && data.title.size() <= 200
-    && data.subtitle is string
-    && data.subtitle.size() <= 300
-    && data.imageUri is string
-    && data.imageUri.size() <= 8192
-    && data.playlistUrl is string
-    && data.playlistUrl.size() > 0
-    && data.playlistUrl.size() <= 8192
-    && data.sortOrder is number
-    && data.sortOrder >= 0
-    && data.isPublished is bool;
+  return data.videosWatched is number
+    && data.videosWatched >= 0
+    && data.videosWatched <= 500;
 }
 
 function hasRequiredProfileFields() {
