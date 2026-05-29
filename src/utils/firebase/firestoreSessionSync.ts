@@ -1,4 +1,4 @@
-import { getAuth } from '@react-native-firebase/auth';
+import { getAuth, getIdToken, reload } from '@react-native-firebase/auth';
 import { Platform } from 'react-native';
 
 import {
@@ -24,8 +24,8 @@ export async function syncFirestoreAuthSession(): Promise<string> {
     throw new Error('You must be signed in to continue.');
   }
 
-  await user.reload();
-  await user.getIdToken(true);
+  await reload(user);
+  await getIdToken(user, true);
   await enableNetwork(db);
 
   if (Platform.OS === 'ios') {

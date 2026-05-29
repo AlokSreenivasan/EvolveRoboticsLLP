@@ -1,7 +1,9 @@
 import {
   EmailAuthProvider,
   getAuth,
+  getIdToken,
   onAuthStateChanged as subscribeToAuthStateChanged,
+  reload,
   sendPasswordResetEmail as sendFirebasePasswordResetEmail,
   signInWithEmailAndPassword as signInWithEmailAndPasswordModular,
   signOut as signOutFirebase,
@@ -169,8 +171,8 @@ export async function refreshAuthSessionForSensitiveOperation(): Promise<void> {
     return;
   }
 
-  await user.reload();
-  await user.getIdToken(true);
+  await reload(user);
+  await getIdToken(user, true);
 
   if (__DEV__) {
     console.log('[refreshAuthSessionForSensitiveOperation]', { uid: user.uid });
