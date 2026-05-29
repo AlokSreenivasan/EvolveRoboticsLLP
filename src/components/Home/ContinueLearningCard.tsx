@@ -26,6 +26,8 @@ type ContinueLearningCardProps = {
   videosWatched: number;
   accentIndex?: number;
   onPress?: () => void;
+  /** Carousel strip on home; full-width stacked cards on the list screen. */
+  variant?: 'carousel' | 'list';
 };
 
 function ContinueLearningCard({
@@ -33,7 +35,9 @@ function ContinueLearningCard({
   videosWatched,
   accentIndex = 0,
   onPress,
+  variant = 'carousel',
 }: ContinueLearningCardProps) {
+  const isList = variant === 'list';
   const accent = CARD_ACCENTS[accentIndex % CARD_ACCENTS.length];
   const progress = computeProgressPercent(videosWatched, playlist.videoCount);
   const progressLabel = formatVideoProgressLabel(
@@ -43,13 +47,13 @@ function ContinueLearningCard({
 
   return (
     <TouchableOpacity
-      style={styles.card}
+      style={[styles.card, isList && styles.cardList]}
       activeOpacity={0.9}
       onPress={onPress}
       disabled={!onPress}
       accessibilityRole="button"
       accessibilityLabel={`Open course ${playlist.title}`}>
-      <View style={styles.imageWrap}>
+      <View style={[styles.imageWrap, isList && styles.imageWrapList]}>
         {playlist.imageUri ? (
           <Image source={{ uri: playlist.imageUri }} style={styles.image} />
         ) : (
@@ -60,17 +64,28 @@ function ContinueLearningCard({
             {progress}%
           </Text>
         </View>
-        <View style={styles.playButton} accessibilityElementsHidden>
-          <Play size={18} color="#fff" fill="#fff" strokeWidth={0} />
+        <View
+          style={[styles.playButton, isList && styles.playButtonList]}
+          accessibilityElementsHidden>
+          <Play
+            size={isList ? 22 : 18}
+            color="#fff"
+            fill="#fff"
+            strokeWidth={0}
+          />
         </View>
       </View>
 
-      <View style={styles.body}>
-        <Text style={styles.title} numberOfLines={1}>
+      <View style={[styles.body, isList && styles.bodyList]}>
+        <Text
+          style={[styles.title, isList && styles.titleList]}
+          numberOfLines={isList ? 2 : 1}>
           {playlist.title}
         </Text>
         {playlist.subtitle ? (
-          <Text style={styles.subtitle} numberOfLines={1}>
+          <Text
+            style={[styles.subtitle, isList && styles.subtitleList]}
+            numberOfLines={isList ? 2 : 1}>
             {playlist.subtitle}
           </Text>
         ) : null}
@@ -107,9 +122,17 @@ const styles = StyleSheet.create({
     borderColor: colors.primaryMuted,
     ...cardShadow,
   },
+  cardList: {
+    width: '100%',
+    marginRight: 0,
+    marginBottom: 16,
+  },
   imageWrap: {
     height: 120,
     position: 'relative',
+  },
+  imageWrapList: {
+    height: 200,
   },
   image: {
     width: '100%',
@@ -143,8 +166,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingLeft: 2,
   },
+  playButtonList: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    bottom: 14,
+    right: 14,
+    paddingLeft: 3,
+  },
   body: {
     padding: 12,
+  },
+  bodyList: {
+    padding: 16,
   },
   title: {
     fontSize: 15,
@@ -152,10 +186,20 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     marginBottom: 2,
   },
+  titleList: {
+    fontSize: 18,
+    lineHeight: 24,
+    marginBottom: 4,
+  },
   subtitle: {
     fontSize: 12,
     color: colors.textSecondary,
     marginBottom: 10,
+  },
+  subtitleList: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 12,
   },
   progressTrack: {
     height: 4,

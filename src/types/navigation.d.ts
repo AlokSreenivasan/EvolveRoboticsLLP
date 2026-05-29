@@ -37,6 +37,8 @@ export type RootStackParamList = {
   };
   /** Course catalog — admin-managed list with thumbnails and duration. */
   Courses: undefined;
+  /** Full list of continue-learning course video cards from home. */
+  ContinueLearningList: undefined;
   /** Registered only for admin users after role resolves. */
   AdminStack: undefined;
   /** Fallback when a non-admin attempts restricted navigation. */

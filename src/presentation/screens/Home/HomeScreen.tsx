@@ -20,7 +20,6 @@ import HomeSectionHeader from '../../../components/Home/HomeSectionHeader';
 import ImportantUpdatesSection from '../../../components/Home/ImportantUpdatesSection';
 import QuickAccessGrid from '../../../components/Home/QuickAccessGrid';
 import UpcomingEventsSection from '../../../components/Home/UpcomingEventsSection';
-import { HOME_NOTIFICATION_COUNT } from '../../../constants/homeScreenConstants';
 import { colors, spacing } from '../../../constants/theme';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
 import { useAdminNavigation } from '../../hooks/useAdminNavigation';
@@ -46,16 +45,13 @@ function HomeScreen() {
       case 'admin':
         openAdmin();
         break;
-      case 'profile':
-        navigation.navigate('Profile');
-        break;
-      case 'notifications':
-        navigation.navigate('NotificationPreferences');
+      case 'settings':
+        navigation.navigate('Settings');
         break;
       case 'courses':
         navigation.navigate('Courses');
         break;
-      case 'calendar':
+      case 'events':
         scrollRef.current?.scrollToEnd({ animated: true });
         break;
       case 'home':
@@ -69,10 +65,7 @@ function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <HomeHeader
-        displayName={displayName}
-        onMenuPress={() => navigation.navigate('Settings')}
-      />
+      <HomeHeader displayName={displayName} />
 
       <ScrollView
         ref={scrollRef}
@@ -89,7 +82,7 @@ function HomeScreen() {
           <HomeSectionHeader
             title="Continue learning"
             actionLabel="View all"
-            onActionPress={() => navigation.navigate('Courses')}
+            onActionPress={() => navigation.navigate('ContinueLearningList')}
           />
           {playlistsLoading ? (
             <ActivityIndicator
@@ -133,7 +126,6 @@ function HomeScreen() {
       <View style={styles.tabBarWrap}>
         <HomeBottomTabBar
           activeTab="home"
-          notificationCount={HOME_NOTIFICATION_COUNT}
           showAdminTab={!roleLoading && isAdmin}
           onTabPress={handleTabPress}
         />

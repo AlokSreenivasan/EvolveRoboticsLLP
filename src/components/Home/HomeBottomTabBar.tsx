@@ -2,28 +2,24 @@ import React from 'react';
 import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  Bell,
   BookOpen,
   Calendar,
   Home,
+  Settings,
   Shield,
-  User,
 } from 'lucide-react-native';
 
-import { HOME_NOTIFICATION_COUNT } from '../../constants/homeScreenConstants';
 import { colors } from '../../constants/theme';
 
 export type HomeTabKey =
   | 'home'
   | 'courses'
-  | 'calendar'
-  | 'notifications'
-  | 'profile'
+  | 'events'
+  | 'settings'
   | 'admin';
 
 type HomeBottomTabBarProps = {
   activeTab?: HomeTabKey;
-  notificationCount?: number;
   /** When true, shows the Admin tab (admin users only). */
   showAdminTab?: boolean;
   onTabPress?: (tab: HomeTabKey) => void;
@@ -31,10 +27,9 @@ type HomeBottomTabBarProps = {
 
 const BASE_TABS: { key: HomeTabKey; label: string; icon: typeof Home }[] = [
   { key: 'home', label: 'Home', icon: Home },
-  { key: 'courses', label: 'Courses', icon: BookOpen },
-  { key: 'calendar', label: 'Calendar', icon: Calendar },
-  { key: 'notifications', label: 'Notifications', icon: Bell },
-  { key: 'profile', label: 'Profile', icon: User },
+  { key: 'courses', label: 'Learn', icon: BookOpen },
+  { key: 'events', label: 'Events', icon: Calendar },
+  { key: 'settings', label: 'Settings', icon: Settings },
 ];
 
 const ADMIN_TAB = { key: 'admin' as const, label: 'Admin', icon: Shield };
@@ -44,20 +39,12 @@ const INACTIVE_COLOR = colors.textMuted;
 
 function HomeBottomTabBar({
   activeTab = 'home',
-  notificationCount = HOME_NOTIFICATION_COUNT,
   showAdminTab = false,
   onTabPress,
 }: HomeBottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const tabs = showAdminTab
-    ? [
-        BASE_TABS[0],
-        BASE_TABS[1],
-        ADMIN_TAB,
-        BASE_TABS[2],
-        BASE_TABS[3],
-        BASE_TABS[4],
-      ]
+    ? [BASE_TABS[0], BASE_TABS[1], ADMIN_TAB, BASE_TABS[2], BASE_TABS[3]]
     : BASE_TABS;
 
   return (
@@ -78,16 +65,10 @@ function HomeBottomTabBar({
             onPress={() => onTabPress?.(tab.key)}
             activeOpacity={0.8}
             accessibilityRole="button"
-            accessibilityState={{ selected: isActive }}>
+            accessibilityState={{ selected: isActive }}
+            accessibilityLabel={tab.label}>
             <View style={styles.iconWrap}>
               <Icon size={22} color={color} strokeWidth={isActive ? 2.5 : 2} />
-              {tab.key === 'notifications' && notificationCount > 0 ? (
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>
-                    {notificationCount > 9 ? '9+' : notificationCount}
-                  </Text>
-                </View>
-              ) : null}
             </View>
             <Text style={[styles.label, { color }]}>{tab.label}</Text>
           </TouchableOpacity>
@@ -122,29 +103,11 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   iconWrap: {
-    position: 'relative',
     marginBottom: 4,
   },
   label: {
     fontSize: 11,
     fontWeight: '600',
-  },
-  badge: {
-    position: 'absolute',
-    top: -4,
-    right: -10,
-    minWidth: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: colors.danger,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-  },
-  badgeText: {
-    color: '#fff',
-    fontSize: 9,
-    fontWeight: '700',
   },
 });
 

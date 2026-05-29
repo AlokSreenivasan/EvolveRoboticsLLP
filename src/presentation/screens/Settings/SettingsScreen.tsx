@@ -100,7 +100,7 @@ function SettingsScreen() {
           </Text>
 
           <AppButton
-            title="Edit Profile"
+            title="Personal details"
             onPress={() => navigation.navigate('Profile')}
             buttonStyle={[styles.outlineButton, styles.outlineButtonInCard]}
             textStyle={styles.outlineButtonText}
