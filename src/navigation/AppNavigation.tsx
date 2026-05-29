@@ -18,6 +18,7 @@ import {
   IntroFlowProvider,
 } from '../presentation/context/IntroFlowContext';
 import { MIN_SPLASH_DURATION_MS } from '../constants/appFlow';
+import { signOutGoogleSdk } from '../services/auth/googleSignInService';
 import {
   isOnboardingComplete,
   markOnboardingComplete,
@@ -65,12 +66,14 @@ function AppNavigation() {
 
       // Reinstall clears AsyncStorage but Firebase may still restore a session
       // from the device keychain — sign out so intro → login flow works cleanly.
-      const clearStaleSession =
-        !onboardingDone && auth().currentUser
-          ? auth().signOut()
-          : Promise.resolve();
+      const clearStaleSession = async () => {
+        if (!onboardingDone && auth().currentUser) {
+          await auth().signOut();
+          await signOutGoogleSdk();
+        }
+      };
 
-      await Promise.all([minSplashDelay, clearStaleSession]);
+      await Promise.all([minSplashDelay, clearStaleSession()]);
 
       if (cancelled) {
         return;

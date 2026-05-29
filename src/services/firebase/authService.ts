@@ -1,5 +1,9 @@
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 
+import {
+  isGoogleAccountProvider,
+  signOutGoogleSdk,
+} from '../auth/googleSignInService';
 import { getErrorMessage } from '../../utils/firebase/errors';
 
 /**
@@ -57,7 +61,14 @@ export function onAuthStateChanged(
 }
 
 export async function signOut(): Promise<void> {
+  const user = getCurrentUser();
+  const hadGoogleProvider = isGoogleAccountProvider(user);
+
   await auth().signOut();
+
+  if (hadGoogleProvider) {
+    await signOutGoogleSdk();
+  }
 }
 
 export function hasEmailPasswordProvider(): boolean {

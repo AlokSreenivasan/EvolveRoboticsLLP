@@ -5,6 +5,7 @@ import {
 } from '../../utils/firebase/extractFirebaseError';
 import { syncFirestoreAuthSession } from '../../utils/firebase/firestoreSessionSync';
 import { FirebaseServiceError, getErrorMessage } from '../../utils/firebase/errors';
+import { signOutGoogleSdk } from '../auth/googleSignInService';
 import { clearLocalUserSessionData } from '../sessionCleanup';
 import {
   getCurrentUser,
@@ -168,8 +169,16 @@ export async function deleteAccount(
       throw new Error('Your session ended before account deletion completed.');
     }
 
+    const hadGoogleProvider = authUser.providerData.some(
+      provider => provider.providerId === 'google.com',
+    );
+
     await authUser.delete();
     await clearLocalUserSessionData();
+
+    if (hadGoogleProvider) {
+      await signOutGoogleSdk();
+    }
   } catch (error) {
     const stage = inferDeleteAccountFailureStage(error);
     const mapped = mapDeleteAccountError(error, stage);

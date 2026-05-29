@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -49,6 +49,16 @@ function LoginScreen() {
   const [emailError, setEmailError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const googleSignInMountedRef = useRef(true);
+
+  useEffect(() => {
+    googleSignInMountedRef.current = true;
+    setGoogleLoading(false);
+
+    return () => {
+      googleSignInMountedRef.current = false;
+    };
+  }, []);
 
   const handleSignIn = async () => {
     if (!isValidEmail(email)) {
@@ -81,13 +91,21 @@ function LoginScreen() {
     setGoogleLoading(true);
     try {
       await signInWithGoogle();
+      if (!googleSignInMountedRef.current) {
+        return;
+      }
       notifyAuthSuccess();
     } catch (error) {
+      if (!googleSignInMountedRef.current) {
+        return;
+      }
       if (!isGoogleSignInCancelled(error)) {
         Alert.alert('Google Sign-In Error', (error as Error)?.message ?? 'Google Sign-In failed.');
       }
     } finally {
-      setGoogleLoading(false);
+      if (googleSignInMountedRef.current) {
+        setGoogleLoading(false);
+      }
     }
   };
 
