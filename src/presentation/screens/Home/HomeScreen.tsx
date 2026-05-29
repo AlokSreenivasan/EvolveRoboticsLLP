@@ -8,7 +8,6 @@ import {
   View,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Calendar } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import ContinueLearningCard from '../../../components/Home/ContinueLearningCard';
@@ -20,9 +19,7 @@ import HomeHeader from '../../../components/Home/HomeHeader';
 import HomeSectionHeader from '../../../components/Home/HomeSectionHeader';
 import ImportantUpdatesSection from '../../../components/Home/ImportantUpdatesSection';
 import QuickAccessGrid from '../../../components/Home/QuickAccessGrid';
-import ScheduleCard from '../../../components/Home/ScheduleCard';
 import UpcomingEventsSection from '../../../components/Home/UpcomingEventsSection';
-import { TODAYS_SCHEDULE } from '../../../constants/homeScreenData';
 import { colors, spacing } from '../../../constants/theme';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
 import { useAuth } from '../../context/AuthContext';
@@ -90,7 +87,7 @@ function HomeScreen() {
 
         <View style={styles.section}>
           <HomeSectionHeader
-            title="Courses"
+            title="Course videos"
             actionLabel="View All"
             onActionPress={() => navigation.navigate('Courses')}
           />
@@ -124,24 +121,6 @@ function HomeScreen() {
         </View>
 
         <ImportantUpdatesSection />
-
-        <View style={styles.section}>
-          <View style={styles.scheduleHeader}>
-            <Text style={styles.scheduleTitle}>Today's Schedule</Text>
-            <View style={styles.scheduleDateRow}>
-              <Calendar size={14} color={colors.primary} strokeWidth={2} />
-              <Text style={styles.scheduleDate}>20 May 2025, Mon</Text>
-            </View>
-          </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.horizontalList}>
-            {TODAYS_SCHEDULE.map(item => (
-              <ScheduleCard key={item.id} item={item} />
-            ))}
-          </ScrollView>
-        </View>
 
         <View style={styles.section}>
           <HomeSectionHeader title="Quick Access" />
@@ -186,28 +165,6 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     lineHeight: 20,
     paddingHorizontal: 4,
-  },
-  scheduleHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-    paddingHorizontal: 4,
-  },
-  scheduleTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  scheduleDateRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  scheduleDate: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    fontWeight: '500',
   },
   tabBarWrap: {
     position: 'absolute',
