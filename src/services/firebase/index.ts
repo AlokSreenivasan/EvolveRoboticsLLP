@@ -20,6 +20,7 @@ export {
   deleteAllUserProfileImages,
   deleteProfileImage,
   deleteProfileImageByUrlSafe,
+  uploadContinueLearningThumbnail,
   uploadCurrentUserProfileImage,
   uploadProfileImage,
 } from './storageService';
@@ -52,6 +53,17 @@ export {
   updateUpcomingEvent,
   updateUpcomingEventsSection,
 } from './upcomingEventsService';
+export {
+  createContinueLearningPlaylist,
+  deleteContinueLearningPlaylist,
+  extractYouTubePlaylistId,
+  isValidYouTubePlaylistUrl,
+  resolveYouTubePlaylistUrl,
+  moveContinueLearningPlaylist,
+  reorderContinueLearningPlaylists,
+  subscribeContinueLearningPlaylists,
+  updateContinueLearningPlaylist,
+} from './continueLearningPlaylistsService';
 export {
   createUserProfile,
   createUserProfileIfNotExists,

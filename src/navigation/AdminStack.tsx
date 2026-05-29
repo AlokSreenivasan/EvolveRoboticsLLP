@@ -7,6 +7,7 @@ import AdminNotifications from '../screens/Admin/Notifications';
 import ManageBanners from '../screens/Admin/ManageBanners';
 import ManageImportantUpdates from '../screens/Admin/ManageImportantUpdates';
 import ManageUpcomingEvents from '../screens/Admin/ManageUpcomingEvents';
+import ManageContinueLearningPlaylists from '../screens/Admin/ManageContinueLearningPlaylists';
 import ManageCourses from '../screens/Admin/ManageCourses';
 import ManageUsers from '../screens/Admin/ManageUsers';
 import type { AdminStackParamList } from '../types/navigation';
@@ -22,6 +23,10 @@ function AdminStackNavigator() {
     <AdminRouteGuard>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="AdminDashboard" component={AdminDashboard} />
+        <Stack.Screen
+          name="ManageContinueLearningPlaylists"
+          component={ManageContinueLearningPlaylists}
+        />
         <Stack.Screen
           name="ManageImportantUpdates"
           component={ManageImportantUpdates}

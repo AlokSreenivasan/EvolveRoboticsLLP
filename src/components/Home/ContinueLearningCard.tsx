@@ -1,67 +1,60 @@
 import React from 'react';
 import {
   Image,
+  Linking,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { BookOpen, Play } from 'lucide-react-native';
+import { Play, Youtube } from 'lucide-react-native';
 
-import type { ContinueLearningCourse } from '../../constants/homeScreenData';
 import { cardShadow, colors } from '../../constants/theme';
+import type { ContinueLearningPlaylist } from '../../store/content/types/continueLearningPlaylists.types';
 
 type ContinueLearningCardProps = {
-  course: ContinueLearningCourse;
+  playlist: ContinueLearningPlaylist;
 };
 
-function ContinueLearningCard({ course }: ContinueLearningCardProps) {
+function ContinueLearningCard({ playlist }: ContinueLearningCardProps) {
+  const handlePlay = () => {
+    if (!playlist.playlistUrl) {
+      return;
+    }
+    Linking.openURL(playlist.playlistUrl).catch(() => undefined);
+  };
+
   return (
     <View style={styles.card}>
       <View style={styles.imageWrap}>
-        <Image source={{ uri: course.imageUri }} style={styles.image} />
-        <View
-          style={[styles.badge, { backgroundColor: course.badgeColor }]}>
-          <Text style={[styles.badgeText, { color: course.progressColor }]}>
-            {course.progress}%
-          </Text>
+        {playlist.imageUri ? (
+          <Image source={{ uri: playlist.imageUri }} style={styles.image} />
+        ) : (
+          <View style={[styles.image, styles.imagePlaceholder]} />
+        )}
+        <View style={styles.badge}>
+          <Youtube size={12} color={colors.primary} strokeWidth={2} />
+          <Text style={styles.badgeText}>Playlist</Text>
         </View>
-        <TouchableOpacity style={styles.playButton} activeOpacity={0.85}>
-          <Play
-            size={18}
-            color="#fff"
-            fill="#fff"
-            strokeWidth={0}
-          />
+        <TouchableOpacity
+          style={styles.playButton}
+          activeOpacity={0.85}
+          onPress={handlePlay}
+          accessibilityRole="button"
+          accessibilityLabel={`Open ${playlist.title} playlist`}>
+          <Play size={18} color="#fff" fill="#fff" strokeWidth={0} />
         </TouchableOpacity>
       </View>
 
       <View style={styles.body}>
         <Text style={styles.title} numberOfLines={1}>
-          {course.title}
+          {playlist.title}
         </Text>
-        <Text style={styles.subtitle} numberOfLines={1}>
-          {course.subtitle}
-        </Text>
-
-        <View style={styles.progressTrack}>
-          <View
-            style={[
-              styles.progressFill,
-              {
-                width: `${course.progress}%`,
-                backgroundColor: course.progressColor,
-              },
-            ]}
-          />
-        </View>
-
-        <View style={styles.footer}>
-          <BookOpen size={14} color={colors.primary} strokeWidth={2} />
-          <Text style={styles.lessons}>
-            {course.lessonsCompleted}/{course.lessonsTotal} Lessons
+        {playlist.subtitle ? (
+          <Text style={styles.subtitle} numberOfLines={2}>
+            {playlist.subtitle}
           </Text>
-        </View>
+        ) : null}
       </View>
     </View>
   );
@@ -87,17 +80,25 @@ const styles = StyleSheet.create({
     height: '100%',
     resizeMode: 'cover',
   },
+  imagePlaceholder: {
+    backgroundColor: colors.primaryMuted,
+  },
   badge: {
     position: 'absolute',
     top: 10,
     left: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
+    backgroundColor: colors.primaryLight,
   },
   badgeText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
+    color: colors.primary,
   },
   playButton: {
     position: 'absolute',
@@ -121,27 +122,6 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   subtitle: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginBottom: 10,
-  },
-  progressTrack: {
-    height: 4,
-    backgroundColor: colors.primaryMuted,
-    borderRadius: 2,
-    overflow: 'hidden',
-    marginBottom: 10,
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 2,
-  },
-  footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  lessons: {
     fontSize: 12,
     color: colors.textSecondary,
   },

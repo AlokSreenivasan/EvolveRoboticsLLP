@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  ActivityIndicator,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -21,14 +22,12 @@ import ImportantUpdatesSection from '../../../components/Home/ImportantUpdatesSe
 import QuickAccessGrid from '../../../components/Home/QuickAccessGrid';
 import ScheduleCard from '../../../components/Home/ScheduleCard';
 import UpcomingEventsSection from '../../../components/Home/UpcomingEventsSection';
-import {
-  CONTINUE_LEARNING_COURSES,
-  TODAYS_SCHEDULE,
-} from '../../../constants/homeScreenData';
+import { TODAYS_SCHEDULE } from '../../../constants/homeScreenData';
 import { colors, spacing } from '../../../constants/theme';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { useAdminNavigation } from '../../hooks/useAdminNavigation';
+import { useContinueLearningPlaylists } from '../../hooks/useContinueLearningPlaylists';
 import { useStoredProfileFullName } from '../../hooks/useStoredProfileFullName';
 import { useUserRole } from '../../hooks/useUserRole';
 
@@ -42,6 +41,7 @@ function HomeScreen() {
   const { profileImage } = useAuth();
   const { isAdmin, roleLoading } = useUserRole();
   const { openAdmin } = useAdminNavigation();
+  const { playlists, loading: playlistsLoading } = useContinueLearningPlaylists();
 
   const handleTabPress = (tab: HomeTabKey) => {
     switch (tab) {
@@ -85,14 +85,25 @@ function HomeScreen() {
 
         <View style={styles.section}>
           <HomeSectionHeader title="Continue Learning" actionLabel="View All" />
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.horizontalList}>
-            {CONTINUE_LEARNING_COURSES.map(course => (
-              <ContinueLearningCard key={course.id} course={course} />
-            ))}
-          </ScrollView>
+          {playlistsLoading ? (
+            <ActivityIndicator
+              color={colors.primary}
+              style={styles.playlistsLoader}
+            />
+          ) : playlists.length === 0 ? (
+            <Text style={styles.playlistsEmpty}>
+              New learning playlists will appear here soon.
+            </Text>
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalList}>
+              {playlists.map(playlist => (
+                <ContinueLearningCard key={playlist.id} playlist={playlist} />
+              ))}
+            </ScrollView>
+          )}
         </View>
 
         <ImportantUpdatesSection />
@@ -149,6 +160,15 @@ const styles = StyleSheet.create({
   },
   horizontalList: {
     paddingRight: 4,
+  },
+  playlistsLoader: {
+    marginVertical: 24,
+  },
+  playlistsEmpty: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    lineHeight: 20,
+    paddingHorizontal: 4,
   },
   scheduleHeader: {
     flexDirection: 'row',

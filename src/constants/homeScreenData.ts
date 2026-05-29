@@ -1,17 +1,5 @@
 import { colors } from './theme';
 
-export type ContinueLearningCourse = {
-  id: string;
-  title: string;
-  subtitle: string;
-  progress: number;
-  progressColor: string;
-  badgeColor: string;
-  lessonsCompleted: number;
-  lessonsTotal: number;
-  imageUri: string;
-};
-
 export type ScheduleItem = {
   id: string;
   time: string;
@@ -65,45 +53,6 @@ export const HERO_SLIDES = [
     highlight: 'Collaborate. Win.',
     subtitle: 'Prepare for hackathons and school robotics competitions.',
     cta: 'Explore Events',
-  },
-];
-
-export const CONTINUE_LEARNING_COURSES: ContinueLearningCourse[] = [
-  {
-    id: '1',
-    title: 'Robotics Basics',
-    subtitle: 'Introduction to Robotics',
-    progress: 65,
-    progressColor: colors.primary,
-    badgeColor: colors.primaryLight,
-    lessonsCompleted: 12,
-    lessonsTotal: 18,
-    imageUri:
-      'https://images.unsplash.com/photo-1535378917042-748a6b064f1e?w=400&auto=format&fit=crop',
-  },
-  {
-    id: '2',
-    title: 'Advanced Sensors',
-    subtitle: 'Sensor Integration',
-    progress: 40,
-    progressColor: '#4CAF50',
-    badgeColor: '#E8F5E9',
-    lessonsCompleted: 8,
-    lessonsTotal: 20,
-    imageUri:
-      'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&auto=format&fit=crop',
-  },
-  {
-    id: '3',
-    title: 'AI in Robotics',
-    subtitle: 'Machine Learning Basics',
-    progress: 20,
-    progressColor: '#9C27B0',
-    badgeColor: '#F3E5F5',
-    lessonsCompleted: 4,
-    lessonsTotal: 20,
-    imageUri:
-      'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=400&auto=format&fit=crop',
   },
 ];
 

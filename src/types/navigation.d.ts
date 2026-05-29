@@ -3,6 +3,7 @@ import { RouteProp } from '@react-navigation/native';
 
 export type AdminStackParamList = {
   AdminDashboard: undefined;
+  ManageContinueLearningPlaylists: undefined;
   ManageImportantUpdates: undefined;
   ManageUpcomingEvents: undefined;
   ManageCourses: undefined;

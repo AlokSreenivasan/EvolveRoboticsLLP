@@ -3,6 +3,7 @@ export const FIRESTORE_COLLECTIONS = {
   appContent: 'appContent',
   importantUpdates: 'importantUpdates',
   upcomingEvents: 'upcomingEvents',
+  continueLearningPlaylists: 'continueLearningPlaylists',
 } as const;
 
 /** Document IDs inside {@link FIRESTORE_COLLECTIONS.appContent}. */
@@ -15,4 +16,10 @@ export const STORAGE_PATHS = {
   /** Base path: profileImages/{uid} */
   userProfileImage: (uid: string, extension = '.jpg') =>
     `profileImages/${uid}${extension}`,
+  /** continueLearningThumbnails/{uid}/{playlistId}.jpg */
+  continueLearningThumbnail: (
+    uid: string,
+    playlistId: string,
+    extension = '.jpg',
+  ) => `continueLearningThumbnails/${uid}/${playlistId}${extension}`,
 } as const;

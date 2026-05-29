@@ -7,6 +7,7 @@ import {
   ImageIcon,
   LayoutDashboard,
   Megaphone,
+  PlayCircle,
   Users,
 } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -26,6 +27,12 @@ type AdminMenuItem = {
 };
 
 const MENU_ITEMS: AdminMenuItem[] = [
+  {
+    key: 'ManageContinueLearningPlaylists',
+    title: 'Continue Learning',
+    description: 'Add YouTube playlists for the home carousel',
+    icon: PlayCircle,
+  },
   {
     key: 'ManageImportantUpdates',
     title: 'Important Updates',

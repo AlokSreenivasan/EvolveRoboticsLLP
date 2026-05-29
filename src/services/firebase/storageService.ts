@@ -1,6 +1,7 @@
 import storage from '@react-native-firebase/storage';
 
 import { assertAuthenticatedUserId } from '../../utils/firebase/assertAuthenticated';
+import { syncFirestoreAuthSession } from '../../utils/firebase/firestoreSessionSync';
 import {
   extractFirebaseErrorDetails,
   isFirebaseNotFoundError,
@@ -25,9 +26,31 @@ function resolveFileExtension(localUri: string): string {
   return '.jpg';
 }
 
+function resolveContentType(localUri: string): string {
+  const ext = resolveFileExtension(localUri).replace('.', '');
+  if (ext === 'png') {
+    return 'image/png';
+  }
+  if (ext === 'webp') {
+    return 'image/webp';
+  }
+  return 'image/jpeg';
+}
+
 function buildProfileImageRef(uid: string, localUri: string) {
   const extension = resolveFileExtension(localUri);
   return storage().ref(STORAGE_PATHS.userProfileImage(uid, extension));
+}
+
+function buildContinueLearningThumbnailRef(
+  uid: string,
+  playlistId: string,
+  localUri: string,
+) {
+  const extension = resolveFileExtension(localUri);
+  return storage().ref(
+    STORAGE_PATHS.continueLearningThumbnail(uid, playlistId, extension),
+  );
 }
 
 /**
@@ -45,7 +68,9 @@ export async function uploadProfileImage(
     }
 
     const reference = buildProfileImageRef(uid, trimmedUri);
-    await reference.putFile(trimmedUri);
+    await reference.putFile(trimmedUri, {
+      contentType: resolveContentType(trimmedUri),
+    });
     return reference.getDownloadURL();
   } catch (error) {
     throw wrapFirebaseError(
@@ -64,6 +89,40 @@ export async function uploadCurrentUserProfileImage(
 ): Promise<string> {
   const uid = assertAuthenticatedUserId();
   return uploadProfileImage(uid, localFileUri);
+}
+
+/** Uploads a playlist thumbnail; requires Storage rules for continueLearningThumbnails. */
+export async function uploadContinueLearningThumbnail(
+  playlistId: string,
+  localFileUri: string,
+): Promise<string> {
+  try {
+    const trimmedUri = localFileUri.trim();
+    if (!trimmedUri) {
+      throw new Error('A valid local image URI is required.');
+    }
+    if (!playlistId.trim()) {
+      throw new Error('A playlist id is required.');
+    }
+
+    const uid = await syncFirestoreAuthSession();
+
+    const reference = buildContinueLearningThumbnailRef(
+      uid,
+      playlistId.trim(),
+      trimmedUri,
+    );
+    await reference.putFile(trimmedUri, {
+      contentType: resolveContentType(trimmedUri),
+    });
+    return reference.getDownloadURL();
+  } catch (error) {
+    throw wrapFirebaseError(
+      error,
+      'UPLOAD_FAILED',
+      'Failed to upload playlist thumbnail.',
+    );
+  }
 }
 
 /**
