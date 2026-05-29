@@ -42,6 +42,17 @@ export {
   updateImportantUpdatesSection,
 } from './importantUpdatesService';
 export {
+  createUpcomingEvent,
+  deleteUpcomingEvent,
+  ensureUpcomingEventsSectionDefaults,
+  moveUpcomingEvent,
+  reorderUpcomingEvents,
+  subscribeUpcomingEvents,
+  subscribeUpcomingEventsSection,
+  updateUpcomingEvent,
+  updateUpcomingEventsSection,
+} from './upcomingEventsService';
+export {
   createUserProfile,
   createUserProfileIfNotExists,
   deleteUserProfile,

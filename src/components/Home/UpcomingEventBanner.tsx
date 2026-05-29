@@ -1,26 +1,36 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { UPCOMING_EVENT } from '../../constants/homeScreenData';
 import { cardShadow, colors } from '../../constants/theme';
+import type { UpcomingEvent } from '../../store/content/types/upcomingEvents.types';
 
-function UpcomingEventBanner() {
+type UpcomingEventBannerProps = {
+  event: UpcomingEvent;
+};
+
+function UpcomingEventBanner({ event }: UpcomingEventBannerProps) {
   return (
     <View style={styles.card}>
       <View style={styles.dateBlock}>
-        <Text style={styles.month}>{UPCOMING_EVENT.month}</Text>
-        <Text style={styles.day}>{UPCOMING_EVENT.day}</Text>
+        <Text style={styles.month}>{event.month}</Text>
+        <Text style={styles.day}>{event.day}</Text>
       </View>
 
       <View style={styles.details}>
-        <Text style={styles.title}>{UPCOMING_EVENT.title}</Text>
-        <Text style={styles.meta}>{UPCOMING_EVENT.dateRange}</Text>
-        <Text style={styles.meta}>{UPCOMING_EVENT.timeRange}</Text>
+        <Text style={styles.title}>{event.title}</Text>
+        {event.dateRange ? (
+          <Text style={styles.meta}>{event.dateRange}</Text>
+        ) : null}
+        {event.timeRange ? (
+          <Text style={styles.meta}>{event.timeRange}</Text>
+        ) : null}
       </View>
 
-      <View style={styles.badge}>
-        <Text style={styles.badgeText}>{UPCOMING_EVENT.daysLeft}</Text>
-      </View>
+      {event.daysLeftLabel ? (
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>{event.daysLeftLabel}</Text>
+        </View>
+      ) : null}
     </View>
   );
 }

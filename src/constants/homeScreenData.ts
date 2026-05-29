@@ -191,12 +191,3 @@ export const QUICK_ACCESS_ITEMS: QuickAccessItem[] = [
   },
 ];
 
-export const UPCOMING_EVENT = {
-  month: 'MAY',
-  day: '25',
-  title: 'Robotics Workshop',
-  dateRange: '25 May 2025',
-  timeRange: '10:00 AM – 1:00 PM',
-  daysLeft: '2 Days Left',
-};
-

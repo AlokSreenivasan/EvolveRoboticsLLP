@@ -6,6 +6,7 @@ import AdminDashboard from '../screens/Admin/AdminDashboard';
 import AdminNotifications from '../screens/Admin/Notifications';
 import ManageBanners from '../screens/Admin/ManageBanners';
 import ManageImportantUpdates from '../screens/Admin/ManageImportantUpdates';
+import ManageUpcomingEvents from '../screens/Admin/ManageUpcomingEvents';
 import ManageCourses from '../screens/Admin/ManageCourses';
 import ManageUsers from '../screens/Admin/ManageUsers';
 import type { AdminStackParamList } from '../types/navigation';
@@ -24,6 +25,10 @@ function AdminStackNavigator() {
         <Stack.Screen
           name="ManageImportantUpdates"
           component={ManageImportantUpdates}
+        />
+        <Stack.Screen
+          name="ManageUpcomingEvents"
+          component={ManageUpcomingEvents}
         />
         <Stack.Screen name="ManageCourses" component={ManageCourses} />
         <Stack.Screen name="ManageBanners" component={ManageBanners} />

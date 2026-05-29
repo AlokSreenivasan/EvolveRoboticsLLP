@@ -20,7 +20,7 @@ import HomeSectionHeader from '../../../components/Home/HomeSectionHeader';
 import ImportantUpdatesSection from '../../../components/Home/ImportantUpdatesSection';
 import QuickAccessGrid from '../../../components/Home/QuickAccessGrid';
 import ScheduleCard from '../../../components/Home/ScheduleCard';
-import UpcomingEventBanner from '../../../components/Home/UpcomingEventBanner';
+import UpcomingEventsSection from '../../../components/Home/UpcomingEventsSection';
 import {
   CONTINUE_LEARNING_COURSES,
   TODAYS_SCHEDULE,
@@ -120,13 +120,7 @@ function HomeScreen() {
           <QuickAccessGrid />
         </View>
 
-        <View style={styles.section}>
-          <HomeSectionHeader
-            title="Upcoming Events"
-            actionLabel="View Calendar"
-          />
-          <UpcomingEventBanner />
-        </View>
+        <UpcomingEventsSection />
       </ScrollView>
 
       <View style={styles.tabBarWrap}>

@@ -3,6 +3,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import {
   Bell,
   BookOpen,
+  Calendar,
   ImageIcon,
   LayoutDashboard,
   Megaphone,
@@ -30,6 +31,12 @@ const MENU_ITEMS: AdminMenuItem[] = [
     title: 'Important Updates',
     description: 'Edit home notices, titles, and section order',
     icon: Megaphone,
+  },
+  {
+    key: 'ManageUpcomingEvents',
+    title: 'Upcoming Events',
+    description: 'Create and manage home event cards',
+    icon: Calendar,
   },
   {
     key: 'ManageCourses',
