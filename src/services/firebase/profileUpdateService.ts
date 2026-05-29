@@ -1,8 +1,7 @@
-import auth from '@react-native-firebase/auth';
-
 import type { UserProfile } from '../../store/user/types';
 import { isLocalImageUri } from '../../utils/profile/mapUserProfile';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
+import { getCurrentUser } from './authService';
 import {
   deleteProfileImageByUrlSafe,
   uploadProfileImage,
@@ -43,7 +42,7 @@ function shouldReplaceStoredImage(
 }
 
 async function syncAuthDisplayName(fullName: string): Promise<void> {
-  const currentUser = auth().currentUser;
+  const currentUser = getCurrentUser();
   if (!currentUser || currentUser.displayName === fullName) {
     return;
   }

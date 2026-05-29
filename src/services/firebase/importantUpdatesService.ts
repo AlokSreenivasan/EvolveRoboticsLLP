@@ -1,5 +1,7 @@
-import firestore, {
+import type {
+  DocumentData,
   FirebaseFirestoreTypes,
+  UpdateData,
 } from '@react-native-firebase/firestore';
 
 import {
@@ -19,6 +21,23 @@ import {
   APP_CONTENT_DOCS,
   FIRESTORE_COLLECTIONS,
 } from './constants';
+import {
+  collection,
+  db,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  limit,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
+  setDoc,
+  Timestamp,
+  updateDoc,
+  writeBatch,
+} from './firestoreClient';
 
 function isTimestamp(
   value: unknown,
@@ -32,13 +51,15 @@ function isTimestamp(
 }
 
 function sectionDocRef() {
-  return firestore()
-    .collection(FIRESTORE_COLLECTIONS.appContent)
-    .doc(APP_CONTENT_DOCS.importantUpdatesSection);
+  return doc(
+    db,
+    FIRESTORE_COLLECTIONS.appContent,
+    APP_CONTENT_DOCS.importantUpdatesSection,
+  );
 }
 
 function noticesCollection() {
-  return firestore().collection(FIRESTORE_COLLECTIONS.importantUpdates);
+  return collection(db, FIRESTORE_COLLECTIONS.importantUpdates);
 }
 
 function mapSection(
@@ -84,7 +105,8 @@ export function subscribeImportantUpdatesSection(
   listener: (section: ImportantUpdatesSection) => void,
   onError?: (error: unknown) => void,
 ): () => void {
-  return sectionDocRef().onSnapshot(
+  return onSnapshot(
+    sectionDocRef(),
     snapshot => {
       const data = snapshot.data() as ImportantUpdatesSectionDocument | undefined;
       listener(mapSection(data));
@@ -99,36 +121,39 @@ export function subscribeImportantUpdates(
   onError?: (error: unknown) => void,
 ): () => void {
   const includeUnpublished = options?.includeUnpublished === true;
+  const noticesQuery = query(
+    noticesCollection(),
+    orderBy('sortOrder', 'asc'),
+  );
 
-  return noticesCollection()
-    .orderBy('sortOrder', 'asc')
-    .onSnapshot(
-      snapshot => {
-        const notices = snapshot.docs.map(doc =>
-          mapNotice(doc.id, doc.data() as ImportantUpdateNoticeDocument),
-        );
-        const filtered = includeUnpublished
-          ? notices
-          : notices.filter(notice => notice.isPublished);
-        listener(sortNotices(filtered));
-      },
-      error => onError?.(error),
-    );
+  return onSnapshot(
+    noticesQuery,
+    snapshot => {
+      const notices = snapshot.docs.map(noticeDoc =>
+        mapNotice(noticeDoc.id, noticeDoc.data() as ImportantUpdateNoticeDocument),
+      );
+      const filtered = includeUnpublished
+        ? notices
+        : notices.filter(notice => notice.isPublished);
+      listener(sortNotices(filtered));
+    },
+    error => onError?.(error),
+  );
 }
 
 export async function ensureImportantUpdatesSectionDefaults(): Promise<void> {
   try {
-    const snapshot = await sectionDocRef().get();
-    if (snapshot.exists) {
+    const snapshot = await getDoc(sectionDocRef());
+    if (snapshot.exists()) {
       return;
     }
 
     const payload: ImportantUpdatesSectionDocument = {
       ...DEFAULT_IMPORTANT_UPDATES_SECTION,
-      updatedAt: firestore.FieldValue.serverTimestamp(),
+      updatedAt: serverTimestamp(),
     };
 
-    await sectionDocRef().set(payload);
+    await setDoc(sectionDocRef(), payload);
   } catch (error) {
     throw wrapFirebaseError(
       error,
@@ -146,10 +171,10 @@ export async function updateImportantUpdatesSection(
       sectionTitle: input.sectionTitle.trim(),
       sectionSubtitle: input.sectionSubtitle.trim(),
       actionLabel: input.actionLabel.trim(),
-      updatedAt: firestore.FieldValue.serverTimestamp(),
+      updatedAt: serverTimestamp(),
     };
 
-    await sectionDocRef().set(payload, { merge: true });
+    await setDoc(sectionDocRef(), payload, { merge: true });
 
     return {
       sectionTitle: payload.sectionTitle,
@@ -167,10 +192,9 @@ export async function updateImportantUpdatesSection(
 }
 
 async function getNextSortOrder(): Promise<number> {
-  const snapshot = await noticesCollection()
-    .orderBy('sortOrder', 'desc')
-    .limit(1)
-    .get();
+  const snapshot = await getDocs(
+    query(noticesCollection(), orderBy('sortOrder', 'desc'), limit(1)),
+  );
 
   if (snapshot.empty) {
     return 0;
@@ -185,7 +209,7 @@ export async function createImportantUpdateNotice(
 ): Promise<ImportantUpdateNotice> {
   try {
     const sortOrder = Math.trunc(await getNextSortOrder());
-    const ref = noticesCollection().doc();
+    const ref = doc(noticesCollection());
     const payload: ImportantUpdateNoticeDocument = {
       tag: input.tag.trim() || 'New Notice',
       title: input.title.trim(),
@@ -193,16 +217,16 @@ export async function createImportantUpdateNotice(
       description: input.description.trim(),
       sortOrder,
       isPublished: input.isPublished ?? true,
-      createdAt: firestore.FieldValue.serverTimestamp(),
-      updatedAt: firestore.FieldValue.serverTimestamp(),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     };
 
-    await ref.set(payload);
+    await setDoc(ref, payload);
 
     return mapNotice(ref.id, {
       ...payload,
-      createdAt: firestore.Timestamp.now(),
-      updatedAt: firestore.Timestamp.now(),
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
     });
   } catch (error) {
     throw wrapFirebaseError(
@@ -219,7 +243,7 @@ export async function updateImportantUpdateNotice(
 ): Promise<void> {
   try {
     const updates: Record<string, unknown> = {
-      updatedAt: firestore.FieldValue.serverTimestamp(),
+      updatedAt: serverTimestamp(),
     };
 
     if (input.tag !== undefined) {
@@ -241,7 +265,7 @@ export async function updateImportantUpdateNotice(
       updates.isPublished = input.isPublished;
     }
 
-    await noticesCollection().doc(noticeId).update(updates);
+    await updateDoc(doc(noticesCollection(), noticeId), updates as UpdateData<DocumentData>);
   } catch (error) {
     throw wrapFirebaseError(
       error,
@@ -255,7 +279,7 @@ export async function deleteImportantUpdateNotice(
   noticeId: string,
 ): Promise<void> {
   try {
-    await noticesCollection().doc(noticeId).delete();
+    await deleteDoc(doc(noticesCollection(), noticeId));
   } catch (error) {
     throw wrapFirebaseError(
       error,
@@ -274,13 +298,12 @@ export async function reorderImportantUpdateNotices(
   }
 
   try {
-    const batch = firestore().batch();
+    const batch = writeBatch(db);
 
     orderedIds.forEach((id, index) => {
-      const ref = noticesCollection().doc(id);
-      batch.update(ref, {
+      batch.update(doc(noticesCollection(), id), {
         sortOrder: Math.trunc(index),
-        updatedAt: firestore.FieldValue.serverTimestamp(),
+        updatedAt: serverTimestamp(),
       });
     });
 

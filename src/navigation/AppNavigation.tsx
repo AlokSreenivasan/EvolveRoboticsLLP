@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import auth from '@react-native-firebase/auth';
+import { getCurrentUser, signOut } from '../services/firebase/authService';
 
 import IntroScreen from '../presentation/screens/Intro/IntroScreen';
 import SplashScreen from '../presentation/screens/Splash/SplashScreen';
@@ -67,8 +67,8 @@ function AppNavigation() {
       // Reinstall clears AsyncStorage but Firebase may still restore a session
       // from the device keychain — sign out so intro → login flow works cleanly.
       const clearStaleSession = async () => {
-        if (!onboardingDone && auth().currentUser) {
-          await auth().signOut();
+        if (!onboardingDone && getCurrentUser()) {
+          await signOut();
           await signOutGoogleSdk();
         }
       };

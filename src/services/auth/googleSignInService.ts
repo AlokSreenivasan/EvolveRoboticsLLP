@@ -1,4 +1,10 @@
-import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithCredential,
+  signOut as signOutFirebase,
+} from '@react-native-firebase/auth';
 import {
   GoogleSignin,
   isCancelledResponse,
@@ -7,6 +13,8 @@ import {
 } from '@react-native-google-signin/google-signin';
 
 import { GOOGLE_WEB_CLIENT_ID } from '../../config/googleSignIn';
+
+const firebaseAuth = getAuth();
 
 let configured = false;
 let signInInProgress = false;
@@ -103,8 +111,8 @@ export async function signInWithGoogle(): Promise<void> {
       throw new Error('Google Sign-In failed. Missing idToken.');
     }
 
-    const credential = auth.GoogleAuthProvider.credential(idToken);
-    await auth().signInWithCredential(credential);
+    const credential = GoogleAuthProvider.credential(idToken);
+    await signInWithCredential(firebaseAuth, credential);
   } finally {
     signInInProgress = false;
   }
@@ -112,7 +120,7 @@ export async function signInWithGoogle(): Promise<void> {
 
 /** Signs out of Firebase and the Google SDK (use {@link signOut} from authService instead). */
 export async function signOutFromGoogle(): Promise<void> {
-  await auth().signOut();
+  await signOutFirebase(firebaseAuth);
   await signOutGoogleSdk();
 }
 

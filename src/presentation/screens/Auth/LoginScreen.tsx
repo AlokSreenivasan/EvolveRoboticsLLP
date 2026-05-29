@@ -14,7 +14,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import auth from '@react-native-firebase/auth';
+import { signInWithEmailPassword } from '../../../services/firebase/authService';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
 import AppButton from '../../../components/AppButton.tsx';
 import { isValidEmail } from '../../../domain/Auth/validation/isValidEmail.ts';
@@ -74,7 +74,7 @@ function LoginScreen() {
 
     setLoading(true);
     try {
-      await auth().signInWithEmailAndPassword(email.trim(), password);
+      await signInWithEmailPassword(email, password);
       notifyAuthSuccess();
     } catch (error) {
       Alert.alert('Login Error', getAuthErrorMessage(error as { code?: string; message?: string }));

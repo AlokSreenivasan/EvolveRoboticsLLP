@@ -14,7 +14,11 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import firestore from '@react-native-firebase/firestore';
+import {
+  collection,
+  db,
+  doc,
+} from '../../services/firebase/firestoreClient';
 import {
   ArrowDown,
   ArrowUp,
@@ -183,7 +187,7 @@ function ManageCourses() {
 
     const courseId =
       editingId ??
-      firestore().collection(FIRESTORE_COLLECTIONS.courses).doc().id;
+      doc(collection(db, FIRESTORE_COLLECTIONS.courses)).id;
 
     let imageUri = current.imageUri.trim();
     const pendingLocalThumbnail = localThumbnailRef.current?.trim();

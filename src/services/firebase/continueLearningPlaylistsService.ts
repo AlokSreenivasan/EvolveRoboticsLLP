@@ -1,5 +1,7 @@
-import firestore, {
+import type {
+  DocumentData,
   FirebaseFirestoreTypes,
+  UpdateData,
 } from '@react-native-firebase/firestore';
 
 import type {
@@ -11,6 +13,22 @@ import type {
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { syncFirestoreAuthSession } from '../../utils/firebase/firestoreSessionSync';
 import { FIRESTORE_COLLECTIONS } from './constants';
+import {
+  collection,
+  db,
+  deleteDoc,
+  doc,
+  getDocs,
+  limit,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
+  setDoc,
+  Timestamp,
+  updateDoc,
+  writeBatch,
+} from './firestoreClient';
 
 function isTimestamp(
   value: unknown,
@@ -24,7 +42,7 @@ function isTimestamp(
 }
 
 function playlistsCollection() {
-  return firestore().collection(FIRESTORE_COLLECTIONS.continueLearningPlaylists);
+  return collection(db, FIRESTORE_COLLECTIONS.continueLearningPlaylists);
 }
 
 function mapPlaylist(
@@ -43,8 +61,8 @@ function mapPlaylist(
         : 1,
     sortOrder: typeof data?.sortOrder === 'number' ? data.sortOrder : 0,
     isPublished: data?.isPublished === true,
-    createdAt: isTimestamp(data?.createdAt) ? data?.createdAt : null,
-    updatedAt: isTimestamp(data?.updatedAt) ? data?.updatedAt : null,
+    createdAt: data && isTimestamp(data.createdAt) ? data.createdAt : null,
+    updatedAt: data && isTimestamp(data.updatedAt) ? data.updatedAt : null,
   };
 }
 
@@ -60,33 +78,35 @@ export function subscribeContinueLearningPlaylists(
   onError?: (error: unknown) => void,
 ): () => void {
   const includeUnpublished = options?.includeUnpublished === true;
+  const playlistsQuery = query(
+    playlistsCollection(),
+    orderBy('sortOrder', 'asc'),
+  );
 
-  return playlistsCollection()
-    .orderBy('sortOrder', 'asc')
-    .onSnapshot(
-      snapshot => {
-        const playlists = snapshot.docs.map(doc =>
-          mapPlaylist(
-            doc.id,
-            doc.data() as Partial<ContinueLearningPlaylistDocument> | undefined,
-          ),
-        );
+  return onSnapshot(
+    playlistsQuery,
+    snapshot => {
+      const playlists = snapshot.docs.map(playlistDoc =>
+        mapPlaylist(
+          playlistDoc.id,
+          playlistDoc.data() as Partial<ContinueLearningPlaylistDocument> | undefined,
+        ),
+      );
 
-        const filtered = includeUnpublished
-          ? playlists
-          : playlists.filter(item => item.isPublished);
+      const filtered = includeUnpublished
+        ? playlists
+        : playlists.filter(item => item.isPublished);
 
-        listener(sortPlaylists(filtered));
-      },
-      error => onError?.(error),
-    );
+      listener(sortPlaylists(filtered));
+    },
+    error => onError?.(error),
+  );
 }
 
 async function getNextSortOrder(): Promise<number> {
-  const snapshot = await playlistsCollection()
-    .orderBy('sortOrder', 'desc')
-    .limit(1)
-    .get();
+  const snapshot = await getDocs(
+    query(playlistsCollection(), orderBy('sortOrder', 'desc'), limit(1)),
+  );
 
   if (snapshot.empty) {
     return 0;
@@ -104,8 +124,8 @@ export async function createContinueLearningPlaylist(
     await syncFirestoreAuthSession();
     const sortOrder = Math.trunc(await getNextSortOrder());
     const ref = options?.playlistId
-      ? playlistsCollection().doc(options.playlistId)
-      : playlistsCollection().doc();
+      ? doc(playlistsCollection(), options.playlistId)
+      : doc(playlistsCollection());
 
     const payload: ContinueLearningPlaylistDocument = {
       title: input.title.trim(),
@@ -115,16 +135,16 @@ export async function createContinueLearningPlaylist(
       videoCount: Math.max(1, Math.trunc(input.videoCount)),
       sortOrder,
       isPublished: input.isPublished ?? true,
-      createdAt: firestore.FieldValue.serverTimestamp(),
-      updatedAt: firestore.FieldValue.serverTimestamp(),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     };
 
-    await ref.set(payload);
+    await setDoc(ref, payload);
 
     return mapPlaylist(ref.id, {
       ...payload,
-      createdAt: firestore.Timestamp.now(),
-      updatedAt: firestore.Timestamp.now(),
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
     } as unknown as ContinueLearningPlaylistDocument);
   } catch (error) {
     throw wrapFirebaseError(
@@ -142,7 +162,7 @@ export async function updateContinueLearningPlaylist(
   try {
     await syncFirestoreAuthSession();
     const updates: Record<string, unknown> = {
-      updatedAt: firestore.FieldValue.serverTimestamp(),
+      updatedAt: serverTimestamp(),
     };
 
     if (input.title !== undefined) {
@@ -167,7 +187,7 @@ export async function updateContinueLearningPlaylist(
       updates.isPublished = input.isPublished;
     }
 
-    await playlistsCollection().doc(playlistId).update(updates);
+    await updateDoc(doc(playlistsCollection(), playlistId), updates as UpdateData<DocumentData>);
   } catch (error) {
     throw wrapFirebaseError(
       error,
@@ -181,7 +201,7 @@ export async function deleteContinueLearningPlaylist(
   playlistId: string,
 ): Promise<void> {
   try {
-    await playlistsCollection().doc(playlistId).delete();
+    await deleteDoc(doc(playlistsCollection(), playlistId));
   } catch (error) {
     throw wrapFirebaseError(
       error,
@@ -199,12 +219,12 @@ export async function reorderContinueLearningPlaylists(
   }
 
   try {
-    const batch = firestore().batch();
+    const batch = writeBatch(db);
 
     orderedIds.forEach((id, index) => {
-      batch.update(playlistsCollection().doc(id), {
+      batch.update(doc(playlistsCollection(), id), {
         sortOrder: Math.trunc(index),
-        updatedAt: firestore.FieldValue.serverTimestamp(),
+        updatedAt: serverTimestamp(),
       });
     });
 
@@ -288,4 +308,3 @@ export function resolveYouTubePlaylistUrl(fields: {
 export function isValidYouTubePlaylistUrl(url: string): boolean {
   return extractYouTubePlaylistId(url) != null;
 }
-

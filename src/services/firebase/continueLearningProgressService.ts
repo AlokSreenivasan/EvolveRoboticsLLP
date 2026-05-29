@@ -1,6 +1,4 @@
-import firestore, {
-  FirebaseFirestoreTypes,
-} from '@react-native-firebase/firestore';
+import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
 import type { ContinueLearningProgress } from '../../store/content/types/continueLearningProgress.types';
 import { clampVideoProgress } from '../../utils/continueLearning/formatVideoProgress';
@@ -8,6 +6,14 @@ import { assertAuthenticatedUserId } from '../../utils/firebase/assertAuthentica
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { syncFirestoreAuthSession } from '../../utils/firebase/firestoreSessionSync';
 import { FIRESTORE_COLLECTIONS } from './constants';
+import {
+  collection,
+  db,
+  doc,
+  onSnapshot,
+  runTransaction,
+  serverTimestamp,
+} from './firestoreClient';
 
 const PROGRESS_SUBCOLLECTION = 'continueLearningProgress';
 
@@ -23,10 +29,12 @@ function isTimestamp(
 }
 
 function progressCollection(uid: string) {
-  return firestore()
-    .collection(FIRESTORE_COLLECTIONS.users)
-    .doc(uid)
-    .collection(PROGRESS_SUBCOLLECTION);
+  return collection(
+    db,
+    FIRESTORE_COLLECTIONS.users,
+    uid,
+    PROGRESS_SUBCOLLECTION,
+  );
 }
 
 function mapProgress(
@@ -39,7 +47,7 @@ function mapProgress(
       typeof data?.videosWatched === 'number'
         ? Math.max(0, Math.trunc(data.videosWatched))
         : 0,
-    updatedAt: isTimestamp(data?.updatedAt) ? data.updatedAt : null,
+    updatedAt: isTimestamp(data?.updatedAt) ? (data?.updatedAt ?? null) : null,
   };
 }
 
@@ -53,11 +61,12 @@ export function subscribeContinueLearningProgress(
     return () => undefined;
   }
 
-  return progressCollection(uid).onSnapshot(
+  return onSnapshot(
+    progressCollection(uid),
     snapshot => {
       const map: Record<string, ContinueLearningProgress> = {};
-      snapshot.docs.forEach(doc => {
-        map[doc.id] = mapProgress(doc.id, doc.data());
+      snapshot.docs.forEach(progressDoc => {
+        map[progressDoc.id] = mapProgress(progressDoc.id, progressDoc.data());
       });
       listener(map);
     },
@@ -75,16 +84,16 @@ export async function recordPlaylistVideoProgress(
     const uid = await syncFirestoreAuthSession();
     const { total } = clampVideoProgress(0, videoCount);
     const target = Math.min(total, Math.max(1, Math.trunc(videoNumber)));
-    const ref = progressCollection(uid).doc(playlistId);
+    const ref = doc(progressCollection(uid), playlistId);
 
-    await firestore().runTransaction(async transaction => {
+    await runTransaction(db, async transaction => {
       const snapshot = await transaction.get(ref);
-      const current = snapshot.exists
+      const current = snapshot.exists()
         ? Math.max(0, Math.trunc(snapshot.data()?.videosWatched ?? 0))
         : 0;
       const next = Math.min(total, Math.max(current, target));
 
-      if (snapshot.exists && next === current) {
+      if (snapshot.exists() && next === current) {
         return;
       }
 
@@ -92,7 +101,7 @@ export async function recordPlaylistVideoProgress(
         ref,
         {
           videosWatched: next,
-          updatedAt: firestore.FieldValue.serverTimestamp(),
+          updatedAt: serverTimestamp(),
         },
         { merge: true },
       );
@@ -114,16 +123,16 @@ export async function recordPlaylistVideoEngagement(
   try {
     const uid = await syncFirestoreAuthSession();
     const { total } = clampVideoProgress(0, videoCount);
-    const ref = progressCollection(uid).doc(playlistId);
+    const ref = doc(progressCollection(uid), playlistId);
 
-    await firestore().runTransaction(async transaction => {
+    await runTransaction(db, async transaction => {
       const snapshot = await transaction.get(ref);
-      const current = snapshot.exists
+      const current = snapshot.exists()
         ? Math.max(0, Math.trunc(snapshot.data()?.videosWatched ?? 0))
         : 0;
       const next = Math.min(total, current + 1);
 
-      if (snapshot.exists && next === current) {
+      if (snapshot.exists() && next === current) {
         return;
       }
 
@@ -131,7 +140,7 @@ export async function recordPlaylistVideoEngagement(
         ref,
         {
           videosWatched: next,
-          updatedAt: firestore.FieldValue.serverTimestamp(),
+          updatedAt: serverTimestamp(),
         },
         { merge: true },
       );

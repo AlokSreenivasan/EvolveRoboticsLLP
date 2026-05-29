@@ -1,5 +1,7 @@
-import firestore, {
+import type {
+  DocumentData,
   FirebaseFirestoreTypes,
+  UpdateData,
 } from '@react-native-firebase/firestore';
 
 import { DEFAULT_UPCOMING_EVENTS_SECTION } from '../../constants/upcomingEventsDefaults';
@@ -14,6 +16,23 @@ import type {
 } from '../../store/content/types/upcomingEvents.types';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { APP_CONTENT_DOCS, FIRESTORE_COLLECTIONS } from './constants';
+import {
+  collection,
+  db,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  limit,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
+  setDoc,
+  Timestamp,
+  updateDoc,
+  writeBatch,
+} from './firestoreClient';
 
 function isTimestamp(
   value: unknown,
@@ -27,13 +46,15 @@ function isTimestamp(
 }
 
 function sectionDocRef() {
-  return firestore()
-    .collection(FIRESTORE_COLLECTIONS.appContent)
-    .doc(APP_CONTENT_DOCS.upcomingEventsSection);
+  return doc(
+    db,
+    FIRESTORE_COLLECTIONS.appContent,
+    APP_CONTENT_DOCS.upcomingEventsSection,
+  );
 }
 
 function eventsCollection() {
-  return firestore().collection(FIRESTORE_COLLECTIONS.upcomingEvents);
+  return collection(db, FIRESTORE_COLLECTIONS.upcomingEvents);
 }
 
 function mapSection(
@@ -79,7 +100,8 @@ export function subscribeUpcomingEventsSection(
   listener: (section: UpcomingEventsSection) => void,
   onError?: (error: unknown) => void,
 ): () => void {
-  return sectionDocRef().onSnapshot(
+  return onSnapshot(
+    sectionDocRef(),
     snapshot => {
       const data = snapshot.data() as UpcomingEventsSectionDocument | undefined;
       listener(mapSection(data));
@@ -94,36 +116,36 @@ export function subscribeUpcomingEvents(
   onError?: (error: unknown) => void,
 ): () => void {
   const includeUnpublished = options?.includeUnpublished === true;
+  const eventsQuery = query(eventsCollection(), orderBy('sortOrder', 'asc'));
 
-  return eventsCollection()
-    .orderBy('sortOrder', 'asc')
-    .onSnapshot(
-      snapshot => {
-        const events = snapshot.docs.map(doc =>
-          mapEvent(doc.id, doc.data() as UpcomingEventDocument),
-        );
-        const filtered = includeUnpublished
-          ? events
-          : events.filter(event => event.isPublished);
-        listener(sortEvents(filtered));
-      },
-      error => onError?.(error),
-    );
+  return onSnapshot(
+    eventsQuery,
+    snapshot => {
+      const events = snapshot.docs.map(eventDoc =>
+        mapEvent(eventDoc.id, eventDoc.data() as UpcomingEventDocument),
+      );
+      const filtered = includeUnpublished
+        ? events
+        : events.filter(event => event.isPublished);
+      listener(sortEvents(filtered));
+    },
+    error => onError?.(error),
+  );
 }
 
 export async function ensureUpcomingEventsSectionDefaults(): Promise<void> {
   try {
-    const snapshot = await sectionDocRef().get();
-    if (snapshot.exists) {
+    const snapshot = await getDoc(sectionDocRef());
+    if (snapshot.exists()) {
       return;
     }
 
     const payload: UpcomingEventsSectionDocument = {
       ...DEFAULT_UPCOMING_EVENTS_SECTION,
-      updatedAt: firestore.FieldValue.serverTimestamp(),
+      updatedAt: serverTimestamp(),
     };
 
-    await sectionDocRef().set(payload);
+    await setDoc(sectionDocRef(), payload);
   } catch (error) {
     throw wrapFirebaseError(
       error,
@@ -141,10 +163,10 @@ export async function updateUpcomingEventsSection(
       sectionTitle: input.sectionTitle.trim(),
       sectionSubtitle: input.sectionSubtitle.trim(),
       actionLabel: input.actionLabel.trim(),
-      updatedAt: firestore.FieldValue.serverTimestamp(),
+      updatedAt: serverTimestamp(),
     };
 
-    await sectionDocRef().set(payload, { merge: true });
+    await setDoc(sectionDocRef(), payload, { merge: true });
 
     return {
       sectionTitle: payload.sectionTitle,
@@ -162,10 +184,9 @@ export async function updateUpcomingEventsSection(
 }
 
 async function getNextSortOrder(): Promise<number> {
-  const snapshot = await eventsCollection()
-    .orderBy('sortOrder', 'desc')
-    .limit(1)
-    .get();
+  const snapshot = await getDocs(
+    query(eventsCollection(), orderBy('sortOrder', 'desc'), limit(1)),
+  );
 
   if (snapshot.empty) {
     return 0;
@@ -180,7 +201,7 @@ export async function createUpcomingEvent(
 ): Promise<UpcomingEvent> {
   try {
     const sortOrder = Math.trunc(await getNextSortOrder());
-    const ref = eventsCollection().doc();
+    const ref = doc(eventsCollection());
     const payload: UpcomingEventDocument = {
       month: input.month.trim().toUpperCase().slice(0, 20),
       day: input.day.trim().slice(0, 10),
@@ -190,16 +211,16 @@ export async function createUpcomingEvent(
       daysLeftLabel: input.daysLeftLabel.trim(),
       sortOrder,
       isPublished: input.isPublished ?? true,
-      createdAt: firestore.FieldValue.serverTimestamp(),
-      updatedAt: firestore.FieldValue.serverTimestamp(),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     };
 
-    await ref.set(payload);
+    await setDoc(ref, payload);
 
     return mapEvent(ref.id, {
       ...payload,
-      createdAt: firestore.Timestamp.now(),
-      updatedAt: firestore.Timestamp.now(),
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
     });
   } catch (error) {
     throw wrapFirebaseError(error, 'FIRESTORE_ERROR', 'Failed to create event.');
@@ -212,7 +233,7 @@ export async function updateUpcomingEvent(
 ): Promise<void> {
   try {
     const updates: Record<string, unknown> = {
-      updatedAt: firestore.FieldValue.serverTimestamp(),
+      updatedAt: serverTimestamp(),
     };
 
     if (input.month !== undefined) {
@@ -240,7 +261,7 @@ export async function updateUpcomingEvent(
       updates.isPublished = input.isPublished;
     }
 
-    await eventsCollection().doc(eventId).update(updates);
+    await updateDoc(doc(eventsCollection(), eventId), updates as UpdateData<DocumentData>);
   } catch (error) {
     throw wrapFirebaseError(error, 'FIRESTORE_ERROR', 'Failed to update event.');
   }
@@ -248,7 +269,7 @@ export async function updateUpcomingEvent(
 
 export async function deleteUpcomingEvent(eventId: string): Promise<void> {
   try {
-    await eventsCollection().doc(eventId).delete();
+    await deleteDoc(doc(eventsCollection(), eventId));
   } catch (error) {
     throw wrapFirebaseError(error, 'FIRESTORE_ERROR', 'Failed to delete event.');
   }
@@ -262,13 +283,12 @@ export async function reorderUpcomingEvents(
   }
 
   try {
-    const batch = firestore().batch();
+    const batch = writeBatch(db);
 
     orderedIds.forEach((id, index) => {
-      const ref = eventsCollection().doc(id);
-      batch.update(ref, {
+      batch.update(doc(eventsCollection(), id), {
         sortOrder: Math.trunc(index),
-        updatedAt: firestore.FieldValue.serverTimestamp(),
+        updatedAt: serverTimestamp(),
       });
     });
 

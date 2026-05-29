@@ -1,6 +1,4 @@
-import firestore, {
-  FirebaseFirestoreTypes,
-} from '@react-native-firebase/firestore';
+import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
 import type {
   Course,
@@ -11,6 +9,21 @@ import type {
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { syncFirestoreAuthSession } from '../../utils/firebase/firestoreSessionSync';
 import { FIRESTORE_COLLECTIONS } from './constants';
+import {
+  collection,
+  db,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  limit,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
+  setDoc,
+  Timestamp,
+} from './firestoreClient';
 
 function isTimestamp(
   value: unknown,
@@ -24,7 +37,7 @@ function isTimestamp(
 }
 
 function coursesCollection() {
-  return firestore().collection(FIRESTORE_COLLECTIONS.courses);
+  return collection(db, FIRESTORE_COLLECTIONS.courses);
 }
 
 function mapCourse(
@@ -55,35 +68,34 @@ export function subscribeCourses(
   onError?: (error: unknown) => void,
 ): () => void {
   const includeUnpublished = options?.includeUnpublished === true;
+  const coursesQuery = query(coursesCollection(), orderBy('sortOrder', 'asc'));
 
-  return coursesCollection()
-    .orderBy('sortOrder', 'asc')
-    .onSnapshot(
-      snapshot => {
-        const courses = snapshot.docs.map(doc =>
-          mapCourse(
-            doc.id,
-            doc.data() as Partial<CourseDocument> | undefined,
-          ),
-        );
+  return onSnapshot(
+    coursesQuery,
+    snapshot => {
+      const courses = snapshot.docs.map(courseDoc =>
+        mapCourse(
+          courseDoc.id,
+          courseDoc.data() as Partial<CourseDocument> | undefined,
+        ),
+      );
 
-        const filtered = includeUnpublished
-          ? courses
-          : courses.filter(course => course.isPublished);
+      const filtered = includeUnpublished
+        ? courses
+        : courses.filter(course => course.isPublished);
 
-        listener(sortCourses(filtered));
-      },
-      error => onError?.(error),
-    );
+      listener(sortCourses(filtered));
+    },
+    error => onError?.(error),
+  );
 }
 
 async function getNextSortOrder(): Promise<number> {
   try {
     await syncFirestoreAuthSession();
-    const snapshot = await coursesCollection()
-      .orderBy('sortOrder', 'desc')
-      .limit(1)
-      .get();
+    const snapshot = await getDocs(
+      query(coursesCollection(), orderBy('sortOrder', 'desc'), limit(1)),
+    );
 
     if (snapshot.empty) {
       return 0;
@@ -104,8 +116,8 @@ export async function createCourse(
     await syncFirestoreAuthSession();
     const sortOrder = Math.trunc(await getNextSortOrder());
     const ref = options?.courseId
-      ? coursesCollection().doc(options.courseId)
-      : coursesCollection().doc();
+      ? doc(coursesCollection(), options.courseId)
+      : doc(coursesCollection());
 
     const payload: CourseDocument = {
       title: input.title.trim(),
@@ -115,16 +127,16 @@ export async function createCourse(
       description: input.description.trim(),
       sortOrder,
       isPublished: input.isPublished ?? true,
-      createdAt: firestore.FieldValue.serverTimestamp(),
-      updatedAt: firestore.FieldValue.serverTimestamp(),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     };
 
-    await ref.set(payload);
+    await setDoc(ref, payload);
 
     return mapCourse(ref.id, {
       ...payload,
-      createdAt: firestore.Timestamp.now(),
-      updatedAt: firestore.Timestamp.now(),
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
     });
   } catch (error) {
     throw wrapFirebaseError(error, 'FIRESTORE_ERROR', 'Failed to create course.');
@@ -137,8 +149,8 @@ export async function updateCourse(
 ): Promise<void> {
   try {
     await syncFirestoreAuthSession();
-    const ref = coursesCollection().doc(courseId);
-    const existing = await ref.get();
+    const ref = doc(coursesCollection(), courseId);
+    const existing = await getDoc(ref);
     const current = mapCourse(
       courseId,
       existing.data() as Partial<CourseDocument> | undefined,
@@ -164,10 +176,10 @@ export async function updateCourse(
         input.isPublished !== undefined
           ? input.isPublished
           : current.isPublished,
-      updatedAt: firestore.FieldValue.serverTimestamp(),
+      updatedAt: serverTimestamp(),
     };
 
-    await ref.set(payload, { merge: true });
+    await setDoc(ref, payload, { merge: true });
   } catch (error) {
     throw wrapFirebaseError(error, 'FIRESTORE_ERROR', 'Failed to update course.');
   }
@@ -176,7 +188,7 @@ export async function updateCourse(
 export async function deleteCourse(courseId: string): Promise<void> {
   try {
     await syncFirestoreAuthSession();
-    await coursesCollection().doc(courseId).delete();
+    await deleteDoc(doc(coursesCollection(), courseId));
   } catch (error) {
     throw wrapFirebaseError(error, 'FIRESTORE_ERROR', 'Failed to delete course.');
   }

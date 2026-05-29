@@ -1,9 +1,15 @@
-import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import {
+  createUserWithEmailAndPassword,
+  getAuth,
+} from '@react-native-firebase/auth';
+import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
 
 import type { UserProfile } from '../../store/user/types';
 import { getErrorMessage } from '../../utils/firebase/errors';
 import { uploadProfileImage } from './storageService';
 import { createUserProfileIfNotExists } from './userService';
+
+const firebaseAuth = getAuth();
 
 export type SignUpWithProfileInput = {
   fullName: string;
@@ -60,7 +66,8 @@ export async function signUpWithProfile(
   let credential: FirebaseAuthTypes.UserCredential | null = null;
 
   try {
-    credential = await auth().createUserWithEmailAndPassword(
+    credential = await createUserWithEmailAndPassword(
+      firebaseAuth,
       email,
       input.password,
     );

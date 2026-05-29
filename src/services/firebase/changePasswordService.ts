@@ -1,4 +1,4 @@
-import auth from '@react-native-firebase/auth';
+import { EmailAuthProvider } from '@react-native-firebase/auth';
 
 import {
   getCurrentUser,
@@ -64,7 +64,7 @@ export async function changePassword(input: ChangePasswordInput): Promise<void> 
   }
 
   try {
-    const credential = auth.EmailAuthProvider.credential(
+    const credential = EmailAuthProvider.credential(
       email,
       input.currentPassword,
     );

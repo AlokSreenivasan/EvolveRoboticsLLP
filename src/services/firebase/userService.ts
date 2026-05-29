@@ -1,5 +1,7 @@
-import firestore, {
+import type {
+  DocumentData,
   FirebaseFirestoreTypes,
+  UpdateData,
 } from '@react-native-firebase/firestore';
 
 import type {
@@ -34,9 +36,20 @@ import {
   wrapFirebaseError,
 } from '../../utils/firebase/errors';
 import { FIRESTORE_COLLECTIONS } from './constants';
+import {
+  collection,
+  db,
+  doc,
+  getDoc,
+  getDocFromServer,
+  runTransaction,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+} from './firestoreClient';
 
 function usersCollection() {
-  return firestore().collection(FIRESTORE_COLLECTIONS.users);
+  return collection(db, FIRESTORE_COLLECTIONS.users);
 }
 
 function mapDocumentToUserProfile(
@@ -69,7 +82,7 @@ function isTimestamp(
 }
 
 function userDocRef(uid: string) {
-  return usersCollection().doc(uid);
+  return doc(usersCollection(), uid);
 }
 
 /**
@@ -101,11 +114,11 @@ export async function createUserProfile(
       phoneNumber: input.phoneNumber.trim(),
       profileImage: input.profileImage ?? null,
       role: DEFAULT_USER_ROLE,
-      createdAt: firestore.FieldValue.serverTimestamp(),
-      updatedAt: firestore.FieldValue.serverTimestamp(),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     };
 
-    await userDocRef(uid).set(payload);
+    await setDoc(userDocRef(uid), payload);
 
     // Return merged profile locally — avoids an extra read after create.
     return {
@@ -134,8 +147,8 @@ export async function getUserProfileWithRoleResolution(
   uid: string,
 ): Promise<UserProfileFetchResult> {
   try {
-    const snapshot = await userDocRef(uid).get();
-    if (!snapshot.exists) {
+    const snapshot = await getDoc(userDocRef(uid));
+    if (!snapshot.exists()) {
       return {
         profile: null,
         roleResolution: normalizeUserRole(undefined, {
@@ -193,7 +206,7 @@ export async function updateUserProfile(
 ): Promise<UserProfile> {
   try {
     const updates: Record<string, unknown> = {
-      updatedAt: firestore.FieldValue.serverTimestamp(),
+      updatedAt: serverTimestamp(),
     };
 
     if (input.fullName !== undefined) {
@@ -206,7 +219,7 @@ export async function updateUserProfile(
       updates.profileImage = input.profileImage;
     }
 
-    await userDocRef(uid).update(updates);
+    await updateDoc(userDocRef(uid), updates as UpdateData<DocumentData>);
 
     return mergeUserProfile(baseProfile, input);
   } catch (error) {
@@ -292,8 +305,8 @@ export async function deleteUserProfile(uid: string): Promise<void> {
   const ref = userDocRef(uid);
 
   try {
-    const serverSnapshot = await ref.get({ source: 'server' });
-    if (!serverSnapshot.exists) {
+    const serverSnapshot = await getDocFromServer(ref);
+    if (!serverSnapshot.exists()) {
       return;
     }
   } catch (error) {
@@ -312,9 +325,9 @@ export async function deleteUserProfile(uid: string): Promise<void> {
   }
 
   try {
-    await firestore().runTransaction(async transaction => {
+    await runTransaction(db, async transaction => {
       const snapshot = await transaction.get(ref);
-      if (snapshot.exists) {
+      if (snapshot.exists()) {
         transaction.delete(ref);
       }
     });

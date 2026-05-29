@@ -1,8 +1,14 @@
-import auth from '@react-native-firebase/auth';
-import firestore from '@react-native-firebase/firestore';
+import { getAuth } from '@react-native-firebase/auth';
 import { Platform } from 'react-native';
 
+import {
+  db,
+  enableNetwork,
+  waitForPendingWrites,
+} from '../../services/firebase/firestoreClient';
 import { logFirebaseOperationError } from './extractFirebaseError';
+
+const firebaseAuth = getAuth();
 
 function delay(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -13,18 +19,18 @@ function delay(ms: number): Promise<void> {
  * iOS often sends delete requests without an updated token after re-authentication.
  */
 export async function syncFirestoreAuthSession(): Promise<string> {
-  const user = auth().currentUser;
+  const user = firebaseAuth.currentUser;
   if (!user) {
     throw new Error('You must be signed in to continue.');
   }
 
   await user.reload();
   await user.getIdToken(true);
-  await firestore().enableNetwork();
+  await enableNetwork(db);
 
   if (Platform.OS === 'ios') {
     try {
-      await firestore().waitForPendingWrites();
+      await waitForPendingWrites(db);
     } catch (error) {
       logFirebaseOperationError(
         'syncFirestoreAuthSession',
@@ -44,7 +50,7 @@ export async function syncFirestoreAuthSession(): Promise<string> {
 }
 
 export function assertAuthUidMatches(targetUid: string): void {
-  const authUid = auth().currentUser?.uid;
+  const authUid = firebaseAuth.currentUser?.uid;
   if (!authUid) {
     throw new Error('You must be signed in to continue.');
   }

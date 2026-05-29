@@ -8,9 +8,12 @@ import React, {
   useState,
 } from 'react';
 
-import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
 
-import { onAuthStateChanged } from '../../services/firebase/authService';
+import {
+  getCurrentUser,
+  onAuthStateChanged,
+} from '../../services/firebase/authService';
 import {
   buildOptimisticProfileFromEdit,
   updateUserProfileWithSync,
@@ -286,7 +289,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const refreshProfile = useCallback(async () => {
-    const currentUser = auth().currentUser;
+    const currentUser = getCurrentUser();
     if (!currentUser) {
       await clearSession();
       return;

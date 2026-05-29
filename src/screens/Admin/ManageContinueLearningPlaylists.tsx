@@ -14,7 +14,11 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import firestore from '@react-native-firebase/firestore';
+import {
+  collection,
+  db,
+  doc,
+} from '../../services/firebase/firestoreClient';
 import {
   ArrowDown,
   ArrowUp,
@@ -214,8 +218,7 @@ function ManageContinueLearningPlaylists() {
 
     const playlistId =
       editingId ??
-      firestore().collection(FIRESTORE_COLLECTIONS.continueLearningPlaylists).doc()
-        .id;
+      doc(collection(db, FIRESTORE_COLLECTIONS.continueLearningPlaylists)).id;
 
     let imageUri = current.imageUri.trim();
     const pendingLocalThumbnail = localThumbnailRef.current?.trim();

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import auth from '@react-native-firebase/auth';
-
+import { onAuthStateChanged } from '../../services/firebase/authService';
 import { subscribeCourses } from '../../services/firebase/coursesService';
 import type { Course } from '../../store/content/types/courses.types';
 import { getErrorMessage } from '../../utils/firebase/errors';
@@ -19,7 +18,7 @@ export function useCourses(options?: UseCoursesOptions) {
   useEffect(() => {
     let unsubCourses: (() => void) | undefined;
 
-    const unsubAuth = auth().onAuthStateChanged(user => {
+    const unsubAuth = onAuthStateChanged(user => {
       unsubCourses?.();
       unsubCourses = undefined;
 

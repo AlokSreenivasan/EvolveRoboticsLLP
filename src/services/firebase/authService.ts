@@ -1,4 +1,12 @@
-import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import {
+  EmailAuthProvider,
+  getAuth,
+  onAuthStateChanged as subscribeToAuthStateChanged,
+  sendPasswordResetEmail as sendFirebasePasswordResetEmail,
+  signInWithEmailAndPassword as signInWithEmailAndPasswordModular,
+  signOut as signOutFirebase,
+} from '@react-native-firebase/auth';
+import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
 
 import {
   isGoogleAccountProvider,
@@ -6,10 +14,22 @@ import {
 } from '../auth/googleSignInService';
 import { getErrorMessage } from '../../utils/firebase/errors';
 
+const firebaseAuth = getAuth();
+
 /**
  * Auth helpers and Firebase Authentication flows (session, password reset).
- * Login still uses sign-in directly on the login screen.
  */
+
+export async function signInWithEmailPassword(
+  email: string,
+  password: string,
+): Promise<void> {
+  await signInWithEmailAndPasswordModular(
+    firebaseAuth,
+    email.trim(),
+    password,
+  );
+}
 
 function mapPasswordResetAuthError(error: {
   code?: string;
@@ -39,32 +59,32 @@ function toPasswordResetError(error: unknown): Error {
   return new Error(getErrorMessage(error));
 }
 export function getAuthInstance() {
-  return auth();
+  return firebaseAuth;
 }
 
 export function getCurrentUser(): FirebaseAuthTypes.User | null {
-  return auth().currentUser;
+  return firebaseAuth.currentUser;
 }
 
 export function getCurrentUserId(): string | null {
-  return auth().currentUser?.uid ?? null;
+  return firebaseAuth.currentUser?.uid ?? null;
 }
 
 export function getCurrentUserEmail(): string | null {
-  return auth().currentUser?.email ?? null;
+  return firebaseAuth.currentUser?.email ?? null;
 }
 
 export function onAuthStateChanged(
   listener: (user: FirebaseAuthTypes.User | null) => void,
 ): () => void {
-  return auth().onAuthStateChanged(listener);
+  return subscribeToAuthStateChanged(firebaseAuth, listener);
 }
 
 export async function signOut(): Promise<void> {
   const user = getCurrentUser();
   const hadGoogleProvider = isGoogleAccountProvider(user);
 
-  await auth().signOut();
+  await signOutFirebase(firebaseAuth);
 
   if (hadGoogleProvider) {
     await signOutGoogleSdk();
@@ -128,7 +148,7 @@ export async function reauthenticateWithPassword(
   }
 
   try {
-    const credential = auth.EmailAuthProvider.credential(
+    const credential = EmailAuthProvider.credential(
       email,
       currentPassword,
     );
@@ -169,7 +189,7 @@ export async function sendPasswordResetEmail(email: string): Promise<void> {
   }
 
   try {
-    await auth().sendPasswordResetEmail(trimmedEmail);
+    await sendFirebasePasswordResetEmail(firebaseAuth, trimmedEmail);
   } catch (error) {
     throw toPasswordResetError(error);
   }
