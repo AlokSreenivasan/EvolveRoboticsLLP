@@ -17,7 +17,11 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BANNER_WIDTH = SCREEN_WIDTH - 32;
 const BANNER_HEIGHT = 168;
 
-function HeroBannerCarousel() {
+type HeroBannerCarouselProps = {
+  onCtaPress?: () => void;
+};
+
+function HeroBannerCarousel({ onCtaPress }: HeroBannerCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
 
   return (
@@ -38,7 +42,10 @@ function HeroBannerCarousel() {
             {HERO_SLIDES[activeIndex].subtitle}
           </Text>
 
-          <TouchableOpacity style={styles.ctaButton} activeOpacity={0.85}>
+          <TouchableOpacity
+            style={styles.ctaButton}
+            activeOpacity={0.85}
+            onPress={onCtaPress}>
             <Text style={styles.ctaText}>
               {HERO_SLIDES[activeIndex].cta}
             </Text>

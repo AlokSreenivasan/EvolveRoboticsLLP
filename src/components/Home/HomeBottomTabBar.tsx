@@ -10,6 +10,7 @@ import {
   User,
 } from 'lucide-react-native';
 
+import { HOME_NOTIFICATION_COUNT } from '../../constants/homeScreenConstants';
 import { colors } from '../../constants/theme';
 
 export type HomeTabKey =
@@ -43,7 +44,7 @@ const INACTIVE_COLOR = colors.textMuted;
 
 function HomeBottomTabBar({
   activeTab = 'home',
-  notificationCount = 3,
+  notificationCount = HOME_NOTIFICATION_COUNT,
   showAdminTab = false,
   onTabPress,
 }: HomeBottomTabBarProps) {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   ActivityIndicator,
   SafeAreaView,
@@ -20,9 +20,9 @@ import HomeSectionHeader from '../../../components/Home/HomeSectionHeader';
 import ImportantUpdatesSection from '../../../components/Home/ImportantUpdatesSection';
 import QuickAccessGrid from '../../../components/Home/QuickAccessGrid';
 import UpcomingEventsSection from '../../../components/Home/UpcomingEventsSection';
+import { HOME_NOTIFICATION_COUNT } from '../../../constants/homeScreenConstants';
 import { colors, spacing } from '../../../constants/theme';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
-import { useAuth } from '../../context/AuthContext';
 import { useAdminNavigation } from '../../hooks/useAdminNavigation';
 import { useContinueLearningPlaylists } from '../../hooks/useContinueLearningPlaylists';
 import { useContinueLearningProgress } from '../../hooks/useContinueLearningProgress';
@@ -30,17 +30,16 @@ import { useStoredProfileFullName } from '../../hooks/useStoredProfileFullName';
 import { useUserRole } from '../../hooks/useUserRole';
 
 const TAB_BAR_HEIGHT = 64;
-const NOTIFICATION_COUNT = 3;
 
 function HomeScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const insets = useSafeAreaInsets();
   const displayName = useStoredProfileFullName();
-  const { profileImage } = useAuth();
   const { isAdmin, roleLoading } = useUserRole();
   const { openAdmin } = useAdminNavigation();
   const { playlists, loading: playlistsLoading } = useContinueLearningPlaylists();
   const { getVideosWatched } = useContinueLearningProgress();
+  const scrollRef = useRef<ScrollView>(null);
 
   const handleTabPress = (tab: HomeTabKey) => {
     switch (tab) {
@@ -56,8 +55,12 @@ function HomeScreen() {
       case 'courses':
         navigation.navigate('Courses');
         break;
+      case 'calendar':
+        scrollRef.current?.scrollToEnd({ animated: true });
+        break;
       case 'home':
       default:
+        scrollRef.current?.scrollTo({ y: 0, animated: true });
         break;
     }
   };
@@ -68,27 +71,24 @@ function HomeScreen() {
     <SafeAreaView style={styles.container}>
       <HomeHeader
         displayName={displayName}
-        profileImage={profileImage}
-        notificationCount={NOTIFICATION_COUNT}
         onMenuPress={() => navigation.navigate('Settings')}
-        onNotificationsPress={() =>
-          navigation.navigate('NotificationPreferences')
-        }
-        onProfilePress={() => navigation.navigate('Profile')}
       />
 
       <ScrollView
+        ref={scrollRef}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.scrollContent,
           { paddingBottom: scrollBottomPadding },
         ]}>
-        <HeroBannerCarousel />
+        <HeroBannerCarousel
+          onCtaPress={() => navigation.navigate('Courses')}
+        />
 
         <View style={styles.section}>
           <HomeSectionHeader
-            title="Course videos"
-            actionLabel="View All"
+            title="Continue learning"
+            actionLabel="View all"
             onActionPress={() => navigation.navigate('Courses')}
           />
           {playlistsLoading ? (
@@ -123,7 +123,7 @@ function HomeScreen() {
         <ImportantUpdatesSection />
 
         <View style={styles.section}>
-          <HomeSectionHeader title="Quick Access" />
+          <HomeSectionHeader title="Quick access" />
           <QuickAccessGrid />
         </View>
 
@@ -133,7 +133,7 @@ function HomeScreen() {
       <View style={styles.tabBarWrap}>
         <HomeBottomTabBar
           activeTab="home"
-          notificationCount={NOTIFICATION_COUNT}
+          notificationCount={HOME_NOTIFICATION_COUNT}
           showAdminTab={!roleLoading && isAdmin}
           onTabPress={handleTabPress}
         />

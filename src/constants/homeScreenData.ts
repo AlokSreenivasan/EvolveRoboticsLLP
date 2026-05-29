@@ -1,15 +1,5 @@
 import { colors } from './theme';
 
-export type ScheduleItem = {
-  id: string;
-  time: string;
-  title: string;
-  type: string;
-  accentColor: string;
-  backgroundColor: string;
-  iconName: 'video' | 'flask' | 'message' | 'clipboard';
-};
-
 export type QuickAccessItem = {
   id: string;
   label: string;
@@ -56,53 +46,7 @@ export const HERO_SLIDES = [
   },
 ];
 
-export const TODAYS_SCHEDULE: ScheduleItem[] = [
-  {
-    id: '1',
-    time: '10:00 AM',
-    title: 'Robotics Basics',
-    type: 'Live Class',
-    accentColor: '#4CAF50',
-    backgroundColor: '#F1F8F4',
-    iconName: 'video',
-  },
-  {
-    id: '2',
-    time: '12:30 PM',
-    title: 'Sensor Lab',
-    type: 'Lab Session',
-    accentColor: colors.primary,
-    backgroundColor: colors.primaryLight,
-    iconName: 'flask',
-  },
-  {
-    id: '3',
-    time: '3:00 PM',
-    title: 'AI Discussion',
-    type: 'Group Chat',
-    accentColor: '#FF9800',
-    backgroundColor: '#FFF8F0',
-    iconName: 'message',
-  },
-  {
-    id: '4',
-    time: '5:00 PM',
-    title: 'Assignment Review',
-    type: 'Assignment',
-    accentColor: '#9C27B0',
-    backgroundColor: '#F9F0FC',
-    iconName: 'clipboard',
-  },
-];
-
 export const QUICK_ACCESS_ITEMS: QuickAccessItem[] = [
-  {
-    id: 'courses',
-    label: 'Courses',
-    iconName: 'graduation',
-    iconColor: colors.primary,
-    backgroundColor: colors.primaryLight,
-  },
   {
     id: 'live',
     label: 'Live Classes',

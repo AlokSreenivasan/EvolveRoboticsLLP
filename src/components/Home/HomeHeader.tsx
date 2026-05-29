@@ -1,27 +1,15 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Bell, Menu } from 'lucide-react-native';
+import { Menu } from 'lucide-react-native';
 
 import { colors } from '../../constants/theme';
-import ProfileAvatar from '../Profile/ProfileAvatar';
 
 type HomeHeaderProps = {
   displayName: string;
-  profileImage?: string | null;
-  notificationCount?: number;
   onMenuPress?: () => void;
-  onNotificationsPress?: () => void;
-  onProfilePress?: () => void;
 };
 
-function HomeHeader({
-  displayName,
-  profileImage,
-  notificationCount = 3,
-  onMenuPress,
-  onNotificationsPress,
-  onProfilePress,
-}: HomeHeaderProps) {
+function HomeHeader({ displayName, onMenuPress }: HomeHeaderProps) {
   const firstName = displayName.trim().split(/\s+/)[0] || 'Learner';
 
   return (
@@ -41,28 +29,6 @@ function HomeHeader({
           Keep learning, keep building the future!
         </Text>
       </View>
-
-      <View style={styles.actions}>
-        <TouchableOpacity
-          style={styles.bellButton}
-          onPress={onNotificationsPress}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="Notifications">
-          <Bell size={22} color={colors.primary} strokeWidth={2} />
-          {notificationCount > 0 ? (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>
-                {notificationCount > 9 ? '9+' : notificationCount}
-              </Text>
-            </View>
-          ) : null}
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={onProfilePress} activeOpacity={0.8}>
-          <ProfileAvatar imageUri={profileImage} size={40} />
-        </TouchableOpacity>
-      </View>
     </View>
   );
 }
@@ -80,7 +46,6 @@ const styles = StyleSheet.create({
   },
   greetingBlock: {
     flex: 1,
-    marginRight: 8,
   },
   greeting: {
     fontSize: 18,
@@ -92,31 +57,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSecondary,
     lineHeight: 16,
-  },
-  actions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  bellButton: {
-    padding: 4,
-  },
-  badge: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    minWidth: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: colors.danger,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-  },
-  badgeText: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: '700',
   },
 });
 

@@ -7,8 +7,17 @@ import {
   Video,
 } from 'lucide-react-native';
 
-import type { ScheduleItem } from '../../constants/homeScreenData';
 import { cardShadowLight, colors } from '../../constants/theme';
+
+type ScheduleItem = {
+  id: string;
+  time: string;
+  title: string;
+  type: string;
+  accentColor: string;
+  backgroundColor: string;
+  iconName: 'video' | 'flask' | 'message' | 'clipboard';
+};
 
 type ScheduleCardProps = {
   item: ScheduleItem;

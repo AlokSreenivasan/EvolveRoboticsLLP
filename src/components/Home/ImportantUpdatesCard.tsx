@@ -14,7 +14,8 @@ type ImportantUpdatesCardProps = {
 };
 
 function ImportantUpdatesCard({ notice, onPress }: ImportantUpdatesCardProps) {
-  const bodyText = notice.description?.trim() || notice.subtitle?.trim();
+  const subtitle = notice.subtitle?.trim();
+  const description = notice.description?.trim();
 
   return (
     <TouchableOpacity
@@ -31,11 +32,9 @@ function ImportantUpdatesCard({ notice, onPress }: ImportantUpdatesCardProps) {
           <Text style={styles.tag}>{notice.tag.trim()}</Text>
         ) : null}
         <Text style={styles.title}>{notice.title}</Text>
-        {notice.subtitle?.trim() ? (
-          <Text style={styles.subtitle}>{notice.subtitle.trim()}</Text>
-        ) : null}
-        {bodyText ? (
-          <Text style={styles.description}>{bodyText}</Text>
+        {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+        {description ? (
+          <Text style={styles.description}>{description}</Text>
         ) : null}
       </View>
 
