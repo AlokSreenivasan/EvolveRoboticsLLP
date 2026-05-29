@@ -9,14 +9,16 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-import CourseCatalogCard from '../../../components/Courses/CourseCatalogCard';
+import ContinueLearningCard from '../../../components/Home/ContinueLearningCard';
 import { colors, spacing } from '../../../constants/theme';
 import type { LoginScreenNavigationProp } from '../../../types/navigation';
-import { useCourses } from '../../hooks/useCourses';
+import { useContinueLearningPlaylists } from '../../hooks/useContinueLearningPlaylists';
+import { useContinueLearningProgress } from '../../hooks/useContinueLearningProgress';
 
-function CoursesScreen() {
+function ContinueLearningListScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
-  const { courses, loading, error } = useCourses();
+  const { playlists, loading, error } = useContinueLearningPlaylists();
+  const { getVideosWatched } = useContinueLearningProgress();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -24,9 +26,9 @@ function CoursesScreen() {
         <Text style={styles.back} onPress={() => navigation.goBack()}>
           ← Back
         </Text>
-        <Text style={styles.title}>Courses</Text>
+        <Text style={styles.title}>Continue learning</Text>
         <Text style={styles.subtitle}>
-          Browse all available courses, duration, and details.
+          Pick up where you left off with your course videos.
         </Text>
       </View>
 
@@ -37,25 +39,30 @@ function CoursesScreen() {
           <ActivityIndicator color={colors.primary} style={styles.loader} />
         ) : error ? (
           <View style={styles.messageCard}>
-            <Text style={styles.messageTitle}>Could not load courses</Text>
+            <Text style={styles.messageTitle}>Could not load videos</Text>
             <Text style={styles.messageText}>
               Go back and try again in a moment.
             </Text>
           </View>
-        ) : courses.length === 0 ? (
+        ) : playlists.length === 0 ? (
           <View style={styles.messageCard}>
-            <Text style={styles.messageTitle}>No courses yet</Text>
+            <Text style={styles.messageTitle}>No course videos yet</Text>
             <Text style={styles.messageText}>
-              New courses will appear here once they are published.
+              New playlists will appear here once they are published.
             </Text>
           </View>
         ) : (
           <View style={styles.list}>
-            {courses.map((course, index) => (
-              <CourseCatalogCard
-                key={course.id}
-                course={course}
+            {playlists.map((playlist, index) => (
+              <ContinueLearningCard
+                key={playlist.id}
+                variant="list"
+                playlist={playlist}
+                videosWatched={getVideosWatched(playlist.id)}
                 accentIndex={index}
+                onPress={() =>
+                  navigation.navigate('CoursePlaylist', { playlist })
+                }
               />
             ))}
           </View>
@@ -128,4 +135,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CoursesScreen;
+export default ContinueLearningListScreen;

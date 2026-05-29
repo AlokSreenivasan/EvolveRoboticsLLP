@@ -1,32 +1,69 @@
 import React from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
-import { Clock } from 'lucide-react-native';
+import {
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { BookOpen } from 'lucide-react-native';
 
 import { cardShadow, colors } from '../../constants/theme';
 import type { Course } from '../../store/content/types/courses.types';
+
+const CARD_ACCENTS = [
+  { badgeColor: colors.primaryLight, accentColor: colors.primary },
+  { badgeColor: '#E8F5E9', accentColor: colors.accentGreen },
+  { badgeColor: '#F3E5F5', accentColor: '#9C27B0' },
+] as const;
 
 type CourseCatalogCardProps = {
   course: Pick<
     Course,
     'title' | 'subtitle' | 'imageUri' | 'durationLabel' | 'description'
   >;
+  accentIndex?: number;
+  onPress?: () => void;
 };
 
-function CourseCatalogCard({ course }: CourseCatalogCardProps) {
+function CourseCatalogCard({
+  course,
+  accentIndex = 0,
+  onPress,
+}: CourseCatalogCardProps) {
+  const accent = CARD_ACCENTS[accentIndex % CARD_ACCENTS.length];
+  const duration = course.durationLabel?.trim();
+
   return (
-    <View style={styles.card}>
-      <View style={styles.thumbnailWrap}>
+    <TouchableOpacity
+      style={styles.card}
+      activeOpacity={0.9}
+      onPress={onPress}
+      disabled={!onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`Course ${course.title}`}>
+      <View style={styles.imageWrap}>
         {course.imageUri?.trim() ? (
           <Image
             source={{ uri: course.imageUri.trim() }}
-            style={styles.thumbnail}
+            style={styles.image}
           />
         ) : (
-          <View style={[styles.thumbnail, styles.thumbnailPlaceholder]} />
+          <View style={[styles.image, styles.imagePlaceholder]} />
         )}
+        {duration ? (
+          <View style={[styles.badge, { backgroundColor: accent.badgeColor }]}>
+            <Text style={[styles.badgeText, { color: accent.accentColor }]}>
+              {duration}
+            </Text>
+          </View>
+        ) : null}
+        <View style={styles.iconButton} accessibilityElementsHidden>
+          <BookOpen size={22} color="#fff" strokeWidth={2} />
+        </View>
       </View>
 
-      <View style={styles.content}>
+      <View style={styles.body}>
         <Text style={styles.title} numberOfLines={2}>
           {course.title}
         </Text>
@@ -36,77 +73,82 @@ function CourseCatalogCard({ course }: CourseCatalogCardProps) {
           </Text>
         ) : null}
         {course.description?.trim() ? (
-          <Text style={styles.description} numberOfLines={2}>
+          <Text style={styles.description} numberOfLines={3}>
             {course.description.trim()}
           </Text>
         ) : null}
-        {course.durationLabel?.trim() ? (
-          <View style={styles.durationRow}>
-            <Clock size={14} color={colors.primary} strokeWidth={2} />
-            <Text style={styles.duration}>{course.durationLabel.trim()}</Text>
-          </View>
-        ) : null}
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    width: '100%',
     backgroundColor: colors.surface,
     borderRadius: 16,
-    padding: 12,
+    marginBottom: 16,
+    overflow: 'hidden',
     borderWidth: 1,
     borderColor: colors.primaryMuted,
     ...cardShadow,
   },
-  thumbnailWrap: {
-    marginRight: 14,
+  imageWrap: {
+    height: 200,
+    position: 'relative',
   },
-  thumbnail: {
-    width: 96,
-    height: 72,
-    borderRadius: 12,
+  image: {
+    width: '100%',
+    height: '100%',
     resizeMode: 'cover',
   },
-  thumbnailPlaceholder: {
+  imagePlaceholder: {
     backgroundColor: colors.primaryMuted,
   },
-  content: {
-    flex: 1,
+  badge: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    maxWidth: '70%',
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  iconButton: {
+    position: 'absolute',
+    bottom: 14,
+    right: 14,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  body: {
+    padding: 16,
   },
   title: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '700',
     color: colors.textPrimary,
+    lineHeight: 24,
     marginBottom: 4,
-    lineHeight: 21,
   },
   subtitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginBottom: 4,
-    lineHeight: 18,
+    fontSize: 14,
+    color: colors.textSecondary,
+    lineHeight: 20,
+    marginBottom: 8,
   },
   description: {
     fontSize: 13,
     color: colors.textSecondary,
     lineHeight: 18,
-    marginBottom: 6,
-  },
-  durationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 2,
-  },
-  duration: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.primary,
   },
 });
 
