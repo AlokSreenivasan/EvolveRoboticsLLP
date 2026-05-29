@@ -26,8 +26,15 @@ export type RootStackParamList = {
   PrivacySettings: undefined;
   NotificationPreferences: undefined;
   Profile: undefined;
-  /** YouTube playlist course — video list and in-app player. */
+  /** Course playlist — lesson list only. */
   CoursePlaylist: { playlist: ContinueLearningPlaylist };
+  /** In-app lesson player. */
+  CourseVideo: {
+    playlist: ContinueLearningPlaylist;
+    videoId: string;
+    videoTitle: string;
+    videoIndex: number;
+  };
   /** All course playlists (same data as home carousel). */
   Courses: undefined;
   /** Registered only for admin users after role resolves. */

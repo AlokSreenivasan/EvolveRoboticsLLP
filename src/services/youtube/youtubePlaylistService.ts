@@ -76,7 +76,7 @@ async function fetchPlaylistVideosFromApi(
 
     if (!response.ok) {
       throw new Error(
-        data.error?.message ?? 'Could not load playlist from YouTube.',
+        data.error?.message ?? 'Could not load course lessons.',
       );
     }
 
@@ -97,7 +97,7 @@ async function fetchPlaylistVideosFromRss(
 ): Promise<YouTubePlaylistVideo[]> {
   const response = await fetch(`${PLAYLIST_RSS_BASE}${playlistId}`);
   if (!response.ok) {
-    throw new Error('Could not load playlist videos.');
+    throw new Error('Could not load course lessons.');
   }
 
   const xml = await response.text();
@@ -128,7 +128,7 @@ export async function fetchYouTubePlaylistVideos(
 ): Promise<YouTubePlaylistVideo[]> {
   const playlistId = extractYouTubePlaylistId(playlistUrl);
   if (!playlistId) {
-    throw new Error('Invalid YouTube playlist URL.');
+    throw new Error('Invalid course link.');
   }
 
   if (YOUTUBE_API_KEY.trim()) {

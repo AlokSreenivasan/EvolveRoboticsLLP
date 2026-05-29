@@ -27,7 +27,7 @@ export function useYouTubePlaylistVideos(
     if (!url) {
       setVideos([]);
       setLoading(false);
-      setError('This course has no playlist link.');
+      setError('This course has no video list.');
       return;
     }
 
@@ -41,7 +41,7 @@ export function useYouTubePlaylistVideos(
           return;
         }
         if (result.length === 0) {
-          setError('No videos found in this playlist.');
+          setError('No lessons found for this course.');
         }
         setVideos(result);
       })
@@ -51,7 +51,7 @@ export function useYouTubePlaylistVideos(
         }
         setVideos([]);
         setError(
-          err instanceof Error ? err.message : 'Failed to load playlist videos.',
+          err instanceof Error ? err.message : 'Failed to load course lessons.',
         );
       })
       .finally(() => {

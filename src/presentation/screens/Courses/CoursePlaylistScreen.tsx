@@ -1,18 +1,17 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
-  Image,
   SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  useWindowDimensions,
   View,
 } from 'react-native';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
-import YoutubePlayer, { PLAYER_STATES } from 'react-native-youtube-iframe';
 
+import CourseLessonRow from '../../../components/Courses/CourseLessonRow';
+import CourseVideoPlayer from '../../../components/Courses/CourseVideoPlayer';
 import { colors, spacing } from '../../../constants/theme';
 import {
   recordPlaylistVideoEngagement,
@@ -31,14 +30,15 @@ function CoursePlaylistScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const route = useRoute<CoursePlaylistRouteProp>();
   const { playlist } = route.params;
-  const { width } = useWindowDimensions();
-  const playerHeight = Math.round((width * 9) / 16);
+  const listRef = useRef<FlatList<YouTubePlaylistVideo>>(null);
 
   const { videos, loading, error, reload } = useYouTubePlaylistVideos(
     playlist.playlistUrl,
   );
-  const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
-  const [playing, setPlaying] = useState(false);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+
+  const activeVideo =
+    activeIndex !== null ? videos[activeIndex] ?? null : null;
 
   useEffect(() => {
     void recordPlaylistVideoEngagement(playlist.id, playlist.videoCount).catch(
@@ -46,22 +46,10 @@ function CoursePlaylistScreen() {
     );
   }, [playlist.id, playlist.videoCount]);
 
-  useEffect(() => {
-    if (videos.length > 0 && !activeVideoId) {
-      setActiveVideoId(videos[0].videoId);
-      setPlaying(true);
-      void recordPlaylistVideoProgress(
-        playlist.id,
-        1,
-        playlist.videoCount,
-      ).catch(() => undefined);
-    }
-  }, [videos, activeVideoId, playlist.id, playlist.videoCount]);
-
   const handleSelectVideo = useCallback(
-    (video: YouTubePlaylistVideo, index: number) => {
-      setActiveVideoId(video.videoId);
-      setPlaying(true);
+    (index: number) => {
+      setActiveIndex(index);
+      listRef.current?.scrollToOffset({ offset: 0, animated: true });
       void recordPlaylistVideoProgress(
         playlist.id,
         index + 1,
@@ -77,29 +65,14 @@ function CoursePlaylistScreen() {
   }: {
     item: YouTubePlaylistVideo;
     index: number;
-  }) => {
-    const isActive = item.videoId === activeVideoId;
-
-    return (
-      <TouchableOpacity
-        style={[styles.videoRow, isActive && styles.videoRowActive]}
-        activeOpacity={0.85}
-        onPress={() => handleSelectVideo(item, index)}
-        accessibilityRole="button"
-        accessibilityState={{ selected: isActive }}
-        accessibilityLabel={`Play ${item.title}`}>
-        <Image source={{ uri: item.thumbnailUrl }} style={styles.thumbnail} />
-        <View style={styles.videoMeta}>
-          <Text style={styles.videoIndex}>{index + 1}</Text>
-          <Text
-            style={[styles.videoTitle, isActive && styles.videoTitleActive]}
-            numberOfLines={2}>
-            {item.title}
-          </Text>
-        </View>
-      </TouchableOpacity>
-    );
-  };
+  }) => (
+    <CourseLessonRow
+      lesson={item}
+      index={index}
+      isActive={index === activeIndex}
+      onPress={() => handleSelectVideo(index)}
+    />
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -123,21 +96,18 @@ function CoursePlaylistScreen() {
         </View>
       </View>
 
-      {activeVideoId ? (
-        <View style={styles.playerWrap}>
-          <YoutubePlayer
-            height={playerHeight}
-            play={playing}
-            videoId={activeVideoId}
-            onChangeState={state => {
-              if (state === PLAYER_STATES.ENDED) {
-                setPlaying(false);
-              }
-              if (state === PLAYER_STATES.PLAYING) {
-                setPlaying(true);
-              }
-            }}
+      {activeVideo ? (
+        <View style={styles.playerSection}>
+          <CourseVideoPlayer
+            key={activeVideo.videoId}
+            videoId={activeVideo.videoId}
           />
+          <View style={styles.playingMeta}>
+            <Text style={styles.lessonBadge}>
+              Lesson {activeIndex! + 1} of {videos.length}
+            </Text>
+            <Text style={styles.playingTitle}>{activeVideo.title}</Text>
+          </View>
         </View>
       ) : null}
 
@@ -155,13 +125,14 @@ function CoursePlaylistScreen() {
         </View>
       ) : (
         <FlatList
+          ref={listRef}
           data={videos}
           keyExtractor={item => item.videoId}
           renderItem={renderVideo}
           contentContainerStyle={styles.listContent}
           ListHeaderComponent={
             <Text style={styles.listHeading}>
-              {videos.length} video{videos.length === 1 ? '' : 's'}
+              {activeVideo ? 'All lessons' : `${videos.length} lessons`}
             </Text>
           }
           showsVerticalScrollIndicator={false}
@@ -208,8 +179,30 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 2,
   },
-  playerWrap: {
-    backgroundColor: '#000',
+  playerSection: {
+    backgroundColor: colors.surface,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  playingMeta: {
+    paddingHorizontal: spacing.screenHorizontal,
+    paddingTop: 14,
+    paddingBottom: 16,
+    backgroundColor: colors.surface,
+  },
+  lessonBadge: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.primary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 6,
+  },
+  playingTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    lineHeight: 24,
   },
   centeredLoader: {
     marginTop: 32,
@@ -244,50 +237,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.textSecondary,
     marginVertical: 14,
-  },
-  videoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 10,
-    borderRadius: 12,
-    backgroundColor: colors.surface,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  videoRowActive: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primaryLight,
-  },
-  thumbnail: {
-    width: 120,
-    height: 68,
-    borderRadius: 8,
-    backgroundColor: colors.primaryMuted,
-  },
-  videoMeta: {
-    flex: 1,
-    flexDirection: 'row',
-    gap: 8,
-    alignItems: 'flex-start',
-  },
-  videoIndex: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.primary,
-    minWidth: 20,
-  },
-  videoTitle: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.textPrimary,
-    lineHeight: 20,
-  },
-  videoTitleActive: {
-    fontWeight: '700',
-    color: colors.primaryDark,
   },
 });
 
