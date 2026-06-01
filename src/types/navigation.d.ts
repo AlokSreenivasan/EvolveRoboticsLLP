@@ -9,6 +9,7 @@ export type AdminStackParamList = {
   ManageImportantUpdates: undefined;
   ManageUpcomingEvents: undefined;
   ManageResources: undefined;
+  ManageAssignments: undefined;
   ManageCourses: undefined;
   ManageBanners: undefined;
   ManageUsers: undefined;
@@ -42,6 +43,8 @@ export type RootStackParamList = {
   ContinueLearningList: undefined;
   /** PDF study notes from Quick Access → Resources. */
   Resources: undefined;
+  /** PDF assignments from Quick Access → Assignments. */
+  Assignments: undefined;
   ResourcePdfViewer: { title: string; pdfUrl: string };
   /** Registered only for admin users after role resolves. */
   AdminStack: undefined;

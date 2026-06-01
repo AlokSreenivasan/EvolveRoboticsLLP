@@ -4,6 +4,7 @@ import {
   Bell,
   BookOpen,
   Calendar,
+  ClipboardList,
   FolderOpen,
   ImageIcon,
   LayoutDashboard,
@@ -51,6 +52,12 @@ const MENU_ITEMS: AdminMenuItem[] = [
     title: 'Resources',
     description: 'Upload PDF notes with headings for Quick Access',
     icon: FolderOpen,
+  },
+  {
+    key: 'ManageAssignments',
+    title: 'Assignments',
+    description: 'Publish PDF assignments with headings and due dates',
+    icon: ClipboardList,
   },
   {
     key: 'ManageCourses',

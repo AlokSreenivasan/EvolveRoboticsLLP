@@ -19,60 +19,65 @@ import {
   Plus,
   Trash2,
 } from 'lucide-react-native';
+
 import AdminScreenLayout from '../../components/Admin/AdminScreenLayout';
 import AppButton from '../../components/AppButton';
 import { colors, cardShadow, spacing } from '../../constants/theme';
-import { useResources } from '../../presentation/hooks/useResources';
+import { useAssignments } from '../../presentation/hooks/useAssignments';
 import {
-  createResourceNote,
-  deleteResourceNote,
-  ensureResourcesSectionDefaults,
-  moveResourceNote,
-  updateResourceNote,
-  updateResourcesSection,
-} from '../../services/firebase/resourcesService';
+  createAssignment,
+  deleteAssignment,
+  ensureAssignmentsSectionDefaults,
+  moveAssignment,
+  updateAssignment,
+  updateAssignmentsSection,
+} from '../../services/firebase/assignmentsService';
 import {
-  deleteResourceNotePdfByUrlSafe,
-  uploadResourceNotePdf,
+  deleteAssignmentPdfByUrlSafe,
+  uploadAssignmentPdf,
 } from '../../services/firebase/storageService';
 import type {
-  ResourceNote,
-  UpdateResourcesSectionInput,
-} from '../../store/content/types/resources.types';
+  Assignment,
+  UpdateAssignmentsSectionInput,
+} from '../../store/content/types/assignments.types';
 import { toAdminWriteErrorMessage } from '../../utils/admin/adminWriteErrorMessage';
 import { pickPdfFile } from '../../utils/documents/pickPdfFile';
 import { getErrorMessage } from '../../utils/firebase/errors';
 
-type NoteFormState = {
+type AssignmentFormState = {
   title: string;
   subtitle: string;
+  dueDateLabel: string;
   isPublished: boolean;
 };
 
-const EMPTY_NOTE_FORM: NoteFormState = {
+const EMPTY_FORM: AssignmentFormState = {
   title: '',
   subtitle: '',
+  dueDateLabel: '',
   isPublished: true,
 };
 
-function ManageResources() {
-  const { section, notes, loading } = useResources({ includeUnpublished: true });
+function ManageAssignments() {
+  const { section, assignments, loading } = useAssignments({
+    includeUnpublished: true,
+  });
 
   const [sectionTitle, setSectionTitle] = useState('');
   const [sectionSubtitle, setSectionSubtitle] = useState('');
   const [savingSection, setSavingSection] = useState(false);
 
   const [editorVisible, setEditorVisible] = useState(false);
-  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
-  const [noteForm, setNoteForm] = useState<NoteFormState>(EMPTY_NOTE_FORM);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState<AssignmentFormState>(EMPTY_FORM);
   const [pendingPdfUri, setPendingPdfUri] = useState<string | null>(null);
   const [existingPdfUrl, setExistingPdfUrl] = useState('');
   const [pickingPdf, setPickingPdf] = useState(false);
-  const [savingNote, setSavingNote] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [reorderingId, setReorderingId] = useState<string | null>(null);
 
   useEffect(() => {
-    ensureResourcesSectionDefaults().catch(() => undefined);
+    ensureAssignmentsSectionDefaults().catch(() => undefined);
   }, []);
 
   useEffect(() => {
@@ -81,29 +86,30 @@ function ManageResources() {
   }, [section]);
 
   const openCreateEditor = () => {
-    setEditingNoteId(null);
-    setNoteForm(EMPTY_NOTE_FORM);
+    setEditingId(null);
+    setForm(EMPTY_FORM);
     setPendingPdfUri(null);
     setExistingPdfUrl('');
     setEditorVisible(true);
   };
 
-  const openEditEditor = (note: ResourceNote) => {
-    setEditingNoteId(note.id);
-    setNoteForm({
-      title: note.title,
-      subtitle: note.subtitle,
-      isPublished: note.isPublished,
+  const openEditEditor = (assignment: Assignment) => {
+    setEditingId(assignment.id);
+    setForm({
+      title: assignment.title,
+      subtitle: assignment.subtitle,
+      dueDateLabel: assignment.dueDateLabel,
+      isPublished: assignment.isPublished,
     });
     setPendingPdfUri(null);
-    setExistingPdfUrl(note.pdfUrl);
+    setExistingPdfUrl(assignment.pdfUrl);
     setEditorVisible(true);
   };
 
   const closeEditor = () => {
     setEditorVisible(false);
-    setEditingNoteId(null);
-    setNoteForm(EMPTY_NOTE_FORM);
+    setEditingId(null);
+    setForm(EMPTY_FORM);
     setPendingPdfUri(null);
     setExistingPdfUrl('');
   };
@@ -123,20 +129,23 @@ function ManageResources() {
   };
 
   const handleSaveSection = async () => {
-    const payload: UpdateResourcesSectionInput = {
+    const payload: UpdateAssignmentsSectionInput = {
       sectionTitle: sectionTitle.trim(),
       sectionSubtitle: sectionSubtitle.trim(),
     };
 
     if (!payload.sectionTitle) {
-      Alert.alert('Screen title required', 'Enter a title for the Resources screen.');
+      Alert.alert(
+        'Screen title required',
+        'Enter a title for the Assignments screen.',
+      );
       return;
     }
 
     setSavingSection(true);
     try {
-      await updateResourcesSection(payload);
-      Alert.alert('Saved', 'Resources screen headings updated.');
+      await updateAssignmentsSection(payload);
+      Alert.alert('Saved', 'Assignments screen headings updated.');
     } catch (error) {
       Alert.alert('Save failed', toAdminWriteErrorMessage(error));
     } finally {
@@ -144,62 +153,64 @@ function ManageResources() {
     }
   };
 
-  const handleSaveNote = async () => {
-    if (!noteForm.title.trim()) {
-      Alert.alert('Heading required', 'Each note needs a heading (title).');
+  const handleSaveAssignment = async () => {
+    if (!form.title.trim()) {
+      Alert.alert('Heading required', 'Each assignment needs a heading (title).');
       return;
     }
 
     const hasPdf = Boolean(pendingPdfUri || existingPdfUrl.trim());
     if (!hasPdf) {
-      Alert.alert('PDF required', 'Attach a PDF file for this note.');
+      Alert.alert('PDF required', 'Attach a PDF file for this assignment.');
       return;
     }
 
-    setSavingNote(true);
+    setSaving(true);
     try {
-      if (editingNoteId) {
+      if (editingId) {
         let pdfUrl = existingPdfUrl.trim();
         if (pendingPdfUri) {
-          pdfUrl = await uploadResourceNotePdf(editingNoteId, pendingPdfUri);
+          pdfUrl = await uploadAssignmentPdf(editingId, pendingPdfUri);
           if (existingPdfUrl.trim()) {
-            await deleteResourceNotePdfByUrlSafe(existingPdfUrl);
+            await deleteAssignmentPdfByUrlSafe(existingPdfUrl);
           }
         }
-        await updateResourceNote(editingNoteId, {
-          title: noteForm.title,
-          subtitle: noteForm.subtitle,
+        await updateAssignment(editingId, {
+          title: form.title,
+          subtitle: form.subtitle,
+          dueDateLabel: form.dueDateLabel,
           pdfUrl,
-          isPublished: noteForm.isPublished,
+          isPublished: form.isPublished,
         });
       } else {
-        const created = await createResourceNote({
-          title: noteForm.title,
-          subtitle: noteForm.subtitle,
+        const created = await createAssignment({
+          title: form.title,
+          subtitle: form.subtitle,
+          dueDateLabel: form.dueDateLabel,
           pdfUrl: '',
-          isPublished: noteForm.isPublished,
+          isPublished: form.isPublished,
         });
-        const pdfUrl = await uploadResourceNotePdf(created.id, pendingPdfUri!);
-        await updateResourceNote(created.id, { pdfUrl });
+        const pdfUrl = await uploadAssignmentPdf(created.id, pendingPdfUri!);
+        await updateAssignment(created.id, { pdfUrl });
       }
       closeEditor();
     } catch (error) {
       Alert.alert('Save failed', toAdminWriteErrorMessage(error));
     } finally {
-      setSavingNote(false);
+      setSaving(false);
     }
   };
 
-  const confirmDeleteNote = (note: ResourceNote) => {
-    Alert.alert('Delete note', `Remove "${note.title}"?`, [
+  const confirmDelete = (assignment: Assignment) => {
+    Alert.alert('Delete assignment', `Remove "${assignment.title}"?`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
         style: 'destructive',
         onPress: async () => {
           try {
-            await deleteResourceNotePdfByUrlSafe(note.pdfUrl);
-            await deleteResourceNote(note.id);
+            await deleteAssignmentPdfByUrlSafe(assignment.pdfUrl);
+            await deleteAssignment(assignment.id);
           } catch (error) {
             Alert.alert('Delete failed', toAdminWriteErrorMessage(error));
           }
@@ -209,17 +220,17 @@ function ManageResources() {
   };
 
   const handleMove = useCallback(
-    async (noteId: string, direction: 'up' | 'down') => {
-      setReorderingId(noteId);
+    async (assignmentId: string, direction: 'up' | 'down') => {
+      setReorderingId(assignmentId);
       try {
-        await moveResourceNote(noteId, direction, notes);
+        await moveAssignment(assignmentId, direction, assignments);
       } catch (error) {
         Alert.alert('Reorder failed', getErrorMessage(error));
       } finally {
         setReorderingId(null);
       }
     },
-    [notes],
+    [assignments],
   );
 
   const pdfLabel = pendingPdfUri
@@ -230,8 +241,8 @@ function ManageResources() {
 
   return (
     <AdminScreenLayout
-      title="Resources"
-      subtitle="Add PDF study notes with headings for the Resources screen"
+      title="Assignments"
+      subtitle="Publish PDF assignments with headings and due dates"
       scrollable={false}>
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -242,13 +253,13 @@ function ManageResources() {
             label="Screen title"
             value={sectionTitle}
             onChangeText={setSectionTitle}
-            placeholder="Resources"
+            placeholder="Assignments"
           />
           <FormField
             label="Screen subtitle"
             value={sectionSubtitle}
             onChangeText={setSectionSubtitle}
-            placeholder="Study notes from your instructors"
+            placeholder="Download sheets and check due dates"
           />
           <AppButton
             title={savingSection ? 'Saving…' : 'Save headings'}
@@ -259,13 +270,13 @@ function ManageResources() {
           />
         </View>
 
-        <View style={styles.notesHeader}>
-          <Text style={styles.blockTitle}>PDF notes</Text>
+        <View style={styles.listHeader}>
+          <Text style={styles.blockTitle}>Assignments</Text>
           <TouchableOpacity
             style={styles.addButton}
             onPress={openCreateEditor}
             accessibilityRole="button"
-            accessibilityLabel="Add note">
+            accessibilityLabel="Add assignment">
             <Plus size={18} color="#fff" strokeWidth={2.5} />
             <Text style={styles.addButtonText}>Add</Text>
           </TouchableOpacity>
@@ -273,43 +284,50 @@ function ManageResources() {
 
         {loading ? (
           <ActivityIndicator color={colors.primary} style={styles.loader} />
-        ) : notes.length === 0 ? (
+        ) : assignments.length === 0 ? (
           <Text style={styles.emptyText}>
-            No notes yet. Add a PDF note for students to open from Quick Access.
+            No assignments yet. Add a PDF for students to open from Quick Access.
           </Text>
         ) : (
-          notes.map((note, index) => (
-            <View key={note.id} style={styles.noteCard}>
-              <View style={styles.noteTopRow}>
-                <View style={styles.noteMeta}>
-                  <Text style={styles.noteTitle}>{note.title}</Text>
-                  {note.subtitle ? (
-                    <Text style={styles.noteSubtitle}>{note.subtitle}</Text>
+          assignments.map((assignment, index) => (
+            <View key={assignment.id} style={styles.itemCard}>
+              <View style={styles.itemTopRow}>
+                <View style={styles.itemMeta}>
+                  <Text style={styles.itemTitle}>{assignment.title}</Text>
+                  {assignment.subtitle ? (
+                    <Text style={styles.itemSubtitle}>{assignment.subtitle}</Text>
+                  ) : null}
+                  {assignment.dueDateLabel ? (
+                    <Text style={styles.dueLabel}>{assignment.dueDateLabel}</Text>
                   ) : null}
                   <Text style={styles.pdfStatus}>
-                    {note.pdfUrl.trim() ? 'PDF attached' : 'Missing PDF'}
+                    {assignment.pdfUrl.trim() ? 'PDF attached' : 'Missing PDF'}
                   </Text>
-                  {!note.isPublished ? (
+                  {!assignment.isPublished ? (
                     <Text style={styles.draftBadge}>Draft</Text>
                   ) : null}
                 </View>
-                <View style={styles.noteActions}>
+                <View style={styles.itemActions}>
                   <IconButton
                     icon={ArrowUp}
-                    disabled={index === 0 || reorderingId === note.id}
-                    onPress={() => handleMove(note.id, 'up')}
+                    disabled={index === 0 || reorderingId === assignment.id}
+                    onPress={() => handleMove(assignment.id, 'up')}
                   />
                   <IconButton
                     icon={ArrowDown}
                     disabled={
-                      index === notes.length - 1 || reorderingId === note.id
+                      index === assignments.length - 1 ||
+                      reorderingId === assignment.id
                     }
-                    onPress={() => handleMove(note.id, 'down')}
+                    onPress={() => handleMove(assignment.id, 'down')}
                   />
-                  <IconButton icon={Pencil} onPress={() => openEditEditor(note)} />
+                  <IconButton
+                    icon={Pencil}
+                    onPress={() => openEditEditor(assignment)}
+                  />
                   <IconButton
                     icon={Trash2}
-                    onPress={() => confirmDeleteNote(note)}
+                    onPress={() => confirmDelete(assignment)}
                     danger
                   />
                 </View>
@@ -326,25 +344,33 @@ function ManageResources() {
         onRequestClose={closeEditor}>
         <View style={styles.modalContainer}>
           <Text style={styles.modalTitle}>
-            {editingNoteId ? 'Edit note' : 'New note'}
+            {editingId ? 'Edit assignment' : 'New assignment'}
           </Text>
           <ScrollView contentContainerStyle={styles.modalScroll}>
             <FormField
               label="Heading"
-              value={noteForm.title}
-              onChangeText={title => setNoteForm(prev => ({ ...prev, title }))}
-              placeholder="Chapter 3 — Kinematics"
+              value={form.title}
+              onChangeText={title => setForm(prev => ({ ...prev, title }))}
+              placeholder="Lab Report — Week 3"
             />
             <FormField
               label="Subtitle (optional)"
-              value={noteForm.subtitle}
+              value={form.subtitle}
               onChangeText={subtitle =>
-                setNoteForm(prev => ({ ...prev, subtitle }))
+                setForm(prev => ({ ...prev, subtitle }))
               }
-              placeholder="Brief description shown on the card"
+              placeholder="Instructions shown on the card"
+            />
+            <FormField
+              label="Due date label"
+              value={form.dueDateLabel}
+              onChangeText={dueDateLabel =>
+                setForm(prev => ({ ...prev, dueDateLabel }))
+              }
+              placeholder="Due 25 Jun 2025"
             />
 
-            <Text style={styles.fieldLabel}>PDF file</Text>
+            <Text style={styles.fieldLabel}>Assignment PDF</Text>
             <TouchableOpacity
               style={styles.pdfPicker}
               onPress={handlePickPdf}
@@ -360,13 +386,13 @@ function ManageResources() {
             <View style={styles.switchRow}>
               <Text style={styles.switchLabel}>Published for students</Text>
               <Switch
-                value={noteForm.isPublished}
+                value={form.isPublished}
                 onValueChange={isPublished =>
-                  setNoteForm(prev => ({ ...prev, isPublished }))
+                  setForm(prev => ({ ...prev, isPublished }))
                 }
                 trackColor={{ true: colors.primarySoft, false: colors.border }}
                 thumbColor={
-                  noteForm.isPublished ? colors.primary : colors.textMuted
+                  form.isPublished ? colors.primary : colors.textMuted
                 }
               />
             </View>
@@ -379,9 +405,9 @@ function ManageResources() {
               textStyle={styles.secondaryButtonText}
             />
             <AppButton
-              title={savingNote ? 'Saving…' : 'Save note'}
-              onPress={handleSaveNote}
-              disabled={savingNote}
+              title={saving ? 'Saving…' : 'Save assignment'}
+              onPress={handleSaveAssignment}
+              disabled={saving}
               buttonStyle={styles.primaryButton}
               textStyle={styles.primaryButtonText}
             />
@@ -504,7 +530,7 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: '600',
   },
-  notesHeader: {
+  listHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -532,7 +558,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     lineHeight: 20,
   },
-  noteCard: {
+  itemCard: {
     backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 14,
@@ -541,22 +567,28 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     ...cardShadow,
   },
-  noteTopRow: {
+  itemTopRow: {
     flexDirection: 'row',
     gap: 8,
   },
-  noteMeta: {
+  itemMeta: {
     flex: 1,
   },
-  noteTitle: {
+  itemTitle: {
     fontSize: 15,
     fontWeight: '600',
     color: colors.textPrimary,
   },
-  noteSubtitle: {
+  itemSubtitle: {
     fontSize: 13,
     color: colors.textSecondary,
     marginTop: 4,
+  },
+  dueLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.accentGreen,
+    marginTop: 6,
   },
   pdfStatus: {
     fontSize: 12,
@@ -575,7 +607,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     overflow: 'hidden',
   },
-  noteActions: {
+  itemActions: {
     flexDirection: 'row',
     alignItems: 'flex-start',
   },
@@ -641,4 +673,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ManageResources;
+export default ManageAssignments;

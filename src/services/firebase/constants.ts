@@ -6,6 +6,7 @@ export const FIRESTORE_COLLECTIONS = {
   continueLearningPlaylists: 'continueLearningPlaylists',
   courses: 'courses',
   resourceNotes: 'resourceNotes',
+  assignments: 'assignments',
 } as const;
 
 /** Document IDs inside {@link FIRESTORE_COLLECTIONS.appContent}. */
@@ -13,6 +14,7 @@ export const APP_CONTENT_DOCS = {
   importantUpdatesSection: 'importantUpdates',
   upcomingEventsSection: 'upcomingEvents',
   resourcesSection: 'resources',
+  assignmentsSection: 'assignments',
 } as const;
 
 export const STORAGE_PATHS = {
@@ -29,4 +31,6 @@ export const STORAGE_PATHS = {
     `courseThumbnails/${uid}/${courseId}${extension}`,
   resourceNotePdf: (uid: string, noteId: string) =>
     `resourceNotes/${uid}/${noteId}.pdf`,
+  assignmentPdf: (uid: string, assignmentId: string) =>
+    `assignments/${uid}/${assignmentId}.pdf`,
 } as const;

@@ -85,7 +85,20 @@ export {
   updateResourcesSection,
 } from './resourcesService';
 export {
+  createAssignment,
+  deleteAssignment,
+  ensureAssignmentsSectionDefaults,
+  moveAssignment,
+  reorderAssignments,
+  subscribeAssignments,
+  subscribeAssignmentsSection,
+  updateAssignment,
+  updateAssignmentsSection,
+} from './assignmentsService';
+export {
+  deleteAssignmentPdfByUrlSafe,
   deleteResourceNotePdfByUrlSafe,
+  uploadAssignmentPdf,
   uploadResourceNotePdf,
 } from './storageService';
 export {

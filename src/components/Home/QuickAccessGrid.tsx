@@ -50,6 +50,8 @@ function QuickAccessGrid() {
   const handlePress = (itemId: string) => {
     if (itemId === 'resources') {
       navigation.navigate('Resources');
+    } else if (itemId === 'assignments') {
+      navigation.navigate('Assignments');
     }
   };
 
