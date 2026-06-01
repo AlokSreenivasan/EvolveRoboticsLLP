@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import {
   ClipboardList,
   PenLine,
@@ -14,6 +15,7 @@ import {
   type QuickAccessItem,
 } from '../../constants/homeScreenData';
 import { colors } from '../../constants/theme';
+import type { LoginScreenNavigationProp } from '../../types/navigation';
 
 function QuickAccessIcon({
   item,
@@ -43,13 +45,24 @@ function QuickAccessIcon({
 }
 
 function QuickAccessGrid() {
+  const navigation = useNavigation<LoginScreenNavigationProp>();
+
+  const handlePress = (itemId: string) => {
+    if (itemId === 'resources') {
+      navigation.navigate('Resources');
+    }
+  };
+
   return (
     <View style={styles.grid}>
       {QUICK_ACCESS_ITEMS.map(item => (
         <TouchableOpacity
           key={item.id}
           style={styles.item}
-          activeOpacity={0.85}>
+          activeOpacity={0.85}
+          onPress={() => handlePress(item.id)}
+          accessibilityRole="button"
+          accessibilityLabel={item.label}>
           <View style={[styles.iconBox, { backgroundColor: item.backgroundColor }]}>
             <QuickAccessIcon item={item} />
           </View>

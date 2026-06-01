@@ -4,6 +4,7 @@ import {
   Bell,
   BookOpen,
   Calendar,
+  FolderOpen,
   ImageIcon,
   LayoutDashboard,
   Megaphone,
@@ -44,6 +45,12 @@ const MENU_ITEMS: AdminMenuItem[] = [
     title: 'Upcoming Events',
     description: 'Create and manage home event cards',
     icon: Calendar,
+  },
+  {
+    key: 'ManageResources',
+    title: 'Resources',
+    description: 'Upload PDF notes with headings for Quick Access',
+    icon: FolderOpen,
   },
   {
     key: 'ManageCourses',

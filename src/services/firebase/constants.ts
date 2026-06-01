@@ -5,12 +5,14 @@ export const FIRESTORE_COLLECTIONS = {
   upcomingEvents: 'upcomingEvents',
   continueLearningPlaylists: 'continueLearningPlaylists',
   courses: 'courses',
+  resourceNotes: 'resourceNotes',
 } as const;
 
 /** Document IDs inside {@link FIRESTORE_COLLECTIONS.appContent}. */
 export const APP_CONTENT_DOCS = {
   importantUpdatesSection: 'importantUpdates',
   upcomingEventsSection: 'upcomingEvents',
+  resourcesSection: 'resources',
 } as const;
 
 export const STORAGE_PATHS = {
@@ -25,4 +27,6 @@ export const STORAGE_PATHS = {
   ) => `continueLearningThumbnails/${uid}/${playlistId}${extension}`,
   courseThumbnail: (uid: string, courseId: string, extension = '.jpg') =>
     `courseThumbnails/${uid}/${courseId}${extension}`,
+  resourceNotePdf: (uid: string, noteId: string) =>
+    `resourceNotes/${uid}/${noteId}.pdf`,
 } as const;

@@ -44,6 +44,18 @@ service firebase.storage {
       allow delete: if request.auth != null && request.auth.uid == uid;
     }
 
+    match /resourceNotes/{uid}/{pdfFile} {
+      allow read: if request.auth != null;
+
+      allow write: if request.auth != null
+        && request.auth.uid == uid
+        && pdfFile.matches('^[A-Za-z0-9_-]+\\.pdf$')
+        && request.resource.size < 25 * 1024 * 1024
+        && isPdfUpload();
+
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+
     match /{allPaths=**} {
       allow read, write: if false;
     }
@@ -53,4 +65,9 @@ service firebase.storage {
 function isImageUpload() {
   return !('contentType' in request.resource)
     || request.resource.contentType.matches('image/.*');
+}
+
+function isPdfUpload() {
+  return !('contentType' in request.resource)
+    || request.resource.contentType == 'application/pdf';
 }

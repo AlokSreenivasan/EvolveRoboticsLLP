@@ -74,6 +74,21 @@ export {
   updateCourse,
 } from './coursesService';
 export {
+  createResourceNote,
+  deleteResourceNote,
+  ensureResourcesSectionDefaults,
+  moveResourceNote,
+  reorderResourceNotes,
+  subscribeResourceNotes,
+  subscribeResourcesSection,
+  updateResourceNote,
+  updateResourcesSection,
+} from './resourcesService';
+export {
+  deleteResourceNotePdfByUrlSafe,
+  uploadResourceNotePdf,
+} from './storageService';
+export {
   recordPlaylistVideoEngagement,
   recordPlaylistVideoProgress,
   subscribeContinueLearningProgress,

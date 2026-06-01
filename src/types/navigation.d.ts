@@ -8,6 +8,7 @@ export type AdminStackParamList = {
   ManageContinueLearningPlaylists: undefined;
   ManageImportantUpdates: undefined;
   ManageUpcomingEvents: undefined;
+  ManageResources: undefined;
   ManageCourses: undefined;
   ManageBanners: undefined;
   ManageUsers: undefined;
@@ -39,6 +40,9 @@ export type RootStackParamList = {
   Courses: undefined;
   /** Full list of continue-learning course video cards from home. */
   ContinueLearningList: undefined;
+  /** PDF study notes from Quick Access → Resources. */
+  Resources: undefined;
+  ResourcePdfViewer: { title: string; pdfUrl: string };
   /** Registered only for admin users after role resolves. */
   AdminStack: undefined;
   /** Fallback when a non-admin attempts restricted navigation. */
