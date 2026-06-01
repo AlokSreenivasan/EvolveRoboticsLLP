@@ -1,8 +1,8 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import AdminScreenLayout from '../../components/Admin/AdminScreenLayout';
-import { colors, cardShadow, spacing } from '../../constants/theme';
+import AdminScreenLayout from '../../../components/Admin/AdminScreenLayout';
+import { colors, cardShadow, spacing } from '../../../constants/theme';
 
 function AdminNotifications() {
   return (

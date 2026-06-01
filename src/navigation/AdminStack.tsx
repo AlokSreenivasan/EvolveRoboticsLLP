@@ -2,16 +2,16 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import AdminRouteGuard from '../components/Admin/AdminRouteGuard';
-import AdminDashboard from '../screens/Admin/AdminDashboard';
-import AdminNotifications from '../screens/Admin/Notifications';
-import ManageBanners from '../screens/Admin/ManageBanners';
-import ManageImportantUpdates from '../screens/Admin/ManageImportantUpdates';
-import ManageAssignments from '../screens/Admin/ManageAssignments';
-import ManageResources from '../screens/Admin/ManageResources';
-import ManageUpcomingEvents from '../screens/Admin/ManageUpcomingEvents';
-import ManageContinueLearningPlaylists from '../screens/Admin/ManageContinueLearningPlaylists';
-import ManageCourses from '../screens/Admin/ManageCourses';
-import ManageUsers from '../screens/Admin/ManageUsers';
+import AdminDashboard from '../presentation/screens/Admin/AdminDashboard';
+import AdminNotifications from '../presentation/screens/Admin/Notifications';
+import ManageBanners from '../presentation/screens/Admin/ManageBanners';
+import ManageImportantUpdates from '../presentation/screens/Admin/ManageImportantUpdates';
+import ManageAssignments from '../presentation/screens/Admin/ManageAssignments';
+import ManageResources from '../presentation/screens/Admin/ManageResources';
+import ManageUpcomingEvents from '../presentation/screens/Admin/ManageUpcomingEvents';
+import ManageContinueLearningPlaylists from '../presentation/screens/Admin/ManageContinueLearningPlaylists';
+import ManageCourses from '../presentation/screens/Admin/ManageCourses';
+import ManageUsers from '../presentation/screens/Admin/ManageUsers';
 import type { AdminStackParamList } from '../types/navigation';
 
 const Stack = createNativeStackNavigator<AdminStackParamList>();

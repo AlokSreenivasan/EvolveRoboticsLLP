@@ -20,11 +20,11 @@ import {
   Plus,
   Trash2,
 } from 'lucide-react-native';
-import AdminScreenLayout from '../../components/Admin/AdminScreenLayout';
-import AppButton from '../../components/AppButton';
-import { VERTICAL_LIST_PERF } from '../../constants/listPerformance';
-import { colors, cardShadow, spacing } from '../../constants/theme';
-import { useResources } from '../../presentation/hooks/useResources';
+import AdminScreenLayout from '../../../components/Admin/AdminScreenLayout';
+import AppButton from '../../../components/AppButton';
+import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
+import { colors, cardShadow, spacing } from '../../../constants/theme';
+import { useResources } from '../../hooks/useResources';
 import {
   createResourceNote,
   deleteResourceNote,
@@ -32,18 +32,18 @@ import {
   moveResourceNote,
   updateResourceNote,
   updateResourcesSection,
-} from '../../services/firebase/resourcesService';
+} from '../../../services/firebase/resourcesService';
 import {
   deleteResourceNotePdfByUrlSafe,
   uploadResourceNotePdf,
-} from '../../services/firebase/storageService';
+} from '../../../services/firebase/storageService';
 import type {
   ResourceNote,
   UpdateResourcesSectionInput,
-} from '../../store/content/types/resources.types';
-import { toAdminWriteErrorMessage } from '../../utils/admin/adminWriteErrorMessage';
-import { pickPdfFile } from '../../utils/documents/pickPdfFile';
-import { getErrorMessage } from '../../utils/firebase/errors';
+} from '../../../store/content/types/resources.types';
+import { toAdminWriteErrorMessage } from '../../../utils/admin/adminWriteErrorMessage';
+import { pickPdfFile } from '../../../utils/documents/pickPdfFile';
+import { getErrorMessage } from '../../../utils/firebase/errors';
 
 type NoteFormState = {
   title: string;

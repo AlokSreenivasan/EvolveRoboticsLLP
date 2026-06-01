@@ -21,11 +21,11 @@ import {
   Trash2,
 } from 'lucide-react-native';
 
-import AdminScreenLayout from '../../components/Admin/AdminScreenLayout';
-import AppButton from '../../components/AppButton';
-import { VERTICAL_LIST_PERF } from '../../constants/listPerformance';
-import { colors, cardShadow, spacing } from '../../constants/theme';
-import { useAssignments } from '../../presentation/hooks/useAssignments';
+import AdminScreenLayout from '../../../components/Admin/AdminScreenLayout';
+import AppButton from '../../../components/AppButton';
+import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
+import { colors, cardShadow, spacing } from '../../../constants/theme';
+import { useAssignments } from '../../hooks/useAssignments';
 import {
   createAssignment,
   deleteAssignment,
@@ -33,18 +33,18 @@ import {
   moveAssignment,
   updateAssignment,
   updateAssignmentsSection,
-} from '../../services/firebase/assignmentsService';
+} from '../../../services/firebase/assignmentsService';
 import {
   deleteAssignmentPdfByUrlSafe,
   uploadAssignmentPdf,
-} from '../../services/firebase/storageService';
+} from '../../../services/firebase/storageService';
 import type {
   Assignment,
   UpdateAssignmentsSectionInput,
-} from '../../store/content/types/assignments.types';
-import { toAdminWriteErrorMessage } from '../../utils/admin/adminWriteErrorMessage';
-import { pickPdfFile } from '../../utils/documents/pickPdfFile';
-import { getErrorMessage } from '../../utils/firebase/errors';
+} from '../../../store/content/types/assignments.types';
+import { toAdminWriteErrorMessage } from '../../../utils/admin/adminWriteErrorMessage';
+import { pickPdfFile } from '../../../utils/documents/pickPdfFile';
+import { getErrorMessage } from '../../../utils/firebase/errors';
 
 type AssignmentFormState = {
   title: string;

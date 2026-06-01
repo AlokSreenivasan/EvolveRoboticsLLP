@@ -19,7 +19,7 @@ import {
   collection,
   db,
   doc,
-} from '../../services/firebase/firestoreClient';
+} from '../../../services/firebase/firestoreClient';
 import {
   ArrowDown,
   ArrowUp,
@@ -29,12 +29,12 @@ import {
   Trash2,
 } from 'lucide-react-native';
 
-import AdminScreenLayout from '../../components/Admin/AdminScreenLayout';
-import AppButton from '../../components/AppButton';
-import { VERTICAL_LIST_PERF } from '../../constants/listPerformance';
-import { colors, cardShadow, spacing } from '../../constants/theme';
-import { useContinueLearningPlaylists } from '../../presentation/hooks/useContinueLearningPlaylists';
-import { FIRESTORE_COLLECTIONS } from '../../services/firebase/constants';
+import AdminScreenLayout from '../../../components/Admin/AdminScreenLayout';
+import AppButton from '../../../components/AppButton';
+import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
+import { colors, cardShadow, spacing } from '../../../constants/theme';
+import { useContinueLearningPlaylists } from '../../hooks/useContinueLearningPlaylists';
+import { FIRESTORE_COLLECTIONS } from '../../../services/firebase/constants';
 import {
   createContinueLearningPlaylist,
   deleteContinueLearningPlaylist,
@@ -42,14 +42,14 @@ import {
   moveContinueLearningPlaylist,
   resolveYouTubePlaylistUrl,
   updateContinueLearningPlaylist,
-} from '../../services/firebase/continueLearningPlaylistsService';
-import { uploadContinueLearningThumbnail } from '../../services/firebase/storageService';
-import { pickProfilePhotoFromGallery } from '../../services/profilePhotoPicker';
-import type { ContinueLearningPlaylist } from '../../store/content/types/continueLearningPlaylists.types';
-import { extractFirebaseErrorDetails } from '../../utils/firebase/extractFirebaseError';
-import { getErrorMessage } from '../../utils/firebase/errors';
-import { getCurrentUserId } from '../../services/firebase/authService';
-import { isAdmin } from '../../services/firebase/roleService';
+} from '../../../services/firebase/continueLearningPlaylistsService';
+import { uploadContinueLearningThumbnail } from '../../../services/firebase/storageService';
+import { pickProfilePhotoFromGallery } from '../../../services/profilePhotoPicker';
+import type { ContinueLearningPlaylist } from '../../../store/content/types/continueLearningPlaylists.types';
+import { extractFirebaseErrorDetails } from '../../../utils/firebase/extractFirebaseError';
+import { getErrorMessage } from '../../../utils/firebase/errors';
+import { getCurrentUserId } from '../../../services/firebase/authService';
+import { isAdmin } from '../../../services/firebase/roleService';
 
 type PlaylistFormState = {
   title: string;

@@ -20,42 +20,38 @@ import {
   Trash2,
 } from 'lucide-react-native';
 
-import AdminScreenLayout from '../../components/Admin/AdminScreenLayout';
-import AppButton from '../../components/AppButton';
-import { VERTICAL_LIST_PERF } from '../../constants/listPerformance';
-import { colors, cardShadow, spacing } from '../../constants/theme';
-import { useUpcomingEvents } from '../../presentation/hooks/useUpcomingEvents';
+import AdminScreenLayout from '../../../components/Admin/AdminScreenLayout';
+import AppButton from '../../../components/AppButton';
+import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
+import { colors, cardShadow, spacing } from '../../../constants/theme';
+import { useImportantUpdates } from '../../hooks/useImportantUpdates';
 import {
-  createUpcomingEvent,
-  deleteUpcomingEvent,
-  ensureUpcomingEventsSectionDefaults,
-  moveUpcomingEvent,
-  updateUpcomingEvent,
-  updateUpcomingEventsSection,
-} from '../../services/firebase/upcomingEventsService';
+  createImportantUpdateNotice,
+  deleteImportantUpdateNotice,
+  ensureImportantUpdatesSectionDefaults,
+  moveImportantUpdateNotice,
+  updateImportantUpdateNotice,
+  updateImportantUpdatesSection,
+} from '../../../services/firebase/importantUpdatesService';
 import type {
-  UpcomingEvent,
-  UpdateUpcomingEventsSectionInput,
-} from '../../store/content/types/upcomingEvents.types';
-import { getErrorMessage } from '../../utils/firebase/errors';
+  ImportantUpdateNotice,
+  UpdateImportantUpdatesSectionInput,
+} from '../../../store/content/types/importantUpdates.types';
+import { getErrorMessage } from '../../../utils/firebase/errors';
 
-type EventFormState = {
-  month: string;
-  day: string;
+type NoticeFormState = {
+  tag: string;
   title: string;
-  dateRange: string;
-  timeRange: string;
-  daysLeftLabel: string;
+  subtitle: string;
+  description: string;
   isPublished: boolean;
 };
 
-const EMPTY_EVENT_FORM: EventFormState = {
-  month: '',
-  day: '',
+const EMPTY_NOTICE_FORM: NoticeFormState = {
+  tag: '',
   title: '',
-  dateRange: '',
-  timeRange: '',
-  daysLeftLabel: '',
+  subtitle: '',
+  description: '',
   isPublished: true,
 };
 
@@ -76,8 +72,8 @@ function toAdminWriteErrorMessage(error: unknown): string {
   return `${base}\n\nFix checklist:\n1) Firestore users/{uid}.role must be exactly \"admin\"\n2) Deploy rules: cd Evolve && firebase deploy --only firestore:rules`;
 }
 
-function ManageUpcomingEvents() {
-  const { section, events, loading } = useUpcomingEvents({
+function ManageImportantUpdates() {
+  const { section, notices, loading } = useImportantUpdates({
     includeUnpublished: true,
   });
 
@@ -87,13 +83,13 @@ function ManageUpcomingEvents() {
   const [savingSection, setSavingSection] = useState(false);
 
   const [editorVisible, setEditorVisible] = useState(false);
-  const [editingEventId, setEditingEventId] = useState<string | null>(null);
-  const [eventForm, setEventForm] = useState<EventFormState>(EMPTY_EVENT_FORM);
-  const [savingEvent, setSavingEvent] = useState(false);
+  const [editingNoticeId, setEditingNoticeId] = useState<string | null>(null);
+  const [noticeForm, setNoticeForm] = useState<NoticeFormState>(EMPTY_NOTICE_FORM);
+  const [savingNotice, setSavingNotice] = useState(false);
   const [reorderingId, setReorderingId] = useState<string | null>(null);
 
   useEffect(() => {
-    ensureUpcomingEventsSectionDefaults().catch(() => undefined);
+    ensureImportantUpdatesSectionDefaults().catch(() => undefined);
   }, []);
 
   useEffect(() => {
@@ -103,33 +99,31 @@ function ManageUpcomingEvents() {
   }, [section]);
 
   const openCreateEditor = () => {
-    setEditingEventId(null);
-    setEventForm(EMPTY_EVENT_FORM);
+    setEditingNoticeId(null);
+    setNoticeForm(EMPTY_NOTICE_FORM);
     setEditorVisible(true);
   };
 
-  const openEditEditor = (event: UpcomingEvent) => {
-    setEditingEventId(event.id);
-    setEventForm({
-      month: event.month,
-      day: event.day,
-      title: event.title,
-      dateRange: event.dateRange,
-      timeRange: event.timeRange,
-      daysLeftLabel: event.daysLeftLabel,
-      isPublished: event.isPublished,
+  const openEditEditor = (notice: ImportantUpdateNotice) => {
+    setEditingNoticeId(notice.id);
+    setNoticeForm({
+      tag: notice.tag,
+      title: notice.title,
+      subtitle: notice.subtitle,
+      description: notice.description,
+      isPublished: notice.isPublished,
     });
     setEditorVisible(true);
   };
 
   const closeEditor = () => {
     setEditorVisible(false);
-    setEditingEventId(null);
-    setEventForm(EMPTY_EVENT_FORM);
+    setEditingNoticeId(null);
+    setNoticeForm(EMPTY_NOTICE_FORM);
   };
 
   const handleSaveSection = async () => {
-    const payload: UpdateUpcomingEventsSectionInput = {
+    const payload: UpdateImportantUpdatesSectionInput = {
       sectionTitle: sectionTitle.trim(),
       sectionSubtitle: sectionSubtitle.trim(),
       actionLabel: actionLabel.trim(),
@@ -142,7 +136,7 @@ function ManageUpcomingEvents() {
 
     setSavingSection(true);
     try {
-      await updateUpcomingEventsSection(payload);
+      await updateImportantUpdatesSection(payload);
       Alert.alert('Saved', 'Section headings updated. Changes appear on Home instantly.');
     } catch (error) {
       Alert.alert('Save failed', toAdminWriteErrorMessage(error));
@@ -151,56 +145,48 @@ function ManageUpcomingEvents() {
     }
   };
 
-  const handleSaveEvent = async () => {
-    if (!eventForm.title.trim()) {
-      Alert.alert('Title required', 'Each event needs a title.');
-      return;
-    }
-    if (!eventForm.month.trim() || !eventForm.day.trim()) {
-      Alert.alert('Date required', 'Enter month (e.g. MAY) and day (e.g. 25) for the date block.');
+  const handleSaveNotice = async () => {
+    if (!noticeForm.title.trim()) {
+      Alert.alert('Title required', 'Each notice needs a title.');
       return;
     }
 
-    setSavingEvent(true);
+    setSavingNotice(true);
     try {
-      if (editingEventId) {
-        await updateUpcomingEvent(editingEventId, {
-          month: eventForm.month,
-          day: eventForm.day,
-          title: eventForm.title,
-          dateRange: eventForm.dateRange,
-          timeRange: eventForm.timeRange,
-          daysLeftLabel: eventForm.daysLeftLabel,
-          isPublished: eventForm.isPublished,
+      if (editingNoticeId) {
+        await updateImportantUpdateNotice(editingNoticeId, {
+          tag: noticeForm.tag,
+          title: noticeForm.title,
+          subtitle: noticeForm.subtitle,
+          description: noticeForm.description,
+          isPublished: noticeForm.isPublished,
         });
       } else {
-        await createUpcomingEvent({
-          month: eventForm.month,
-          day: eventForm.day,
-          title: eventForm.title,
-          dateRange: eventForm.dateRange,
-          timeRange: eventForm.timeRange,
-          daysLeftLabel: eventForm.daysLeftLabel,
-          isPublished: eventForm.isPublished,
+        await createImportantUpdateNotice({
+          tag: noticeForm.tag.trim() || 'New Notice',
+          title: noticeForm.title,
+          subtitle: noticeForm.subtitle,
+          description: noticeForm.description,
+          isPublished: noticeForm.isPublished,
         });
       }
       closeEditor();
     } catch (error) {
       Alert.alert('Save failed', toAdminWriteErrorMessage(error));
     } finally {
-      setSavingEvent(false);
+      setSavingNotice(false);
     }
   };
 
-  const confirmDeleteEvent = (event: UpcomingEvent) => {
-    Alert.alert('Delete event', `Remove "${event.title}"?`, [
+  const confirmDeleteNotice = (notice: ImportantUpdateNotice) => {
+    Alert.alert('Delete notice', `Remove "${notice.title}"?`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
         style: 'destructive',
         onPress: async () => {
           try {
-            await deleteUpcomingEvent(event.id);
+            await deleteImportantUpdateNotice(notice.id);
           } catch (error) {
             Alert.alert('Delete failed', toAdminWriteErrorMessage(error));
           }
@@ -210,17 +196,17 @@ function ManageUpcomingEvents() {
   };
 
   const handleMove = useCallback(
-    async (eventId: string, direction: 'up' | 'down') => {
-      setReorderingId(eventId);
+    async (noticeId: string, direction: 'up' | 'down') => {
+      setReorderingId(noticeId);
       try {
-        await moveUpcomingEvent(eventId, direction, events);
+        await moveImportantUpdateNotice(noticeId, direction, notices);
       } catch (error) {
         Alert.alert('Reorder failed', getErrorMessage(error));
       } finally {
         setReorderingId(null);
       }
     },
-    [events],
+    [notices],
   );
 
   const listHeader = useCallback(
@@ -232,7 +218,7 @@ function ManageUpcomingEvents() {
             label="Section title"
             value={sectionTitle}
             onChangeText={setSectionTitle}
-            placeholder="Upcoming Events"
+            placeholder="Important Updates"
           />
           <FormField
             label="Section subtitle"
@@ -244,7 +230,7 @@ function ManageUpcomingEvents() {
             label="Action label"
             value={actionLabel}
             onChangeText={setActionLabel}
-            placeholder="View Calendar"
+            placeholder="View All"
           />
           <AppButton
             title={savingSection ? 'Saving…' : 'Save section'}
@@ -254,13 +240,13 @@ function ManageUpcomingEvents() {
             textStyle={styles.primaryButtonText}
           />
         </View>
-        <View style={styles.eventsHeader}>
-          <Text style={styles.blockTitle}>Events</Text>
+        <View style={styles.noticesHeader}>
+          <Text style={styles.blockTitle}>Notices</Text>
           <TouchableOpacity
             style={styles.addButton}
             onPress={openCreateEditor}
             accessibilityRole="button"
-            accessibilityLabel="Add event">
+            accessibilityLabel="Add notice">
             <Plus size={18} color="#fff" strokeWidth={2.5} />
             <Text style={styles.addButtonText}>Add</Text>
           </TouchableOpacity>
@@ -281,56 +267,47 @@ function ManageUpcomingEvents() {
     if (loading) {
       return <ActivityIndicator color={colors.primary} style={styles.loader} />;
     }
-    if (events.length === 0) {
+    if (notices.length === 0) {
       return (
         <Text style={styles.emptyText}>
-          No events yet. Add one to show on the home screen.
+          No notices yet. Add one to show on the home screen.
         </Text>
       );
     }
     return null;
-  }, [events.length, loading]);
+  }, [loading, notices.length]);
 
-  const renderEvent = useCallback(
-    ({ item: event, index }: { item: UpcomingEvent; index: number }) => (
-      <View style={styles.eventCard}>
-        <View style={styles.eventTopRow}>
-          <View style={styles.eventMeta}>
-            <View style={styles.datePreview}>
-              <Text style={styles.dateMonth}>{event.month}</Text>
-              <Text style={styles.dateDay}>{event.day}</Text>
-            </View>
-            <Text style={styles.eventTitle}>{event.title}</Text>
-            {event.dateRange ? (
-              <Text style={styles.eventSubtitle}>{event.dateRange}</Text>
+  const renderNotice = useCallback(
+    ({ item: notice, index }: { item: ImportantUpdateNotice; index: number }) => (
+      <View style={styles.noticeCard}>
+        <View style={styles.noticeTopRow}>
+          <View style={styles.noticeMeta}>
+            {notice.tag ? <Text style={styles.noticeTag}>{notice.tag}</Text> : null}
+            <Text style={styles.noticeTitle}>{notice.title}</Text>
+            {notice.subtitle ? (
+              <Text style={styles.noticeSubtitle}>{notice.subtitle}</Text>
             ) : null}
-            {event.timeRange ? (
-              <Text style={styles.eventSubtitle}>{event.timeRange}</Text>
-            ) : null}
-            {event.daysLeftLabel ? (
-              <Text style={styles.badgePreview}>{event.daysLeftLabel}</Text>
-            ) : null}
-            {!event.isPublished ? (
+            {!notice.isPublished ? (
               <Text style={styles.draftBadge}>Draft</Text>
             ) : null}
           </View>
-          <View style={styles.eventActions}>
+          <View style={styles.noticeActions}>
             <IconButton
               icon={ArrowUp}
-              disabled={index === 0 || reorderingId === event.id}
-              onPress={() => handleMove(event.id, 'up')}
+              disabled={index === 0 || reorderingId === notice.id}
+              onPress={() => handleMove(notice.id, 'up')}
             />
             <IconButton
               icon={ArrowDown}
               disabled={
-                index === events.length - 1 || reorderingId === event.id
+                index === notices.length - 1 || reorderingId === notice.id
               }
-              onPress={() => handleMove(event.id, 'down')}
+              onPress={() => handleMove(notice.id, 'down')}
             />
-            <IconButton icon={Pencil} onPress={() => openEditEditor(event)} />
+            <IconButton icon={Pencil} onPress={() => openEditEditor(notice)} />
             <IconButton
               icon={Trash2}
-              onPress={() => confirmDeleteEvent(event)}
+              onPress={() => confirmDeleteNotice(notice)}
               danger
             />
           </View>
@@ -338,25 +315,28 @@ function ManageUpcomingEvents() {
       </View>
     ),
     [
-      confirmDeleteEvent,
-      events.length,
+      confirmDeleteNotice,
       handleMove,
+      notices.length,
       openEditEditor,
       reorderingId,
     ],
   );
 
-  const keyExtractor = useCallback((item: UpcomingEvent) => item.id, []);
+  const keyExtractor = useCallback(
+    (item: ImportantUpdateNotice) => item.id,
+    [],
+  );
 
   return (
     <AdminScreenLayout
-      title="Upcoming Events"
-      subtitle="Edit home section titles and event cards"
+      title="Important Updates"
+      subtitle="Edit home section titles and notices"
       scrollable={false}>
       <FlatList
-        data={events}
+        data={notices}
         keyExtractor={keyExtractor}
-        renderItem={renderEvent}
+        renderItem={renderNotice}
         ListHeaderComponent={listHeader}
         ListEmptyComponent={listEmpty}
         showsVerticalScrollIndicator={false}
@@ -372,71 +352,50 @@ function ManageUpcomingEvents() {
         onRequestClose={closeEditor}>
         <View style={styles.modalContainer}>
           <Text style={styles.modalTitle}>
-            {editingEventId ? 'Edit event' : 'New event'}
+            {editingNoticeId ? 'Edit notice' : 'New notice'}
           </Text>
           <ScrollView contentContainerStyle={styles.modalScroll}>
-            <View style={styles.rowFields}>
-              <View style={styles.halfField}>
-                <FormField
-                  label="Month (date block)"
-                  value={eventForm.month}
-                  onChangeText={month =>
-                    setEventForm(prev => ({ ...prev, month }))
-                  }
-                  placeholder="MAY"
-                  autoCapitalize="characters"
-                />
-              </View>
-              <View style={styles.halfField}>
-                <FormField
-                  label="Day (date block)"
-                  value={eventForm.day}
-                  onChangeText={day => setEventForm(prev => ({ ...prev, day }))}
-                  placeholder="25"
-                  keyboardType="number-pad"
-                />
-              </View>
-            </View>
+            <FormField
+              label="Tag"
+              value={noticeForm.tag}
+              onChangeText={tag => setNoticeForm(prev => ({ ...prev, tag }))}
+              placeholder="New Notice"
+            />
             <FormField
               label="Title"
-              value={eventForm.title}
-              onChangeText={title => setEventForm(prev => ({ ...prev, title }))}
-              placeholder="Robotics Workshop"
+              value={noticeForm.title}
+              onChangeText={title =>
+                setNoticeForm(prev => ({ ...prev, title }))
+              }
+              placeholder="Robotics Workshop on 25 May 2025"
             />
             <FormField
-              label="Date range"
-              value={eventForm.dateRange}
-              onChangeText={dateRange =>
-                setEventForm(prev => ({ ...prev, dateRange }))
+              label="Subtitle"
+              value={noticeForm.subtitle}
+              onChangeText={subtitle =>
+                setNoticeForm(prev => ({ ...prev, subtitle }))
               }
-              placeholder="25 May 2025"
+              placeholder="Hands-on session for all students."
             />
             <FormField
-              label="Time range"
-              value={eventForm.timeRange}
-              onChangeText={timeRange =>
-                setEventForm(prev => ({ ...prev, timeRange }))
+              label="Description"
+              value={noticeForm.description}
+              onChangeText={description =>
+                setNoticeForm(prev => ({ ...prev, description }))
               }
-              placeholder="10:00 AM – 1:00 PM"
-            />
-            <FormField
-              label="Days-left badge"
-              value={eventForm.daysLeftLabel}
-              onChangeText={daysLeftLabel =>
-                setEventForm(prev => ({ ...prev, daysLeftLabel }))
-              }
-              placeholder="2 Days Left"
+              placeholder="Additional details (optional)"
+              multiline
             />
             <View style={styles.switchRow}>
               <Text style={styles.switchLabel}>Published on home</Text>
               <Switch
-                value={eventForm.isPublished}
+                value={noticeForm.isPublished}
                 onValueChange={isPublished =>
-                  setEventForm(prev => ({ ...prev, isPublished }))
+                  setNoticeForm(prev => ({ ...prev, isPublished }))
                 }
                 trackColor={{ true: colors.primarySoft, false: colors.border }}
                 thumbColor={
-                  eventForm.isPublished ? colors.primary : colors.textMuted
+                  noticeForm.isPublished ? colors.primary : colors.textMuted
                 }
               />
             </View>
@@ -449,9 +408,9 @@ function ManageUpcomingEvents() {
               textStyle={styles.secondaryButtonText}
             />
             <AppButton
-              title={savingEvent ? 'Saving…' : 'Save event'}
-              onPress={handleSaveEvent}
-              disabled={savingEvent}
+              title={savingNotice ? 'Saving…' : 'Save notice'}
+              onPress={handleSaveNotice}
+              disabled={savingNotice}
               buttonStyle={styles.primaryButton}
               textStyle={styles.primaryButtonText}
             />
@@ -468,8 +427,6 @@ type FormFieldProps = {
   onChangeText: (value: string) => void;
   placeholder?: string;
   multiline?: boolean;
-  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
-  keyboardType?: 'default' | 'number-pad';
 };
 
 function FormField({
@@ -478,8 +435,6 @@ function FormField({
   onChangeText,
   placeholder,
   multiline,
-  autoCapitalize,
-  keyboardType,
 }: FormFieldProps) {
   return (
     <View style={styles.field}>
@@ -491,8 +446,6 @@ function FormField({
         placeholder={placeholder}
         placeholderTextColor={colors.textMuted}
         multiline={multiline}
-        autoCapitalize={autoCapitalize}
-        keyboardType={keyboardType}
       />
     </View>
   );
@@ -569,13 +522,6 @@ const styles = StyleSheet.create({
     minHeight: 88,
     textAlignVertical: 'top',
   },
-  rowFields: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  halfField: {
-    flex: 1,
-  },
   primaryButton: {
     backgroundColor: colors.primary,
     marginTop: 4,
@@ -594,7 +540,7 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: '600',
   },
-  eventsHeader: {
+  noticesHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -622,7 +568,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     lineHeight: 20,
   },
-  eventCard: {
+  noticeCard: {
     backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 14,
@@ -631,44 +577,28 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     ...cardShadow,
   },
-  eventTopRow: {
+  noticeTopRow: {
     flexDirection: 'row',
     gap: 8,
   },
-  eventMeta: {
+  noticeMeta: {
     flex: 1,
   },
-  datePreview: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 6,
-    marginBottom: 4,
-  },
-  dateMonth: {
+  noticeTag: {
     fontSize: 11,
     fontWeight: '700',
     color: colors.primary,
+    marginBottom: 4,
   },
-  dateDay: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: colors.textPrimary,
-  },
-  eventTitle: {
+  noticeTitle: {
     fontSize: 15,
     fontWeight: '600',
     color: colors.textPrimary,
   },
-  eventSubtitle: {
+  noticeSubtitle: {
     fontSize: 13,
     color: colors.textSecondary,
-    marginTop: 2,
-  },
-  badgePreview: {
     marginTop: 4,
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.primary,
   },
   draftBadge: {
     marginTop: 6,
@@ -682,7 +612,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     overflow: 'hidden',
   },
-  eventActions: {
+  noticeActions: {
     flexDirection: 'row',
     alignItems: 'flex-start',
   },
@@ -727,4 +657,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ManageUpcomingEvents;
+export default ManageImportantUpdates;

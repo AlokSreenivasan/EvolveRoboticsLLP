@@ -19,7 +19,7 @@ import {
   collection,
   db,
   doc,
-} from '../../services/firebase/firestoreClient';
+} from '../../../services/firebase/firestoreClient';
 import {
   ArrowDown,
   ArrowUp,
@@ -29,25 +29,25 @@ import {
   Trash2,
 } from 'lucide-react-native';
 
-import AdminScreenLayout from '../../components/Admin/AdminScreenLayout';
-import AppButton from '../../components/AppButton';
-import { VERTICAL_LIST_PERF } from '../../constants/listPerformance';
-import { colors, cardShadow, spacing } from '../../constants/theme';
-import { useCourses } from '../../presentation/hooks/useCourses';
-import { FIRESTORE_COLLECTIONS } from '../../services/firebase/constants';
+import AdminScreenLayout from '../../../components/Admin/AdminScreenLayout';
+import AppButton from '../../../components/AppButton';
+import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
+import { colors, cardShadow, spacing } from '../../../constants/theme';
+import { useCourses } from '../../hooks/useCourses';
+import { FIRESTORE_COLLECTIONS } from '../../../services/firebase/constants';
 import {
   createCourse,
   deleteCourse,
   moveCourse,
   updateCourse,
-} from '../../services/firebase/coursesService';
-import { getCurrentUserId } from '../../services/firebase/authService';
-import { isAdmin } from '../../services/firebase/roleService';
-import { uploadCourseThumbnail } from '../../services/firebase/storageService';
-import { pickProfilePhotoFromGallery } from '../../services/profilePhotoPicker';
-import type { Course } from '../../store/content/types/courses.types';
-import { extractFirebaseErrorDetails } from '../../utils/firebase/extractFirebaseError';
-import { getErrorMessage } from '../../utils/firebase/errors';
+} from '../../../services/firebase/coursesService';
+import { getCurrentUserId } from '../../../services/firebase/authService';
+import { isAdmin } from '../../../services/firebase/roleService';
+import { uploadCourseThumbnail } from '../../../services/firebase/storageService';
+import { pickProfilePhotoFromGallery } from '../../../services/profilePhotoPicker';
+import type { Course } from '../../../store/content/types/courses.types';
+import { extractFirebaseErrorDetails } from '../../../utils/firebase/extractFirebaseError';
+import { getErrorMessage } from '../../../utils/firebase/errors';
 
 type CourseFormState = {
   title: string;

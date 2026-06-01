@@ -15,9 +15,9 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import AdminScreenLayout from '../../components/Admin/AdminScreenLayout';
-import { colors, cardShadow, spacing } from '../../constants/theme';
-import type { AdminStackParamList } from '../../types/navigation';
+import AdminScreenLayout from '../../../components/Admin/AdminScreenLayout';
+import { colors, cardShadow, spacing } from '../../../constants/theme';
+import type { AdminStackParamList } from '../../../types/navigation';
 
 type AdminNav = NativeStackNavigationProp<AdminStackParamList, 'AdminDashboard'>;
 
