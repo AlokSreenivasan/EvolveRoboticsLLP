@@ -26,7 +26,7 @@ function UpcomingEventsSection() {
         loading={loading}
         errorMessage={
           error
-            ? 'Could not load events. Pull to refresh the home screen.'
+            ? 'Could not load events. Pull down to try again.'
             : null
         }
         emptyTitle={isEmpty ? 'No upcoming events' : undefined}

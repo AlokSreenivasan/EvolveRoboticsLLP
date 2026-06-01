@@ -31,7 +31,7 @@ function ImportantUpdatesSection() {
       loading={loading}
       errorMessage={
         error
-          ? 'Could not load updates. Pull to refresh the home screen.'
+          ? 'Could not load updates. Pull down to try again.'
           : null
       }
       emptyTitle={isEmpty ? 'No updates right now' : undefined}

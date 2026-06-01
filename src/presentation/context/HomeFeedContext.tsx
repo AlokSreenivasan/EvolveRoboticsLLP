@@ -67,6 +67,8 @@ export type HomeFeedContextValue = {
   progress: HomeFeedProgress;
   importantUpdates: HomeFeedImportantUpdates;
   upcomingEvents: HomeFeedUpcomingEvents;
+  refreshing: boolean;
+  refresh: () => void;
 };
 
 const HomeFeedContext = createContext<HomeFeedContextValue | null>(null);
@@ -145,6 +147,17 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
   const [eventsLoading, setEventsLoading] = useState(true);
   const [eventsError, setEventsError] = useState<string | null>(null);
 
+  const [refreshNonce, setRefreshNonce] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const refresh = useCallback(() => {
+    if (!isActive || refreshing) {
+      return;
+    }
+    setRefreshing(true);
+    setRefreshNonce(n => n + 1);
+  }, [isActive, refreshing]);
+
   useEffect(() => {
     if (!isActive) {
       return;
@@ -158,6 +171,9 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
     setPlaylistsLoading(true);
     setImportantLoading(true);
     setEventsLoading(true);
+    setPlaylistsError(null);
+    setImportantError(null);
+    setEventsError(null);
 
     const unsubPlaylists = subscribeContinueLearningPlaylists(
       next => {
@@ -247,7 +263,7 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
       unsubEventsSection();
       unsubEvents();
     };
-  }, [isActive]);
+  }, [isActive, refreshNonce]);
 
   useEffect(() => {
     if (!isActive) {
@@ -262,6 +278,7 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
     }
 
     setProgressLoading(true);
+    setProgressError(null);
     const unsub = subscribeContinueLearningProgress(
       next => {
         setProgressByPlaylistId(next);
@@ -275,7 +292,30 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
     );
 
     return () => unsub();
-  }, [isActive, user]);
+  }, [isActive, refreshNonce, user]);
+
+  useEffect(() => {
+    if (!refreshing || !isActive) {
+      return;
+    }
+
+    const allSettled =
+      !playlistsLoading &&
+      !importantLoading &&
+      !eventsLoading &&
+      !progressLoading;
+
+    if (allSettled) {
+      setRefreshing(false);
+    }
+  }, [
+    eventsLoading,
+    importantLoading,
+    isActive,
+    playlistsLoading,
+    progressLoading,
+    refreshing,
+  ]);
 
   const getVideosWatched = useCallback(
     (playlistId: string) => progressByPlaylistId[playlistId]?.videosWatched ?? 0,
@@ -309,6 +349,8 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
         loading: isActive ? eventsLoading : false,
         error: eventsError,
       },
+      refreshing,
+      refresh,
     }),
     [
       events,
@@ -327,6 +369,8 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
       progressByPlaylistId,
       progressError,
       progressLoading,
+      refresh,
+      refreshing,
     ],
   );
 
@@ -384,4 +428,12 @@ export function useHomeFeedImportantUpdates(): HomeFeedImportantUpdates {
 export function useHomeFeedUpcomingEvents(): HomeFeedUpcomingEvents {
   const ctx = useHomeFeedOptional();
   return ctx?.upcomingEvents ?? EMPTY_UPCOMING_EVENTS;
+}
+
+export function useHomeFeedRefresh(): { refreshing: boolean; refresh: () => void } {
+  const ctx = useHomeFeedOptional();
+  return {
+    refreshing: ctx?.refreshing ?? false,
+    refresh: ctx?.refresh ?? (() => {}),
+  };
 }

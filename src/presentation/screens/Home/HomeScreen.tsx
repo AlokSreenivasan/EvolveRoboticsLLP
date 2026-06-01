@@ -2,6 +2,7 @@ import React, { useCallback, useRef } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  RefreshControl,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -25,7 +26,7 @@ import { HORIZONTAL_LIST_PERF } from '../../../constants/listPerformance';
 import { colors, spacing } from '../../../constants/theme';
 import type { ContinueLearningPlaylist } from '../../../store/content/types/continueLearningPlaylists.types';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
-import { useHomeFeedFocus } from '../../context/HomeFeedContext';
+import { useHomeFeedFocus, useHomeFeedRefresh } from '../../context/HomeFeedContext';
 import { useAdminNavigation } from '../../hooks/useAdminNavigation';
 import { useContinueLearningPlaylists } from '../../hooks/useContinueLearningPlaylists';
 import { useContinueLearningProgress } from '../../hooks/useContinueLearningProgress';
@@ -36,6 +37,7 @@ const TAB_BAR_HEIGHT = 64;
 
 function HomeScreen() {
   useHomeFeedFocus();
+  const { refresh, refreshing } = useHomeFeedRefresh();
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const insets = useSafeAreaInsets();
   const displayName = useStoredProfileFullName();
@@ -92,6 +94,14 @@ function HomeScreen() {
       <ScrollView
         ref={scrollRef}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={refresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        }
         contentContainerStyle={[
           styles.scrollContent,
           { paddingBottom: scrollBottomPadding },
