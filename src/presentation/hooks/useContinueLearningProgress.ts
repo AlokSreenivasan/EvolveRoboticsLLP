@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 
+import { useHomeFeedOptional } from '../context/HomeFeedContext';
 import { subscribeContinueLearningProgress } from '../../services/firebase/continueLearningProgressService';
 import type { ContinueLearningProgress } from '../../store/content/types/continueLearningProgress.types';
 import { getErrorMessage } from '../../utils/firebase/errors';
 import { useAuth } from '../context/AuthContext';
 
 export function useContinueLearningProgress() {
+  const homeFeed = useHomeFeedOptional();
   const { user } = useAuth();
   const [progressByPlaylistId, setProgressByPlaylistId] = useState<
     Record<string, ContinueLearningProgress>
@@ -14,6 +16,10 @@ export function useContinueLearningProgress() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (homeFeed) {
+      return;
+    }
+
     if (!user) {
       setProgressByPlaylistId({});
       setLoading(false);
@@ -35,17 +41,26 @@ export function useContinueLearningProgress() {
     );
 
     return () => unsub();
-  }, [user]);
+  }, [homeFeed, user]);
 
-  const getVideosWatched = useMemo(
+  const localGetVideosWatched = useMemo(
     () => (playlistId: string) =>
       progressByPlaylistId[playlistId]?.videosWatched ?? 0,
     [progressByPlaylistId],
   );
 
+  if (homeFeed) {
+    return {
+      progressByPlaylistId: homeFeed.progress.progressByPlaylistId,
+      getVideosWatched: homeFeed.progress.getVideosWatched,
+      loading: homeFeed.progress.loading,
+      error: homeFeed.progress.error,
+    };
+  }
+
   return {
     progressByPlaylistId,
-    getVideosWatched,
+    getVideosWatched: localGetVideosWatched,
     loading,
     error,
   };

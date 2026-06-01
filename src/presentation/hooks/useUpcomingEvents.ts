@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
+import { useHomeFeedUpcomingEvents } from '../context/HomeFeedContext';
 import { DEFAULT_UPCOMING_EVENTS_SECTION } from '../../constants/upcomingEventsDefaults';
 import {
   subscribeUpcomingEvents,
@@ -18,6 +19,7 @@ type UseUpcomingEventsOptions = {
 
 export function useUpcomingEvents(options?: UseUpcomingEventsOptions) {
   const includeUnpublished = options?.includeUnpublished === true;
+  const homeFeed = useHomeFeedUpcomingEvents();
   const [section, setSection] = useState<UpcomingEventsSection>(
     DEFAULT_UPCOMING_EVENTS_SECTION,
   );
@@ -26,6 +28,10 @@ export function useUpcomingEvents(options?: UseUpcomingEventsOptions) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!includeUnpublished) {
+      return;
+    }
+
     let sectionReady = false;
     let eventsReady = false;
 
@@ -70,6 +76,16 @@ export function useUpcomingEvents(options?: UseUpcomingEventsOptions) {
   }, [includeUnpublished]);
 
   const displayEvents = useMemo(() => events, [events]);
+
+  if (!includeUnpublished) {
+    return {
+      section: homeFeed.section,
+      events: homeFeed.events,
+      displayEvents: homeFeed.displayEvents,
+      loading: homeFeed.loading,
+      error: homeFeed.error,
+    };
+  }
 
   return {
     section,

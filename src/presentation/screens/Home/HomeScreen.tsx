@@ -25,6 +25,7 @@ import { HORIZONTAL_LIST_PERF } from '../../../constants/listPerformance';
 import { colors, spacing } from '../../../constants/theme';
 import type { ContinueLearningPlaylist } from '../../../store/content/types/continueLearningPlaylists.types';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
+import { useHomeFeedFocus } from '../../context/HomeFeedContext';
 import { useAdminNavigation } from '../../hooks/useAdminNavigation';
 import { useContinueLearningPlaylists } from '../../hooks/useContinueLearningPlaylists';
 import { useContinueLearningProgress } from '../../hooks/useContinueLearningProgress';
@@ -34,6 +35,7 @@ import { useUserRole } from '../../hooks/useUserRole';
 const TAB_BAR_HEIGHT = 64;
 
 function HomeScreen() {
+  useHomeFeedFocus();
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const insets = useSafeAreaInsets();
   const displayName = useStoredProfileFullName();

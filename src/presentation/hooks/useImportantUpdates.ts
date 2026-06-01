@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
+import { useHomeFeedImportantUpdates } from '../context/HomeFeedContext';
 import {
   DEFAULT_IMPORTANT_UPDATES_SECTION,
 } from '../../constants/importantUpdatesDefaults';
@@ -20,6 +21,7 @@ type UseImportantUpdatesOptions = {
 
 export function useImportantUpdates(options?: UseImportantUpdatesOptions) {
   const includeUnpublished = options?.includeUnpublished === true;
+  const homeFeed = useHomeFeedImportantUpdates();
   const [section, setSection] = useState<ImportantUpdatesSection>(
     DEFAULT_IMPORTANT_UPDATES_SECTION,
   );
@@ -28,6 +30,10 @@ export function useImportantUpdates(options?: UseImportantUpdatesOptions) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!includeUnpublished) {
+      return;
+    }
+
     let sectionReady = false;
     let noticesReady = false;
 
@@ -74,6 +80,16 @@ export function useImportantUpdates(options?: UseImportantUpdatesOptions) {
   const displayNotices = useMemo(() => {
     return notices;
   }, [notices]);
+
+  if (!includeUnpublished) {
+    return {
+      section: homeFeed.section,
+      notices: homeFeed.notices,
+      displayNotices: homeFeed.displayNotices,
+      loading: homeFeed.loading,
+      error: homeFeed.error,
+    };
+  }
 
   return {
     section,

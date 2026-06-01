@@ -15,6 +15,7 @@ import SettingsScreen from '../presentation/screens/Settings/SettingsScreen';
 import ChangePasswordScreen from '../presentation/screens/Settings/ChangePasswordScreen';
 import PrivacySettingsScreen from '../presentation/screens/Settings/PrivacySettingsScreen';
 import NotificationPreferencesScreen from '../presentation/screens/Settings/NotificationPreferencesScreen';
+import { HomeFeedProvider } from '../presentation/context/HomeFeedContext';
 import { useUserRole } from '../presentation/hooks/useUserRole';
 
 import AdminStackNavigator from './AdminStack';
@@ -28,8 +29,9 @@ function MainStack() {
   const showAdminStack = !roleLoading && isAdmin;
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Home" component={HomeScreen} />
+    <HomeFeedProvider>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen
         name="ContinueLearningList"
         component={ContinueLearningListScreen}
@@ -56,7 +58,8 @@ function MainStack() {
       {showAdminStack ? (
         <Stack.Screen name="AdminStack" component={AdminStackNavigator} />
       ) : null}
-    </Stack.Navigator>
+      </Stack.Navigator>
+    </HomeFeedProvider>
   );
 }
 

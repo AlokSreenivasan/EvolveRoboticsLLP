@@ -14,10 +14,12 @@ import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import { colors, spacing } from '../../../constants/theme';
 import type { ContinueLearningPlaylist } from '../../../store/content/types/continueLearningPlaylists.types';
 import type { LoginScreenNavigationProp } from '../../../types/navigation';
+import { useHomeFeedFocus } from '../../context/HomeFeedContext';
 import { useContinueLearningPlaylists } from '../../hooks/useContinueLearningPlaylists';
 import { useContinueLearningProgress } from '../../hooks/useContinueLearningProgress';
 
 function ContinueLearningListScreen() {
+  useHomeFeedFocus();
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const { playlists, loading, error } = useContinueLearningPlaylists();
   const { getVideosWatched } = useContinueLearningProgress();
