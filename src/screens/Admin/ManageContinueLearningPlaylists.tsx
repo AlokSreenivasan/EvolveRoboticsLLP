@@ -342,12 +342,16 @@ function ManageContinueLearningPlaylists() {
                 ) : (
                   <View style={[styles.thumb, styles.thumbPlaceholder]} />
                 )}
-                <View style={styles.cardMeta}>
-                  <Text style={styles.cardTitle}>{playlist.title}</Text>
+                <View style={styles.cardTextWrap}>
+                  <Text style={styles.cardTitle} numberOfLines={2}>
+                    {playlist.title}
+                  </Text>
                   {playlist.subtitle ? (
-                    <Text style={styles.cardSubtitle}>{playlist.subtitle}</Text>
+                    <Text style={styles.cardSubtitle} numberOfLines={2}>
+                      {playlist.subtitle}
+                    </Text>
                   ) : null}
-                  <Text style={styles.cardMeta}>
+                  <Text style={styles.cardDetail}>
                     {playlist.videoCount} video
                     {playlist.videoCount === 1 ? '' : 's'}
                   </Text>
@@ -611,7 +615,7 @@ const styles = StyleSheet.create({
   },
   cardRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 10,
   },
   thumb: {
@@ -619,12 +623,14 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 8,
     backgroundColor: colors.primaryMuted,
+    flexShrink: 0,
   },
   thumbPlaceholder: {
     backgroundColor: colors.primaryMuted,
   },
-  cardMeta: {
+  cardTextWrap: {
     flex: 1,
+    minWidth: 0,
   },
   cardTitle: {
     fontSize: 15,
@@ -636,7 +642,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 2,
   },
-  cardMeta: {
+  cardDetail: {
     fontSize: 12,
     color: colors.textMuted,
     marginTop: 4,
@@ -656,9 +662,10 @@ const styles = StyleSheet.create({
   cardActions: {
     flexDirection: 'row',
     alignItems: 'flex-start',
+    flexShrink: 0,
   },
   iconButton: {
-    padding: 6,
+    padding: 4,
   },
   iconButtonDisabled: {
     opacity: 0.35,
