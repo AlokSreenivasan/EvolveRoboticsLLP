@@ -152,4 +152,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CourseCatalogCard;
+export default React.memo(CourseCatalogCard);

@@ -97,4 +97,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default UpcomingEventBanner;
+export default React.memo(UpcomingEventBanner);

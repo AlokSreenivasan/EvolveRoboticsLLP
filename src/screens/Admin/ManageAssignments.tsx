@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  FlatList,
   ScrollView,
   StyleSheet,
   Switch,
@@ -22,6 +23,7 @@ import {
 
 import AdminScreenLayout from '../../components/Admin/AdminScreenLayout';
 import AppButton from '../../components/AppButton';
+import { VERTICAL_LIST_PERF } from '../../constants/listPerformance';
 import { colors, cardShadow, spacing } from '../../constants/theme';
 import { useAssignments } from '../../presentation/hooks/useAssignments';
 import {
@@ -239,14 +241,9 @@ function ManageAssignments() {
       ? 'Current PDF attached'
       : 'No PDF selected';
 
-  return (
-    <AdminScreenLayout
-      title="Assignments"
-      subtitle="Publish PDF assignments with headings and due dates"
-      scrollable={false}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}>
+  const listHeader = useCallback(
+    () => (
+      <>
         <Text style={styles.blockTitle}>Screen headings</Text>
         <View style={styles.card}>
           <FormField
@@ -269,7 +266,6 @@ function ManageAssignments() {
             textStyle={styles.primaryButtonText}
           />
         </View>
-
         <View style={styles.listHeader}>
           <Text style={styles.blockTitle}>Assignments</Text>
           <TouchableOpacity
@@ -281,61 +277,101 @@ function ManageAssignments() {
             <Text style={styles.addButtonText}>Add</Text>
           </TouchableOpacity>
         </View>
+      </>
+    ),
+    [
+      handleSaveSection,
+      openCreateEditor,
+      savingSection,
+      sectionSubtitle,
+      sectionTitle,
+    ],
+  );
 
-        {loading ? (
-          <ActivityIndicator color={colors.primary} style={styles.loader} />
-        ) : assignments.length === 0 ? (
-          <Text style={styles.emptyText}>
-            No assignments yet. Add a PDF for students to open from Quick Access.
-          </Text>
-        ) : (
-          assignments.map((assignment, index) => (
-            <View key={assignment.id} style={styles.itemCard}>
-              <View style={styles.itemTopRow}>
-                <View style={styles.itemMeta}>
-                  <Text style={styles.itemTitle}>{assignment.title}</Text>
-                  {assignment.subtitle ? (
-                    <Text style={styles.itemSubtitle}>{assignment.subtitle}</Text>
-                  ) : null}
-                  {assignment.dueDateLabel ? (
-                    <Text style={styles.dueLabel}>{assignment.dueDateLabel}</Text>
-                  ) : null}
-                  <Text style={styles.pdfStatus}>
-                    {assignment.pdfUrl.trim() ? 'PDF attached' : 'Missing PDF'}
-                  </Text>
-                  {!assignment.isPublished ? (
-                    <Text style={styles.draftBadge}>Draft</Text>
-                  ) : null}
-                </View>
-                <View style={styles.itemActions}>
-                  <IconButton
-                    icon={ArrowUp}
-                    disabled={index === 0 || reorderingId === assignment.id}
-                    onPress={() => handleMove(assignment.id, 'up')}
-                  />
-                  <IconButton
-                    icon={ArrowDown}
-                    disabled={
-                      index === assignments.length - 1 ||
-                      reorderingId === assignment.id
-                    }
-                    onPress={() => handleMove(assignment.id, 'down')}
-                  />
-                  <IconButton
-                    icon={Pencil}
-                    onPress={() => openEditEditor(assignment)}
-                  />
-                  <IconButton
-                    icon={Trash2}
-                    onPress={() => confirmDelete(assignment)}
-                    danger
-                  />
-                </View>
-              </View>
-            </View>
-          ))
-        )}
-      </ScrollView>
+  const listEmpty = useCallback(() => {
+    if (loading) {
+      return <ActivityIndicator color={colors.primary} style={styles.loader} />;
+    }
+    if (assignments.length === 0) {
+      return (
+        <Text style={styles.emptyText}>
+          No assignments yet. Add a PDF for students to open from Quick Access.
+        </Text>
+      );
+    }
+    return null;
+  }, [assignments.length, loading]);
+
+  const renderAssignment = useCallback(
+    ({ item: assignment, index }: { item: Assignment; index: number }) => (
+      <View style={styles.itemCard}>
+        <View style={styles.itemTopRow}>
+          <View style={styles.itemMeta}>
+            <Text style={styles.itemTitle}>{assignment.title}</Text>
+            {assignment.subtitle ? (
+              <Text style={styles.itemSubtitle}>{assignment.subtitle}</Text>
+            ) : null}
+            {assignment.dueDateLabel ? (
+              <Text style={styles.dueLabel}>{assignment.dueDateLabel}</Text>
+            ) : null}
+            <Text style={styles.pdfStatus}>
+              {assignment.pdfUrl.trim() ? 'PDF attached' : 'Missing PDF'}
+            </Text>
+            {!assignment.isPublished ? (
+              <Text style={styles.draftBadge}>Draft</Text>
+            ) : null}
+          </View>
+          <View style={styles.itemActions}>
+            <IconButton
+              icon={ArrowUp}
+              disabled={index === 0 || reorderingId === assignment.id}
+              onPress={() => handleMove(assignment.id, 'up')}
+            />
+            <IconButton
+              icon={ArrowDown}
+              disabled={
+                index === assignments.length - 1 ||
+                reorderingId === assignment.id
+              }
+              onPress={() => handleMove(assignment.id, 'down')}
+            />
+            <IconButton icon={Pencil} onPress={() => openEditEditor(assignment)} />
+            <IconButton
+              icon={Trash2}
+              onPress={() => confirmDelete(assignment)}
+              danger
+            />
+          </View>
+        </View>
+      </View>
+    ),
+    [
+      assignments.length,
+      confirmDelete,
+      handleMove,
+      openEditEditor,
+      reorderingId,
+    ],
+  );
+
+  const keyExtractor = useCallback((item: Assignment) => item.id, []);
+
+  return (
+    <AdminScreenLayout
+      title="Assignments"
+      subtitle="Publish PDF assignments with headings and due dates"
+      scrollable={false}>
+      <FlatList
+        data={assignments}
+        keyExtractor={keyExtractor}
+        renderItem={renderAssignment}
+        ListHeaderComponent={listHeader}
+        ListEmptyComponent={listEmpty}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+        extraData={reorderingId}
+        {...VERTICAL_LIST_PERF}
+      />
 
       <Modal
         visible={editorVisible}

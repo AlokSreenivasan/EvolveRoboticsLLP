@@ -1,6 +1,7 @@
-import React, { useRef } from 'react';
+import React, { useCallback, useRef } from 'react';
 import {
   ActivityIndicator,
+  FlatList,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -20,7 +21,9 @@ import HomeSectionHeader from '../../../components/Home/HomeSectionHeader';
 import ImportantUpdatesSection from '../../../components/Home/ImportantUpdatesSection';
 import QuickAccessGrid from '../../../components/Home/QuickAccessGrid';
 import UpcomingEventsSection from '../../../components/Home/UpcomingEventsSection';
+import { HORIZONTAL_LIST_PERF } from '../../../constants/listPerformance';
 import { colors, spacing } from '../../../constants/theme';
+import type { ContinueLearningPlaylist } from '../../../store/content/types/continueLearningPlaylists.types';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
 import { useAdminNavigation } from '../../hooks/useAdminNavigation';
 import { useContinueLearningPlaylists } from '../../hooks/useContinueLearningPlaylists';
@@ -63,6 +66,23 @@ function HomeScreen() {
 
   const scrollBottomPadding = TAB_BAR_HEIGHT + Math.max(insets.bottom, 8) + 16;
 
+  const renderPlaylist = useCallback(
+    ({ item, index }: { item: ContinueLearningPlaylist; index: number }) => (
+      <ContinueLearningCard
+        playlist={item}
+        videosWatched={getVideosWatched(item.id)}
+        accentIndex={index}
+        onPress={() => navigation.navigate('CoursePlaylist', { playlist: item })}
+      />
+    ),
+    [getVideosWatched, navigation],
+  );
+
+  const playlistKeyExtractor = useCallback(
+    (item: ContinueLearningPlaylist) => item.id,
+    [],
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <HomeHeader displayName={displayName} />
@@ -94,22 +114,15 @@ function HomeScreen() {
               New courses will appear here soon.
             </Text>
           ) : (
-            <ScrollView
+            <FlatList
               horizontal
+              data={playlists}
+              keyExtractor={playlistKeyExtractor}
+              renderItem={renderPlaylist}
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.horizontalList}>
-              {playlists.map((playlist, index) => (
-                <ContinueLearningCard
-                  key={playlist.id}
-                  playlist={playlist}
-                  videosWatched={getVideosWatched(playlist.id)}
-                  accentIndex={index}
-                  onPress={() =>
-                    navigation.navigate('CoursePlaylist', { playlist })
-                  }
-                />
-              ))}
-            </ScrollView>
+              contentContainerStyle={styles.horizontalList}
+              {...HORIZONTAL_LIST_PERF}
+            />
           )}
         </View>
 

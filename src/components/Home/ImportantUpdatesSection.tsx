@@ -1,13 +1,27 @@
-import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { useCallback } from 'react';
+import { FlatList, StyleSheet, View } from 'react-native';
 
+import { NESTED_LIST_PERF } from '../../constants/listPerformance';
 import { useImportantUpdates } from '../../presentation/hooks/useImportantUpdates';
+import type { ImportantUpdateNotice } from '../../store/content/types/importantUpdates.types';
 import HomeFeedSection from './HomeFeedSection';
 import ImportantUpdatesCard from './ImportantUpdatesCard';
 
 function ImportantUpdatesSection() {
   const { section, displayNotices, loading, error } = useImportantUpdates();
   const isEmpty = !loading && !error && displayNotices.length === 0;
+
+  const renderNotice = useCallback(
+    ({ item }: { item: ImportantUpdateNotice }) => (
+      <ImportantUpdatesCard notice={item} />
+    ),
+    [],
+  );
+
+  const keyExtractor = useCallback(
+    (item: ImportantUpdateNotice) => item.id,
+    [],
+  );
 
   return (
     <HomeFeedSection
@@ -27,19 +41,25 @@ function ImportantUpdatesSection() {
           : undefined
       }>
       {!loading && !error && displayNotices.length > 0 ? (
-        <View style={styles.list}>
-          {displayNotices.map(notice => (
-            <ImportantUpdatesCard key={notice.id} notice={notice} />
-          ))}
-        </View>
+        <FlatList
+          data={displayNotices}
+          keyExtractor={keyExtractor}
+          renderItem={renderNotice}
+          ItemSeparatorComponent={ListSeparator}
+          {...NESTED_LIST_PERF}
+        />
       ) : null}
     </HomeFeedSection>
   );
 }
 
+function ListSeparator() {
+  return <View style={styles.separator} />;
+}
+
 const styles = StyleSheet.create({
-  list: {
-    gap: 12,
+  separator: {
+    height: 12,
   },
 });
 

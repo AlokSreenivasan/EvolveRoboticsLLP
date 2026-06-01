@@ -1,13 +1,22 @@
-import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { useCallback } from 'react';
+import { FlatList, StyleSheet, View } from 'react-native';
 
+import { NESTED_LIST_PERF } from '../../constants/listPerformance';
 import { useUpcomingEvents } from '../../presentation/hooks/useUpcomingEvents';
+import type { UpcomingEvent } from '../../store/content/types/upcomingEvents.types';
 import HomeFeedSection from './HomeFeedSection';
 import UpcomingEventBanner from './UpcomingEventBanner';
 
 function UpcomingEventsSection() {
   const { section, displayEvents, loading, error } = useUpcomingEvents();
   const isEmpty = !loading && !error && displayEvents.length === 0;
+
+  const renderEvent = useCallback(
+    ({ item }: { item: UpcomingEvent }) => <UpcomingEventBanner event={item} />,
+    [],
+  );
+
+  const keyExtractor = useCallback((item: UpcomingEvent) => item.id, []);
 
   return (
     <HomeFeedSection
@@ -27,19 +36,25 @@ function UpcomingEventsSection() {
             : undefined
         }>
         {!loading && !error && displayEvents.length > 0 ? (
-          <View style={styles.list}>
-            {displayEvents.map(event => (
-              <UpcomingEventBanner key={event.id} event={event} />
-            ))}
-          </View>
+          <FlatList
+            data={displayEvents}
+            keyExtractor={keyExtractor}
+            renderItem={renderEvent}
+            ItemSeparatorComponent={ListSeparator}
+            {...NESTED_LIST_PERF}
+          />
         ) : null}
     </HomeFeedSection>
   );
 }
 
+function ListSeparator() {
+  return <View style={styles.separator} />;
+}
+
 const styles = StyleSheet.create({
-  list: {
-    gap: 12,
+  separator: {
+    height: 12,
   },
 });
 

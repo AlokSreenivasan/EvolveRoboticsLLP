@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   ActivityIndicator,
+  FlatList,
   SafeAreaView,
-  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -10,13 +10,57 @@ import {
 import { useNavigation } from '@react-navigation/native';
 
 import ResourceNoteCard from '../../../components/Resources/ResourceNoteCard';
+import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import { colors, spacing } from '../../../constants/theme';
+import type { ResourceNote } from '../../../store/content/types/resources.types';
 import type { LoginScreenNavigationProp } from '../../../types/navigation';
 import { useResources } from '../../hooks/useResources';
 
 function ResourcesScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const { section, notes, loading, error } = useResources();
+
+  const renderNote = useCallback(
+    ({ item, index }: { item: ResourceNote; index: number }) => (
+      <ResourceNoteCard
+        note={item}
+        accentIndex={index}
+        onPress={() =>
+          navigation.navigate('ResourcePdfViewer', {
+            title: item.title,
+            pdfUrl: item.pdfUrl,
+          })
+        }
+      />
+    ),
+    [navigation],
+  );
+
+  const keyExtractor = useCallback((item: ResourceNote) => item.id, []);
+
+  const listEmpty = useCallback(() => {
+    if (loading) {
+      return <ActivityIndicator color={colors.primary} style={styles.loader} />;
+    }
+    if (error) {
+      return (
+        <View style={styles.messageCard}>
+          <Text style={styles.messageTitle}>Could not load resources</Text>
+          <Text style={styles.messageText}>
+            Go back and try again in a moment.
+          </Text>
+        </View>
+      );
+    }
+    return (
+      <View style={styles.messageCard}>
+        <Text style={styles.messageTitle}>No notes yet</Text>
+        <Text style={styles.messageText}>
+          Study notes will appear here once your instructors publish them.
+        </Text>
+      </View>
+    );
+  }, [error, loading]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -30,43 +74,15 @@ function ResourcesScreen() {
         ) : null}
       </View>
 
-      <ScrollView
+      <FlatList
+        data={loading || error ? [] : notes}
+        keyExtractor={keyExtractor}
+        renderItem={renderNote}
+        ListEmptyComponent={listEmpty}
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
-        {loading ? (
-          <ActivityIndicator color={colors.primary} style={styles.loader} />
-        ) : error ? (
-          <View style={styles.messageCard}>
-            <Text style={styles.messageTitle}>Could not load resources</Text>
-            <Text style={styles.messageText}>
-              Go back and try again in a moment.
-            </Text>
-          </View>
-        ) : notes.length === 0 ? (
-          <View style={styles.messageCard}>
-            <Text style={styles.messageTitle}>No notes yet</Text>
-            <Text style={styles.messageText}>
-              Study notes will appear here once your instructors publish them.
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.list}>
-            {notes.map((note, index) => (
-              <ResourceNoteCard
-                key={note.id}
-                note={note}
-                accentIndex={index}
-                onPress={() =>
-                  navigation.navigate('ResourcePdfViewer', {
-                    title: note.title,
-                    pdfUrl: note.pdfUrl,
-                  })
-                }
-              />
-            ))}
-          </View>
-        )}
-      </ScrollView>
+        showsVerticalScrollIndicator={false}
+        {...VERTICAL_LIST_PERF}
+      />
     </SafeAreaView>
   );
 }
@@ -105,12 +121,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.screenHorizontal,
     paddingTop: 16,
     paddingBottom: 24,
+    flexGrow: 1,
   },
   loader: {
     marginVertical: 40,
-  },
-  list: {
-    width: '100%',
   },
   messageCard: {
     padding: 20,

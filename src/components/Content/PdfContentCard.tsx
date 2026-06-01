@@ -125,4 +125,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default PdfContentCard;
+export default React.memo(PdfContentCard);

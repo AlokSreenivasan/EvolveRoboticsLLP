@@ -22,6 +22,7 @@ import type {
   LoginScreenNavigationProp,
   RootStackParamList,
 } from '../../../types/navigation';
+import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import { useYouTubePlaylistVideos } from '../../hooks/useYouTubePlaylistVideos';
 
 type CoursePlaylistRouteProp = RouteProp<RootStackParamList, 'CoursePlaylist'>;
@@ -59,19 +60,30 @@ function CoursePlaylistScreen() {
     [playlist.id, playlist.videoCount],
   );
 
-  const renderVideo = ({
-    item,
-    index,
-  }: {
-    item: YouTubePlaylistVideo;
-    index: number;
-  }) => (
-    <CourseLessonRow
-      lesson={item}
-      index={index}
-      isActive={index === activeIndex}
-      onPress={() => handleSelectVideo(index)}
-    />
+  const renderVideo = useCallback(
+    ({ item, index }: { item: YouTubePlaylistVideo; index: number }) => (
+      <CourseLessonRow
+        lesson={item}
+        index={index}
+        isActive={index === activeIndex}
+        onPress={() => handleSelectVideo(index)}
+      />
+    ),
+    [activeIndex, handleSelectVideo],
+  );
+
+  const keyExtractor = useCallback(
+    (item: YouTubePlaylistVideo) => item.videoId,
+    [],
+  );
+
+  const listHeader = useCallback(
+    () => (
+      <Text style={styles.listHeading}>
+        {activeVideo ? 'All lessons' : `${videos.length} lessons`}
+      </Text>
+    ),
+    [activeVideo, videos.length],
   );
 
   return (
@@ -127,15 +139,13 @@ function CoursePlaylistScreen() {
         <FlatList
           ref={listRef}
           data={videos}
-          keyExtractor={item => item.videoId}
+          keyExtractor={keyExtractor}
           renderItem={renderVideo}
           contentContainerStyle={styles.listContent}
-          ListHeaderComponent={
-            <Text style={styles.listHeading}>
-              {activeVideo ? 'All lessons' : `${videos.length} lessons`}
-            </Text>
-          }
+          ListHeaderComponent={listHeader}
           showsVerticalScrollIndicator={false}
+          extraData={activeIndex}
+          {...VERTICAL_LIST_PERF}
         />
       )}
     </SafeAreaView>

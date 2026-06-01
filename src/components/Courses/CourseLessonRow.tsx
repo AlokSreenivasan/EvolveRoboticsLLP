@@ -133,4 +133,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CourseLessonRow;
+export default React.memo(CourseLessonRow);

@@ -6,6 +6,7 @@ import {
   InteractionManager,
   Keyboard,
   Modal,
+  FlatList,
   ScrollView,
   StyleSheet,
   Switch,
@@ -30,6 +31,7 @@ import {
 
 import AdminScreenLayout from '../../components/Admin/AdminScreenLayout';
 import AppButton from '../../components/AppButton';
+import { VERTICAL_LIST_PERF } from '../../constants/listPerformance';
 import { colors, cardShadow, spacing } from '../../constants/theme';
 import { useContinueLearningPlaylists } from '../../presentation/hooks/useContinueLearningPlaylists';
 import { FIRESTORE_COLLECTIONS } from '../../services/firebase/constants';
@@ -298,14 +300,9 @@ function ManageContinueLearningPlaylists() {
     [playlists],
   );
 
-  return (
-    <AdminScreenLayout
-      title="Continue Learning"
-      subtitle="Add YouTube playlists shown on the home screen"
-      scrollable={false}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}>
+  const listHeader = useCallback(
+    () => (
+      <>
         <View style={styles.headerRow}>
           <Text style={styles.blockTitle}>YouTube playlists</Text>
           <TouchableOpacity
@@ -317,77 +314,109 @@ function ManageContinueLearningPlaylists() {
             <Text style={styles.addButtonText}>Add</Text>
           </TouchableOpacity>
         </View>
-
         <Text style={styles.hint}>
           Add a YouTube playlist link, title, and subtitle. Choose a thumbnail
           from your gallery or paste an image URL. Published playlists appear on
           Home.
         </Text>
+      </>
+    ),
+    [openCreateEditor],
+  );
 
-        {loading ? (
-          <ActivityIndicator color={colors.primary} style={styles.loader} />
-        ) : playlists.length === 0 ? (
-          <Text style={styles.emptyText}>
-            No playlists yet. Add a YouTube playlist to show on the home screen.
-          </Text>
-        ) : (
-          playlists.map((playlist, index) => (
-            <View key={playlist.id} style={styles.card}>
-              <View style={styles.cardRow}>
-                {playlist.imageUri ? (
-                  <Image
-                    source={{ uri: playlist.imageUri }}
-                    style={styles.thumb}
-                  />
-                ) : (
-                  <View style={[styles.thumb, styles.thumbPlaceholder]} />
-                )}
-                <View style={styles.cardTextWrap}>
-                  <Text style={styles.cardTitle} numberOfLines={2}>
-                    {playlist.title}
-                  </Text>
-                  {playlist.subtitle ? (
-                    <Text style={styles.cardSubtitle} numberOfLines={2}>
-                      {playlist.subtitle}
-                    </Text>
-                  ) : null}
-                  <Text style={styles.cardDetail}>
-                    {playlist.videoCount} video
-                    {playlist.videoCount === 1 ? '' : 's'}
-                  </Text>
-                  {!playlist.isPublished ? (
-                    <Text style={styles.draftBadge}>Draft</Text>
-                  ) : null}
-                </View>
-                <View style={styles.cardActions}>
-                  <IconButton
-                    icon={ArrowUp}
-                    disabled={index === 0 || reorderingId === playlist.id}
-                    onPress={() => handleMove(playlist.id, 'up')}
-                  />
-                  <IconButton
-                    icon={ArrowDown}
-                    disabled={
-                      index === playlists.length - 1 ||
-                      reorderingId === playlist.id
-                    }
-                    onPress={() => handleMove(playlist.id, 'down')}
-                  />
-                  <IconButton
-                    icon={Pencil}
-                    onPress={() => openEditEditor(playlist)}
-                  />
-                  <IconButton
-                    icon={Trash2}
-                    onPress={() => confirmDelete(playlist)}
-                    danger
-                  />
-                </View>
-              </View>
-            </View>
-          ))
-        )}
-      </ScrollView>
+  const listEmpty = useCallback(() => {
+    if (loading) {
+      return <ActivityIndicator color={colors.primary} style={styles.loader} />;
+    }
+    if (playlists.length === 0) {
+      return (
+        <Text style={styles.emptyText}>
+          No playlists yet. Add a YouTube playlist to show on the home screen.
+        </Text>
+      );
+    }
+    return null;
+  }, [loading, playlists.length]);
+
+  const renderPlaylist = useCallback(
+    ({ item: playlist, index }: { item: ContinueLearningPlaylist; index: number }) => (
+      <View style={styles.card}>
+        <View style={styles.cardRow}>
+          {playlist.imageUri ? (
+            <Image source={{ uri: playlist.imageUri }} style={styles.thumb} />
+          ) : (
+            <View style={[styles.thumb, styles.thumbPlaceholder]} />
+          )}
+          <View style={styles.cardTextWrap}>
+            <Text style={styles.cardTitle} numberOfLines={2}>
+              {playlist.title}
+            </Text>
+            {playlist.subtitle ? (
+              <Text style={styles.cardSubtitle} numberOfLines={2}>
+                {playlist.subtitle}
+              </Text>
+            ) : null}
+            <Text style={styles.cardDetail}>
+              {playlist.videoCount} video
+              {playlist.videoCount === 1 ? '' : 's'}
+            </Text>
+            {!playlist.isPublished ? (
+              <Text style={styles.draftBadge}>Draft</Text>
+            ) : null}
+          </View>
+          <View style={styles.cardActions}>
+            <IconButton
+              icon={ArrowUp}
+              disabled={index === 0 || reorderingId === playlist.id}
+              onPress={() => handleMove(playlist.id, 'up')}
+            />
+            <IconButton
+              icon={ArrowDown}
+              disabled={
+                index === playlists.length - 1 || reorderingId === playlist.id
+              }
+              onPress={() => handleMove(playlist.id, 'down')}
+            />
+            <IconButton icon={Pencil} onPress={() => openEditEditor(playlist)} />
+            <IconButton
+              icon={Trash2}
+              onPress={() => confirmDelete(playlist)}
+              danger
+            />
+          </View>
+        </View>
+      </View>
+    ),
+    [
+      confirmDelete,
+      handleMove,
+      openEditEditor,
+      playlists.length,
+      reorderingId,
+    ],
+  );
+
+  const keyExtractor = useCallback(
+    (item: ContinueLearningPlaylist) => item.id,
+    [],
+  );
+
+  return (
+    <AdminScreenLayout
+      title="Continue Learning"
+      subtitle="Add YouTube playlists shown on the home screen"
+      scrollable={false}>
+      <FlatList
+        data={playlists}
+        keyExtractor={keyExtractor}
+        renderItem={renderPlaylist}
+        ListHeaderComponent={listHeader}
+        ListEmptyComponent={listEmpty}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+        extraData={reorderingId}
+        {...VERTICAL_LIST_PERF}
+      />
 
       <Modal
         visible={editorVisible}

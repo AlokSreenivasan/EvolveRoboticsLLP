@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  FlatList,
   ScrollView,
   StyleSheet,
   Switch,
@@ -21,6 +22,7 @@ import {
 } from 'lucide-react-native';
 import AdminScreenLayout from '../../components/Admin/AdminScreenLayout';
 import AppButton from '../../components/AppButton';
+import { VERTICAL_LIST_PERF } from '../../constants/listPerformance';
 import { colors, cardShadow, spacing } from '../../constants/theme';
 import { useResources } from '../../presentation/hooks/useResources';
 import {
@@ -228,14 +230,9 @@ function ManageResources() {
       ? 'Current PDF attached'
       : 'No PDF selected';
 
-  return (
-    <AdminScreenLayout
-      title="Resources"
-      subtitle="Add PDF study notes with headings for the Resources screen"
-      scrollable={false}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}>
+  const listHeader = useCallback(
+    () => (
+      <>
         <Text style={styles.blockTitle}>Screen headings</Text>
         <View style={styles.card}>
           <FormField
@@ -258,7 +255,6 @@ function ManageResources() {
             textStyle={styles.primaryButtonText}
           />
         </View>
-
         <View style={styles.notesHeader}>
           <Text style={styles.blockTitle}>PDF notes</Text>
           <TouchableOpacity
@@ -270,54 +266,95 @@ function ManageResources() {
             <Text style={styles.addButtonText}>Add</Text>
           </TouchableOpacity>
         </View>
+      </>
+    ),
+    [
+      handleSaveSection,
+      openCreateEditor,
+      savingSection,
+      sectionSubtitle,
+      sectionTitle,
+    ],
+  );
 
-        {loading ? (
-          <ActivityIndicator color={colors.primary} style={styles.loader} />
-        ) : notes.length === 0 ? (
-          <Text style={styles.emptyText}>
-            No notes yet. Add a PDF note for students to open from Quick Access.
-          </Text>
-        ) : (
-          notes.map((note, index) => (
-            <View key={note.id} style={styles.noteCard}>
-              <View style={styles.noteTopRow}>
-                <View style={styles.noteMeta}>
-                  <Text style={styles.noteTitle}>{note.title}</Text>
-                  {note.subtitle ? (
-                    <Text style={styles.noteSubtitle}>{note.subtitle}</Text>
-                  ) : null}
-                  <Text style={styles.pdfStatus}>
-                    {note.pdfUrl.trim() ? 'PDF attached' : 'Missing PDF'}
-                  </Text>
-                  {!note.isPublished ? (
-                    <Text style={styles.draftBadge}>Draft</Text>
-                  ) : null}
-                </View>
-                <View style={styles.noteActions}>
-                  <IconButton
-                    icon={ArrowUp}
-                    disabled={index === 0 || reorderingId === note.id}
-                    onPress={() => handleMove(note.id, 'up')}
-                  />
-                  <IconButton
-                    icon={ArrowDown}
-                    disabled={
-                      index === notes.length - 1 || reorderingId === note.id
-                    }
-                    onPress={() => handleMove(note.id, 'down')}
-                  />
-                  <IconButton icon={Pencil} onPress={() => openEditEditor(note)} />
-                  <IconButton
-                    icon={Trash2}
-                    onPress={() => confirmDeleteNote(note)}
-                    danger
-                  />
-                </View>
-              </View>
-            </View>
-          ))
-        )}
-      </ScrollView>
+  const listEmpty = useCallback(() => {
+    if (loading) {
+      return <ActivityIndicator color={colors.primary} style={styles.loader} />;
+    }
+    if (notes.length === 0) {
+      return (
+        <Text style={styles.emptyText}>
+          No notes yet. Add a PDF note for students to open from Quick Access.
+        </Text>
+      );
+    }
+    return null;
+  }, [loading, notes.length]);
+
+  const renderNote = useCallback(
+    ({ item: note, index }: { item: ResourceNote; index: number }) => (
+      <View style={styles.noteCard}>
+        <View style={styles.noteTopRow}>
+          <View style={styles.noteMeta}>
+            <Text style={styles.noteTitle}>{note.title}</Text>
+            {note.subtitle ? (
+              <Text style={styles.noteSubtitle}>{note.subtitle}</Text>
+            ) : null}
+            <Text style={styles.pdfStatus}>
+              {note.pdfUrl.trim() ? 'PDF attached' : 'Missing PDF'}
+            </Text>
+            {!note.isPublished ? (
+              <Text style={styles.draftBadge}>Draft</Text>
+            ) : null}
+          </View>
+          <View style={styles.noteActions}>
+            <IconButton
+              icon={ArrowUp}
+              disabled={index === 0 || reorderingId === note.id}
+              onPress={() => handleMove(note.id, 'up')}
+            />
+            <IconButton
+              icon={ArrowDown}
+              disabled={index === notes.length - 1 || reorderingId === note.id}
+              onPress={() => handleMove(note.id, 'down')}
+            />
+            <IconButton icon={Pencil} onPress={() => openEditEditor(note)} />
+            <IconButton
+              icon={Trash2}
+              onPress={() => confirmDeleteNote(note)}
+              danger
+            />
+          </View>
+        </View>
+      </View>
+    ),
+    [
+      confirmDeleteNote,
+      handleMove,
+      notes.length,
+      openEditEditor,
+      reorderingId,
+    ],
+  );
+
+  const keyExtractor = useCallback((item: ResourceNote) => item.id, []);
+
+  return (
+    <AdminScreenLayout
+      title="Resources"
+      subtitle="Add PDF study notes with headings for the Resources screen"
+      scrollable={false}>
+      <FlatList
+        data={notes}
+        keyExtractor={keyExtractor}
+        renderItem={renderNote}
+        ListHeaderComponent={listHeader}
+        ListEmptyComponent={listEmpty}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+        extraData={reorderingId}
+        {...VERTICAL_LIST_PERF}
+      />
 
       <Modal
         visible={editorVisible}

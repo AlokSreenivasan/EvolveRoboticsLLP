@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   ActivityIndicator,
+  FlatList,
   SafeAreaView,
-  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -10,7 +10,9 @@ import {
 import { useNavigation } from '@react-navigation/native';
 
 import ContinueLearningCard from '../../../components/Home/ContinueLearningCard';
+import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import { colors, spacing } from '../../../constants/theme';
+import type { ContinueLearningPlaylist } from '../../../store/content/types/continueLearningPlaylists.types';
 import type { LoginScreenNavigationProp } from '../../../types/navigation';
 import { useContinueLearningPlaylists } from '../../hooks/useContinueLearningPlaylists';
 import { useContinueLearningProgress } from '../../hooks/useContinueLearningProgress';
@@ -19,6 +21,48 @@ function ContinueLearningListScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const { playlists, loading, error } = useContinueLearningPlaylists();
   const { getVideosWatched } = useContinueLearningProgress();
+
+  const renderPlaylist = useCallback(
+    ({ item, index }: { item: ContinueLearningPlaylist; index: number }) => (
+      <ContinueLearningCard
+        variant="list"
+        playlist={item}
+        videosWatched={getVideosWatched(item.id)}
+        accentIndex={index}
+        onPress={() => navigation.navigate('CoursePlaylist', { playlist: item })}
+      />
+    ),
+    [getVideosWatched, navigation],
+  );
+
+  const keyExtractor = useCallback(
+    (item: ContinueLearningPlaylist) => item.id,
+    [],
+  );
+
+  const listEmpty = useCallback(() => {
+    if (loading) {
+      return <ActivityIndicator color={colors.primary} style={styles.loader} />;
+    }
+    if (error) {
+      return (
+        <View style={styles.messageCard}>
+          <Text style={styles.messageTitle}>Could not load videos</Text>
+          <Text style={styles.messageText}>
+            Go back and try again in a moment.
+          </Text>
+        </View>
+      );
+    }
+    return (
+      <View style={styles.messageCard}>
+        <Text style={styles.messageTitle}>No course videos yet</Text>
+        <Text style={styles.messageText}>
+          New playlists will appear here once they are published.
+        </Text>
+      </View>
+    );
+  }, [error, loading]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -32,42 +76,15 @@ function ContinueLearningListScreen() {
         </Text>
       </View>
 
-      <ScrollView
+      <FlatList
+        data={loading || error ? [] : playlists}
+        keyExtractor={keyExtractor}
+        renderItem={renderPlaylist}
+        ListEmptyComponent={listEmpty}
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
-        {loading ? (
-          <ActivityIndicator color={colors.primary} style={styles.loader} />
-        ) : error ? (
-          <View style={styles.messageCard}>
-            <Text style={styles.messageTitle}>Could not load videos</Text>
-            <Text style={styles.messageText}>
-              Go back and try again in a moment.
-            </Text>
-          </View>
-        ) : playlists.length === 0 ? (
-          <View style={styles.messageCard}>
-            <Text style={styles.messageTitle}>No course videos yet</Text>
-            <Text style={styles.messageText}>
-              New playlists will appear here once they are published.
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.list}>
-            {playlists.map((playlist, index) => (
-              <ContinueLearningCard
-                key={playlist.id}
-                variant="list"
-                playlist={playlist}
-                videosWatched={getVideosWatched(playlist.id)}
-                accentIndex={index}
-                onPress={() =>
-                  navigation.navigate('CoursePlaylist', { playlist })
-                }
-              />
-            ))}
-          </View>
-        )}
-      </ScrollView>
+        showsVerticalScrollIndicator={false}
+        {...VERTICAL_LIST_PERF}
+      />
     </SafeAreaView>
   );
 }
@@ -106,12 +123,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.screenHorizontal,
     paddingTop: 16,
     paddingBottom: 24,
+    flexGrow: 1,
   },
   loader: {
     marginVertical: 40,
-  },
-  list: {
-    width: '100%',
   },
   messageCard: {
     padding: 20,

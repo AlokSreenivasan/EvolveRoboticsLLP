@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  FlatList,
   ScrollView,
   StyleSheet,
   Switch,
@@ -21,6 +22,7 @@ import {
 
 import AdminScreenLayout from '../../components/Admin/AdminScreenLayout';
 import AppButton from '../../components/AppButton';
+import { VERTICAL_LIST_PERF } from '../../constants/listPerformance';
 import { colors, cardShadow, spacing } from '../../constants/theme';
 import { useUpcomingEvents } from '../../presentation/hooks/useUpcomingEvents';
 import {
@@ -221,14 +223,9 @@ function ManageUpcomingEvents() {
     [events],
   );
 
-  return (
-    <AdminScreenLayout
-      title="Upcoming Events"
-      subtitle="Edit home section titles and event cards"
-      scrollable={false}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}>
+  const listHeader = useCallback(
+    () => (
+      <>
         <Text style={styles.blockTitle}>Section headings</Text>
         <View style={styles.card}>
           <FormField
@@ -257,7 +254,6 @@ function ManageUpcomingEvents() {
             textStyle={styles.primaryButtonText}
           />
         </View>
-
         <View style={styles.eventsHeader}>
           <Text style={styles.blockTitle}>Events</Text>
           <TouchableOpacity
@@ -269,61 +265,105 @@ function ManageUpcomingEvents() {
             <Text style={styles.addButtonText}>Add</Text>
           </TouchableOpacity>
         </View>
+      </>
+    ),
+    [
+      actionLabel,
+      handleSaveSection,
+      openCreateEditor,
+      savingSection,
+      sectionSubtitle,
+      sectionTitle,
+    ],
+  );
 
-        {loading ? (
-          <ActivityIndicator color={colors.primary} style={styles.loader} />
-        ) : events.length === 0 ? (
-          <Text style={styles.emptyText}>
-            No events yet. Add one to show on the home screen.
-          </Text>
-        ) : (
-          events.map((event, index) => (
-            <View key={event.id} style={styles.eventCard}>
-              <View style={styles.eventTopRow}>
-                <View style={styles.eventMeta}>
-                  <View style={styles.datePreview}>
-                    <Text style={styles.dateMonth}>{event.month}</Text>
-                    <Text style={styles.dateDay}>{event.day}</Text>
-                  </View>
-                  <Text style={styles.eventTitle}>{event.title}</Text>
-                  {event.dateRange ? (
-                    <Text style={styles.eventSubtitle}>{event.dateRange}</Text>
-                  ) : null}
-                  {event.timeRange ? (
-                    <Text style={styles.eventSubtitle}>{event.timeRange}</Text>
-                  ) : null}
-                  {event.daysLeftLabel ? (
-                    <Text style={styles.badgePreview}>{event.daysLeftLabel}</Text>
-                  ) : null}
-                  {!event.isPublished ? (
-                    <Text style={styles.draftBadge}>Draft</Text>
-                  ) : null}
-                </View>
-                <View style={styles.eventActions}>
-                  <IconButton
-                    icon={ArrowUp}
-                    disabled={index === 0 || reorderingId === event.id}
-                    onPress={() => handleMove(event.id, 'up')}
-                  />
-                  <IconButton
-                    icon={ArrowDown}
-                    disabled={
-                      index === events.length - 1 || reorderingId === event.id
-                    }
-                    onPress={() => handleMove(event.id, 'down')}
-                  />
-                  <IconButton icon={Pencil} onPress={() => openEditEditor(event)} />
-                  <IconButton
-                    icon={Trash2}
-                    onPress={() => confirmDeleteEvent(event)}
-                    danger
-                  />
-                </View>
-              </View>
+  const listEmpty = useCallback(() => {
+    if (loading) {
+      return <ActivityIndicator color={colors.primary} style={styles.loader} />;
+    }
+    if (events.length === 0) {
+      return (
+        <Text style={styles.emptyText}>
+          No events yet. Add one to show on the home screen.
+        </Text>
+      );
+    }
+    return null;
+  }, [events.length, loading]);
+
+  const renderEvent = useCallback(
+    ({ item: event, index }: { item: UpcomingEvent; index: number }) => (
+      <View style={styles.eventCard}>
+        <View style={styles.eventTopRow}>
+          <View style={styles.eventMeta}>
+            <View style={styles.datePreview}>
+              <Text style={styles.dateMonth}>{event.month}</Text>
+              <Text style={styles.dateDay}>{event.day}</Text>
             </View>
-          ))
-        )}
-      </ScrollView>
+            <Text style={styles.eventTitle}>{event.title}</Text>
+            {event.dateRange ? (
+              <Text style={styles.eventSubtitle}>{event.dateRange}</Text>
+            ) : null}
+            {event.timeRange ? (
+              <Text style={styles.eventSubtitle}>{event.timeRange}</Text>
+            ) : null}
+            {event.daysLeftLabel ? (
+              <Text style={styles.badgePreview}>{event.daysLeftLabel}</Text>
+            ) : null}
+            {!event.isPublished ? (
+              <Text style={styles.draftBadge}>Draft</Text>
+            ) : null}
+          </View>
+          <View style={styles.eventActions}>
+            <IconButton
+              icon={ArrowUp}
+              disabled={index === 0 || reorderingId === event.id}
+              onPress={() => handleMove(event.id, 'up')}
+            />
+            <IconButton
+              icon={ArrowDown}
+              disabled={
+                index === events.length - 1 || reorderingId === event.id
+              }
+              onPress={() => handleMove(event.id, 'down')}
+            />
+            <IconButton icon={Pencil} onPress={() => openEditEditor(event)} />
+            <IconButton
+              icon={Trash2}
+              onPress={() => confirmDeleteEvent(event)}
+              danger
+            />
+          </View>
+        </View>
+      </View>
+    ),
+    [
+      confirmDeleteEvent,
+      events.length,
+      handleMove,
+      openEditEditor,
+      reorderingId,
+    ],
+  );
+
+  const keyExtractor = useCallback((item: UpcomingEvent) => item.id, []);
+
+  return (
+    <AdminScreenLayout
+      title="Upcoming Events"
+      subtitle="Edit home section titles and event cards"
+      scrollable={false}>
+      <FlatList
+        data={events}
+        keyExtractor={keyExtractor}
+        renderItem={renderEvent}
+        ListHeaderComponent={listHeader}
+        ListEmptyComponent={listEmpty}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+        extraData={reorderingId}
+        {...VERTICAL_LIST_PERF}
+      />
 
       <Modal
         visible={editorVisible}

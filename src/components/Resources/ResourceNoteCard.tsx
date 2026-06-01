@@ -23,4 +23,4 @@ function ResourceNoteCard({ note, accentIndex = 0, onPress }: ResourceNoteCardPr
   );
 }
 
-export default ResourceNoteCard;
+export default React.memo(ResourceNoteCard);

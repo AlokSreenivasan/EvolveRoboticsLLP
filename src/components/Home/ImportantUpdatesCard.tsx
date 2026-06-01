@@ -93,4 +93,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ImportantUpdatesCard;
+export default React.memo(ImportantUpdatesCard);

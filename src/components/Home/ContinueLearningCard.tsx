@@ -223,4 +223,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ContinueLearningCard;
+export default React.memo(ContinueLearningCard);

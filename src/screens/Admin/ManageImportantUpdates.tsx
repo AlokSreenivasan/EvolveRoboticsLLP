@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  FlatList,
   ScrollView,
   StyleSheet,
   Switch,
@@ -21,6 +22,7 @@ import {
 
 import AdminScreenLayout from '../../components/Admin/AdminScreenLayout';
 import AppButton from '../../components/AppButton';
+import { VERTICAL_LIST_PERF } from '../../constants/listPerformance';
 import { colors, cardShadow, spacing } from '../../constants/theme';
 import { useImportantUpdates } from '../../presentation/hooks/useImportantUpdates';
 import {
@@ -207,14 +209,9 @@ function ManageImportantUpdates() {
     [notices],
   );
 
-  return (
-    <AdminScreenLayout
-      title="Important Updates"
-      subtitle="Edit home section titles and notices"
-      scrollable={false}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}>
+  const listHeader = useCallback(
+    () => (
+      <>
         <Text style={styles.blockTitle}>Section headings</Text>
         <View style={styles.card}>
           <FormField
@@ -243,7 +240,6 @@ function ManageImportantUpdates() {
             textStyle={styles.primaryButtonText}
           />
         </View>
-
         <View style={styles.noticesHeader}>
           <Text style={styles.blockTitle}>Notices</Text>
           <TouchableOpacity
@@ -255,58 +251,99 @@ function ManageImportantUpdates() {
             <Text style={styles.addButtonText}>Add</Text>
           </TouchableOpacity>
         </View>
+      </>
+    ),
+    [
+      actionLabel,
+      handleSaveSection,
+      openCreateEditor,
+      savingSection,
+      sectionSubtitle,
+      sectionTitle,
+    ],
+  );
 
-        {loading ? (
-          <ActivityIndicator color={colors.primary} style={styles.loader} />
-        ) : notices.length === 0 ? (
-          <Text style={styles.emptyText}>
-            No notices yet. Add one to show on the home screen.
-          </Text>
-        ) : (
-          notices.map((notice, index) => (
-            <View key={notice.id} style={styles.noticeCard}>
-              <View style={styles.noticeTopRow}>
-                <View style={styles.noticeMeta}>
-                  {notice.tag ? (
-                    <Text style={styles.noticeTag}>{notice.tag}</Text>
-                  ) : null}
-                  <Text style={styles.noticeTitle}>{notice.title}</Text>
-                  {notice.subtitle ? (
-                    <Text style={styles.noticeSubtitle}>{notice.subtitle}</Text>
-                  ) : null}
-                  {!notice.isPublished ? (
-                    <Text style={styles.draftBadge}>Draft</Text>
-                  ) : null}
-                </View>
-                <View style={styles.noticeActions}>
-                  <IconButton
-                    icon={ArrowUp}
-                    disabled={index === 0 || reorderingId === notice.id}
-                    onPress={() => handleMove(notice.id, 'up')}
-                  />
-                  <IconButton
-                    icon={ArrowDown}
-                    disabled={
-                      index === notices.length - 1 ||
-                      reorderingId === notice.id
-                    }
-                    onPress={() => handleMove(notice.id, 'down')}
-                  />
-                  <IconButton
-                    icon={Pencil}
-                    onPress={() => openEditEditor(notice)}
-                  />
-                  <IconButton
-                    icon={Trash2}
-                    onPress={() => confirmDeleteNotice(notice)}
-                    danger
-                  />
-                </View>
-              </View>
-            </View>
-          ))
-        )}
-      </ScrollView>
+  const listEmpty = useCallback(() => {
+    if (loading) {
+      return <ActivityIndicator color={colors.primary} style={styles.loader} />;
+    }
+    if (notices.length === 0) {
+      return (
+        <Text style={styles.emptyText}>
+          No notices yet. Add one to show on the home screen.
+        </Text>
+      );
+    }
+    return null;
+  }, [loading, notices.length]);
+
+  const renderNotice = useCallback(
+    ({ item: notice, index }: { item: ImportantUpdateNotice; index: number }) => (
+      <View style={styles.noticeCard}>
+        <View style={styles.noticeTopRow}>
+          <View style={styles.noticeMeta}>
+            {notice.tag ? <Text style={styles.noticeTag}>{notice.tag}</Text> : null}
+            <Text style={styles.noticeTitle}>{notice.title}</Text>
+            {notice.subtitle ? (
+              <Text style={styles.noticeSubtitle}>{notice.subtitle}</Text>
+            ) : null}
+            {!notice.isPublished ? (
+              <Text style={styles.draftBadge}>Draft</Text>
+            ) : null}
+          </View>
+          <View style={styles.noticeActions}>
+            <IconButton
+              icon={ArrowUp}
+              disabled={index === 0 || reorderingId === notice.id}
+              onPress={() => handleMove(notice.id, 'up')}
+            />
+            <IconButton
+              icon={ArrowDown}
+              disabled={
+                index === notices.length - 1 || reorderingId === notice.id
+              }
+              onPress={() => handleMove(notice.id, 'down')}
+            />
+            <IconButton icon={Pencil} onPress={() => openEditEditor(notice)} />
+            <IconButton
+              icon={Trash2}
+              onPress={() => confirmDeleteNotice(notice)}
+              danger
+            />
+          </View>
+        </View>
+      </View>
+    ),
+    [
+      confirmDeleteNotice,
+      handleMove,
+      notices.length,
+      openEditEditor,
+      reorderingId,
+    ],
+  );
+
+  const keyExtractor = useCallback(
+    (item: ImportantUpdateNotice) => item.id,
+    [],
+  );
+
+  return (
+    <AdminScreenLayout
+      title="Important Updates"
+      subtitle="Edit home section titles and notices"
+      scrollable={false}>
+      <FlatList
+        data={notices}
+        keyExtractor={keyExtractor}
+        renderItem={renderNotice}
+        ListHeaderComponent={listHeader}
+        ListEmptyComponent={listEmpty}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+        extraData={reorderingId}
+        {...VERTICAL_LIST_PERF}
+      />
 
       <Modal
         visible={editorVisible}

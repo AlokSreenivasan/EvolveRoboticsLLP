@@ -6,6 +6,7 @@ import {
   InteractionManager,
   Keyboard,
   Modal,
+  FlatList,
   ScrollView,
   StyleSheet,
   Switch,
@@ -30,6 +31,7 @@ import {
 
 import AdminScreenLayout from '../../components/Admin/AdminScreenLayout';
 import AppButton from '../../components/AppButton';
+import { VERTICAL_LIST_PERF } from '../../constants/listPerformance';
 import { colors, cardShadow, spacing } from '../../constants/theme';
 import { useCourses } from '../../presentation/hooks/useCourses';
 import { FIRESTORE_COLLECTIONS } from '../../services/firebase/constants';
@@ -260,14 +262,9 @@ function ManageCourses() {
     [courses],
   );
 
-  return (
-    <AdminScreenLayout
-      title="Manage Courses"
-      subtitle="Add courses shown in the Courses tab"
-      scrollable={false}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}>
+  const listHeader = useCallback(
+    () => (
+      <>
         <View style={styles.headerRow}>
           <Text style={styles.blockTitle}>Course catalog</Text>
           <TouchableOpacity
@@ -279,67 +276,94 @@ function ManageCourses() {
             <Text style={styles.addButtonText}>Add</Text>
           </TouchableOpacity>
         </View>
-
         <Text style={styles.hint}>
           Add title, duration, and thumbnail for each course. Published courses
           appear in the Courses tab for all users.
         </Text>
+      </>
+    ),
+    [openCreateEditor],
+  );
 
-        {loading ? (
-          <ActivityIndicator color={colors.primary} style={styles.loader} />
-        ) : courses.length === 0 ? (
-          <Text style={styles.emptyText}>
-            No courses yet. Add one to show in the Courses tab.
-          </Text>
-        ) : (
-          courses.map((course, index) => (
-            <View key={course.id} style={styles.card}>
-              <View style={styles.cardRow}>
-                {course.imageUri ? (
-                  <Image source={{ uri: course.imageUri }} style={styles.thumb} />
-                ) : (
-                  <View style={[styles.thumb, styles.thumbPlaceholder]} />
-                )}
-                <View style={styles.cardMeta}>
-                  <Text style={styles.cardTitle}>{course.title}</Text>
-                  {course.subtitle ? (
-                    <Text style={styles.cardSubtitle}>{course.subtitle}</Text>
-                  ) : null}
-                  {course.durationLabel ? (
-                    <Text style={styles.cardDuration}>{course.durationLabel}</Text>
-                  ) : null}
-                  {!course.isPublished ? (
-                    <Text style={styles.draftBadge}>Draft</Text>
-                  ) : null}
-                </View>
-                <View style={styles.cardActions}>
-                  <IconButton
-                    icon={ArrowUp}
-                    disabled={index === 0 || reorderingId === course.id}
-                    onPress={() => handleMove(course.id, 'up')}
-                  />
-                  <IconButton
-                    icon={ArrowDown}
-                    disabled={
-                      index === courses.length - 1 || reorderingId === course.id
-                    }
-                    onPress={() => handleMove(course.id, 'down')}
-                  />
-                  <IconButton
-                    icon={Pencil}
-                    onPress={() => openEditEditor(course)}
-                  />
-                  <IconButton
-                    icon={Trash2}
-                    onPress={() => confirmDelete(course)}
-                    danger
-                  />
-                </View>
-              </View>
-            </View>
-          ))
-        )}
-      </ScrollView>
+  const listEmpty = useCallback(() => {
+    if (loading) {
+      return <ActivityIndicator color={colors.primary} style={styles.loader} />;
+    }
+    if (courses.length === 0) {
+      return (
+        <Text style={styles.emptyText}>
+          No courses yet. Add one to show in the Courses tab.
+        </Text>
+      );
+    }
+    return null;
+  }, [courses.length, loading]);
+
+  const renderCourse = useCallback(
+    ({ item: course, index }: { item: Course; index: number }) => (
+      <View style={styles.card}>
+        <View style={styles.cardRow}>
+          {course.imageUri ? (
+            <Image source={{ uri: course.imageUri }} style={styles.thumb} />
+          ) : (
+            <View style={[styles.thumb, styles.thumbPlaceholder]} />
+          )}
+          <View style={styles.cardMeta}>
+            <Text style={styles.cardTitle}>{course.title}</Text>
+            {course.subtitle ? (
+              <Text style={styles.cardSubtitle}>{course.subtitle}</Text>
+            ) : null}
+            {course.durationLabel ? (
+              <Text style={styles.cardDuration}>{course.durationLabel}</Text>
+            ) : null}
+            {!course.isPublished ? (
+              <Text style={styles.draftBadge}>Draft</Text>
+            ) : null}
+          </View>
+          <View style={styles.cardActions}>
+            <IconButton
+              icon={ArrowUp}
+              disabled={index === 0 || reorderingId === course.id}
+              onPress={() => handleMove(course.id, 'up')}
+            />
+            <IconButton
+              icon={ArrowDown}
+              disabled={
+                index === courses.length - 1 || reorderingId === course.id
+              }
+              onPress={() => handleMove(course.id, 'down')}
+            />
+            <IconButton icon={Pencil} onPress={() => openEditEditor(course)} />
+            <IconButton
+              icon={Trash2}
+              onPress={() => confirmDelete(course)}
+              danger
+            />
+          </View>
+        </View>
+      </View>
+    ),
+    [confirmDelete, courses.length, handleMove, openEditEditor, reorderingId],
+  );
+
+  const keyExtractor = useCallback((item: Course) => item.id, []);
+
+  return (
+    <AdminScreenLayout
+      title="Manage Courses"
+      subtitle="Add courses shown in the Courses tab"
+      scrollable={false}>
+      <FlatList
+        data={courses}
+        keyExtractor={keyExtractor}
+        renderItem={renderCourse}
+        ListHeaderComponent={listHeader}
+        ListEmptyComponent={listEmpty}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+        extraData={reorderingId}
+        {...VERTICAL_LIST_PERF}
+      />
 
       <Modal
         visible={editorVisible}
