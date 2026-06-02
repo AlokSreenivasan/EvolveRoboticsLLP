@@ -47,7 +47,7 @@ export const adminStyles = StyleSheet.create({
   },
   primaryButton: {
     backgroundColor: colors.primary,
-    marginTop: 4,
+    flex: 1,
   },
   primaryButtonText: {
     color: '#fff',
