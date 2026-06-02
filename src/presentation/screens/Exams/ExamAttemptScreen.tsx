@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -30,24 +30,83 @@ function formatMinutes(timerSeconds: number): number {
   return Math.max(0, Math.trunc(timerSeconds / 60));
 }
 
+function formatTimeMMSS(totalSeconds: number): string {
+  const safe = Number.isFinite(totalSeconds)
+    ? Math.max(0, Math.trunc(totalSeconds))
+    : 0;
+  const minutes = Math.floor(safe / 60);
+  const seconds = safe % 60;
+  const mm = String(minutes).padStart(2, '0');
+  const ss = String(seconds).padStart(2, '0');
+  return `${mm}:${ss}`;
+}
+
 function ExamAttemptScreen() {
   const navigation = useNavigation();
   const route = useRoute<ExamAttemptRoute>();
-  const { examId } = route.params;
+  const examId = route.params?.examId ?? '';
 
   const { exam, loading, error } = useExam(examId);
 
   const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const submittedRef = useRef(false);
+  const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const questionCount = exam?.questions?.length ?? 0;
+  const examQuestions = exam?.questions ?? [];
   const answeredCount = useMemo(
     () => Object.keys(answers).length,
     [answers],
   );
 
-  const handleSelect = useCallback((questionId: string, choiceIndex: number) => {
-    setAnswers(prev => ({ ...prev, [questionId]: choiceIndex }));
-  }, []);
+  useEffect(() => {
+    if (!exam) {
+      return;
+    }
+
+    // Reset attempt state when exam changes.
+    setAnswers({});
+    setSubmitting(false);
+    submittedRef.current = false;
+
+    setRemainingSeconds(exam.timerSeconds);
+
+    if (tickRef.current) {
+      clearInterval(tickRef.current);
+      tickRef.current = null;
+    }
+
+    tickRef.current = setInterval(() => {
+      setRemainingSeconds(prev => {
+        if (prev == null) {
+          return prev;
+        }
+        if (prev <= 0) {
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (tickRef.current) {
+        clearInterval(tickRef.current);
+        tickRef.current = null;
+      }
+    };
+  }, [exam?.id]);
+
+  const handleSelect = useCallback(
+    (questionId: string, choiceIndex: number) => {
+      if (submittedRef.current) {
+        return;
+      }
+      setAnswers(prev => ({ ...prev, [questionId]: choiceIndex }));
+    },
+    [],
+  );
 
   const renderChoice = useCallback(
     (questionId: string, choiceIndex: number, label: string) => {
@@ -95,6 +154,77 @@ function ExamAttemptScreen() {
 
   const keyExtractor = useCallback((item: ExamQuestion) => item.id, []);
 
+  const canSubmit = questionCount > 0 && answeredCount === questionCount;
+
+  const finishSubmission = useCallback(
+    async (reason: 'manual' | 'timeout') => {
+      if (!exam) {
+        return;
+      }
+      if (submittedRef.current || submitting) {
+        return;
+      }
+
+      submittedRef.current = true;
+      setSubmitting(true);
+
+      if (tickRef.current) {
+        clearInterval(tickRef.current);
+        tickRef.current = null;
+      }
+
+      const total = questionCount;
+      const correct = examQuestions.reduce((count, question) => {
+        const selected = answers[question.id];
+        return selected === question.correctChoiceIndex ? count + 1 : count;
+      }, 0);
+
+      try {
+        await createExamAttempt({
+          examId: exam.id,
+          answers,
+          correctCount: correct,
+          totalQuestions: total,
+        });
+
+        Alert.alert(
+          reason === 'timeout' ? 'Time up' : 'Submitted',
+          `Score: ${correct}/${total} (${total > 0 ? Math.round((correct / total) * 100) : 0}%)`,
+          [{ text: 'OK', onPress: () => navigation.goBack() }],
+        );
+      } catch (submitError) {
+        submittedRef.current = false;
+        Alert.alert(
+          'Submit failed',
+          String((submitError as Error)?.message ?? submitError),
+        );
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    [answers, exam, examQuestions, navigation, questionCount, submitting],
+  );
+
+  const handleSubmit = useCallback(async () => {
+    await finishSubmission('manual');
+  }, [finishSubmission]);
+
+  useEffect(() => {
+    if (!exam) {
+      return;
+    }
+    if (remainingSeconds == null) {
+      return;
+    }
+    if (remainingSeconds > 0) {
+      return;
+    }
+    finishSubmission('timeout');
+  }, [exam, finishSubmission, remainingSeconds]);
+
+  const timeLabel =
+    remainingSeconds == null ? '' : formatTimeMMSS(remainingSeconds);
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -122,36 +252,6 @@ function ExamAttemptScreen() {
     );
   }
 
-  const canSubmit = questionCount > 0 && answeredCount === questionCount;
-
-  const handleSubmit = async () => {
-    const total = questionCount;
-    const correct = (exam.questions ?? []).reduce((count, question) => {
-      const selected = answers[question.id];
-      return selected === question.correctChoiceIndex ? count + 1 : count;
-    }, 0);
-
-    try {
-      await createExamAttempt({
-        examId: exam.id,
-        answers,
-        correctCount: correct,
-        totalQuestions: total,
-      });
-
-      Alert.alert(
-        'Submitted',
-        `Score: ${correct}/${total} (${total > 0 ? Math.round((correct / total) * 100) : 0}%)`,
-        [{ text: 'OK', onPress: () => navigation.goBack() }],
-      );
-    } catch (submitError) {
-      Alert.alert(
-        'Submit failed',
-        String((submitError as Error)?.message ?? submitError),
-      );
-    }
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -162,9 +262,20 @@ function ExamAttemptScreen() {
         <Text style={styles.subtitle}>
           {questionCount} questions • {formatMinutes(exam.timerSeconds)} min
         </Text>
-        <Text style={styles.progress}>
-          Answered {Math.min(answeredCount, questionCount)}/{questionCount}
-        </Text>
+        <View style={styles.metaRow}>
+          <Text style={styles.progress}>
+            Answered {Math.min(answeredCount, questionCount)}/{questionCount}
+          </Text>
+          <Text
+            style={[
+              styles.timer,
+              remainingSeconds != null && remainingSeconds <= 15
+                ? styles.timerDanger
+                : null,
+            ]}>
+            Time left {timeLabel}
+          </Text>
+        </View>
       </View>
 
       <FlatList
@@ -178,12 +289,19 @@ function ExamAttemptScreen() {
 
       <View style={styles.footer}>
         <AppButton
-          title={canSubmit ? 'Submit' : 'Answer all questions'}
+          title={
+            submitting
+              ? 'Submitting…'
+              : canSubmit
+                ? 'Submit'
+                : 'Answer all questions'
+          }
           onPress={handleSubmit}
-          disabled={!canSubmit}
+          disabled={!canSubmit || submitting || submittedRef.current}
           buttonStyle={[
             styles.submitButton,
-            !canSubmit && styles.submitButtonDisabled,
+            (!canSubmit || submitting || submittedRef.current) &&
+              styles.submitButtonDisabled,
           ]}
           textStyle={styles.submitText}
         />
@@ -222,9 +340,23 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   progress: {
-    marginTop: 8,
     fontSize: 12,
     color: colors.textMuted,
+  },
+  metaRow: {
+    marginTop: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+  },
+  timer: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: colors.textPrimary,
+  },
+  timerDanger: {
+    color: colors.danger,
   },
   scrollContent: {
     paddingHorizontal: spacing.screenHorizontal,
