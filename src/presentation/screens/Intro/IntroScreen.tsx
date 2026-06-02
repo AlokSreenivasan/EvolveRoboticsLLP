@@ -19,17 +19,21 @@ const slides = [
   {
     id: 1,
     title: 'Explore the Future of Robotics',
-    image: require('../../../assets/swipeImages/swipe1.png'),
+    // image: require('../../../assets/swipeImages/swipe1.png'),
+    image: require('../../../assets/swipeScreenImages/swipe1.png'),
+
   },
   {
     id: 2,
     title: 'Smart Automation for Everyone',
-    image: require('../../../assets/swipeImages/swipe2.png'),
+    // image: require('../../../assets/swipeImages/swipe2.png'),
+    image: require('../../../assets/swipeScreenImages/swipe2.png'),
   },
   {
     id: 3,
     title: 'Innovating Tomorrow, Today',
-    image: require('../../../assets/swipeImages/swipe3.png'),
+    // image: require('../../../assets/swipeImages/swipe3.png'),
+    image: require('../../../assets/swipeScreenImages/swipe3.png'),
   },
 ];
 
@@ -40,47 +44,38 @@ function IntroScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Logo + Skip */}
-      <View style={styles.logoContainer}>
-        <Image source={require('../../../assets/LOGO__.png')} style={styles.logo} />
-        {currentIndex !== slides.length - 1 && (
-          <TouchableOpacity
-            onPress={() => finishIntro('Login')}
-            style={styles.skipButton}
-          >
-            <Text style={styles.skipText}>Skip</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Swiper */}
+      {/* Swiper (full screen) */}
       <View style={styles.swipeContainer}>
         <Swiper
           ref={swiperRef}
           loop={false}
           dotStyle={styles.dot}
           activeDotStyle={styles.activeDot}
-          paginationStyle={{ bottom: height * 0.05 }}
+          paginationStyle={styles.pagination}
           onIndexChanged={index => setCurrentIndex(index)}
         >
           {slides.map(slide => (
             <View style={styles.slide} key={slide.id}>
-              <Image
-                source={slide.image}
-                style={styles.image}
-                resizeMode="cover"
-              />
-              <Text style={styles.title}>{slide.title}</Text>
+              <Image source={slide.image} style={styles.image} resizeMode="cover" />
             </View>
           ))}
         </Swiper>
       </View>
 
-      {/* Buttons or Swipe Wrapper */}
-      <View style={styles.buttonContainer}>
+      {/* Skip overlay */}
+      {currentIndex !== slides.length - 1 && (
+        <TouchableOpacity
+          onPress={() => finishIntro('Login')}
+          style={styles.skipButton}
+        >
+          <Text style={styles.skipText}>Skip</Text>
+        </TouchableOpacity>
+      )}
+
+      {/* Bottom overlay */}
+      <View style={styles.bottomOverlay}>
         {currentIndex === slides.length - 1 ? (
           <>
-           
             <AppButton
               title="Login"
               onPress={() => finishIntro('Login')}
@@ -96,9 +91,7 @@ function IntroScreen() {
             />
           </>
         ) : (
-          <TouchableWithoutFeedback
-            onPress={() => swiperRef.current?.scrollBy(1, true)}
-          >
+          <TouchableWithoutFeedback onPress={() => swiperRef.current?.scrollBy(1, true)}>
             <View style={styles.swipeWrapper}>
               <Text style={styles.swipeText}>Swipe to explore</Text>
               <Text style={styles.swipeArrow}>➔</Text>
@@ -113,23 +106,13 @@ function IntroScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-  },
-  logoContainer: {
-    flex: 1, // Takes small space
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 25,
-  },
-  logo: {
-    height: 120,
-    width: 120,
-    resizeMode: 'contain',
+    backgroundColor: '#000',
   },
   skipButton: {
     position: 'absolute',
     top: 10,
     right: 20,
+    zIndex: 10,
   },
   skipText: {
     color: '#a42a8b',
@@ -137,9 +120,10 @@ const styles = StyleSheet.create({
   },
 
   swipeContainer: {
-    flex: 4, // Takes most space
-    justifyContent: 'center',
-    alignItems: 'center',
+    flex: 1,
+  },
+  pagination: {
+    bottom: height * 0.14,
   },
   dot: {
     backgroundColor: '#ccc',
@@ -157,37 +141,21 @@ const styles = StyleSheet.create({
   },
   slide: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
+    backgroundColor: '#000',
   },
   image: {
-    width: width * 1,
-    height: height * 0.9,
-    marginBottom: 30,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#a42a8b',
-    textAlign: 'center',
-    marginTop: 320,
-    position: 'absolute',
-    textShadowColor: 'white', // border color
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 1,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#555',
-    textAlign: 'center',
-    marginBottom: 40,
+    width: '100%',
+    height: '100%',
   },
 
-  buttonContainer: {
-    flex: 1, // Bottom area
+  bottomOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
     paddingHorizontal: 20,
-    justifyContent: 'center',
+    paddingBottom: 18,
+    paddingTop: 12,
     alignItems: 'center',
   },
   loginButton: {
