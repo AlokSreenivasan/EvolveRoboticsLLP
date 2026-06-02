@@ -8,8 +8,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { RouteProp, useRoute } from '@react-navigation/native';
 
+import BackButton from '../../../components/BackButton';
 import CourseLessonRow from '../../../components/Courses/CourseLessonRow';
 import CourseVideoPlayer from '../../../components/Courses/CourseVideoPlayer';
 import { colors, spacing } from '../../../constants/theme';
@@ -18,17 +19,13 @@ import {
   recordPlaylistVideoProgress,
 } from '../../../services/firebase/continueLearningProgressService';
 import type { YouTubePlaylistVideo } from '../../../store/content/types/youtubePlaylist.types';
-import type {
-  LoginScreenNavigationProp,
-  RootStackParamList,
-} from '../../../types/navigation';
+import type { RootStackParamList } from '../../../types/navigation';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import { useYouTubePlaylistVideos } from '../../hooks/useYouTubePlaylistVideos';
 
 type CoursePlaylistRouteProp = RouteProp<RootStackParamList, 'CoursePlaylist'>;
 
 function CoursePlaylistScreen() {
-  const navigation = useNavigation<LoginScreenNavigationProp>();
   const route = useRoute<CoursePlaylistRouteProp>();
   const { playlist } = route.params;
   const listRef = useRef<FlatList<YouTubePlaylistVideo>>(null);
@@ -89,13 +86,7 @@ function CoursePlaylistScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-          accessibilityRole="button"
-          accessibilityLabel="Go back">
-          <Text style={styles.backText}>← Back</Text>
-        </TouchableOpacity>
+        <BackButton />
         <View style={styles.headerTitles}>
           <Text style={styles.headerTitle} numberOfLines={1}>
             {playlist.title}
@@ -166,15 +157,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
-  },
-  backButton: {
-    paddingVertical: 4,
-    paddingRight: 4,
-  },
-  backText: {
-    fontSize: 16,
-    color: colors.link,
-    fontWeight: '600',
   },
   headerTitles: {
     flex: 1,

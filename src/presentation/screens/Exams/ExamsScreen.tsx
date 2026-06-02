@@ -11,6 +11,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { ClipboardCheck, FileText } from 'lucide-react-native';
 
+import BackButton from '../../../components/BackButton';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import { colors, spacing } from '../../../constants/theme';
 import type { Exam } from '../../../store/content/types/exams.types';
@@ -84,9 +85,7 @@ function ExamsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.back} onPress={() => navigation.goBack()}>
-          ← Back
-        </Text>
+        <BackButton withSpacingBelow />
         <View style={styles.titleRow}>
           <View style={styles.titleText}>
             <Text style={styles.title}>Exams</Text>
@@ -131,12 +130,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
-  },
-  back: {
-    fontSize: 16,
-    color: colors.link,
-    fontWeight: '600',
-    marginBottom: 8,
   },
   titleRow: {
     flexDirection: 'row',

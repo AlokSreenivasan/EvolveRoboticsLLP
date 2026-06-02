@@ -4,13 +4,12 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 
+import BackButton from '../BackButton';
 import { colors, spacing } from '../../constants/theme';
 
 type AdminScreenLayoutProps = {
@@ -28,8 +27,6 @@ function AdminScreenLayout({
   scrollable = true,
   contentContainerStyle,
 }: AdminScreenLayoutProps) {
-  const navigation = useNavigation();
-
   const body = scrollable ? (
     <ScrollView
       showsVerticalScrollIndicator={false}
@@ -43,13 +40,7 @@ function AdminScreenLayout({
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="Go back">
-          <Text style={styles.backText}>← Back</Text>
-        </TouchableOpacity>
+        <BackButton withSpacingBelow />
         <View style={styles.titleBlock}>
           <Text style={styles.title}>{title}</Text>
           {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
@@ -72,12 +63,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
-  },
-  backText: {
-    color: colors.primary,
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
   },
   titleBlock: {
     gap: 4,

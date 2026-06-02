@@ -6,13 +6,13 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../types/navigation';
 import { useNavigation } from '@react-navigation/native';
 import AppButton from '../../../components/AppButton.tsx';
+import BackButton from '../../../components/BackButton';
 import { isValidEmail } from '../../../domain/Auth/validation/isValidEmail.ts';
 import { sendPasswordResetEmail } from '../../../services/firebase/authService';
 
@@ -71,13 +71,7 @@ function ForgotPasswordScreen() {
   return (
       <ScrollView style={styles.container}>
         <View style={styles.firstBox}>
-          {/* Back button */}
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Login')}
-            style={styles.backButton}
-          >
-            <Text style={styles.backText}>←</Text>
-          </TouchableOpacity>
+          <BackButton onPress={() => navigation.navigate('Login')} />
           <Text style={styles.title}>Forgot Password</Text>
         </View>
 
@@ -125,10 +119,6 @@ const styles = StyleSheet.create({
     alignContent: 'center',
     height: 100,
   },
-  backButton: {
-
-  },
-  backText: { fontSize: 22, fontWeight: 'bold' },
   title: {
     fontSize: 18,
     fontWeight: '600',

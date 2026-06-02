@@ -1,15 +1,9 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import {
-  CheckCircle2,
-  ChevronLeft,
-  Circle,
-  Pencil,
-  Plus,
-  Trash2,
-} from 'lucide-react-native';
+import { CheckCircle2, Circle, Pencil, Plus, Trash2 } from 'lucide-react-native';
 
 import AdminEntityForm from '../../../components/Admin/AdminEntityForm';
+import BackButton from '../../../components/BackButton';
 import AdminFormField from '../../../components/Admin/AdminFormField';
 import AdminIconButton from '../../../components/Admin/AdminIconButton';
 import AdminListLayout from '../../../components/Admin/AdminListLayout';
@@ -358,14 +352,11 @@ function ManageExams() {
         onSave={questionEditorVisible ? upsertQuestion : handleSaveExam}>
         {questionEditorVisible ? (
           <>
-            <TouchableOpacity
-              style={styles.backButton}
+            <BackButton
+              label="← Back to exam"
               onPress={closeQuestionEditor}
-              accessibilityRole="button"
-              accessibilityLabel="Back to exam">
-              <ChevronLeft size={18} color={colors.primary} strokeWidth={2.5} />
-              <Text style={styles.backButtonText}>Back to exam</Text>
-            </TouchableOpacity>
+              withSpacingBelow
+            />
 
             <AdminFormField
               label="Question"
@@ -516,24 +507,6 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     lineHeight: 18,
     marginBottom: spacing.sectionGap,
-  },
-  backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    alignSelf: 'flex-start',
-    marginBottom: 10,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: colors.primaryMuted,
-    backgroundColor: colors.primaryLight,
-  },
-  backButtonText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.primary,
   },
   questionsHeader: {
     marginTop: 10,

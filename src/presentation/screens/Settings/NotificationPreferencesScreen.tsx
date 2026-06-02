@@ -10,7 +10,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import {
   Bell,
   BookOpen,
@@ -26,6 +25,7 @@ import {
   Volume2,
 } from 'lucide-react-native';
 
+import BackButton, { backButtonOverlayStyle } from '../../../components/BackButton';
 import Header from '../../../components/Header.tsx';
 import NotificationToggleRow from '../../../components/Settings/NotificationToggleRow';
 import SettingsSectionHeader from '../../../components/Settings/SettingsSectionHeader';
@@ -39,10 +39,7 @@ import {
   resetNotificationPreferences,
   saveNotificationPreferences,
 } from '../../../services/notificationPreferencesStorage';
-import type { LoginScreenNavigationProp } from '../../../types/navigation';
-
 function NotificationPreferencesScreen() {
-  const navigation = useNavigation<LoginScreenNavigationProp>();
   const [preferences, setPreferences] = useState<NotificationPreferences>(
     DEFAULT_NOTIFICATION_PREFERENCES,
   );
@@ -128,12 +125,7 @@ function NotificationPreferencesScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.screenHeader}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-          disabled={saving}>
-          <Text style={styles.backText}>← Back</Text>
-        </TouchableOpacity>
+        <BackButton style={backButtonOverlayStyle} disabled={saving} />
         <Header title="Notification Settings" />
       </View>
 
@@ -356,19 +348,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     height: 80,
     justifyContent: 'center',
-  },
-  backButton: {
-    position: 'absolute',
-    left: 16,
-    top: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    zIndex: 2,
-  },
-  backText: {
-    color: '#a42a8b',
-    fontSize: 16,
-    fontWeight: '600',
   },
   loadingContainer: {
     flex: 1,

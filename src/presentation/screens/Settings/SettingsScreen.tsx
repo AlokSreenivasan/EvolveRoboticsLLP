@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { signOut } from '../../../services/firebase/authService';
 import { useNavigation } from '@react-navigation/native';
+import BackButton, { backButtonOverlayStyle } from '../../../components/BackButton';
 import Header from '../../../components/Header.tsx';
 import ProfileAvatar from '../../../components/Profile/ProfileAvatar.tsx';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
@@ -50,11 +51,7 @@ function SettingsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.screenHeader}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}>
-          <Text style={styles.backText}>← Back</Text>
-        </TouchableOpacity>
+        <BackButton style={backButtonOverlayStyle} />
         <Header title="Settings" />
       </View>
 
@@ -179,19 +176,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     height: 80,
     justifyContent: 'center',
-  },
-  backButton: {
-    position: 'absolute',
-    left: 16,
-    top: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    zIndex: 2,
-  },
-  backText: {
-    color: '#a42a8b',
-    fontSize: 16,
-    fontWeight: '600',
   },
   scrollContent: {
     padding: 16,

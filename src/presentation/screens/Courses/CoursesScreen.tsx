@@ -7,17 +7,14 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-
+import BackButton from '../../../components/BackButton';
 import CourseCatalogCard from '../../../components/Courses/CourseCatalogCard';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import { colors, spacing } from '../../../constants/theme';
 import type { Course } from '../../../store/content/types/courses.types';
-import type { LoginScreenNavigationProp } from '../../../types/navigation';
 import { useCourses } from '../../hooks/useCourses';
 
 function CoursesScreen() {
-  const navigation = useNavigation<LoginScreenNavigationProp>();
   const { courses, loading, error } = useCourses();
 
   const renderCourse = useCallback(
@@ -56,9 +53,7 @@ function CoursesScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.back} onPress={() => navigation.goBack()}>
-          ← Back
-        </Text>
+        <BackButton withSpacingBelow />
         <Text style={styles.title}>Courses</Text>
         <Text style={styles.subtitle}>
           Browse all available courses, duration, and details.
@@ -90,12 +85,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
-  },
-  back: {
-    fontSize: 16,
-    color: colors.link,
-    fontWeight: '600',
-    marginBottom: 8,
   },
   title: {
     fontSize: 22,

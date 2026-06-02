@@ -8,10 +8,11 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import { WebView } from 'react-native-webview';
 
+import BackButton from '../../../components/BackButton';
 import { colors, spacing } from '../../../constants/theme';
 import type { RootStackParamList } from '../../../types/navigation';
 import { buildEmbeddedPdfViewerUrl } from '../../../utils/resources/pdfViewerUrl';
@@ -19,7 +20,6 @@ import { buildEmbeddedPdfViewerUrl } from '../../../utils/resources/pdfViewerUrl
 type ResourcePdfRoute = RouteProp<RootStackParamList, 'ResourcePdfViewer'>;
 
 function ResourcePdfViewerScreen() {
-  const navigation = useNavigation();
   const route = useRoute<ResourcePdfRoute>();
   const { title, pdfUrl } = route.params;
   const [loading, setLoading] = useState(true);
@@ -33,9 +33,7 @@ function ResourcePdfViewerScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.back} onPress={() => navigation.goBack()}>
-          ← Back
-        </Text>
+        <BackButton withSpacingBelow />
         <Text style={styles.title} numberOfLines={2}>
           {title}
         </Text>
@@ -77,12 +75,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
-  },
-  back: {
-    fontSize: 16,
-    color: colors.link,
-    fontWeight: '600',
-    marginBottom: 8,
   },
   title: {
     fontSize: 20,

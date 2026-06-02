@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
+import BackButton from '../../../components/BackButton';
 import ResourceNoteCard from '../../../components/Resources/ResourceNoteCard';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import { colors, spacing } from '../../../constants/theme';
@@ -65,9 +66,7 @@ function ResourcesScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.back} onPress={() => navigation.goBack()}>
-          ← Back
-        </Text>
+        <BackButton withSpacingBelow />
         <Text style={styles.title}>{section.sectionTitle}</Text>
         {section.sectionSubtitle?.trim() ? (
           <Text style={styles.subtitle}>{section.sectionSubtitle.trim()}</Text>
@@ -99,12 +98,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
-  },
-  back: {
-    fontSize: 16,
-    color: colors.link,
-    fontWeight: '600',
-    marginBottom: 8,
   },
   title: {
     fontSize: 22,

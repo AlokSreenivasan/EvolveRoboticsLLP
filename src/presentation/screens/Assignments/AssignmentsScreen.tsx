@@ -10,6 +10,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { ClipboardList } from 'lucide-react-native';
 
+import BackButton from '../../../components/BackButton';
 import PdfContentCard from '../../../components/Content/PdfContentCard';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import { colors, spacing } from '../../../constants/theme';
@@ -72,9 +73,7 @@ function AssignmentsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.back} onPress={() => navigation.goBack()}>
-          ← Back
-        </Text>
+        <BackButton withSpacingBelow />
         <Text style={styles.title}>{section.sectionTitle}</Text>
         {section.sectionSubtitle?.trim() ? (
           <Text style={styles.subtitle}>{section.sectionSubtitle.trim()}</Text>
@@ -106,12 +105,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
-  },
-  back: {
-    fontSize: 16,
-    color: colors.link,
-    fontWeight: '600',
-    marginBottom: 8,
   },
   title: {
     fontSize: 22,

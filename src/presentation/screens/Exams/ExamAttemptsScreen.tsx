@@ -7,13 +7,12 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import { ClipboardCheck } from 'lucide-react-native';
 
+import BackButton from '../../../components/BackButton';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import { colors, spacing } from '../../../constants/theme';
 import type { ExamAttempt } from '../../../services/firebase/examAttemptsService';
-import type { LoginScreenNavigationProp } from '../../../types/navigation';
 import { useExamAttempts } from '../../hooks/useExamAttempts';
 
 function formatSubmittedAt(attempt: ExamAttempt): string {
@@ -25,7 +24,6 @@ function formatSubmittedAt(attempt: ExamAttempt): string {
 }
 
 function ExamAttemptsScreen() {
-  const navigation = useNavigation<LoginScreenNavigationProp>();
   const { attempts, loading, error } = useExamAttempts();
 
   const renderAttempt = useCallback(
@@ -77,9 +75,7 @@ function ExamAttemptsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.back} onPress={() => navigation.goBack()}>
-          ← Back
-        </Text>
+        <BackButton withSpacingBelow />
         <Text style={styles.title}>My exam results</Text>
         <Text style={styles.subtitle}>Your latest submitted attempts.</Text>
       </View>
@@ -109,12 +105,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
-  },
-  back: {
-    fontSize: 16,
-    color: colors.link,
-    fontWeight: '600',
-    marginBottom: 8,
   },
   title: {
     fontSize: 22,

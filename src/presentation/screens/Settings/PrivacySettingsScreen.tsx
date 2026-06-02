@@ -8,16 +8,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-
+import BackButton, { backButtonOverlayStyle } from '../../../components/BackButton';
 import DeleteAccountConfirmModal from '../../../components/Settings/DeleteAccountConfirmModal';
 import Header from '../../../components/Header.tsx';
 import { deleteAccount } from '../../../services/firebase/deleteAccountService';
 import { hasEmailPasswordProvider } from '../../../services/firebase/authService';
-import type { LoginScreenNavigationProp } from '../../../types/navigation';
-
 function PrivacySettingsScreen() {
-  const navigation = useNavigation<LoginScreenNavigationProp>();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const requiresPassword = hasEmailPasswordProvider();
@@ -57,12 +53,7 @@ function PrivacySettingsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.screenHeader}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-          disabled={deleting}>
-          <Text style={styles.backText}>← Back</Text>
-        </TouchableOpacity>
+        <BackButton style={backButtonOverlayStyle} disabled={deleting} />
         <Header title="Privacy Settings" />
       </View>
 
@@ -110,19 +101,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     height: 80,
     justifyContent: 'center',
-  },
-  backButton: {
-    position: 'absolute',
-    left: 16,
-    top: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    zIndex: 2,
-  },
-  backText: {
-    color: '#a42a8b',
-    fontSize: 16,
-    fontWeight: '600',
   },
   scrollContent: {
     padding: 16,

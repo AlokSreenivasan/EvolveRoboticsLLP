@@ -15,6 +15,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 
 import AppButton from '../../../components/AppButton.tsx';
+import BackButton, { backButtonOverlayStyle } from '../../../components/BackButton';
 import Header from '../../../components/Header.tsx';
 import type { LoginScreenNavigationProp } from '../../../types/navigation';
 import { useChangePasswordForm } from '../../hooks/useChangePasswordForm';
@@ -56,12 +57,10 @@ function ChangePasswordScreen() {
       style={styles.container}>
       <SafeAreaView style={styles.container}>
         <View style={styles.screenHeader}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-            disabled={isSubmitting}>
-            <Text style={styles.backText}>← Back</Text>
-          </TouchableOpacity>
+          <BackButton
+            style={backButtonOverlayStyle}
+            disabled={isSubmitting}
+          />
           <Header title="Change Password" />
         </View>
 
@@ -159,19 +158,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     height: 80,
     justifyContent: 'center',
-  },
-  backButton: {
-    position: 'absolute',
-    left: 16,
-    top: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    zIndex: 2,
-  },
-  backText: {
-    color: '#a42a8b',
-    fontSize: 16,
-    fontWeight: '600',
   },
   scrollContent: {
     padding: 16,

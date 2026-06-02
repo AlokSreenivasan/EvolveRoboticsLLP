@@ -3,23 +3,19 @@ import {
   SafeAreaView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
-import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { RouteProp, useRoute } from '@react-navigation/native';
 
+import BackButton from '../../../components/BackButton';
 import CourseVideoPlayer from '../../../components/Courses/CourseVideoPlayer';
 import { colors, spacing } from '../../../constants/theme';
 import { recordPlaylistVideoProgress } from '../../../services/firebase/continueLearningProgressService';
-import type {
-  LoginScreenNavigationProp,
-  RootStackParamList,
-} from '../../../types/navigation';
+import type { RootStackParamList } from '../../../types/navigation';
 
 type CourseVideoRouteProp = RouteProp<RootStackParamList, 'CourseVideo'>;
 
 function CourseVideoScreen() {
-  const navigation = useNavigation<LoginScreenNavigationProp>();
   const route = useRoute<CourseVideoRouteProp>();
   const { playlist, videoId, videoTitle, videoIndex } = route.params;
 
@@ -34,13 +30,7 @@ function CourseVideoScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-          accessibilityRole="button"
-          accessibilityLabel="Go back">
-          <Text style={styles.backText}>← Back</Text>
-        </TouchableOpacity>
+        <BackButton />
         <Text style={styles.headerTitle} numberOfLines={1}>
           {playlist.title}
         </Text>
@@ -73,15 +63,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
-  },
-  backButton: {
-    paddingVertical: 4,
-    paddingRight: 4,
-  },
-  backText: {
-    fontSize: 16,
-    color: colors.link,
-    fontWeight: '600',
   },
   headerTitle: {
     flex: 1,

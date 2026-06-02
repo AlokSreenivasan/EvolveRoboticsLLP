@@ -14,6 +14,7 @@ import type { RouteProp } from '@react-navigation/native';
 import { CheckCircle2, Circle } from 'lucide-react-native';
 
 import AppButton from '../../../components/AppButton';
+import BackButton from '../../../components/BackButton';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import { colors, spacing } from '../../../constants/theme';
 import { createExamAttempt } from '../../../services/firebase/examAttemptsService';
@@ -237,9 +238,7 @@ function ExamAttemptScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.back} onPress={() => navigation.goBack()}>
-            ← Back
-          </Text>
+          <BackButton withSpacingBelow />
           <Text style={styles.title}>Exam</Text>
         </View>
         <View style={styles.messageCard}>
@@ -255,9 +254,7 @@ function ExamAttemptScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.back} onPress={() => navigation.goBack()}>
-          ← Back
-        </Text>
+        <BackButton withSpacingBelow />
         <Text style={styles.title}>{exam.title}</Text>
         <Text style={styles.subtitle}>
           {questionCount} questions • {formatMinutes(exam.timerSeconds)} min
@@ -322,12 +319,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
-  },
-  back: {
-    fontSize: 16,
-    color: colors.link,
-    fontWeight: '600',
-    marginBottom: 8,
   },
   title: {
     fontSize: 20,
