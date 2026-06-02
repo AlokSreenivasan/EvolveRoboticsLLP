@@ -52,6 +52,8 @@ function QuickAccessGrid() {
       navigation.navigate('Resources');
     } else if (itemId === 'assignments') {
       navigation.navigate('Assignments');
+    } else if (itemId === 'exams') {
+      navigation.navigate('Exams');
     }
   };
 

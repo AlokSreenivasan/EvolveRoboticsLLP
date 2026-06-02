@@ -46,6 +46,8 @@ export type RootStackParamList = {
   Resources: undefined;
   /** PDF assignments from Quick Access → Assignments. */
   Assignments: undefined;
+  /** Timed exams from Quick Access → Exams. */
+  Exams: undefined;
   ResourcePdfViewer: { title: string; pdfUrl: string };
   /** Registered only for admin users after role resolves. */
   AdminStack: undefined;
