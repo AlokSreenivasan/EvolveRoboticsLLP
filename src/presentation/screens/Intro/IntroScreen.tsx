@@ -33,7 +33,7 @@ const slides = [
     id: 3,
     title: 'Innovating Tomorrow, Today',
     // image: require('../../../assets/swipeImages/swipe3.png'),
-    image: require('../../../assets/swipeScreenImages/swipe3.png'),
+    image: require('../../../assets/swipeScreenImages/swipe4.png'),
   },
 ];
 

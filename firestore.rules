@@ -73,6 +73,13 @@ service cloud.firestore {
       allow delete: if isAdmin(database);
     }
 
+    match /exams/{examId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin(database) && isValidExamCreate();
+      allow update: if isAdmin(database) && isValidExamUpdate();
+      allow delete: if isAdmin(database);
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
@@ -262,6 +269,30 @@ function isValidAssignmentCreate() {
 
 function isValidAssignmentUpdate() {
   return isValidAssignmentFields(request.resource.data);
+}
+
+function isValidExamFields(data) {
+  return data.title is string
+    && data.title.size() > 0
+    && data.title.size() <= 200
+    && data.description is string
+    && data.description.size() <= 1000
+    && data.timerSeconds is number
+    && data.timerSeconds >= 0
+    && data.questions is list
+    && data.questions.size() >= 0
+    && data.questions.size() <= 500
+    && data.sortOrder is number
+    && data.sortOrder >= 0
+    && data.isPublished is bool;
+}
+
+function isValidExamCreate() {
+  return isValidExamFields(request.resource.data);
+}
+
+function isValidExamUpdate() {
+  return isValidExamFields(request.resource.data);
 }
 
 function isValidContinueLearningProgress() {

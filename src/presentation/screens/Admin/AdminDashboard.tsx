@@ -4,6 +4,7 @@ import {
   Bell,
   BookOpen,
   Calendar,
+  ClipboardCheck,
   ClipboardList,
   FolderOpen,
   ImageIcon,
@@ -58,6 +59,12 @@ const MENU_ITEMS: AdminMenuItem[] = [
     title: 'Assignments',
     description: 'Publish PDF assignments with headings and due dates',
     icon: ClipboardList,
+  },
+  {
+    key: 'ManageExams',
+    title: 'Exams',
+    description: 'Create timed exams with multiple-choice questions',
+    icon: ClipboardCheck,
   },
   {
     key: 'ManageCourses',

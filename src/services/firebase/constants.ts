@@ -7,6 +7,7 @@ export const FIRESTORE_COLLECTIONS = {
   courses: 'courses',
   resourceNotes: 'resourceNotes',
   assignments: 'assignments',
+  exams: 'exams',
 } as const;
 
 /** Document IDs inside {@link FIRESTORE_COLLECTIONS.appContent}. */
