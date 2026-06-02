@@ -50,6 +50,8 @@ export type RootStackParamList = {
   Exams: undefined;
   /** Exam attempt screen for users. */
   ExamAttempt: { examId: string };
+  /** User's submitted exam attempts / results. */
+  ExamAttempts: undefined;
   ResourcePdfViewer: { title: string; pdfUrl: string };
   /** Registered only for admin users after role resolves. */
   AdminStack: undefined;

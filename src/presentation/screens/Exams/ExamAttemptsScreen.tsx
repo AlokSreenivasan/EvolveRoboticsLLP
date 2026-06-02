@@ -5,57 +5,50 @@ import {
   SafeAreaView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { ClipboardCheck, FileText } from 'lucide-react-native';
+import { ClipboardCheck } from 'lucide-react-native';
 
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import { colors, spacing } from '../../../constants/theme';
-import type { Exam } from '../../../store/content/types/exams.types';
+import type { ExamAttempt } from '../../../services/firebase/examAttemptsService';
 import type { LoginScreenNavigationProp } from '../../../types/navigation';
-import { useExams } from '../../hooks/useExams';
+import { useExamAttempts } from '../../hooks/useExamAttempts';
 
-function formatMinutes(timerSeconds: number): number {
-  if (typeof timerSeconds !== 'number' || !Number.isFinite(timerSeconds)) {
-    return 0;
+function formatSubmittedAt(attempt: ExamAttempt): string {
+  const dt = attempt.submittedAt?.toDate?.();
+  if (!dt) {
+    return '';
   }
-  return Math.max(0, Math.trunc(timerSeconds / 60));
+  return dt.toLocaleString();
 }
 
-function ExamsScreen() {
+function ExamAttemptsScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
-  const { exams, loading, error } = useExams();
+  const { attempts, loading, error } = useExamAttempts();
 
-  const renderExam = useCallback(
-    ({ item }: { item: Exam }) => (
-      <TouchableOpacity
-        style={styles.card}
-        activeOpacity={0.85}
-        onPress={() => navigation.navigate('ExamAttempt', { examId: item.id })}
-        accessibilityRole="button"
-        accessibilityLabel={`Exam ${item.title}`}>
-        <View style={styles.cardIcon}>
-          <FileText size={20} color={colors.primary} strokeWidth={2.5} />
+  const renderAttempt = useCallback(
+    ({ item }: { item: ExamAttempt }) => (
+      <View style={styles.card}>
+        <View style={styles.iconBox}>
+          <ClipboardCheck size={20} color={colors.primary} strokeWidth={2.5} />
         </View>
         <View style={styles.cardText}>
-          <Text style={styles.cardTitle}>{item.title}</Text>
-          {item.description.trim() ? (
-            <Text style={styles.cardSubtitle} numberOfLines={2}>
-              {item.description.trim()}
-            </Text>
-          ) : null}
+          <Text style={styles.cardTitle}>Exam attempt</Text>
           <Text style={styles.cardMeta}>
-            {item.questions.length} questions • {formatMinutes(item.timerSeconds)} min
+            Score: {item.correctCount}/{item.totalQuestions} ({item.percentage}%)
           </Text>
+          {formatSubmittedAt(item) ? (
+            <Text style={styles.cardSubtle}>{formatSubmittedAt(item)}</Text>
+          ) : null}
         </View>
-      </TouchableOpacity>
+      </View>
     ),
-    [navigation],
+    [],
   );
 
-  const keyExtractor = useCallback((item: Exam) => item.id, []);
+  const keyExtractor = useCallback((item: ExamAttempt) => item.id, []);
 
   const listEmpty = useCallback(() => {
     if (loading) {
@@ -64,7 +57,7 @@ function ExamsScreen() {
     if (error) {
       return (
         <View style={styles.messageCard}>
-          <Text style={styles.messageTitle}>Could not load exams</Text>
+          <Text style={styles.messageTitle}>Could not load results</Text>
           <Text style={styles.messageText}>
             Go back and try again in a moment.
           </Text>
@@ -73,9 +66,9 @@ function ExamsScreen() {
     }
     return (
       <View style={styles.messageCard}>
-        <Text style={styles.messageTitle}>No exams yet</Text>
+        <Text style={styles.messageTitle}>No attempts yet</Text>
         <Text style={styles.messageText}>
-          Exams will appear here once your instructors publish them.
+          Submit an exam and your results will appear here.
         </Text>
       </View>
     );
@@ -87,29 +80,14 @@ function ExamsScreen() {
         <Text style={styles.back} onPress={() => navigation.goBack()}>
           ← Back
         </Text>
-        <View style={styles.titleRow}>
-          <View style={styles.titleText}>
-            <Text style={styles.title}>Exams</Text>
-            <Text style={styles.subtitle}>
-              Attempt published exams within the given time.
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={styles.resultsButton}
-            activeOpacity={0.85}
-            onPress={() => navigation.navigate('ExamAttempts')}
-            accessibilityRole="button"
-            accessibilityLabel="View my exam results">
-            <ClipboardCheck size={16} color={colors.primary} strokeWidth={2.5} />
-            <Text style={styles.resultsButtonText}>Results</Text>
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.title}>My exam results</Text>
+        <Text style={styles.subtitle}>Your latest submitted attempts.</Text>
       </View>
 
       <FlatList
-        data={loading || error ? [] : exams}
+        data={loading || error ? [] : attempts}
         keyExtractor={keyExtractor}
-        renderItem={renderExam}
+        renderItem={renderAttempt}
         ListEmptyComponent={listEmpty}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -138,15 +116,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 8,
   },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  titleText: {
-    flex: 1,
-  },
   title: {
     fontSize: 22,
     fontWeight: '800',
@@ -157,22 +126,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
     lineHeight: 20,
-  },
-  resultsButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.primaryMuted,
-    backgroundColor: colors.primaryLight,
-  },
-  resultsButtonText: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: colors.primary,
   },
   scrollContent: {
     paddingHorizontal: spacing.screenHorizontal,
@@ -214,7 +167,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     marginBottom: 12,
   },
-  cardIcon: {
+  iconBox: {
     width: 44,
     height: 44,
     borderRadius: 12,
@@ -232,18 +185,17 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.textPrimary,
   },
-  cardSubtitle: {
-    marginTop: 4,
+  cardMeta: {
+    marginTop: 6,
     fontSize: 13,
     color: colors.textSecondary,
-    lineHeight: 18,
   },
-  cardMeta: {
-    marginTop: 8,
+  cardSubtle: {
+    marginTop: 6,
     fontSize: 12,
     color: colors.textMuted,
   },
 });
 
-export default ExamsScreen;
+export default ExamAttemptsScreen;
 

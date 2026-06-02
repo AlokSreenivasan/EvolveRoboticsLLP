@@ -11,6 +11,7 @@ import AssignmentsScreen from '../presentation/screens/Assignments/AssignmentsSc
 import ResourcesScreen from '../presentation/screens/Resources/ResourcesScreen';
 import ExamsScreen from '../presentation/screens/Exams/ExamsScreen';
 import ExamAttemptScreen from '../presentation/screens/Exams/ExamAttemptScreen';
+import ExamAttemptsScreen from '../presentation/screens/Exams/ExamAttemptsScreen';
 import AboutScreen from '../presentation/screens/About/AboutScreen';
 import ProfileScreen from '../presentation/screens/Profile/ProfileScreen';
 import SettingsScreen from '../presentation/screens/Settings/SettingsScreen';
@@ -42,6 +43,7 @@ function MainStack() {
       <Stack.Screen name="Assignments" component={AssignmentsScreen} />
       <Stack.Screen name="Exams" component={ExamsScreen} />
       <Stack.Screen name="ExamAttempt" component={ExamAttemptScreen} />
+      <Stack.Screen name="ExamAttempts" component={ExamAttemptsScreen} />
       <Stack.Screen
         name="ResourcePdfViewer"
         component={ResourcePdfViewerScreen}
