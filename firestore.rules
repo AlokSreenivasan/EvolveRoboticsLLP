@@ -23,6 +23,12 @@ service cloud.firestore {
         allow create, update: if isOwner(userId) && isValidContinueLearningProgress();
         allow delete: if isOwner(userId);
       }
+
+      match /examAttempts/{attemptId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidExamAttemptCreate();
+        allow update, delete: if false;
+      }
     }
 
     match /appContent/{docId} {
@@ -293,6 +299,26 @@ function isValidExamCreate() {
 
 function isValidExamUpdate() {
   return isValidExamFields(request.resource.data);
+}
+
+function isValidExamAttemptCreate() {
+  let data = request.resource.data;
+  return data.examId is string
+    && data.examId.size() > 0
+    && data.examId.size() <= 200
+    && data.answers is map
+    && data.answers.size() >= 0
+    && data.answers.size() <= 500
+    && data.correctCount is number
+    && data.correctCount >= 0
+    && data.correctCount <= 500
+    && data.totalQuestions is number
+    && data.totalQuestions >= 0
+    && data.totalQuestions <= 500
+    && data.percentage is number
+    && data.percentage >= 0
+    && data.percentage <= 100
+    && data.submittedAt == request.time;
 }
 
 function isValidContinueLearningProgress() {

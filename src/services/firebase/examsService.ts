@@ -17,6 +17,7 @@ import {
   db,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   limit,
   onSnapshot,
@@ -42,6 +43,10 @@ function isTimestamp(
 
 function examsCollection() {
   return collection(db, FIRESTORE_COLLECTIONS.exams);
+}
+
+function examDocRef(examId: string) {
+  return doc(db, FIRESTORE_COLLECTIONS.exams, examId);
 }
 
 function mapExam(id: string, data: ExamDocument): Exam {
@@ -92,6 +97,36 @@ export function subscribeExams(
     },
     error => onError?.(error),
   );
+}
+
+export function subscribeExam(
+  examId: string,
+  listener: (exam: Exam | null) => void,
+  onError?: (error: unknown) => void,
+): () => void {
+  return onSnapshot(
+    examDocRef(examId),
+    snapshot => {
+      if (!snapshot.exists()) {
+        listener(null);
+        return;
+      }
+      listener(mapExam(snapshot.id, snapshot.data() as ExamDocument));
+    },
+    error => onError?.(error),
+  );
+}
+
+export async function getExam(examId: string): Promise<Exam | null> {
+  try {
+    const snapshot = await getDoc(examDocRef(examId));
+    if (!snapshot.exists()) {
+      return null;
+    }
+    return mapExam(snapshot.id, snapshot.data() as ExamDocument);
+  } catch (error) {
+    throw wrapFirebaseError(error, 'FIRESTORE_ERROR', 'Failed to load exam.');
+  }
 }
 
 async function getNextSortOrder(): Promise<number> {

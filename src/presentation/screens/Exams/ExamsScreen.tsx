@@ -1,7 +1,6 @@
 import React, { useCallback } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   SafeAreaView,
   StyleSheet,
@@ -34,9 +33,7 @@ function ExamsScreen() {
       <TouchableOpacity
         style={styles.card}
         activeOpacity={0.85}
-        onPress={() =>
-          Alert.alert('Exam', 'Exam taking screen will be added next.')
-        }
+        onPress={() => navigation.navigate('ExamAttempt', { examId: item.id })}
         accessibilityRole="button"
         accessibilityLabel={`Exam ${item.title}`}>
         <View style={styles.cardIcon}>
@@ -55,7 +52,7 @@ function ExamsScreen() {
         </View>
       </TouchableOpacity>
     ),
-    [],
+    [navigation],
   );
 
   const keyExtractor = useCallback((item: Exam) => item.id, []);
