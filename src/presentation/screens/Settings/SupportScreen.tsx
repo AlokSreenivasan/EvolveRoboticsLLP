@@ -46,13 +46,9 @@ function SupportRow({ label, value, onPress }: SupportRowProps) {
   );
 }
 
-async function openUrl(url: string, failureMessage: string) {
+/** tel:/mailto: are opened directly — canOpenURL is unreliable on simulators and Android 11+. */
+async function openExternalUrl(url: string, failureMessage: string) {
   try {
-    const canOpen = await Linking.canOpenURL(url);
-    if (!canOpen) {
-      Alert.alert('Unavailable', failureMessage);
-      return;
-    }
     await Linking.openURL(url);
   } catch {
     Alert.alert('Unavailable', failureMessage);
@@ -61,14 +57,14 @@ async function openUrl(url: string, failureMessage: string) {
 
 function SupportScreen() {
   const handleEmailPress = () => {
-    openUrl(
+    openExternalUrl(
       `mailto:${SUPPORT_EMAIL}`,
       'Could not open your email app. You can copy the address and email us directly.',
     );
   };
 
   const handlePhonePress = () => {
-    openUrl(
+    openExternalUrl(
       `tel:${SUPPORT_PHONE_DIAL}`,
       'Could not open the phone dialer. You can call us at the number shown.',
     );
