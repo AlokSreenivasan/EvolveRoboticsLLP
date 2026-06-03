@@ -140,6 +140,16 @@ function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Help & Support</Text>
+          <TouchableOpacity
+            style={styles.listItem}
+            onPress={() => navigation.navigate('Support')}>
+            <Text style={styles.listText}>Support</Text>
+            <Text style={styles.arrow}>›</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>App Information</Text>
           <Text style={styles.versionText}>Version 2.1.1</Text>
           <TouchableOpacity style={styles.listItem}>

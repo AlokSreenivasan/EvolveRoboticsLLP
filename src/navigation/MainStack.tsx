@@ -19,6 +19,7 @@ import SettingsScreen from '../presentation/screens/Settings/SettingsScreen';
 import ChangePasswordScreen from '../presentation/screens/Settings/ChangePasswordScreen';
 import PrivacySettingsScreen from '../presentation/screens/Settings/PrivacySettingsScreen';
 import NotificationPreferencesScreen from '../presentation/screens/Settings/NotificationPreferencesScreen';
+import SupportScreen from '../presentation/screens/Settings/SupportScreen';
 import { HomeFeedProvider } from '../presentation/context/HomeFeedContext';
 import { useUserRole } from '../presentation/hooks/useUserRole';
 
@@ -63,6 +64,7 @@ function MainStack() {
         name="NotificationPreferences"
         component={NotificationPreferencesScreen}
       />
+      <Stack.Screen name="Support" component={SupportScreen} />
       <Stack.Screen name="Profile" component={ProfileScreen} />
       <Stack.Screen name="About" component={AboutScreen} />
       <Stack.Screen name="Unauthorized" component={UnauthorizedRoute} />

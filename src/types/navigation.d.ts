@@ -27,6 +27,7 @@ export type RootStackParamList = {
   ChangePassword: undefined;
   PrivacySettings: undefined;
   NotificationPreferences: undefined;
+  Support: undefined;
   Profile: undefined;
   /** Course playlist — lesson list only. */
   CoursePlaylist: { playlist: ContinueLearningPlaylist };

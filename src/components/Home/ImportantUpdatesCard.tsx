@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { ChevronRight, Megaphone } from 'lucide-react-native';
+import { Megaphone } from 'lucide-react-native';
 
 import { cardShadowLight, colors } from '../../constants/theme';
 import type { ImportantUpdateNotice } from '../../store/content/types/importantUpdates.types';
@@ -37,8 +37,6 @@ function ImportantUpdatesCard({ notice, onPress }: ImportantUpdatesCardProps) {
           <Text style={styles.description}>{description}</Text>
         ) : null}
       </View>
-
-      <ChevronRight size={20} color={colors.textMuted} strokeWidth={2} />
     </TouchableOpacity>
   );
 }
@@ -65,7 +63,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    marginRight: 8,
   },
   tag: {
     fontSize: 12,
