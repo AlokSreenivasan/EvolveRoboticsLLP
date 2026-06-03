@@ -1,9 +1,17 @@
-import messaging from '@react-native-firebase/messaging';
+import {
+  AuthorizationStatus,
+  getMessaging,
+  getToken,
+  onTokenRefresh,
+  requestPermission,
+} from '@react-native-firebase/messaging';
 import { PermissionsAndroid, Platform } from 'react-native';
 
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { FIRESTORE_COLLECTIONS } from './constants';
 import { db, doc, serverTimestamp, setDoc } from './firestoreClient';
+
+const firebaseMessaging = getMessaging();
 
 const FCM_TOKENS_SUBCOLLECTION = 'fcmTokens';
 
@@ -17,10 +25,10 @@ function pushPlatform(): 'ios' | 'android' {
 
 async function requestPushPermission(): Promise<boolean> {
   if (Platform.OS === 'ios') {
-    const status = await messaging().requestPermission();
+    const status = await requestPermission(firebaseMessaging);
     return (
-      status === messaging.AuthorizationStatus.AUTHORIZED ||
-      status === messaging.AuthorizationStatus.PROVISIONAL
+      status === AuthorizationStatus.AUTHORIZED ||
+      status === AuthorizationStatus.PROVISIONAL
     );
   }
 
@@ -67,7 +75,7 @@ export async function registerDeviceForPushNotifications(
       return;
     }
 
-    const token = await messaging().getToken();
+    const token = await getToken(firebaseMessaging);
     if (!token) {
       return;
     }
@@ -83,7 +91,7 @@ export async function registerDeviceForPushNotifications(
 }
 
 export function subscribeFcmTokenRefresh(uid: string): () => void {
-  return messaging().onTokenRefresh(async token => {
+  return onTokenRefresh(firebaseMessaging, async token => {
     try {
       if (token) {
         await persistFcmToken(uid, token);
