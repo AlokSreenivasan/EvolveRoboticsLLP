@@ -1,19 +1,17 @@
 import React, { useRef, useState } from 'react';
 import {
-  Dimensions,
   Image,
-  SafeAreaView,
+  LayoutChangeEvent,
   StyleSheet,
-  Text,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Swiper from 'react-native-swiper';
 import AppButton from '../../../components/AppButton.tsx';
+import ExpandingDotPagination from '../../../components/ExpandingDotPagination';
 import { useIntroFlow } from '../../context/IntroFlowContext';
 
-const { width, height } = Dimensions.get('window');
+const LAST_SLIDE_BOTTOM_OFFSET = 128;
 
 const slides = [
   {
@@ -40,18 +38,31 @@ const slides = [
 function IntroScreen() {
   const { finishIntro } = useIntroFlow();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [swiperSize, setSwiperSize] = useState({ width: 0, height: 0 });
   const swiperRef = useRef<Swiper>(null);
+  const insets = useSafeAreaInsets();
+  const isLastSlide = currentIndex === slides.length - 1;
+
+  const onSwipeContainerLayout = (event: LayoutChangeEvent) => {
+    const { width, height } = event.nativeEvent.layout;
+    setSwiperSize(prev =>
+      prev.width === width && prev.height === height
+        ? prev
+        : { width, height },
+    );
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       {/* Swiper (full screen) */}
-      <View style={styles.swipeContainer}>
+      <View style={styles.swipeContainer} onLayout={onSwipeContainerLayout}>
+        {swiperSize.height > 0 ? (
         <Swiper
           ref={swiperRef}
           loop={false}
-          dotStyle={styles.dot}
-          activeDotStyle={styles.activeDot}
-          paginationStyle={styles.pagination}
+          width={swiperSize.width}
+          height={swiperSize.height}
+          showsPagination={false}
           onIndexChanged={index => setCurrentIndex(index)}
         >
           {slides.map(slide => (
@@ -60,46 +71,45 @@ function IntroScreen() {
             </View>
           ))}
         </Swiper>
+        ) : null}
       </View>
 
-      {/* Skip overlay */}
-      {currentIndex !== slides.length - 1 && (
-        <TouchableOpacity
-          onPress={() => finishIntro('Login')}
-          style={styles.skipButton}
-        >
-          <Text style={styles.skipText}>Skip</Text>
-        </TouchableOpacity>
-      )}
+      <View
+        style={[
+          styles.paginationOverlay,
+          {
+            bottom: isLastSlide
+              ? LAST_SLIDE_BOTTOM_OFFSET + insets.bottom
+              : 28 + insets.bottom,
+          },
+        ]}>
+        <ExpandingDotPagination
+          total={slides.length}
+          activeIndex={currentIndex}
+          variant="dark"
+          onDotPress={index => swiperRef.current?.scrollTo(index)}
+        />
+      </View>
 
       {/* Bottom overlay */}
-      <View style={styles.bottomOverlay}>
-        {currentIndex === slides.length - 1 ? (
-          <>
-            <AppButton
-              title="Login"
-              onPress={() => finishIntro('Login')}
-              buttonStyle={styles.loginButton}
-              textStyle={styles.loginText}
-            />
+      {isLastSlide && (
+        <View style={[styles.bottomOverlay, { paddingBottom: 18 + insets.bottom }]}>
+          <AppButton
+            title="Login"
+            onPress={() => finishIntro('Login')}
+            buttonStyle={styles.loginButton}
+            textStyle={styles.loginText}
+          />
 
-            <AppButton
-              title="Sign Up"
-              onPress={() => finishIntro('SignUp')}
-              buttonStyle={styles.signUpButton}
-              textStyle={styles.signUpText}
-            />
-          </>
-        ) : (
-          <TouchableWithoutFeedback onPress={() => swiperRef.current?.scrollBy(1, true)}>
-            <View style={styles.swipeWrapper}>
-              <Text style={styles.swipeText}>Swipe to explore</Text>
-              <Text style={styles.swipeArrow}>➔</Text>
-            </View>
-          </TouchableWithoutFeedback>
-        )}
-      </View>
-    </SafeAreaView>
+          <AppButton
+            title="Sign Up"
+            onPress={() => finishIntro('SignUp')}
+            buttonStyle={styles.signUpButton}
+            textStyle={styles.signUpText}
+          />
+        </View>
+      )}
+    </View>
   );
 }
 
@@ -108,36 +118,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
   },
-  skipButton: {
-    position: 'absolute',
-    top: 10,
-    right: 20,
-    zIndex: 10,
-  },
-  skipText: {
-    color: '#a42a8b',
-    fontWeight: '600',
-  },
-
   swipeContainer: {
     flex: 1,
   },
-  pagination: {
-    bottom: height * 0.14,
-  },
-  dot: {
-    backgroundColor: '#ccc',
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginHorizontal: 3,
-  },
-  activeDot: {
-    backgroundColor: '#a42a8b',
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginHorizontal: 3,
+  paginationOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 5,
   },
   slide: {
     flex: 1,
@@ -154,7 +143,6 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     paddingHorizontal: 20,
-    paddingBottom: 18,
     paddingTop: 12,
     alignItems: 'center',
   },
@@ -185,35 +173,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: '600',
     fontSize: 14,
-  },
-  swipeWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#a42a8b', // translucent background
-    paddingHorizontal: 46,
-    paddingVertical: 14,
-    borderRadius: 26,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 5, // Android shadow
-  },
-  swipeText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-    textShadowColor: 'rgba(0,0,0,0.8)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
-  },
-  swipeArrow: {
-    fontSize: 18,
-    color: '#fff',
-    marginLeft: 6,
-    textShadowColor: 'rgba(0,0,0,0.8)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
   },
 });
 

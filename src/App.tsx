@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import AppNavigation from './navigation/AppNavigation.tsx';
 import { AuthProvider } from './presentation/context/AuthContext.tsx';
@@ -10,9 +11,11 @@ function App() {
   }, []);
 
   return (
-    <AuthProvider>
-      <AppNavigation />
-    </AuthProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <AppNavigation />
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }
 

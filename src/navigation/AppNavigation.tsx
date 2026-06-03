@@ -128,11 +128,25 @@ function AppNavigation() {
             <AuthFlowProvider onAuthSuccess={handleAuthSuccess}>
               <Stack.Navigator screenOptions={fadeScreenOptions}>
                 {rootScreen === 'intro' ? (
-                  <Stack.Screen name="Intro" component={IntroScreen} />
+                  <Stack.Screen
+                    name="Intro"
+                    component={IntroScreen}
+                    options={{
+                      statusBarHidden: true,
+                      statusBarAnimation: 'fade',
+                    }}
+                  />
                 ) : rootScreen === 'main' ? (
-                  <Stack.Screen name="MainStack" component={MainStack} />
+                  <Stack.Screen
+                    name="MainStack"
+                    component={MainStack}
+                    options={{ statusBarHidden: false }}
+                  />
                 ) : (
-                  <Stack.Screen name="AuthStack">
+                  <Stack.Screen
+                    name="AuthStack"
+                    options={{ statusBarHidden: false }}
+                  >
                     {() => <AuthStack initialRoute={authInitialRoute} />}
                   </Stack.Screen>
                 )}
