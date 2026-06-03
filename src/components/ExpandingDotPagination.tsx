@@ -1,15 +1,17 @@
 import React, { useEffect } from 'react';
 import {
-  LayoutAnimation,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
-  UIManager,
   View,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { colors, spacing } from '../constants/theme';
 
@@ -36,13 +38,6 @@ type PaginationSegmentProps = {
   onPress?: () => void;
 };
 
-if (
-  Platform.OS === 'android' &&
-  UIManager.setLayoutAnimationEnabledExperimental
-) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
-
 function PaginationSegment({
   index,
   isActive,
@@ -55,15 +50,39 @@ function PaginationSegment({
     : colors.primaryMuted;
   const activeColor = colors.primary;
 
+  const width = useSharedValue(
+    isActive ? SEGMENT_ACTIVE_WIDTH : SEGMENT_INACTIVE_WIDTH,
+  );
+  const height = useSharedValue(
+    isActive ? SEGMENT_ACTIVE_HEIGHT : SEGMENT_HEIGHT,
+  );
+  const borderRadius = useSharedValue(isActive ? 3 : 2);
+
+  useEffect(() => {
+    width.value = withTiming(
+      isActive ? SEGMENT_ACTIVE_WIDTH : SEGMENT_INACTIVE_WIDTH,
+      { duration: 200 },
+    );
+    height.value = withTiming(
+      isActive ? SEGMENT_ACTIVE_HEIGHT : SEGMENT_HEIGHT,
+      { duration: 200 },
+    );
+    borderRadius.value = withTiming(isActive ? 3 : 2, { duration: 200 });
+  }, [isActive, width, height, borderRadius]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    width: width.value,
+    height: height.value,
+    borderRadius: borderRadius.value,
+  }));
+
   const segment = (
-    <View
+    <Animated.View
       style={[
         styles.segment,
+        animatedStyle,
         {
-          width: isActive ? SEGMENT_ACTIVE_WIDTH : SEGMENT_INACTIVE_WIDTH,
-          height: isActive ? SEGMENT_ACTIVE_HEIGHT : SEGMENT_HEIGHT,
           backgroundColor: isActive ? activeColor : inactiveColor,
-          borderRadius: isActive ? 3 : 2,
         },
         isActive && isDark && styles.segmentActiveGlow,
       ]}
@@ -95,10 +114,6 @@ function ExpandingDotPagination({
   style,
 }: ExpandingDotPaginationProps) {
   const isDark = variant === 'dark';
-
-  useEffect(() => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-  }, [activeIndex]);
 
   return (
     <View style={[styles.wrapper, style]}>
