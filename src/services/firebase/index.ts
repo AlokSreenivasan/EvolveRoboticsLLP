@@ -102,7 +102,6 @@ export {
   uploadResourceNotePdf,
 } from './storageService';
 export {
-  recordPlaylistVideoEngagement,
   recordPlaylistVideoProgress,
   subscribeContinueLearningProgress,
 } from './continueLearningProgressService';

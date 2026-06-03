@@ -325,7 +325,8 @@ function isValidContinueLearningProgress() {
   let data = request.resource.data;
   return data.videosWatched is number
     && data.videosWatched >= 0
-    && data.videosWatched <= 500;
+    && data.videosWatched <= 500
+    && (!('hasStartedWatching' in data) || data.hasStartedWatching is bool);
 }
 
 function hasRequiredProfileFields() {

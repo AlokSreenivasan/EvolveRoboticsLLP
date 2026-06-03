@@ -29,7 +29,6 @@ import { LoginScreenNavigationProp } from '../../../types/navigation';
 import { useHomeFeedFocus, useHomeFeedRefresh } from '../../context/HomeFeedContext';
 import { useAdminNavigation } from '../../hooks/useAdminNavigation';
 import { useContinueLearningPlaylists } from '../../hooks/useContinueLearningPlaylists';
-import { useContinueLearningProgress } from '../../hooks/useContinueLearningProgress';
 import { useStoredProfileFullName } from '../../hooks/useStoredProfileFullName';
 import { useUserRole } from '../../hooks/useUserRole';
 
@@ -44,7 +43,6 @@ function HomeScreen() {
   const { isAdmin, roleLoading } = useUserRole();
   const { openAdmin } = useAdminNavigation();
   const { playlists, loading: playlistsLoading } = useContinueLearningPlaylists();
-  const { getVideosWatched } = useContinueLearningProgress();
   const scrollRef = useRef<ScrollView>(null);
 
   const handleTabPress = (tab: HomeTabKey) => {
@@ -71,15 +69,13 @@ function HomeScreen() {
   const scrollBottomPadding = TAB_BAR_HEIGHT + Math.max(insets.bottom, 8) + 16;
 
   const renderPlaylist = useCallback(
-    ({ item, index }: { item: ContinueLearningPlaylist; index: number }) => (
+    ({ item }: { item: ContinueLearningPlaylist }) => (
       <ContinueLearningCard
         playlist={item}
-        videosWatched={getVideosWatched(item.id)}
-        accentIndex={index}
         onPress={() => navigation.navigate('CoursePlaylist', { playlist: item })}
       />
     ),
-    [getVideosWatched, navigation],
+    [navigation],
   );
 
   const playlistKeyExtractor = useCallback(

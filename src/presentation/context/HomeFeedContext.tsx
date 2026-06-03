@@ -42,6 +42,7 @@ export type HomeFeedContinueLearning = {
 export type HomeFeedProgress = {
   progressByPlaylistId: Record<string, ContinueLearningProgress>;
   getVideosWatched: (playlistId: string) => number;
+  getHasStartedWatching: (playlistId: string) => boolean;
   loading: boolean;
   error: string | null;
 };
@@ -86,6 +87,7 @@ const EMPTY_CONTINUE_LEARNING: HomeFeedContinueLearning = {
 const EMPTY_PROGRESS: HomeFeedProgress = {
   progressByPlaylistId: {},
   getVideosWatched: () => 0,
+  getHasStartedWatching: () => false,
   loading: true,
   error: null,
 };
@@ -322,6 +324,12 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
     [progressByPlaylistId],
   );
 
+  const getHasStartedWatching = useCallback(
+    (playlistId: string) =>
+      progressByPlaylistId[playlistId]?.hasStartedWatching ?? false,
+    [progressByPlaylistId],
+  );
+
   const value = useMemo<HomeFeedContextValue>(
     () => ({
       continueLearning: {
@@ -332,6 +340,7 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
       progress: {
         progressByPlaylistId,
         getVideosWatched,
+        getHasStartedWatching,
         loading: isActive ? progressLoading : false,
         error: progressError,
       },
@@ -357,6 +366,7 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
       eventsError,
       eventsLoading,
       eventsSection,
+      getHasStartedWatching,
       getVideosWatched,
       importantError,
       importantLoading,

@@ -17,25 +17,21 @@ import type { ContinueLearningPlaylist } from '../../../store/content/types/cont
 import type { LoginScreenNavigationProp } from '../../../types/navigation';
 import { useHomeFeedFocus } from '../../context/HomeFeedContext';
 import { useContinueLearningPlaylists } from '../../hooks/useContinueLearningPlaylists';
-import { useContinueLearningProgress } from '../../hooks/useContinueLearningProgress';
 
 function ContinueLearningListScreen() {
   useHomeFeedFocus();
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const { playlists, loading, error } = useContinueLearningPlaylists();
-  const { getVideosWatched } = useContinueLearningProgress();
 
   const renderPlaylist = useCallback(
-    ({ item, index }: { item: ContinueLearningPlaylist; index: number }) => (
+    ({ item }: { item: ContinueLearningPlaylist }) => (
       <ContinueLearningCard
         variant="list"
         playlist={item}
-        videosWatched={getVideosWatched(item.id)}
-        accentIndex={index}
         onPress={() => navigation.navigate('CoursePlaylist', { playlist: item })}
       />
     ),
-    [getVideosWatched, navigation],
+    [navigation],
   );
 
   const keyExtractor = useCallback(

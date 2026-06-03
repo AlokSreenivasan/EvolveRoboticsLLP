@@ -49,10 +49,17 @@ export function useContinueLearningProgress() {
     [progressByPlaylistId],
   );
 
+  const localGetHasStartedWatching = useMemo(
+    () => (playlistId: string) =>
+      progressByPlaylistId[playlistId]?.hasStartedWatching ?? false,
+    [progressByPlaylistId],
+  );
+
   if (homeFeed) {
     return {
       progressByPlaylistId: homeFeed.progress.progressByPlaylistId,
       getVideosWatched: homeFeed.progress.getVideosWatched,
+      getHasStartedWatching: homeFeed.progress.getHasStartedWatching,
       loading: homeFeed.progress.loading,
       error: homeFeed.progress.error,
     };
@@ -61,6 +68,7 @@ export function useContinueLearningProgress() {
   return {
     progressByPlaylistId,
     getVideosWatched: localGetVideosWatched,
+    getHasStartedWatching: localGetHasStartedWatching,
     loading,
     error,
   };

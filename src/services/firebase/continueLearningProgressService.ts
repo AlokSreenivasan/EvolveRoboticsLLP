@@ -39,7 +39,13 @@ function progressCollection(uid: string) {
 
 function mapProgress(
   playlistId: string,
-  data: { videosWatched?: number; updatedAt?: unknown } | undefined,
+  data:
+    | {
+        videosWatched?: number;
+        hasStartedWatching?: boolean;
+        updatedAt?: unknown;
+      }
+    | undefined,
 ): ContinueLearningProgress {
   return {
     playlistId,
@@ -47,6 +53,7 @@ function mapProgress(
       typeof data?.videosWatched === 'number'
         ? Math.max(0, Math.trunc(data.videosWatched))
         : 0,
+    hasStartedWatching: data?.hasStartedWatching === true,
     updatedAt: isTimestamp(data?.updatedAt) ? (data?.updatedAt ?? null) : null,
   };
 }
@@ -101,45 +108,7 @@ export async function recordPlaylistVideoProgress(
         ref,
         {
           videosWatched: next,
-          updatedAt: serverTimestamp(),
-        },
-        { merge: true },
-      );
-    });
-  } catch (error) {
-    throw wrapFirebaseError(
-      error,
-      'FIRESTORE_ERROR',
-      'Failed to update playlist progress.',
-    );
-  }
-}
-
-/** Increments watched count when the user opens the playlist (capped at videoCount). */
-export async function recordPlaylistVideoEngagement(
-  playlistId: string,
-  videoCount: number,
-): Promise<void> {
-  try {
-    const uid = await syncFirestoreAuthSession();
-    const { total } = clampVideoProgress(0, videoCount);
-    const ref = doc(progressCollection(uid), playlistId);
-
-    await runTransaction(db, async transaction => {
-      const snapshot = await transaction.get(ref);
-      const current = snapshot.exists()
-        ? Math.max(0, Math.trunc(snapshot.data()?.videosWatched ?? 0))
-        : 0;
-      const next = Math.min(total, current + 1);
-
-      if (snapshot.exists() && next === current) {
-        return;
-      }
-
-      transaction.set(
-        ref,
-        {
-          videosWatched: next,
+          hasStartedWatching: true,
           updatedAt: serverTimestamp(),
         },
         { merge: true },

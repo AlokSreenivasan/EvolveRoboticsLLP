@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -14,10 +14,7 @@ import BackButton from '../../../components/BackButton';
 import CourseLessonRow from '../../../components/Courses/CourseLessonRow';
 import CourseVideoPlayer from '../../../components/Courses/CourseVideoPlayer';
 import { colors, spacing } from '../../../constants/theme';
-import {
-  recordPlaylistVideoEngagement,
-  recordPlaylistVideoProgress,
-} from '../../../services/firebase/continueLearningProgressService';
+import { recordPlaylistVideoProgress } from '../../../services/firebase/continueLearningProgressService';
 import type { YouTubePlaylistVideo } from '../../../store/content/types/youtubePlaylist.types';
 import type { RootStackParamList } from '../../../types/navigation';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
@@ -37,12 +34,6 @@ function CoursePlaylistScreen() {
 
   const activeVideo =
     activeIndex !== null ? videos[activeIndex] ?? null : null;
-
-  useEffect(() => {
-    void recordPlaylistVideoEngagement(playlist.id, playlist.videoCount).catch(
-      () => undefined,
-    );
-  }, [playlist.id, playlist.videoCount]);
 
   const handleSelectVideo = useCallback(
     (index: number) => {
