@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Dimensions,
   ImageBackground,
@@ -22,7 +22,7 @@ type HeroBannerCarouselProps = {
 };
 
 function HeroBannerCarousel({ onCtaPress }: HeroBannerCarouselProps) {
-  const [activeIndex, setActiveIndex] = useState(0);
+  const slide = HERO_SLIDES[0];
 
   return (
     <View style={styles.wrapper}>
@@ -33,41 +33,20 @@ function HeroBannerCarousel({ onCtaPress }: HeroBannerCarouselProps) {
         resizeMode="cover">
         <View style={styles.overlay}>
           <Text style={styles.headline}>
-            {HERO_SLIDES[activeIndex].headline}{' '}
-            <Text style={styles.headlineHighlight}>
-              {HERO_SLIDES[activeIndex].highlight}
-            </Text>
+            {slide.headline}{' '}
+            <Text style={styles.headlineHighlight}>{slide.highlight}</Text>
           </Text>
-          <Text style={styles.subtitle}>
-            {HERO_SLIDES[activeIndex].subtitle}
-          </Text>
+          <Text style={styles.subtitle}>{slide.subtitle}</Text>
 
           <TouchableOpacity
             style={styles.ctaButton}
             activeOpacity={0.85}
             onPress={onCtaPress}>
-            <Text style={styles.ctaText}>
-              {HERO_SLIDES[activeIndex].cta}
-            </Text>
+            <Text style={styles.ctaText}>{slide.cta}</Text>
             <ChevronRight size={16} color={colors.primary} strokeWidth={2.5} />
           </TouchableOpacity>
         </View>
       </ImageBackground>
-
-      <View style={styles.pagination}>
-        {HERO_SLIDES.map((slide, index) => (
-          <TouchableOpacity
-            key={slide.id}
-            onPress={() => setActiveIndex(index)}
-            style={[
-              styles.dot,
-              index === activeIndex ? styles.dotActive : styles.dotInactive,
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel={`Banner slide ${index + 1}`}
-          />
-        ))}
-      </View>
     </View>
   );
 }
@@ -123,25 +102,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     color: colors.primary,
-  },
-  pagination: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 10,
-    gap: 6,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  dotActive: {
-    backgroundColor: colors.primary,
-    width: 18,
-  },
-  dotInactive: {
-    backgroundColor: colors.primaryMuted,
   },
 });
 
