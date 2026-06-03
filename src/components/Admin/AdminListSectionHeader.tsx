@@ -5,7 +5,8 @@ import { Plus } from 'lucide-react-native';
 import { adminStyles } from './adminStyles';
 
 type AdminListSectionHeaderProps = {
-  title: string;
+  /** Omit when the screen header already shows the same title. */
+  title?: string;
   addLabel?: string;
   onAdd: () => void;
 };
@@ -16,8 +17,12 @@ function AdminListSectionHeader({
   onAdd,
 }: AdminListSectionHeaderProps) {
   return (
-    <View style={adminStyles.listSectionHeader}>
-      <Text style={adminStyles.blockTitle}>{title}</Text>
+    <View
+      style={[
+        adminStyles.listSectionHeader,
+        !title && adminStyles.listSectionHeaderAddOnly,
+      ]}>
+      {title ? <Text style={adminStyles.blockTitle}>{title}</Text> : null}
       <TouchableOpacity
         style={adminStyles.addButton}
         onPress={onAdd}

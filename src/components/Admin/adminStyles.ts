@@ -13,6 +13,12 @@ export const adminStyles = StyleSheet.create({
     color: colors.textPrimary,
     marginBottom: 10,
   },
+  sectionHint: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    lineHeight: 20,
+    marginBottom: 16,
+  },
   card: {
     backgroundColor: colors.surface,
     borderRadius: spacing.cardRadius,
@@ -64,27 +70,34 @@ export const adminStyles = StyleSheet.create({
     fontWeight: '600',
   },
   sendLiveButton: {
-    backgroundColor: colors.accentGreen,
-    marginTop: 8,
+    backgroundColor: colors.primaryLight,
+    borderWidth: 1,
+    borderColor: colors.primaryMuted,
+    borderRadius: 12,
     paddingVertical: 12,
   },
   sendLiveButtonText: {
-    color: '#fff',
+    color: colors.primary,
     fontWeight: '700',
+    fontSize: 14,
   },
   sendLiveHint: {
     fontSize: 12,
-    color: colors.textMuted,
+    color: colors.textSecondary,
     textAlign: 'center',
     marginTop: 8,
     marginBottom: 4,
     lineHeight: 17,
+    paddingHorizontal: 4,
   },
   listSectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 10,
+  },
+  listSectionHeaderAddOnly: {
+    justifyContent: 'flex-end',
   },
   addButton: {
     flexDirection: 'row',
@@ -108,14 +121,11 @@ export const adminStyles = StyleSheet.create({
     color: colors.textSecondary,
     lineHeight: 20,
   },
-  listRowWithSend: {
-    marginBottom: 10,
-  },
   listRowCard: {
     backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 14,
-    marginBottom: 8,
+    marginBottom: 10,
     borderWidth: 1,
     borderColor: colors.border,
     ...cardShadow,
@@ -123,6 +133,12 @@ export const adminStyles = StyleSheet.create({
   listRowTop: {
     flexDirection: 'row',
     gap: 8,
+  },
+  listRowFooter: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
   },
   listRowMeta: {
     flex: 1,

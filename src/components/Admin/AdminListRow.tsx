@@ -17,6 +17,7 @@ type AdminListRowProps = {
   onMoveDown: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  footer?: React.ReactNode;
 };
 
 function AdminListRow({
@@ -32,6 +33,7 @@ function AdminListRow({
   onMoveDown,
   onEdit,
   onDelete,
+  footer,
 }: AdminListRowProps) {
   return (
     <View style={adminStyles.listRowCard}>
@@ -59,6 +61,7 @@ function AdminListRow({
           onDelete={onDelete}
         />
       </View>
+      {footer ? <View style={adminStyles.listRowFooter}>{footer}</View> : null}
     </View>
   );
 }

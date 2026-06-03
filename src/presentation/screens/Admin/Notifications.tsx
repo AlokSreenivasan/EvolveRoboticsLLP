@@ -173,7 +173,13 @@ function AdminNotifications() {
   };
 
   const listHeader = (
-    <AdminListSectionHeader title="Notifications" onAdd={openCreateEditor} />
+    <>
+      <Text style={adminStyles.sectionHint}>
+        Published announcements appear on the home feed. Send a push alert when
+        you are ready.
+      </Text>
+      <AdminListSectionHeader title="All notifications" onAdd={openCreateEditor} />
+    </>
   );
 
   const renderItem = useCallback(
@@ -185,29 +191,33 @@ function AdminNotifications() {
       index: number;
     }) => {
       const isSending = sendingLiveId === notification.id;
+      const messagePreview = notification.body?.trim();
 
       return (
-        <View style={adminStyles.listRowWithSend}>
-          <AdminListRow
-            title={notification.title}
-            subtitle={notification.body}
-            isPublished={notification.isPublished}
-            index={index}
-            itemCount={notifications.length}
-            reordering={reorderingId === notification.id}
-            onMoveUp={() => handleMove(notification.id, 'up')}
-            onMoveDown={() => handleMove(notification.id, 'down')}
-            onEdit={() => openEditEditor(notification)}
-            onDelete={() => confirmDelete(notification)}
-          />
-          <AppButton
-            title={isSending ? 'Sending…' : 'Send live notification'}
-            onPress={() => handleSendLiveNotification(notification)}
-            disabled={isSending || sendingLiveId != null}
-            buttonStyle={adminStyles.sendLiveButton}
-            textStyle={adminStyles.sendLiveButtonText}
-          />
-        </View>
+        <AdminListRow
+          title={notification.title}
+          subtitle={messagePreview || undefined}
+          statusLine={
+            notification.isPublished ? 'Visible on home' : undefined
+          }
+          isPublished={notification.isPublished}
+          index={index}
+          itemCount={notifications.length}
+          reordering={reorderingId === notification.id}
+          onMoveUp={() => handleMove(notification.id, 'up')}
+          onMoveDown={() => handleMove(notification.id, 'down')}
+          onEdit={() => openEditEditor(notification)}
+          onDelete={() => confirmDelete(notification)}
+          footer={
+            <AppButton
+              title={isSending ? 'Sending…' : 'Send live notification'}
+              onPress={() => handleSendLiveNotification(notification)}
+              disabled={isSending || sendingLiveId != null}
+              buttonStyle={adminStyles.sendLiveButton}
+              textStyle={adminStyles.sendLiveButtonText}
+            />
+          }
+        />
       );
     },
     [handleMove, notifications.length, reorderingId, sendingLiveId],
@@ -272,8 +282,7 @@ function AdminNotifications() {
               textStyle={adminStyles.sendLiveButtonText}
             />
             <Text style={adminStyles.sendLiveHint}>
-              Sends a push alert to every device that has opened the app and
-              allowed notifications.
+              Sends a push alert to devices that have allowed notifications.
             </Text>
           </>
         ) : null}

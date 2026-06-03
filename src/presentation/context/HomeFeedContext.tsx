@@ -443,7 +443,7 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
 
 /**
  * Call from screens that display home feed data so listeners stay active
- * while Home or Continue Learning list is focused.
+ * while Home, Continue Learning list, or Notifications list is focused.
  */
 export function useHomeFeedFocus() {
   const register = useContext(HomeFeedFocusContext);

@@ -1,14 +1,23 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 import { NESTED_LIST_PERF } from '../../constants/listPerformance';
 import { useNotifications } from '../../presentation/hooks/useNotifications';
 import type { AppNotification } from '../../store/content/types/notifications.types';
+import type { LoginScreenNavigationProp } from '../../types/navigation';
 import HomeFeedSection from './HomeFeedSection';
 import NotificationItemCard from './NotificationItemCard';
 
+const HOME_PREVIEW_LIMIT = 3;
+
 function NotificationsSection() {
+  const navigation = useNavigation<LoginScreenNavigationProp>();
   const { displayNotifications, loading, error } = useNotifications();
+  const previewNotifications = useMemo(
+    () => displayNotifications.slice(0, HOME_PREVIEW_LIMIT),
+    [displayNotifications],
+  );
   const isEmpty = !loading && !error && displayNotifications.length === 0;
 
   const renderItem = useCallback(
@@ -23,6 +32,12 @@ function NotificationsSection() {
   return (
     <HomeFeedSection
       title="Notifications"
+      actionLabel={
+        !loading && !error && displayNotifications.length > 0
+          ? 'View all'
+          : undefined
+      }
+      onActionPress={() => navigation.navigate('NotificationsList')}
       loading={loading}
       errorMessage={
         error
@@ -35,9 +50,9 @@ function NotificationsSection() {
           ? 'When admins post announcements, they’ll appear here.'
           : undefined
       }>
-      {!loading && !error && displayNotifications.length > 0 ? (
+      {!loading && !error && previewNotifications.length > 0 ? (
         <FlatList
-          data={displayNotifications}
+          data={previewNotifications}
           keyExtractor={keyExtractor}
           renderItem={renderItem}
           ItemSeparatorComponent={ListSeparator}

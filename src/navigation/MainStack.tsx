@@ -5,6 +5,7 @@ import CoursePlaylistScreen from '../presentation/screens/Courses/CoursePlaylist
 import CourseVideoScreen from '../presentation/screens/Courses/CourseVideoScreen';
 import CoursesScreen from '../presentation/screens/Courses/CoursesScreen';
 import ContinueLearningListScreen from '../presentation/screens/Home/ContinueLearningListScreen';
+import NotificationsListScreen from '../presentation/screens/Home/NotificationsListScreen';
 import HomeScreen from '../presentation/screens/Home/HomeScreen';
 import ResourcePdfViewerScreen from '../presentation/screens/Resources/ResourcePdfViewerScreen';
 import AssignmentsScreen from '../presentation/screens/Assignments/AssignmentsScreen';
@@ -38,6 +39,10 @@ function MainStack() {
       <Stack.Screen
         name="ContinueLearningList"
         component={ContinueLearningListScreen}
+      />
+      <Stack.Screen
+        name="NotificationsList"
+        component={NotificationsListScreen}
       />
       <Stack.Screen name="Resources" component={ResourcesScreen} />
       <Stack.Screen name="Assignments" component={AssignmentsScreen} />

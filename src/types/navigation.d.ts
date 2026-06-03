@@ -42,6 +42,8 @@ export type RootStackParamList = {
   Courses: undefined;
   /** Full list of continue-learning course video cards from home. */
   ContinueLearningList: undefined;
+  /** Full list of in-app announcements from home. */
+  NotificationsList: undefined;
   /** PDF study notes from Quick Access → Resources. */
   Resources: undefined;
   /** PDF assignments from Quick Access → Assignments. */
