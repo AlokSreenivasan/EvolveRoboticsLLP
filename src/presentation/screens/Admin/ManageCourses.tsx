@@ -20,19 +20,13 @@ import {
   db,
   doc,
 } from '../../../services/firebase/firestoreClient';
-import {
-  ArrowDown,
-  ArrowUp,
-  ImagePlus,
-  Pencil,
-  Plus,
-  Trash2,
-} from 'lucide-react-native';
+import { ImagePlus, Plus } from 'lucide-react-native';
 
+import AdminCourseListCard from '../../../components/Admin/AdminCourseListCard';
 import AdminScreenLayout from '../../../components/Admin/AdminScreenLayout';
 import AppButton from '../../../components/AppButton';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
-import { colors, cardShadow, spacing } from '../../../constants/theme';
+import { colors, spacing } from '../../../constants/theme';
 import { useCourses } from '../../hooks/useCourses';
 import { FIRESTORE_COLLECTIONS } from '../../../services/firebase/constants';
 import {
@@ -301,47 +295,17 @@ function ManageCourses() {
 
   const renderCourse = useCallback(
     ({ item: course, index }: { item: Course; index: number }) => (
-      <View style={styles.card}>
-        <View style={styles.cardRow}>
-          {course.imageUri ? (
-            <Image source={{ uri: course.imageUri }} style={styles.thumb} />
-          ) : (
-            <View style={[styles.thumb, styles.thumbPlaceholder]} />
-          )}
-          <View style={styles.cardMeta}>
-            <Text style={styles.cardTitle}>{course.title}</Text>
-            {course.subtitle ? (
-              <Text style={styles.cardSubtitle}>{course.subtitle}</Text>
-            ) : null}
-            {course.durationLabel ? (
-              <Text style={styles.cardDuration}>{course.durationLabel}</Text>
-            ) : null}
-            {!course.isPublished ? (
-              <Text style={styles.draftBadge}>Draft</Text>
-            ) : null}
-          </View>
-          <View style={styles.cardActions}>
-            <IconButton
-              icon={ArrowUp}
-              disabled={index === 0 || reorderingId === course.id}
-              onPress={() => handleMove(course.id, 'up')}
-            />
-            <IconButton
-              icon={ArrowDown}
-              disabled={
-                index === courses.length - 1 || reorderingId === course.id
-              }
-              onPress={() => handleMove(course.id, 'down')}
-            />
-            <IconButton icon={Pencil} onPress={() => openEditEditor(course)} />
-            <IconButton
-              icon={Trash2}
-              onPress={() => confirmDelete(course)}
-              danger
-            />
-          </View>
-        </View>
-      </View>
+      <AdminCourseListCard
+        course={course}
+        accentIndex={index}
+        index={index}
+        itemCount={courses.length}
+        reordering={reorderingId === course.id}
+        onMoveUp={() => handleMove(course.id, 'up')}
+        onMoveDown={() => handleMove(course.id, 'down')}
+        onEdit={() => openEditEditor(course)}
+        onDelete={() => confirmDelete(course)}
+      />
     ),
     [confirmDelete, courses.length, handleMove, openEditEditor, reorderingId],
   );
@@ -503,34 +467,6 @@ function FormField({
   );
 }
 
-type IconButtonProps = {
-  icon: typeof Pencil;
-  onPress: () => void;
-  disabled?: boolean;
-  danger?: boolean;
-};
-
-function IconButton({
-  icon: Icon,
-  onPress,
-  disabled,
-  danger,
-}: IconButtonProps) {
-  return (
-    <TouchableOpacity
-      style={[styles.iconButton, disabled && styles.iconButtonDisabled]}
-      onPress={onPress}
-      disabled={disabled}
-      hitSlop={6}>
-      <Icon
-        size={18}
-        color={danger ? colors.danger : colors.primary}
-        strokeWidth={2}
-      />
-    </TouchableOpacity>
-  );
-}
-
 const styles = StyleSheet.create({
   scrollContent: {
     padding: spacing.screenHorizontal,
@@ -574,70 +510,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
     lineHeight: 20,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...cardShadow,
-  },
-  cardRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  thumb: {
-    width: 56,
-    height: 56,
-    borderRadius: 8,
-    backgroundColor: colors.primaryMuted,
-  },
-  thumbPlaceholder: {
-    backgroundColor: colors.primaryMuted,
-  },
-  cardMeta: {
-    flex: 1,
-  },
-  cardTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.textPrimary,
-  },
-  cardSubtitle: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  cardDuration: {
-    fontSize: 12,
-    color: colors.primary,
-    fontWeight: '600',
-    marginTop: 4,
-  },
-  draftBadge: {
-    marginTop: 6,
-    alignSelf: 'flex-start',
-    fontSize: 11,
-    fontWeight: '700',
-    color: colors.accentOrange,
-    backgroundColor: '#FFF3E0',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-    overflow: 'hidden',
-  },
-  cardActions: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  iconButton: {
-    padding: 6,
-  },
-  iconButtonDisabled: {
-    opacity: 0.35,
   },
   field: {
     marginBottom: 14,
