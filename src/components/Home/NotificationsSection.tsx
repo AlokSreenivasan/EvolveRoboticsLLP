@@ -45,11 +45,7 @@ function NotificationsSection() {
           : null
       }
       emptyTitle={isEmpty ? 'No notifications' : undefined}
-      emptyMessage={
-        isEmpty
-          ? 'When admins post announcements, they’ll appear here.'
-          : undefined
-      }>
+      emptyMessage={isEmpty ? 'No updates yet.' : undefined}>
       {!loading && !error && previewNotifications.length > 0 ? (
         <FlatList
           data={previewNotifications}

@@ -33,17 +33,16 @@ function NotificationItemCard({
       </View>
 
       <View style={styles.content}>
-        <View style={styles.titleRow}>
-          <Text style={[styles.badge, isList && styles.badgeList]}>
-            Announcement
+        <View style={[styles.titleRow, body ? styles.titleRowWithBody : null]}>
+          <Text
+            style={[styles.title, isList && styles.titleList]}
+            numberOfLines={2}>
+            {notification.title}
           </Text>
           {timestamp ? (
             <Text style={styles.timestamp}>{timestamp}</Text>
           ) : null}
         </View>
-        <Text style={[styles.title, isList && styles.titleList]}>
-          {notification.title}
-        </Text>
         {body ? (
           <Text style={[styles.body, isList && styles.bodyList]}>{body}</Text>
         ) : null}
@@ -92,20 +91,12 @@ const styles = StyleSheet.create({
   },
   titleRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
-    marginBottom: 6,
     gap: 8,
   },
-  badge: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: colors.primary,
-    letterSpacing: 0.3,
-    textTransform: 'uppercase',
-  },
-  badgeList: {
-    fontSize: 12,
+  titleRowWithBody: {
+    marginBottom: 6,
   },
   timestamp: {
     fontSize: 12,
@@ -114,10 +105,10 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   title: {
+    flex: 1,
     fontSize: 15,
     fontWeight: '700',
     color: colors.textPrimary,
-    marginBottom: 4,
     lineHeight: 20,
   },
   titleList: {

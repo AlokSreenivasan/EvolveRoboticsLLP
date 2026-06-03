@@ -173,13 +173,7 @@ function AdminNotifications() {
   };
 
   const listHeader = (
-    <>
-      <Text style={adminStyles.sectionHint}>
-        Published announcements appear on the home feed. Send a push alert when
-        you are ready.
-      </Text>
-      <AdminListSectionHeader title="All notifications" onAdd={openCreateEditor} />
-    </>
+    <AdminListSectionHeader title="All notifications" onAdd={openCreateEditor} />
   );
 
   const renderItem = useCallback(
@@ -191,12 +185,9 @@ function AdminNotifications() {
       index: number;
     }) => {
       const isSending = sendingLiveId === notification.id;
-      const messagePreview = notification.body?.trim();
-
       return (
         <AdminListRow
           title={notification.title}
-          subtitle={messagePreview || undefined}
           statusLine={
             notification.isPublished ? 'Visible on home' : undefined
           }
@@ -235,7 +226,7 @@ function AdminNotifications() {
     <>
       <AdminListLayout
         title="Notifications"
-        subtitle="Create in-app announcements and send push alerts"
+        subtitle="Create notifications and send push alerts"
         data={notifications}
         loading={loading}
         reorderingId={reorderingId}

@@ -63,7 +63,7 @@ function NotificationsListScreen() {
         </View>
         <Text style={styles.messageTitle}>No notifications yet</Text>
         <Text style={styles.messageText}>
-          When admins post announcements, they will appear here.
+          New updates from your learning team will show up here.
         </Text>
       </View>
     );
@@ -71,7 +71,7 @@ function NotificationsListScreen() {
 
   const countLabel =
     !loading && !error && displayNotifications.length > 0
-      ? `${displayNotifications.length} announcement${
+      ? `${displayNotifications.length} update${
           displayNotifications.length === 1 ? '' : 's'
         }`
       : null;
@@ -82,8 +82,7 @@ function NotificationsListScreen() {
         <BackButton withSpacingBelow />
         <Text style={styles.title}>Notifications</Text>
         <Text style={styles.subtitle}>
-          Stay up to date with course news and announcements from your
-          instructors.
+          Course news and updates from your instructors.
         </Text>
         {countLabel ? <Text style={styles.countBadge}>{countLabel}</Text> : null}
       </View>
@@ -99,10 +98,10 @@ function NotificationsListScreen() {
                 <Bell size={22} color={colors.primary} strokeWidth={2} />
               </View>
               <View style={styles.infoTextWrap}>
-                <Text style={styles.infoTitle}>In-app announcements</Text>
+                <Text style={styles.infoTitle}>In-app updates</Text>
                 <Text style={styles.infoDescription}>
-                  These are updates posted by your learning team. Adjust push
-                  alerts anytime in notification settings.
+                  Posted by your learning team. Adjust push alerts in notification
+                  settings.
                 </Text>
               </View>
             </View>
