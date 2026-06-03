@@ -32,6 +32,7 @@ export function useAdminImagePicker(existingRemoteUri = '') {
       const result = await pickProfilePhotoFromGallery();
       if (result.success) {
         setLocalUri(result.uri);
+        setRemoteUri('');
         return;
       }
       if (!result.cancelled && result.message) {
@@ -45,6 +46,11 @@ export function useAdminImagePicker(existingRemoteUri = '') {
   const previewUri = localUri?.trim() || remoteUri.trim() || null;
   const pendingLocalUri = () => localUriRef.current?.trim() || null;
 
+  const updateRemoteUri = useCallback((uri: string) => {
+    setLocalUri(null);
+    setRemoteUri(uri);
+  }, []);
+
   return {
     localUri,
     remoteUri,
@@ -53,6 +59,6 @@ export function useAdminImagePicker(existingRemoteUri = '') {
     resetImageState,
     loadExistingImage,
     handlePickImage,
-    setRemoteUri,
+    setRemoteUri: updateRemoteUri,
   };
 }

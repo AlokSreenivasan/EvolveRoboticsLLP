@@ -1,17 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Image,
   InteractionManager,
   Keyboard,
-  Modal,
   FlatList,
-  ScrollView,
-  StyleSheet,
-  Switch,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -20,14 +14,19 @@ import {
   db,
   doc,
 } from '../../../services/firebase/firestoreClient';
-import { ImagePlus, Plus } from 'lucide-react-native';
+import { ImagePlus } from 'lucide-react-native';
 
 import AdminCourseListCard from '../../../components/Admin/AdminCourseListCard';
-import AdminScreenLayout from '../../../components/Admin/AdminScreenLayout';
-import AppButton from '../../../components/AppButton';
-import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
-import { colors, spacing } from '../../../constants/theme';
+import AdminEntityForm from '../../../components/Admin/AdminEntityForm';
+import AdminFormField from '../../../components/Admin/AdminFormField';
+import AdminListLayout from '../../../components/Admin/AdminListLayout';
+import AdminListSectionHeader from '../../../components/Admin/AdminListSectionHeader';
+import AdminPublishedSwitch from '../../../components/Admin/AdminPublishedSwitch';
+import { adminStyles } from '../../../components/Admin/adminStyles';
+import { colors } from '../../../constants/theme';
 import { useCourses } from '../../hooks/useCourses';
+import { useAdminImagePicker } from '../../hooks/admin/useAdminImagePicker';
+import { useAdminReorder } from '../../hooks/admin/useAdminReorder';
 import { FIRESTORE_COLLECTIONS } from '../../../services/firebase/constants';
 import {
   createCourse,
@@ -35,18 +34,13 @@ import {
   moveCourse,
   updateCourse,
 } from '../../../services/firebase/coursesService';
-import { getCurrentUserId } from '../../../services/firebase/authService';
-import { isAdmin } from '../../../services/firebase/roleService';
 import { uploadCourseThumbnail } from '../../../services/firebase/storageService';
-import { pickProfilePhotoFromGallery } from '../../../services/profilePhotoPicker';
 import type { Course } from '../../../store/content/types/courses.types';
-import { extractFirebaseErrorDetails } from '../../../utils/firebase/extractFirebaseError';
-import { getErrorMessage } from '../../../utils/firebase/errors';
+import { toAdminWriteErrorMessage } from '../../../utils/admin/adminWriteErrorMessage';
 
 type CourseFormState = {
   title: string;
   subtitle: string;
-  imageUri: string;
   durationLabel: string;
   description: string;
   isPublished: boolean;
@@ -55,42 +49,10 @@ type CourseFormState = {
 const EMPTY_FORM: CourseFormState = {
   title: '',
   subtitle: '',
-  imageUri: '',
   durationLabel: '',
   description: '',
   isPublished: true,
 };
-
-function isPermissionDenied(error: unknown): boolean {
-  const code = (error as { code?: string } | null)?.code;
-  if (typeof code === 'string' && code.includes('permission-denied')) {
-    return true;
-  }
-  const message = (error as { message?: string } | null)?.message;
-  return typeof message === 'string' && message.toLowerCase().includes('permission');
-}
-
-function toAdminWriteErrorMessage(error: unknown): string {
-  const { code, message } = extractFirebaseErrorDetails(error);
-  const base = message || getErrorMessage(error);
-  const uid = getCurrentUserId();
-  const uidLine = uid ? `\nYour UID: ${uid}` : '';
-
-  if (!isPermissionDenied(error)) {
-    return `${base}${uidLine}`;
-  }
-
-  const service = code?.includes('storage') ? 'Storage' : 'Firestore';
-
-  return (
-    `${service} permission denied.${uidLine}\n\n` +
-    'Fix checklist:\n' +
-    '1) Firestore → users → (your UID) → field role must be exactly: admin\n' +
-    '2) Sign out, sign back in, then retry\n' +
-    '3) Deploy rules: cd Evolve && firebase deploy --only firestore:rules,storage\n' +
-    `4) Error code: ${code ?? 'unknown'}`
-  );
-}
 
 function ManageCourses() {
   const { courses, loading } = useCourses({ includeUnpublished: true });
@@ -100,23 +62,19 @@ function ManageCourses() {
   const [form, setForm] = useState<CourseFormState>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
-  const [localThumbnailUri, setLocalThumbnailUri] = useState<string | null>(null);
-  const [reorderingId, setReorderingId] = useState<string | null>(null);
   const formRef = useRef(form);
-  const localThumbnailRef = useRef<string | null>(null);
+  const imagePicker = useAdminImagePicker();
+
+  const { reorderingId, handleMove } = useAdminReorder(courses, moveCourse);
 
   useEffect(() => {
     formRef.current = form;
   }, [form]);
 
-  useEffect(() => {
-    localThumbnailRef.current = localThumbnailUri;
-  }, [localThumbnailUri]);
-
   const openCreateEditor = () => {
     setEditingId(null);
     setForm(EMPTY_FORM);
-    setLocalThumbnailUri(null);
+    imagePicker.resetImageState();
     setEditorVisible(true);
   };
 
@@ -125,12 +83,11 @@ function ManageCourses() {
     setForm({
       title: course.title,
       subtitle: course.subtitle,
-      imageUri: course.imageUri,
       durationLabel: course.durationLabel,
       description: course.description,
       isPublished: course.isPublished,
     });
-    setLocalThumbnailUri(null);
+    imagePicker.loadExistingImage(course.imageUri);
     setEditorVisible(true);
   };
 
@@ -138,45 +95,23 @@ function ManageCourses() {
     setEditorVisible(false);
     setEditingId(null);
     setForm(EMPTY_FORM);
-    setLocalThumbnailUri(null);
+    imagePicker.resetImageState();
   };
-
-  const handlePickThumbnail = async () => {
-    const result = await pickProfilePhotoFromGallery();
-    if (result.success) {
-      setLocalThumbnailUri(result.uri);
-      setForm(prev => ({ ...prev, imageUri: '' }));
-      return;
-    }
-    if (!result.cancelled && result.message) {
-      Alert.alert('Thumbnail', result.message);
-    }
-  };
-
-  const thumbnailPreviewUri =
-    localThumbnailUri?.trim() || form.imageUri.trim() || null;
 
   const performSave = async () => {
     const current = formRef.current;
     const title = current.title.trim();
 
     if (!title) {
-      Alert.alert('Title required', 'Enter a title for this course.');
+      Alert.alert('Title required', 'Each course needs a title.');
       return;
     }
 
     const durationLabel = current.durationLabel.trim();
     if (!durationLabel) {
-      Alert.alert('Duration required', 'Enter a duration label (e.g. 2h 30m).');
-      return;
-    }
-
-    const hasAdmin = await isAdmin();
-    if (!hasAdmin) {
-      const uid = getCurrentUserId();
       Alert.alert(
-        'Admin access required',
-        `Your account does not have admin role in Firestore.${uid ? `\n\nUID: ${uid}\n\nSet users/${uid}.role to "admin" in Firebase Console, then sign out and back in.` : ''}`,
+        'Duration required',
+        'Each course needs a duration (e.g. 2h 30m).',
       );
       return;
     }
@@ -185,8 +120,8 @@ function ManageCourses() {
       editingId ??
       doc(collection(db, FIRESTORE_COLLECTIONS.courses)).id;
 
-    let imageUri = current.imageUri.trim();
-    const pendingLocalThumbnail = localThumbnailRef.current?.trim();
+    let imageUri = imagePicker.remoteUri.trim();
+    const pendingLocalThumbnail = imagePicker.pendingLocalUri();
 
     setSaving(true);
     try {
@@ -242,56 +177,9 @@ function ManageCourses() {
     ]);
   };
 
-  const handleMove = useCallback(
-    async (courseId: string, direction: 'up' | 'down') => {
-      setReorderingId(courseId);
-      try {
-        await moveCourse(courseId, direction, courses);
-      } catch (error) {
-        Alert.alert('Reorder failed', getErrorMessage(error));
-      } finally {
-        setReorderingId(null);
-      }
-    },
-    [courses],
+  const listHeader = (
+    <AdminListSectionHeader title="All courses" onAdd={openCreateEditor} />
   );
-
-  const listHeader = useCallback(
-    () => (
-      <>
-        <View style={styles.headerRow}>
-          <Text style={styles.blockTitle}>Course catalog</Text>
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={openCreateEditor}
-            accessibilityRole="button"
-            accessibilityLabel="Add course">
-            <Plus size={18} color="#fff" strokeWidth={2.5} />
-            <Text style={styles.addButtonText}>Add</Text>
-          </TouchableOpacity>
-        </View>
-        <Text style={styles.hint}>
-          Add title, duration, and thumbnail for each course. Published courses
-          appear in the Courses tab for all users.
-        </Text>
-      </>
-    ),
-    [openCreateEditor],
-  );
-
-  const listEmpty = useCallback(() => {
-    if (loading) {
-      return <ActivityIndicator color={colors.primary} style={styles.loader} />;
-    }
-    if (courses.length === 0) {
-      return (
-        <Text style={styles.emptyText}>
-          No courses yet. Add one to show in the Courses tab.
-        </Text>
-      );
-    }
-    return null;
-  }, [courses.length, loading]);
 
   const renderCourse = useCallback(
     ({ item: course, index }: { item: Course; index: number }) => (
@@ -307,309 +195,101 @@ function ManageCourses() {
         onDelete={() => confirmDelete(course)}
       />
     ),
-    [confirmDelete, courses.length, handleMove, openEditEditor, reorderingId],
+    [courses.length, handleMove, reorderingId],
   );
 
   const keyExtractor = useCallback((item: Course) => item.id, []);
 
+  const formBusy = saving || uploadingThumbnail;
+  const savingLabel = uploadingThumbnail
+    ? 'Uploading thumbnail…'
+    : 'Saving…';
+
   return (
-    <AdminScreenLayout
-      title="Manage Courses"
-      subtitle="Add courses shown in the Courses tab"
-      scrollable={false}>
-      <FlatList
+    <>
+      <AdminListLayout
+        title="Manage Courses"
+        subtitle="Create courses shown in the Courses tab"
         data={courses}
+        loading={loading}
+        reorderingId={reorderingId}
         keyExtractor={keyExtractor}
         renderItem={renderCourse}
-        ListHeaderComponent={listHeader}
-        ListEmptyComponent={listEmpty}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-        extraData={reorderingId}
-        {...VERTICAL_LIST_PERF}
+        listHeader={listHeader}
+        emptyMessage="No courses yet. Tap Add to create one."
       />
 
-      <Modal
+      <AdminEntityForm
         visible={editorVisible}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={closeEditor}>
-        <View style={styles.modalContainer}>
-          <Text style={styles.modalTitle}>
-            {editingId ? 'Edit course' : 'New course'}
-          </Text>
-          <ScrollView contentContainerStyle={styles.modalScroll}>
-            <FormField
-              label="Title"
-              value={form.title}
-              onChangeText={title => setForm(prev => ({ ...prev, title }))}
-              placeholder="Introduction to Robotics"
-            />
-            <FormField
-              label="Subtitle"
-              value={form.subtitle}
-              onChangeText={subtitle =>
-                setForm(prev => ({ ...prev, subtitle }))
-              }
-              placeholder="Beginner-friendly overview"
-            />
-            <FormField
-              label="Duration"
-              value={form.durationLabel}
-              onChangeText={durationLabel =>
-                setForm(prev => ({ ...prev, durationLabel }))
-              }
-              placeholder="2h 30m"
-            />
-            <FormField
-              label="Description"
-              value={form.description}
-              onChangeText={description =>
-                setForm(prev => ({ ...prev, description }))
-              }
-              placeholder="What students will learn (optional)"
-              multiline
-            />
-            <Text style={styles.fieldLabel}>Thumbnail</Text>
-            <TouchableOpacity
-              style={styles.pickImageButton}
-              onPress={handlePickThumbnail}
-              disabled={saving}
-              accessibilityRole="button"
-              accessibilityLabel="Choose thumbnail image">
-              <ImagePlus size={18} color={colors.primary} strokeWidth={2} />
-              <Text style={styles.pickImageText}>Choose image from gallery</Text>
-            </TouchableOpacity>
-            <FormField
-              label="Or paste thumbnail URL"
-              value={form.imageUri}
-              onChangeText={imageUri => {
-                setLocalThumbnailUri(null);
-                setForm(prev => ({ ...prev, imageUri }));
-              }}
-              placeholder="https://..."
-              autoCapitalize="none"
-            />
-            {thumbnailPreviewUri ? (
-              <Image source={{ uri: thumbnailPreviewUri }} style={styles.preview} />
-            ) : null}
-            <View style={styles.switchRow}>
-              <Text style={styles.switchLabel}>Published in Courses tab</Text>
-              <Switch
-                value={form.isPublished}
-                onValueChange={isPublished =>
-                  setForm(prev => ({ ...prev, isPublished }))
-                }
-                trackColor={{ true: colors.primarySoft, false: colors.border }}
-                thumbColor={
-                  form.isPublished ? colors.primary : colors.textMuted
-                }
-              />
-            </View>
-          </ScrollView>
-          <View style={styles.modalActions}>
-            <AppButton
-              title="Cancel"
-              onPress={closeEditor}
-              buttonStyle={styles.secondaryButton}
-              textStyle={styles.secondaryButtonText}
-            />
-            <AppButton
-              title={
-                uploadingThumbnail
-                  ? 'Uploading thumbnail…'
-                  : saving
-                    ? 'Saving…'
-                    : 'Save course'
-              }
-              onPress={handleSave}
-              disabled={saving}
-              buttonStyle={styles.primaryButton}
-              textStyle={styles.primaryButtonText}
-            />
-          </View>
-        </View>
-      </Modal>
-    </AdminScreenLayout>
+        title={editingId ? 'Edit course' : 'New course'}
+        saveLabel="Save course"
+        savingLabel={savingLabel}
+        saving={formBusy}
+        onClose={closeEditor}
+        onSave={handleSave}>
+        <AdminFormField
+          label="Title"
+          value={form.title}
+          onChangeText={title => setForm(prev => ({ ...prev, title }))}
+          placeholder="Introduction to Robotics"
+        />
+        <AdminFormField
+          label="Subtitle (optional)"
+          value={form.subtitle}
+          onChangeText={subtitle => setForm(prev => ({ ...prev, subtitle }))}
+          placeholder="Brief line shown on the course card"
+          multiline
+        />
+        <AdminFormField
+          label="Duration"
+          value={form.durationLabel}
+          onChangeText={durationLabel =>
+            setForm(prev => ({ ...prev, durationLabel }))
+          }
+          placeholder="2h 30m"
+        />
+        <AdminFormField
+          label="Description (optional)"
+          value={form.description}
+          onChangeText={description =>
+            setForm(prev => ({ ...prev, description }))
+          }
+          placeholder="What learners will cover in this course"
+          multiline
+        />
+        <Text style={adminStyles.fieldLabel}>Thumbnail</Text>
+        <TouchableOpacity
+          style={adminStyles.pickImageButton}
+          onPress={imagePicker.handlePickImage}
+          disabled={formBusy}
+          accessibilityRole="button"
+          accessibilityLabel="Choose thumbnail from gallery">
+          <ImagePlus size={18} color={colors.primary} strokeWidth={2} />
+          <Text style={adminStyles.pickImageText}>Choose from gallery</Text>
+        </TouchableOpacity>
+        <AdminFormField
+          label="Thumbnail URL (optional)"
+          value={imagePicker.remoteUri}
+          onChangeText={uri => imagePicker.setRemoteUri(uri)}
+          placeholder="https://..."
+          autoCapitalize="none"
+        />
+        {imagePicker.previewUri ? (
+          <Image
+            source={{ uri: imagePicker.previewUri }}
+            style={adminStyles.thumbnailPreview}
+          />
+        ) : null}
+        <AdminPublishedSwitch
+          label="Published for learners"
+          value={form.isPublished}
+          onValueChange={isPublished =>
+            setForm(prev => ({ ...prev, isPublished }))
+          }
+        />
+      </AdminEntityForm>
+    </>
   );
 }
-
-type FormFieldProps = {
-  label: string;
-  value: string;
-  onChangeText: (value: string) => void;
-  placeholder?: string;
-  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
-  multiline?: boolean;
-};
-
-function FormField({
-  label,
-  value,
-  onChangeText,
-  placeholder,
-  autoCapitalize,
-  multiline,
-}: FormFieldProps) {
-  return (
-    <View style={styles.field}>
-      <Text style={styles.fieldLabel}>{label}</Text>
-      <TextInput
-        style={[styles.input, multiline && styles.inputMultiline]}
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor={colors.textMuted}
-        autoCapitalize={autoCapitalize}
-        multiline={multiline}
-      />
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  scrollContent: {
-    padding: spacing.screenHorizontal,
-    paddingBottom: 40,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  blockTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  hint: {
-    fontSize: 13,
-    lineHeight: 19,
-    color: colors.textSecondary,
-    marginBottom: 16,
-  },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: colors.primary,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  addButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  loader: {
-    marginVertical: 24,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    lineHeight: 20,
-  },
-  field: {
-    marginBottom: 14,
-  },
-  fieldLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.textSecondary,
-    marginBottom: 6,
-  },
-  pickImageButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    alignSelf: 'flex-start',
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    backgroundColor: colors.primaryLight,
-    marginBottom: 14,
-  },
-  pickImageText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.primary,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 15,
-    color: colors.textPrimary,
-    backgroundColor: colors.background,
-  },
-  inputMultiline: {
-    minHeight: 88,
-    textAlignVertical: 'top',
-  },
-  preview: {
-    width: '100%',
-    height: 120,
-    borderRadius: 10,
-    marginBottom: 14,
-    backgroundColor: colors.primaryMuted,
-  },
-  switchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  switchLabel: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.textPrimary,
-  },
-  primaryButton: {
-    backgroundColor: colors.primary,
-    flex: 1,
-  },
-  primaryButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-  secondaryButton: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    backgroundColor: colors.surface,
-  },
-  secondaryButtonText: {
-    color: colors.primary,
-    fontWeight: '600',
-  },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: colors.background,
-    paddingTop: 20,
-    paddingHorizontal: spacing.screenHorizontal,
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: 16,
-  },
-  modalScroll: {
-    paddingBottom: 16,
-  },
-  modalActions: {
-    flexDirection: 'row',
-    gap: 12,
-    paddingVertical: 16,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
-  },
-});
 
 export default ManageCourses;

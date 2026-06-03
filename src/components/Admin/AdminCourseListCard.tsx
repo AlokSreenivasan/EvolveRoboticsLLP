@@ -87,8 +87,8 @@ function AdminCourseListCard({
         ) : null}
         <Text style={styles.statusLine}>
           {course.isPublished
-            ? 'Visible in the Courses tab'
-            : 'Hidden until published'}
+            ? 'Visible for learners'
+            : 'Draft — hidden from learners'}
         </Text>
       </View>
 

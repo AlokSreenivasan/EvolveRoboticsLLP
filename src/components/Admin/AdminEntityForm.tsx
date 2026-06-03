@@ -8,6 +8,7 @@ type AdminEntityFormProps = {
   visible: boolean;
   title: string;
   saveLabel: string;
+  savingLabel?: string;
   saving: boolean;
   onClose: () => void;
   onSave: () => void;
@@ -18,6 +19,7 @@ function AdminEntityForm({
   visible,
   title,
   saveLabel,
+  savingLabel = 'Saving…',
   saving,
   onClose,
   onSave,
@@ -42,7 +44,7 @@ function AdminEntityForm({
             textStyle={adminStyles.secondaryButtonText}
           />
           <AppButton
-            title={saving ? 'Saving…' : saveLabel}
+            title={saving ? savingLabel : saveLabel}
             onPress={onSave}
             disabled={saving}
             buttonStyle={adminStyles.primaryButton}
