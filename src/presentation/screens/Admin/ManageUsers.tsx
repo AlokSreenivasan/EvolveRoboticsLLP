@@ -63,8 +63,8 @@ function ManageUsers() {
         />
       </View>
       <Text style={styles.searchHint}>
-        Lists load in pages for performance. Type at least 2 characters to
-        filter by name prefix, or include @ to search email.
+        Type at least 2 characters to search by name or email. Use digits only
+        to search by phone (3+ digits). Results load in pages — scroll for more.
       </Text>
       {!loading && !error && users.length > 0 ? (
         <Text style={styles.countLabel}>

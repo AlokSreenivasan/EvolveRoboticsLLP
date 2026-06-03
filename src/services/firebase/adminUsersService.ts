@@ -7,6 +7,10 @@ import type {
   FetchAdminUsersPageResult,
 } from '../../store/user/types/adminUsers.types';
 import type { UserProfileDocument } from '../../store/user/types/user.types';
+import {
+  normalizeAdminUserSearchTerm,
+  resolveAdminUserSearchMode,
+} from '../../utils/admin/adminUserSearch';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { normalizeUserRole } from '../../utils/role/normalizeUserRole';
 import { FIRESTORE_COLLECTIONS } from './constants';
@@ -23,8 +27,6 @@ import {
 } from './firestoreClient';
 
 export const ADMIN_USERS_PAGE_SIZE = 30;
-
-const SEARCH_MIN_LENGTH = 2;
 
 function usersCollection() {
   return collection(db, FIRESTORE_COLLECTIONS.users);
@@ -45,8 +47,31 @@ function mapDocToListItem(
   };
 }
 
-function isEmailSearch(term: string): boolean {
-  return term.includes('@');
+function buildRangedUsersQuery(
+  field: 'fullName' | 'email' | 'phoneNumber',
+  term: string,
+  pageSize: number,
+  cursor: AdminUsersPageCursor | null,
+) {
+  if (cursor) {
+    return query(
+      usersCollection(),
+      orderBy(field),
+      where(field, '>=', term),
+      where(field, '<=', `${term}\uf8ff`),
+      orderBy(documentId()),
+      startAfter(cursor as FirebaseFirestoreTypes.QueryDocumentSnapshot),
+      limit(pageSize),
+    );
+  }
+  return query(
+    usersCollection(),
+    orderBy(field),
+    where(field, '>=', term),
+    where(field, '<=', `${term}\uf8ff`),
+    orderBy(documentId()),
+    limit(pageSize),
+  );
 }
 
 function buildUsersListQuery(
@@ -54,52 +79,21 @@ function buildUsersListQuery(
   searchTerm: string,
   cursor: AdminUsersPageCursor | null,
 ) {
-  const trimmedSearch = searchTerm.trim();
-  const useSearch = trimmedSearch.length >= SEARCH_MIN_LENGTH;
+  const searchMode = resolveAdminUserSearchMode(searchTerm);
 
-  if (useSearch && isEmailSearch(trimmedSearch)) {
-    const emailTerm = trimmedSearch.toLowerCase();
-    if (cursor) {
-      return query(
-        usersCollection(),
-        orderBy('email'),
-        where('email', '>=', emailTerm),
-        where('email', '<=', `${emailTerm}\uf8ff`),
-        orderBy(documentId()),
-        startAfter(cursor as FirebaseFirestoreTypes.QueryDocumentSnapshot),
-        limit(pageSize),
-      );
-    }
-    return query(
-      usersCollection(),
-      orderBy('email'),
-      where('email', '>=', emailTerm),
-      where('email', '<=', `${emailTerm}\uf8ff`),
-      orderBy(documentId()),
-      limit(pageSize),
-    );
+  if (searchMode === 'email') {
+    const emailTerm = normalizeAdminUserSearchTerm(searchTerm, 'email');
+    return buildRangedUsersQuery('email', emailTerm, pageSize, cursor);
   }
 
-  if (useSearch) {
-    if (cursor) {
-      return query(
-        usersCollection(),
-        orderBy('fullName'),
-        where('fullName', '>=', trimmedSearch),
-        where('fullName', '<=', `${trimmedSearch}\uf8ff`),
-        orderBy(documentId()),
-        startAfter(cursor as FirebaseFirestoreTypes.QueryDocumentSnapshot),
-        limit(pageSize),
-      );
-    }
-    return query(
-      usersCollection(),
-      orderBy('fullName'),
-      where('fullName', '>=', trimmedSearch),
-      where('fullName', '<=', `${trimmedSearch}\uf8ff`),
-      orderBy(documentId()),
-      limit(pageSize),
-    );
+  if (searchMode === 'phone') {
+    const phoneTerm = normalizeAdminUserSearchTerm(searchTerm, 'phone');
+    return buildRangedUsersQuery('phoneNumber', phoneTerm, pageSize, cursor);
+  }
+
+  if (searchMode === 'name') {
+    const nameTerm = normalizeAdminUserSearchTerm(searchTerm, 'name');
+    return buildRangedUsersQuery('fullName', nameTerm, pageSize, cursor);
   }
 
   if (cursor) {
