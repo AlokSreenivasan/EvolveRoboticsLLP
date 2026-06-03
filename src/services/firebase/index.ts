@@ -115,5 +115,9 @@ export {
   updateCurrentUserProfile,
   updateUserProfile,
 } from './userService';
+export {
+  ADMIN_USERS_PAGE_SIZE,
+  fetchAdminUsersPage,
+} from './adminUsersService';
 export type { UserProfileFetchResult } from './userService';
 // updateCurrentUserProfile requires baseProfile — prefer updateUserProfileWithSync

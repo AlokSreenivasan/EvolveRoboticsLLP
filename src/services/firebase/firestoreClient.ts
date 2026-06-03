@@ -4,6 +4,7 @@ export {
   collection,
   deleteDoc,
   doc,
+  documentId,
   enableNetwork,
   getDoc,
   getDocFromServer,
@@ -15,9 +16,11 @@ export {
   runTransaction,
   serverTimestamp,
   setDoc,
+  startAfter,
   Timestamp,
   updateDoc,
   waitForPendingWrites,
+  where,
   writeBatch,
 } from '@react-native-firebase/firestore';
 
