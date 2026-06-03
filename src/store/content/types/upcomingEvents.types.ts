@@ -18,6 +18,7 @@ export interface UpcomingEventsSection {
 export interface UpcomingEventDocument {
   month: string;
   day: string;
+  year?: number;
   title: string;
   dateRange: string;
   timeRange: string;
@@ -32,6 +33,7 @@ export interface UpcomingEvent {
   id: string;
   month: string;
   day: string;
+  year: number | null;
   title: string;
   dateRange: string;
   timeRange: string;
@@ -45,6 +47,7 @@ export interface UpcomingEvent {
 export type CreateUpcomingEventInput = {
   month: string;
   day: string;
+  year: number;
   title: string;
   dateRange: string;
   timeRange: string;

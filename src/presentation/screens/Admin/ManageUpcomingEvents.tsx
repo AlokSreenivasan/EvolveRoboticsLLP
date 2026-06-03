@@ -2,12 +2,14 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Text, View } from 'react-native';
 
 import AdminEntityForm from '../../../components/Admin/AdminEntityForm';
+import AdminEventDateScrollPicker from '../../../components/Admin/AdminEventDateScrollPicker';
 import AdminFormField from '../../../components/Admin/AdminFormField';
 import AdminListLayout from '../../../components/Admin/AdminListLayout';
 import AdminListRowActions from '../../../components/Admin/AdminListRowActions';
 import AdminListSectionHeader from '../../../components/Admin/AdminListSectionHeader';
 import AdminPublishedSwitch from '../../../components/Admin/AdminPublishedSwitch';
 import AdminSectionCard from '../../../components/Admin/AdminSectionCard';
+import EventDateBlock from '../../../components/Home/EventDateBlock';
 import { adminStyles } from '../../../components/Admin/adminStyles';
 import { useUpcomingEvents } from '../../hooks/useUpcomingEvents';
 import { useAdminReorder } from '../../hooks/admin/useAdminReorder';
@@ -25,10 +27,19 @@ import type {
   UpdateUpcomingEventsSectionInput,
 } from '../../../store/content/types/upcomingEvents.types';
 import { toAdminWriteErrorMessage } from '../../../utils/admin/adminWriteErrorMessage';
+import {
+  EVENT_YEAR_MAX,
+  computeDaysLeftLabel,
+  formatEventDateParts,
+  getDisplayDaysLeftLabel,
+  parseStoredEventYear,
+  resolveUpcomingEventDate,
+} from '../../../utils/upcomingEventDate';
 
 type EventFormState = {
   month: string;
   day: string;
+  year: number | null;
   title: string;
   dateRange: string;
   timeRange: string;
@@ -39,6 +50,7 @@ type EventFormState = {
 const EMPTY_EVENT_FORM: EventFormState = {
   month: '',
   day: '',
+  year: null,
   title: '',
   dateRange: '',
   timeRange: '',
@@ -72,16 +84,29 @@ function ManageUpcomingEvents() {
   }, [section]);
 
   const openCreateEditor = () => {
+    const today = new Date();
+    const { month, day, year } = formatEventDateParts(today);
     setEditingEventId(null);
-    setEventForm(EMPTY_EVENT_FORM);
+    setEventForm({
+      ...EMPTY_EVENT_FORM,
+      month,
+      day,
+      year,
+      daysLeftLabel: computeDaysLeftLabel(month, day, { year }),
+    });
     setEditorVisible(true);
   };
 
   const openEditEditor = (event: UpcomingEvent) => {
+    const resolvedYear =
+      event.year ??
+      resolveUpcomingEventDate(event.month, event.day)?.getFullYear() ??
+      new Date().getFullYear();
     setEditingEventId(event.id);
     setEventForm({
       month: event.month,
       day: event.day,
+      year: resolvedYear,
       title: event.title,
       dateRange: event.dateRange,
       timeRange: event.timeRange,
@@ -128,20 +153,44 @@ function ManageUpcomingEvents() {
     if (!eventForm.month.trim() || !eventForm.day.trim()) {
       Alert.alert(
         'Date required',
-        'Enter month (e.g. MAY) and day (e.g. 25) for the date block.',
+        'Choose an event date for the home card.',
       );
       return;
     }
+
+    const year = parseStoredEventYear(eventForm.year);
+    if (year == null) {
+      Alert.alert(
+        'Date required',
+        `Choose a valid year (today through ${EVENT_YEAR_MAX}).`,
+      );
+      return;
+    }
+
+    if (!resolveUpcomingEventDate(eventForm.month, eventForm.day, { year })) {
+      Alert.alert(
+        'Invalid date',
+        `That date is not valid or falls after ${EVENT_YEAR_MAX}.`,
+      );
+      return;
+    }
+
+    const daysLeftLabel = computeDaysLeftLabel(
+      eventForm.month.trim(),
+      eventForm.day.trim(),
+      { year },
+    );
 
     setSavingEvent(true);
     try {
       const payload = {
         month: eventForm.month,
         day: eventForm.day,
+        year,
         title: eventForm.title,
         dateRange: eventForm.dateRange,
         timeRange: eventForm.timeRange,
-        daysLeftLabel: eventForm.daysLeftLabel,
+        daysLeftLabel,
         isPublished: eventForm.isPublished,
       };
       if (editingEventId) {
@@ -209,10 +258,12 @@ function ManageUpcomingEvents() {
       <View style={adminStyles.listRowCard}>
         <View style={adminStyles.listRowTop}>
           <View style={adminStyles.listRowMeta}>
-            <View style={adminStyles.datePreview}>
-              <Text style={adminStyles.dateMonth}>{event.month}</Text>
-              <Text style={adminStyles.dateDay}>{event.day}</Text>
-            </View>
+            <EventDateBlock
+              month={event.month}
+              day={event.day}
+              size="compact"
+              style={adminStyles.listRowDateBlock}
+            />
             <Text style={adminStyles.listRowTitle}>{event.title}</Text>
             {event.dateRange ? (
               <Text style={adminStyles.listRowSubtitle}>{event.dateRange}</Text>
@@ -220,8 +271,20 @@ function ManageUpcomingEvents() {
             {event.timeRange ? (
               <Text style={adminStyles.listRowSubtitle}>{event.timeRange}</Text>
             ) : null}
-            {event.daysLeftLabel ? (
-              <Text style={adminStyles.badgePreview}>{event.daysLeftLabel}</Text>
+            {getDisplayDaysLeftLabel(
+              event.month,
+              event.day,
+              event.daysLeftLabel,
+              event.year ?? undefined,
+            ) ? (
+              <Text style={adminStyles.badgePreview}>
+                {getDisplayDaysLeftLabel(
+                  event.month,
+                  event.day,
+                  event.daysLeftLabel,
+                  event.year ?? undefined,
+                )}
+              </Text>
             ) : null}
             {!event.isPublished ? (
               <Text style={adminStyles.draftBadge}>Draft</Text>
@@ -265,28 +328,20 @@ function ManageUpcomingEvents() {
         saving={savingEvent}
         onClose={closeEditor}
         onSave={handleSaveEvent}>
-        <View style={adminStyles.rowFields}>
-          <View style={adminStyles.halfField}>
-            <AdminFormField
-              label="Month (date block)"
-              value={eventForm.month}
-              onChangeText={month =>
-                setEventForm(prev => ({ ...prev, month }))
-              }
-              placeholder="MAY"
-              autoCapitalize="characters"
-            />
-          </View>
-          <View style={adminStyles.halfField}>
-            <AdminFormField
-              label="Day (date block)"
-              value={eventForm.day}
-              onChangeText={day => setEventForm(prev => ({ ...prev, day }))}
-              placeholder="25"
-              keyboardType="number-pad"
-            />
-          </View>
-        </View>
+        <AdminEventDateScrollPicker
+          month={eventForm.month}
+          day={eventForm.day}
+          year={eventForm.year}
+          onChange={(month, day, year) =>
+            setEventForm(prev => ({
+              ...prev,
+              month,
+              day,
+              year,
+              daysLeftLabel: computeDaysLeftLabel(month, day, { year }),
+            }))
+          }
+        />
         <AdminFormField
           label="Title"
           value={eventForm.title}
@@ -308,14 +363,6 @@ function ManageUpcomingEvents() {
             setEventForm(prev => ({ ...prev, timeRange }))
           }
           placeholder="10:00 AM – 1:00 PM"
-        />
-        <AdminFormField
-          label="Days-left badge"
-          value={eventForm.daysLeftLabel}
-          onChangeText={daysLeftLabel =>
-            setEventForm(prev => ({ ...prev, daysLeftLabel }))
-          }
-          placeholder="2 Days Left"
         />
         <AdminPublishedSwitch
           label="Published on home"

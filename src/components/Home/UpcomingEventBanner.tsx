@@ -3,18 +3,24 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { cardShadow, colors } from '../../constants/theme';
 import type { UpcomingEvent } from '../../store/content/types/upcomingEvents.types';
+import { getDisplayDaysLeftLabel } from '../../utils/upcomingEventDate';
+import EventDateBlock from './EventDateBlock';
 
 type UpcomingEventBannerProps = {
   event: UpcomingEvent;
 };
 
 function UpcomingEventBanner({ event }: UpcomingEventBannerProps) {
+  const daysLeftLabel = getDisplayDaysLeftLabel(
+    event.month,
+    event.day,
+    event.daysLeftLabel,
+    event.year ?? undefined,
+  );
+
   return (
     <View style={styles.card}>
-      <View style={styles.dateBlock}>
-        <Text style={styles.month}>{event.month}</Text>
-        <Text style={styles.day}>{event.day}</Text>
-      </View>
+      <EventDateBlock month={event.month} day={event.day} />
 
       <View style={styles.details}>
         <Text style={styles.title}>{event.title}</Text>
@@ -26,9 +32,9 @@ function UpcomingEventBanner({ event }: UpcomingEventBannerProps) {
         ) : null}
       </View>
 
-      {event.daysLeftLabel ? (
+      {daysLeftLabel ? (
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>{event.daysLeftLabel}</Text>
+          <Text style={styles.badgeText}>{daysLeftLabel}</Text>
         </View>
       ) : null}
     </View>
@@ -45,29 +51,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.eventBorder,
     ...cardShadow,
-  },
-  dateBlock: {
-    width: 56,
-    height: 64,
-    borderRadius: 12,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
-    borderWidth: 1,
-    borderColor: colors.primaryMuted,
-  },
-  month: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: colors.primary,
-    letterSpacing: 0.5,
-  },
-  day: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: colors.textPrimary,
-    lineHeight: 30,
+    gap: 14,
   },
   details: {
     flex: 1,

@@ -273,24 +273,19 @@ export const adminStyles = StyleSheet.create({
   halfField: {
     flex: 1,
   },
-  datePreview: {
+  listRowDateBlock: {
     alignSelf: 'flex-start',
-    alignItems: 'center',
-    backgroundColor: colors.primaryLight,
-    borderRadius: 8,
+    marginBottom: 8,
+  },
+  datePickerBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.primarySoft,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    marginBottom: 8,
-    minWidth: 52,
+    borderRadius: 14,
   },
-  dateMonth: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: colors.primary,
-    letterSpacing: 0.5,
-  },
-  dateDay: {
-    fontSize: 18,
+  datePickerBadgeText: {
+    fontSize: 11,
     fontWeight: '700',
     color: colors.primary,
   },

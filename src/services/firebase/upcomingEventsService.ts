@@ -14,6 +14,7 @@ import type {
   UpdateUpcomingEventInput,
   UpdateUpcomingEventsSectionInput,
 } from '../../store/content/types/upcomingEvents.types';
+import { parseStoredEventYear } from '../../utils/upcomingEventDate';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { APP_CONTENT_DOCS, FIRESTORE_COLLECTIONS } from './constants';
 import {
@@ -81,6 +82,7 @@ function mapEvent(id: string, data: UpcomingEventDocument): UpcomingEvent {
     id,
     month: data.month?.trim().toUpperCase() ?? '',
     day: data.day?.trim() ?? '',
+    year: parseStoredEventYear(data.year),
     title: data.title?.trim() ?? '',
     dateRange: data.dateRange?.trim() ?? '',
     timeRange: data.timeRange?.trim() ?? '',
@@ -205,6 +207,7 @@ export async function createUpcomingEvent(
     const payload: UpcomingEventDocument = {
       month: input.month.trim().toUpperCase().slice(0, 20),
       day: input.day.trim().slice(0, 10),
+      year: Math.trunc(input.year),
       title: input.title.trim(),
       dateRange: input.dateRange.trim(),
       timeRange: input.timeRange.trim(),
@@ -241,6 +244,9 @@ export async function updateUpcomingEvent(
     }
     if (input.day !== undefined) {
       updates.day = input.day.trim();
+    }
+    if (input.year !== undefined) {
+      updates.year = Math.trunc(input.year);
     }
     if (input.title !== undefined) {
       updates.title = input.title.trim();
