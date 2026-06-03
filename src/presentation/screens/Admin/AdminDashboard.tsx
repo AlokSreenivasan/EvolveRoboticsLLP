@@ -7,7 +7,6 @@ import {
   ClipboardCheck,
   ClipboardList,
   FolderOpen,
-  ImageIcon,
   LayoutDashboard,
   Megaphone,
   PlayCircle,
@@ -71,12 +70,6 @@ const MENU_ITEMS: AdminMenuItem[] = [
     title: 'Manage Courses',
     description: 'Create, edit, and publish learning content',
     icon: BookOpen,
-  },
-  {
-    key: 'ManageBanners',
-    title: 'Manage Banners',
-    description: 'Update home carousel and promotional banners',
-    icon: ImageIcon,
   },
   {
     key: 'ManageUsers',

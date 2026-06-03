@@ -4,7 +4,6 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AdminRouteGuard from '../components/Admin/AdminRouteGuard';
 import AdminDashboard from '../presentation/screens/Admin/AdminDashboard';
 import AdminNotifications from '../presentation/screens/Admin/Notifications';
-import ManageBanners from '../presentation/screens/Admin/ManageBanners';
 import ManageImportantUpdates from '../presentation/screens/Admin/ManageImportantUpdates';
 import ManageAssignments from '../presentation/screens/Admin/ManageAssignments';
 import ManageExams from '../presentation/screens/Admin/ManageExams';
@@ -45,7 +44,6 @@ function AdminStackNavigator() {
         />
         <Stack.Screen name="ManageExams" component={ManageExams} />
         <Stack.Screen name="ManageCourses" component={ManageCourses} />
-        <Stack.Screen name="ManageBanners" component={ManageBanners} />
         <Stack.Screen name="ManageUsers" component={ManageUsers} />
         <Stack.Screen
           name="AdminNotifications"

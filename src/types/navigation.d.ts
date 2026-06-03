@@ -12,7 +12,6 @@ export type AdminStackParamList = {
   ManageAssignments: undefined;
   ManageExams: undefined;
   ManageCourses: undefined;
-  ManageBanners: undefined;
   ManageUsers: undefined;
   AdminNotifications: undefined;
 };

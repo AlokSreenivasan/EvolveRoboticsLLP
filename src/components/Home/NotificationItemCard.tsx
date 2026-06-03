@@ -19,11 +19,13 @@ function NotificationItemCard({
   variant = 'default',
 }: NotificationItemCardProps) {
   const body = notification.body?.trim();
-  const timestamp = formatNotificationTimestamp(
-    notification.createdAt,
-    notification.updatedAt,
-  );
   const isList = variant === 'list';
+  const timestamp = isList
+    ? formatNotificationTimestamp(
+        notification.createdAt,
+        notification.updatedAt,
+      )
+    : null;
 
   return (
     <View style={[styles.card, isList && styles.cardList]}>
