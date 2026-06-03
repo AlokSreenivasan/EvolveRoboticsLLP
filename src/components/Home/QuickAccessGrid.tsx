@@ -11,6 +11,7 @@ import {
 } from 'lucide-react-native';
 
 import {
+  QUICK_ACCESS_HIDDEN_IDS,
   QUICK_ACCESS_ITEMS,
   type QuickAccessItem,
 } from '../../constants/homeScreenData';
@@ -57,9 +58,13 @@ function QuickAccessGrid() {
     }
   };
 
+  const visibleItems = QUICK_ACCESS_ITEMS.filter(
+    item => !QUICK_ACCESS_HIDDEN_IDS.has(item.id),
+  );
+
   return (
     <View style={styles.grid}>
-      {QUICK_ACCESS_ITEMS.map(item => (
+      {visibleItems.map(item => (
         <TouchableOpacity
           key={item.id}
           style={styles.item}
@@ -80,13 +85,12 @@ function QuickAccessGrid() {
 const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     justifyContent: 'space-between',
-    rowGap: 16,
   },
   item: {
-    width: '30%',
+    flex: 1,
     alignItems: 'center',
+    maxWidth: '33%',
   },
   iconBox: {
     width: 56,

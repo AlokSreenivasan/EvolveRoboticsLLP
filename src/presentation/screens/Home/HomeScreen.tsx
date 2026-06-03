@@ -141,11 +141,7 @@ function HomeScreen() {
         <ImportantUpdatesSection />
 
         <View style={styles.section}>
-          <HomeSectionHeader
-            title="Quick access"
-            actionLabel="More"
-            onActionPress={() => navigation.navigate('PaidCoursesCode')}
-          />
+          <HomeSectionHeader title="Quick access" />
           <QuickAccessGrid />
         </View>
 
