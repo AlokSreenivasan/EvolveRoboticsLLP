@@ -1,17 +1,22 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
+  LayoutAnimation,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
+  UIManager,
   View,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
 
-import { colors } from '../constants/theme';
+import { colors, spacing } from '../constants/theme';
 
-const DOT_HEIGHT = 8;
-const DOT_RADIUS = DOT_HEIGHT / 2;
+const SEGMENT_INACTIVE_WIDTH = 10;
+const SEGMENT_ACTIVE_WIDTH = 26;
+const SEGMENT_HEIGHT = 4;
+const SEGMENT_ACTIVE_HEIGHT = 5;
 
 type PaginationVariant = 'light' | 'dark';
 
@@ -24,52 +29,59 @@ type ExpandingDotPaginationProps = {
   style?: StyleProp<ViewStyle>;
 };
 
-type PaginationDotProps = {
+type PaginationSegmentProps = {
   index: number;
   isActive: boolean;
   variant: PaginationVariant;
   onPress?: () => void;
 };
 
-function activeWidth(variant: PaginationVariant) {
-  return variant === 'dark' ? 28 : 18;
+if (
+  Platform.OS === 'android' &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-function PaginationDot({ index, isActive, variant, onPress }: PaginationDotProps) {
-  const dotColor =
-    variant === 'dark'
-      ? isActive
-        ? colors.primary
-        : 'rgba(255,255,255,0.4)'
-      : isActive
-        ? colors.primary
-        : colors.primaryMuted;
+function PaginationSegment({
+  index,
+  isActive,
+  variant,
+  onPress,
+}: PaginationSegmentProps) {
+  const isDark = variant === 'dark';
+  const inactiveColor = isDark
+    ? 'rgba(255,255,255,0.28)'
+    : colors.primaryMuted;
+  const activeColor = colors.primary;
 
-  const dot = (
+  const segment = (
     <View
       style={[
-        styles.dot,
+        styles.segment,
         {
-          width: isActive ? activeWidth(variant) : 8,
-          height: DOT_HEIGHT,
-          backgroundColor: dotColor,
+          width: isActive ? SEGMENT_ACTIVE_WIDTH : SEGMENT_INACTIVE_WIDTH,
+          height: isActive ? SEGMENT_ACTIVE_HEIGHT : SEGMENT_HEIGHT,
+          backgroundColor: isActive ? activeColor : inactiveColor,
+          borderRadius: isActive ? 3 : 2,
         },
+        isActive && isDark && styles.segmentActiveGlow,
       ]}
     />
   );
 
   if (!onPress) {
-    return dot;
+    return segment;
   }
 
   return (
     <Pressable
       onPress={onPress}
-      hitSlop={8}
+      hitSlop={10}
       accessibilityRole="button"
       accessibilityLabel={`Go to slide ${index + 1}`}
       accessibilityState={{ selected: isActive }}>
-      {dot}
+      {segment}
     </Pressable>
   );
 }
@@ -84,15 +96,19 @@ function ExpandingDotPagination({
 }: ExpandingDotPaginationProps) {
   const isDark = variant === 'dark';
 
+  useEffect(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+  }, [activeIndex]);
+
   return (
-    <View style={[styles.row, style]}>
+    <View style={[styles.wrapper, style]}>
       <View
         style={[
-          styles.track,
-          isDark ? styles.trackDark : styles.trackLight,
+          styles.rail,
+          isDark ? styles.railDark : styles.railLight,
         ]}>
         {Array.from({ length: total }, (_, index) => (
-          <PaginationDot
+          <PaginationSegment
             key={index}
             index={index}
             isActive={index === activeIndex}
@@ -105,13 +121,18 @@ function ExpandingDotPagination({
       </View>
 
       {showLabel ? (
-        <Text style={[styles.label, isDark && styles.labelDark]}>
-          <Text style={[styles.labelActive, isDark && styles.labelActiveDark]}>
-            {String(activeIndex + 1).padStart(2, '0')}
+        <Text style={[styles.stepLabel, isDark && styles.stepLabelDark]}>
+          <Text
+            style={[
+              styles.stepCurrent,
+              isDark && styles.stepCurrentDark,
+            ]}>
+            {activeIndex + 1}
           </Text>
-          <Text style={[styles.labelSep, isDark && styles.labelSepDark]}>
+          <Text
+            style={[styles.stepDivider, isDark && styles.stepDividerDark]}>
             {' '}
-            / {String(total).padStart(2, '0')}
+            of {total}
           </Text>
         </Text>
       ) : null}
@@ -120,52 +141,61 @@ function ExpandingDotPagination({
 }
 
 const styles = StyleSheet.create({
-  row: {
+  wrapper: {
+    alignItems: 'center',
+    gap: 10,
+  },
+  rail: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 14,
-  },
-  track: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: spacing.cardRadius,
   },
-  trackLight: {
+  railLight: {
     backgroundColor: colors.primaryLight,
-  },
-  trackDark: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
     borderWidth: 1,
-    borderColor: 'rgba(238, 205, 244, 0.22)',
+    borderColor: colors.primaryMuted,
   },
-  dot: {
-    borderRadius: DOT_RADIUS,
+  railDark: {
+    backgroundColor: 'rgba(122, 31, 102, 0.35)',
+    borderWidth: 1,
+    borderColor: 'rgba(238, 205, 244, 0.28)',
   },
-  label: {
-    fontSize: 13,
+  segment: {
+    borderRadius: 2,
+  },
+  segmentActiveGlow: {
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.65,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  stepLabel: {
+    fontSize: 12,
     fontWeight: '600',
-    minWidth: 44,
+    letterSpacing: 0.3,
   },
-  labelDark: {
-    color: 'rgba(255,255,255,0.55)',
+  stepLabelDark: {
+    color: 'rgba(255,255,255,0.5)',
   },
-  labelActive: {
+  stepCurrent: {
     color: colors.primary,
     fontWeight: '700',
+    fontSize: 13,
   },
-  labelActiveDark: {
+  stepCurrentDark: {
     color: colors.heroHighlight,
   },
-  labelSep: {
+  stepDivider: {
     color: colors.textMuted,
     fontWeight: '500',
   },
-  labelSepDark: {
-    color: 'rgba(255,255,255,0.45)',
+  stepDividerDark: {
+    color: 'rgba(255,255,255,0.42)',
   },
 });
 

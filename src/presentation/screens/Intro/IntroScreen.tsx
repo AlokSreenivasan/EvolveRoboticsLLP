@@ -87,6 +87,7 @@ function IntroScreen() {
           total={slides.length}
           activeIndex={currentIndex}
           variant="dark"
+          showLabel={false}
           onDotPress={index => swiperRef.current?.scrollTo(index)}
         />
       </View>
