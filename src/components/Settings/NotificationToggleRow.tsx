@@ -2,6 +2,8 @@ import React from 'react';
 import { Platform, StyleSheet, Switch, Text, View } from 'react-native';
 import type { LucideIcon } from 'lucide-react-native';
 
+import { colors } from '../../constants/theme';
+
 type NotificationToggleRowProps = {
   icon: LucideIcon;
   iconColor: string;
@@ -13,8 +15,6 @@ type NotificationToggleRowProps = {
   disabled?: boolean;
   isLast?: boolean;
 };
-
-const PRIMARY_ACTIVE = '#a42a8b';
 
 function NotificationToggleRow({
   icon: Icon,
@@ -44,11 +44,11 @@ function NotificationToggleRow({
         onValueChange={onValueChange}
         disabled={disabled}
         trackColor={{
-          false: '#D1D5DB',
-          true: Platform.OS === 'ios' ? '#E8B4DC' : PRIMARY_ACTIVE,
+          false: colors.border,
+          true: Platform.OS === 'ios' ? colors.primarySoft : colors.primary,
         }}
-        thumbColor={value ? PRIMARY_ACTIVE : '#f4f4f5'}
-        ios_backgroundColor="#D1D5DB"
+        thumbColor={value ? colors.primary : '#f4f4f5'}
+        ios_backgroundColor={colors.border}
       />
     </View>
   );
@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
   },
   rowBorder: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: colors.border,
   },
   iconContainer: {
     width: 44,
@@ -80,12 +80,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1a1a2e',
+    color: colors.textPrimary,
     marginBottom: 2,
   },
   subtitle: {
     fontSize: 13,
-    color: '#6B7280',
+    color: colors.textSecondary,
     lineHeight: 18,
   },
 });

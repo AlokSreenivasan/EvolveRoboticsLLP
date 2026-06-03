@@ -1,18 +1,15 @@
 import React, { useState } from 'react';
-import {
-  Alert,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import BackButton, { backButtonOverlayStyle } from '../../../components/BackButton';
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Shield } from 'lucide-react-native';
+
 import DeleteAccountConfirmModal from '../../../components/Settings/DeleteAccountConfirmModal';
-import Header from '../../../components/Header.tsx';
+import SettingsInfoCard from '../../../components/Settings/SettingsInfoCard';
+import SettingsScreenLayout from '../../../components/Settings/SettingsScreenLayout';
+import SettingsSectionHeader from '../../../components/Settings/SettingsSectionHeader';
+import { colors, spacing } from '../../../constants/theme';
 import { deleteAccount } from '../../../services/firebase/deleteAccountService';
 import { hasEmailPasswordProvider } from '../../../services/firebase/authService';
+
 function PrivacySettingsScreen() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -51,22 +48,18 @@ function PrivacySettingsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.screenHeader}>
-        <BackButton style={backButtonOverlayStyle} disabled={deleting} />
-        <Header title="Privacy Settings" />
-      </View>
+    <SettingsScreenLayout
+      title="Privacy Settings"
+      backDisabled={deleting}>
+      <SettingsInfoCard
+        icon={Shield}
+        title="Your privacy"
+        description="Manage how your account and personal data are handled in the app."
+      />
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Your Privacy</Text>
-          <Text style={styles.sectionDescription}>
-            Manage how your account and personal data are handled in the app.
-          </Text>
-        </View>
-
-        <View style={styles.dangerSection}>
-          <Text style={styles.dangerSectionTitle}>Danger Zone</Text>
+      <View style={styles.sectionBlock}>
+        <SettingsSectionHeader title="Danger zone" />
+        <View style={styles.dangerCard}>
           <Text style={styles.dangerDescription}>
             Permanently delete your account and remove your profile, sign-in
             access, and associated user data. This cannot be undone.
@@ -79,7 +72,7 @@ function PrivacySettingsScreen() {
             <Text style={styles.deleteButtonText}>Delete Account</Text>
           </TouchableOpacity>
         </View>
-      </ScrollView>
+      </View>
 
       <DeleteAccountConfirmModal
         visible={showDeleteModal}
@@ -88,70 +81,35 @@ function PrivacySettingsScreen() {
         onCancel={handleCancelDelete}
         onConfirm={handleConfirmDelete}
       />
-    </SafeAreaView>
+    </SettingsScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
+  sectionBlock: {
+    marginBottom: spacing.sectionGap,
   },
-  screenHeader: {
-    backgroundColor: '#fff',
-    height: 80,
-    justifyContent: 'center',
-  },
-  scrollContent: {
+  dangerCard: {
+    backgroundColor: '#FFF5F5',
+    borderRadius: spacing.cardRadius,
     padding: 16,
-    paddingBottom: 32,
-  },
-  section: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    marginBottom: 16,
-    elevation: 2,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  sectionDescription: {
-    fontSize: 14,
-    color: '#555',
-    lineHeight: 20,
-  },
-  dangerSection: {
-    backgroundColor: '#fff5f5',
-    borderRadius: 12,
-    padding: 20,
     borderWidth: 1,
-    borderColor: '#ef9a9a',
-    elevation: 2,
-  },
-  dangerSectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#c62828',
-    marginBottom: 8,
+    borderColor: '#FECACA',
   },
   dangerDescription: {
-    fontSize: 14,
-    color: '#555',
-    lineHeight: 20,
+    fontSize: 13,
+    color: colors.textSecondary,
+    lineHeight: 19,
     marginBottom: 16,
   },
   deleteButton: {
-    backgroundColor: '#c62828',
+    backgroundColor: '#DC2626',
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
   },
   deleteButtonText: {
-    color: '#fff',
+    color: colors.surface,
     fontSize: 16,
     fontWeight: '700',
   },

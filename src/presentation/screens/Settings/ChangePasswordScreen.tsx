@@ -2,21 +2,20 @@ import React from 'react';
 import {
   ActivityIndicator,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
-  SafeAreaView,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { Lock } from 'lucide-react-native';
 
 import AppButton from '../../../components/AppButton.tsx';
-import BackButton, { backButtonOverlayStyle } from '../../../components/BackButton';
-import Header from '../../../components/Header.tsx';
+import SettingsCard from '../../../components/Settings/SettingsCard';
+import SettingsInfoCard from '../../../components/Settings/SettingsInfoCard';
+import SettingsScreenLayout from '../../../components/Settings/SettingsScreenLayout';
+import SettingsSectionHeader from '../../../components/Settings/SettingsSectionHeader';
+import { colors, spacing } from '../../../constants/theme';
 import type { LoginScreenNavigationProp } from '../../../types/navigation';
 import { useChangePasswordForm } from '../../hooks/useChangePasswordForm';
 
@@ -52,180 +51,139 @@ function ChangePasswordScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.container}>
-      <SafeAreaView style={styles.container}>
-        <View style={styles.screenHeader}>
-          <BackButton
-            style={backButtonOverlayStyle}
+    <SettingsScreenLayout
+      title="Change Password"
+      backDisabled={isSubmitting}
+      keyboardAvoiding
+      keyboardShouldPersistTaps="handled">
+      <SettingsInfoCard
+        icon={Lock}
+        title="Update your password"
+        description="Enter your current password, then choose a new one."
+      />
+
+      <View style={styles.sectionBlock}>
+        <SettingsSectionHeader title="New credentials" />
+        <SettingsCard style={styles.formCard}>
+          <Text style={styles.label}>Current Password</Text>
+          <TextInput
+            style={[
+              styles.input,
+              errors.currentPassword ? styles.inputError : null,
+            ]}
+            placeholder="Enter current password"
+            placeholderTextColor={colors.textMuted}
+            value={currentPassword}
+            onChangeText={setCurrentPassword}
+            secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
+            editable={!isSubmitting}
+          />
+          {errors.currentPassword ? (
+            <Text style={styles.errorText}>{errors.currentPassword}</Text>
+          ) : null}
+
+          <Text style={styles.label}>New Password</Text>
+          <TextInput
+            style={[
+              styles.input,
+              errors.newPassword ? styles.inputError : null,
+            ]}
+            placeholder="Enter new password"
+            placeholderTextColor={colors.textMuted}
+            value={newPassword}
+            onChangeText={setNewPassword}
+            secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
+            editable={!isSubmitting}
+          />
+          {errors.newPassword ? (
+            <Text style={styles.errorText}>{errors.newPassword}</Text>
+          ) : null}
+
+          <Text style={styles.label}>Confirm New Password</Text>
+          <TextInput
+            style={[
+              styles.input,
+              errors.confirmNewPassword ? styles.inputError : null,
+            ]}
+            placeholder="Re-enter new password"
+            placeholderTextColor={colors.textMuted}
+            value={confirmNewPassword}
+            onChangeText={setConfirmNewPassword}
+            secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
+            editable={!isSubmitting}
+          />
+          {errors.confirmNewPassword ? (
+            <Text style={styles.errorText}>{errors.confirmNewPassword}</Text>
+          ) : null}
+
+          <AppButton
+            title={isSubmitting ? 'Updating...' : 'Update Password'}
+            onPress={handleUpdatePassword}
+            buttonStyle={styles.saveButton}
+            textStyle={styles.saveButtonText}
             disabled={isSubmitting}
           />
-          <Header title="Change Password" />
-        </View>
-
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}>
-          <Text style={styles.pageSubtitle}>
-            Enter your current password, then choose a new one.
-          </Text>
-
-          <View style={styles.formCard}>
-            <Text style={styles.sectionTitle}>Update Password</Text>
-
-            <Text style={styles.label}>Current Password</Text>
-            <TextInput
-              style={[
-                styles.input,
-                errors.currentPassword ? styles.inputError : null,
-              ]}
-              placeholder="Enter current password"
-              placeholderTextColor="#999"
-              value={currentPassword}
-              onChangeText={setCurrentPassword}
-              secureTextEntry
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!isSubmitting}
+          {isSubmitting ? (
+            <ActivityIndicator
+              color={colors.primary}
+              style={styles.saveLoader}
             />
-            {errors.currentPassword ? (
-              <Text style={styles.errorText}>{errors.currentPassword}</Text>
-            ) : null}
-
-            <Text style={styles.label}>New Password</Text>
-            <TextInput
-              style={[
-                styles.input,
-                errors.newPassword ? styles.inputError : null,
-              ]}
-              placeholder="Enter new password"
-              placeholderTextColor="#999"
-              value={newPassword}
-              onChangeText={setNewPassword}
-              secureTextEntry
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!isSubmitting}
-            />
-            {errors.newPassword ? (
-              <Text style={styles.errorText}>{errors.newPassword}</Text>
-            ) : null}
-
-            <Text style={styles.label}>Confirm New Password</Text>
-            <TextInput
-              style={[
-                styles.input,
-                errors.confirmNewPassword ? styles.inputError : null,
-              ]}
-              placeholder="Re-enter new password"
-              placeholderTextColor="#999"
-              value={confirmNewPassword}
-              onChangeText={setConfirmNewPassword}
-              secureTextEntry
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!isSubmitting}
-            />
-            {errors.confirmNewPassword ? (
-              <Text style={styles.errorText}>{errors.confirmNewPassword}</Text>
-            ) : null}
-
-            <AppButton
-              title={isSubmitting ? 'Updating...' : 'Update Password'}
-              onPress={handleUpdatePassword}
-              buttonStyle={styles.saveButton}
-              textStyle={styles.saveButtonText}
-              disabled={isSubmitting}
-            />
-            {isSubmitting ? (
-              <ActivityIndicator color="#a42a8b" style={styles.saveLoader} />
-            ) : null}
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    </KeyboardAvoidingView>
+          ) : null}
+        </SettingsCard>
+      </View>
+    </SettingsScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  screenHeader: {
-    backgroundColor: '#fff',
-    height: 80,
-    justifyContent: 'center',
-  },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 32,
-  },
-  pageSubtitle: {
-    fontSize: 14,
-    color: '#555',
-    textAlign: 'center',
-    marginBottom: 20,
+  sectionBlock: {
+    marginBottom: spacing.sectionGap,
   },
   formCard: {
-    backgroundColor: '#fff',
-    borderRadius: 15,
     padding: 16,
-    borderWidth: 1,
-    borderColor: '#eecdf4',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#a42a8b',
-    paddingBottom: 12,
-    marginBottom: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eecdf4',
   },
   label: {
     fontWeight: '600',
     marginBottom: 8,
     marginTop: 12,
     fontSize: 14,
-    color: '#a42a8b',
+    color: colors.primary,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#eecdf4',
-    borderRadius: 15,
+    borderColor: colors.primaryMuted,
+    borderRadius: 12,
     paddingHorizontal: 15,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#000',
+    color: colors.textPrimary,
     marginBottom: 4,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
   },
   inputError: {
     borderColor: '#e57373',
   },
   errorText: {
-    color: 'red',
+    color: colors.danger,
     fontSize: 13,
     marginBottom: 8,
   },
   saveButton: {
-    backgroundColor: '#a42a8b',
+    backgroundColor: colors.primary,
     paddingVertical: 14,
     borderRadius: 12,
     marginTop: 20,
   },
   saveButtonText: {
-    color: '#fff',
+    color: colors.surface,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
   saveLoader: {
     marginTop: 12,

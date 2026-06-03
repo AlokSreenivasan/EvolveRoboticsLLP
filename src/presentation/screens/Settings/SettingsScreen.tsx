@@ -2,20 +2,30 @@ import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  SafeAreaView,
-  ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { signOut } from '../../../services/firebase/authService';
 import { useNavigation } from '@react-navigation/native';
-import BackButton, { backButtonOverlayStyle } from '../../../components/BackButton';
-import Header from '../../../components/Header.tsx';
-import ProfileAvatar from '../../../components/Profile/ProfileAvatar.tsx';
-import { LoginScreenNavigationProp } from '../../../types/navigation';
+import {
+  Bell,
+  FileText,
+  HelpCircle,
+  LayoutDashboard,
+  Lock,
+  ScrollText,
+  Shield,
+} from 'lucide-react-native';
+
 import AppButton from '../../../components/AppButton.tsx';
+import ProfileAvatar from '../../../components/Profile/ProfileAvatar.tsx';
+import SettingsCard from '../../../components/Settings/SettingsCard';
+import SettingsLinkRow from '../../../components/Settings/SettingsLinkRow';
+import SettingsScreenLayout from '../../../components/Settings/SettingsScreenLayout';
+import SettingsSectionHeader from '../../../components/Settings/SettingsSectionHeader';
+import { colors, spacing } from '../../../constants/theme';
+import { LoginScreenNavigationProp } from '../../../types/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { useAdminNavigation } from '../../hooks/useAdminNavigation';
 import { useStoredProfileFullName } from '../../hooks/useStoredProfileFullName';
@@ -49,266 +59,170 @@ function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.screenHeader}>
-        <BackButton style={backButtonOverlayStyle} />
-        <Header title="Settings" />
-      </View>
-
-      {/* <View style={styles.headerClicks}>
-        <View style={styles.headerSubClicks}>
-          <TouchableOpacity onPress={() => navigation.navigate('Home')}>
-            <Text
-              style={[
-                styles.tabText,
-                route.name === 'Home' && styles.activeTabText,
-              ]}
-            >
-              Home
+    <SettingsScreenLayout title="Settings">
+      <SettingsCard style={styles.profileCard}>
+        <View style={styles.profileRow}>
+          <ProfileAvatar imageUri={profileImage} size={72} />
+          <View style={styles.profileText}>
+            <Text style={styles.userName} numberOfLines={2}>
+              {displayName}
             </Text>
-          </TouchableOpacity>
-        </View>
-
-
-        <View style={styles.headerSubClicks}>
-          <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
-            <Text
-              style={[
-                styles.tabText,
-                route.name === 'Profile' && styles.activeTabText,
-              ]}
-            >
-              Settings
+            <Text style={styles.userEmail} numberOfLines={1}>
+              {userEmail}
             </Text>
-          </TouchableOpacity>
-        </View>
-      </View> */}
-
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.profileCard}>
-          <ProfileAvatar
-            imageUri={profileImage}
-            size={76}
-            style={styles.avatarSmall}
-          />
-          <Text style={styles.userName}>{displayName}</Text>
-          <Text style={styles.userEmail} numberOfLines={1}>
-            {userEmail}
-          </Text>
-
-          <AppButton
-            title="Personal details"
-            onPress={() => navigation.navigate('Profile')}
-            buttonStyle={[styles.outlineButton, styles.outlineButtonInCard]}
-            textStyle={styles.outlineButtonText}
-          />
-        </View>
-        {!roleLoading && isAdmin ? (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Administrator</Text>
-            <TouchableOpacity
-              style={styles.listItem}
-              onPress={() => openAdmin()}>
-              <Text style={styles.linkText}>Admin Dashboard</Text>
-              <Text style={styles.arrow}>›</Text>
-            </TouchableOpacity>
           </View>
-        ) : null}
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account Settings</Text>
-
-          <TouchableOpacity
-            style={styles.listItem}
-            onPress={() => navigation.navigate('ChangePassword')}>
-            <Text style={styles.listText}>Change Password</Text>
-            <Text style={styles.arrow}>›</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.listItem}
-            onPress={() => navigation.navigate('PrivacySettings')}>
-            <Text style={styles.listText}>Privacy Settings</Text>
-            <Text style={styles.arrow}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.listItem}
-            onPress={() => navigation.navigate('NotificationPreferences')}>
-            <Text style={styles.listText}>Notification Preferences</Text>
-            <Text style={styles.arrow}>›</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Help & Support</Text>
-          <TouchableOpacity
-            style={styles.listItem}
-            onPress={() => navigation.navigate('Support')}>
-            <Text style={styles.listText}>Support</Text>
-            <Text style={styles.arrow}>›</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>App Information</Text>
-          <Text style={styles.versionText}>Version 2.1.1</Text>
-          <TouchableOpacity style={styles.listItem}>
-            <Text style={styles.linkText}>Privacy Policy</Text>
-            <Text style={styles.arrow}>›</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.listItem}>
-            <Text style={styles.linkText}>Terms of Service</Text>
-            <Text style={styles.arrow}>›</Text>
-          </TouchableOpacity>
         </View>
 
         <AppButton
-          title={loggingOut ? 'Logging out...' : 'Log Out'}
-          onPress={handleLogoutPress}
-          buttonStyle={[styles.outlineButton, styles.logoutButtonSpacing]}
+          title="Personal details"
+          onPress={() => navigation.navigate('Profile')}
+          buttonStyle={styles.outlineButton}
           textStyle={styles.outlineButtonText}
-          disabled={loggingOut}
         />
-        {loggingOut ? (
-          <ActivityIndicator color="#a42a8b" style={styles.loader} />
-        ) : null}
-      </ScrollView>
-    </SafeAreaView>
+      </SettingsCard>
+
+      {!roleLoading && isAdmin ? (
+        <View style={styles.sectionBlock}>
+          <SettingsSectionHeader title="Administrator" />
+          <SettingsCard>
+            <SettingsLinkRow
+              icon={LayoutDashboard}
+              iconColor={colors.primary}
+              iconBackgroundColor={colors.primaryLight}
+              title="Admin Dashboard"
+              variant="link"
+              onPress={() => openAdmin()}
+              isLast
+            />
+          </SettingsCard>
+        </View>
+      ) : null}
+
+      <View style={styles.sectionBlock}>
+        <SettingsSectionHeader title="Account Settings" />
+        <SettingsCard>
+          <SettingsLinkRow
+            icon={Lock}
+            iconColor={colors.accentBlue}
+            iconBackgroundColor="#E3F2FD"
+            title="Change Password"
+            onPress={() => navigation.navigate('ChangePassword')}
+          />
+          <SettingsLinkRow
+            icon={Shield}
+            iconColor={colors.danger}
+            iconBackgroundColor="#FFEBEE"
+            title="Privacy Settings"
+            onPress={() => navigation.navigate('PrivacySettings')}
+          />
+          <SettingsLinkRow
+            icon={Bell}
+            iconColor={colors.primary}
+            iconBackgroundColor={colors.primaryLight}
+            title="Notification Preferences"
+            onPress={() => navigation.navigate('NotificationPreferences')}
+            isLast
+          />
+        </SettingsCard>
+      </View>
+
+      <View style={styles.sectionBlock}>
+        <SettingsSectionHeader title="Help & Support" />
+        <SettingsCard>
+          <SettingsLinkRow
+            icon={HelpCircle}
+            iconColor={colors.accentOrange}
+            iconBackgroundColor="#FFF3E0"
+            title="Support"
+            onPress={() => navigation.navigate('Support')}
+            isLast
+          />
+        </SettingsCard>
+      </View>
+
+      <View style={styles.sectionBlock}>
+        <SettingsSectionHeader title="App Information" />
+        <SettingsCard>
+          <SettingsLinkRow title="Version" subtitle="2.1.1" />
+          <SettingsLinkRow
+            icon={FileText}
+            iconColor={colors.primary}
+            iconBackgroundColor={colors.primaryLight}
+            title="Privacy Policy"
+            variant="link"
+          />
+          <SettingsLinkRow
+            icon={ScrollText}
+            iconColor={colors.primary}
+            iconBackgroundColor={colors.primaryLight}
+            title="Terms of Service"
+            variant="link"
+            isLast
+          />
+        </SettingsCard>
+      </View>
+
+      <AppButton
+        title={loggingOut ? 'Logging out...' : 'Log Out'}
+        onPress={handleLogoutPress}
+        buttonStyle={styles.outlineButton}
+        textStyle={styles.outlineButtonText}
+        disabled={loggingOut}
+      />
+      {loggingOut ? (
+        <ActivityIndicator
+          color={colors.primary}
+          style={styles.loader}
+        />
+      ) : null}
+    </SettingsScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
+  sectionBlock: {
+    marginBottom: spacing.sectionGap,
   },
-  screenHeader: {
-    backgroundColor: '#fff',
-    height: 80,
-    justifyContent: 'center',
-  },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 32,
-  },
-  headerClicks: {
-    flexDirection: 'row',
-    borderColor: 'lightgrey',
-    borderBottomWidth: 1,
-    height: 50,
-    alignItems: 'center',
-  },
-  headerSubClicks: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  tabText: {
-    fontSize: 16,
-    fontWeight: '400',
-    color: 'black',
-  },
-  activeTabText: {
-    color: '#a42a8b', // highlight active tab
-    fontWeight: '400',
-  },
-
   profileCard: {
-    height: 170,
     padding: 16,
-    borderRadius: 15,
-    borderColor: '#d3d3d3',
-    borderWidth: 1,
-    // borderColor: 'black',
+    marginBottom: spacing.sectionGap,
   },
-  avatarSmall: {
-    left: 12,
+  profileRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  profileText: {
+    flex: 1,
+    marginLeft: 16,
   },
   userName: {
-    fontSize: 30,
-    fontWeight: 'bold',
-    position: 'absolute',
-    top: 20,
-    left: 120,
+    fontSize: 22,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginBottom: 4,
   },
   userEmail: {
-    fontSize: 15,
-    fontWeight: '400',
-    position: 'absolute',
-    top: 60,
-    left: 120,
+    fontSize: 14,
+    color: colors.textSecondary,
   },
   outlineButton: {
     borderWidth: 1,
-    borderColor: '#a42a8b',
+    borderColor: colors.primary,
     paddingVertical: 10,
-    borderRadius: 15,
+    borderRadius: 12,
     width: '100%',
-    height: 40,
+    height: 44,
   },
   outlineButtonText: {
-    color: '#a42a8b',
+    color: colors.primary,
     textAlign: 'center',
     fontWeight: '600',
     fontSize: 14,
   },
-  outlineButtonInCard: {
-    top: 15,
-  },
   loader: {
     marginTop: 12,
-    marginBottom: 24,
     alignSelf: 'center',
-  },
-  section: {
-    // borderWidth: 1,
-    // borderColor: '#d3d3d3',
-    // borderRadius: 15,
-    // width: '100%',
-    // height: 200,
-    top: 16,
-    // paddingVertical: 10,
-    paddingHorizontal: 20,
-
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    paddingVertical: 10,
-    marginBottom: 16,
-    elevation: 2,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: 'lightgrey',
-  },
-  listItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'lightgrey',
-  },
-  listText: {
-    fontSize: 15,
-  },
-  arrow: {
-    fontSize: 20,
-    color: '#999',
-  },
-  versionText: {
-    fontSize: 15,
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-  },
-  linkText: {
-    fontSize: 15,
-    color: '#a42a8b',
-  },
-  logoutButtonSpacing: {
-    marginTop: 8,
   },
 });
 
