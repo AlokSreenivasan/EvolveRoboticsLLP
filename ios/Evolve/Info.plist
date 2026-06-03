@@ -46,6 +46,10 @@
 	<string></string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Evolve needs access to your photo library so you can choose a profile picture.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

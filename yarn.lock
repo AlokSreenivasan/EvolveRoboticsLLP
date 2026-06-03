@@ -2048,6 +2048,16 @@
   dependencies:
     react-native-url-polyfill "3.0.0"
 
+"@react-native-firebase/functions@^24.0.0":
+  version "24.0.0"
+  resolved "https://registry.npmjs.org/@react-native-firebase/functions/-/functions-24.0.0.tgz"
+  integrity sha512-831TBgJgH0zeLby/drkFLpOumst1BaH+0xv4wQUw9H5x7TpwJbjLXMl6BLX79bVEX+7ZVDAxWzHnYGpwX0ihvQ==
+
+"@react-native-firebase/messaging@^24.0.0":
+  version "24.0.0"
+  resolved "https://registry.npmjs.org/@react-native-firebase/messaging/-/messaging-24.0.0.tgz"
+  integrity sha512-rODaV83e8mR+Y9EPDblfSpy4rM+alriiq5306RyzPryhsyu+guj4fhGwZpESWwhmk9fKjsnshv++aFA50xFjhg==
+
 "@react-native-firebase/storage@^24.0.0":
   version "24.0.0"
   resolved "https://registry.npmjs.org/@react-native-firebase/storage/-/storage-24.0.0.tgz"

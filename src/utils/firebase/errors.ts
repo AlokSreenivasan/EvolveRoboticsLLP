@@ -4,6 +4,8 @@ export type FirebaseServiceErrorCode =
   | 'UPLOAD_FAILED'
   | 'FIRESTORE_ERROR'
   | 'STORAGE_ERROR'
+  | 'LIVE_NOTIFICATION_ERROR'
+  | 'PUSH_REGISTRATION_ERROR'
   | 'UNKNOWN';
 
 export class FirebaseServiceError extends Error {
@@ -22,9 +24,27 @@ export class FirebaseServiceError extends Error {
   }
 }
 
+function getCallableErrorMessage(error: unknown): string | null {
+  if (typeof error !== 'object' || error == null) {
+    return null;
+  }
+  const record = error as { message?: string; details?: unknown };
+  if (typeof record.message === 'string' && record.message.trim()) {
+    return record.message;
+  }
+  if (typeof record.details === 'string' && record.details.trim()) {
+    return record.details;
+  }
+  return null;
+}
+
 export function getErrorMessage(error: unknown): string {
   if (error instanceof FirebaseServiceError) {
     return error.message;
+  }
+  const callableMessage = getCallableErrorMessage(error);
+  if (callableMessage) {
+    return callableMessage;
   }
   if (error instanceof Error) {
     return error.message;

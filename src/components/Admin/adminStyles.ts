@@ -63,6 +63,23 @@ export const adminStyles = StyleSheet.create({
     color: colors.primary,
     fontWeight: '600',
   },
+  sendLiveButton: {
+    backgroundColor: colors.accentGreen,
+    marginTop: 8,
+    paddingVertical: 12,
+  },
+  sendLiveButtonText: {
+    color: '#fff',
+    fontWeight: '700',
+  },
+  sendLiveHint: {
+    fontSize: 12,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginTop: 8,
+    marginBottom: 4,
+    lineHeight: 17,
+  },
   listSectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -91,11 +108,14 @@ export const adminStyles = StyleSheet.create({
     color: colors.textSecondary,
     lineHeight: 20,
   },
+  listRowWithSend: {
+    marginBottom: 10,
+  },
   listRowCard: {
     backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 14,
-    marginBottom: 10,
+    marginBottom: 8,
     borderWidth: 1,
     borderColor: colors.border,
     ...cardShadow,

@@ -16,10 +16,12 @@ import {
   subscribeImportantUpdates,
   subscribeImportantUpdatesSection,
 } from '../../services/firebase/importantUpdatesService';
+import { subscribeNotifications } from '../../services/firebase/notificationsService';
 import {
   subscribeUpcomingEvents,
   subscribeUpcomingEventsSection,
 } from '../../services/firebase/upcomingEventsService';
+import type { AppNotification } from '../../store/content/types/notifications.types';
 import type { ContinueLearningPlaylist } from '../../store/content/types/continueLearningPlaylists.types';
 import type { ContinueLearningProgress } from '../../store/content/types/continueLearningProgress.types';
 import type {
@@ -63,11 +65,19 @@ export type HomeFeedUpcomingEvents = {
   error: string | null;
 };
 
+export type HomeFeedNotifications = {
+  notifications: AppNotification[];
+  displayNotifications: AppNotification[];
+  loading: boolean;
+  error: string | null;
+};
+
 export type HomeFeedContextValue = {
   continueLearning: HomeFeedContinueLearning;
   progress: HomeFeedProgress;
   importantUpdates: HomeFeedImportantUpdates;
   upcomingEvents: HomeFeedUpcomingEvents;
+  notifications: HomeFeedNotifications;
   refreshing: boolean;
   refresh: () => void;
 };
@@ -104,6 +114,13 @@ const EMPTY_UPCOMING_EVENTS: HomeFeedUpcomingEvents = {
   section: DEFAULT_UPCOMING_EVENTS_SECTION,
   events: [],
   displayEvents: [],
+  loading: true,
+  error: null,
+};
+
+const EMPTY_NOTIFICATIONS: HomeFeedNotifications = {
+  notifications: [],
+  displayNotifications: [],
   loading: true,
   error: null,
 };
@@ -149,6 +166,12 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
   const [eventsLoading, setEventsLoading] = useState(true);
   const [eventsError, setEventsError] = useState<string | null>(null);
 
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(true);
+  const [notificationsError, setNotificationsError] = useState<string | null>(
+    null,
+  );
+
   const [refreshNonce, setRefreshNonce] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -173,9 +196,11 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
     setPlaylistsLoading(true);
     setImportantLoading(true);
     setEventsLoading(true);
+    setNotificationsLoading(true);
     setPlaylistsError(null);
     setImportantError(null);
     setEventsError(null);
+    setNotificationsError(null);
 
     const unsubPlaylists = subscribeContinueLearningPlaylists(
       next => {
@@ -258,12 +283,26 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
       },
     );
 
+    const unsubNotifications = subscribeNotifications(
+      next => {
+        setNotifications(next);
+        setNotificationsError(null);
+        setNotificationsLoading(false);
+      },
+      { includeUnpublished: false },
+      err => {
+        setNotificationsError(getErrorMessage(err));
+        setNotificationsLoading(false);
+      },
+    );
+
     return () => {
       unsubPlaylists();
       unsubImportantSection();
       unsubImportantNotices();
       unsubEventsSection();
       unsubEvents();
+      unsubNotifications();
     };
   }, [isActive, refreshNonce]);
 
@@ -305,6 +344,7 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
       !playlistsLoading &&
       !importantLoading &&
       !eventsLoading &&
+      !notificationsLoading &&
       !progressLoading;
 
     if (allSettled) {
@@ -314,6 +354,7 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
     eventsLoading,
     importantLoading,
     isActive,
+    notificationsLoading,
     playlistsLoading,
     progressLoading,
     refreshing,
@@ -358,6 +399,12 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
         loading: isActive ? eventsLoading : false,
         error: eventsError,
       },
+      notifications: {
+        notifications,
+        displayNotifications: notifications,
+        loading: isActive ? notificationsLoading : false,
+        error: notificationsError,
+      },
       refreshing,
       refresh,
     }),
@@ -373,6 +420,9 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
       importantSection,
       isActive,
       notices,
+      notifications,
+      notificationsError,
+      notificationsLoading,
       playlists,
       playlistsError,
       playlistsLoading,
@@ -438,6 +488,11 @@ export function useHomeFeedImportantUpdates(): HomeFeedImportantUpdates {
 export function useHomeFeedUpcomingEvents(): HomeFeedUpcomingEvents {
   const ctx = useHomeFeedOptional();
   return ctx?.upcomingEvents ?? EMPTY_UPCOMING_EVENTS;
+}
+
+export function useHomeFeedNotifications(): HomeFeedNotifications {
+  const ctx = useHomeFeedOptional();
+  return ctx?.notifications ?? EMPTY_NOTIFICATIONS;
 }
 
 export function useHomeFeedRefresh(): { refreshing: boolean; refresh: () => void } {

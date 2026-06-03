@@ -20,6 +20,7 @@ import HomeBottomTabBar, {
 import HomeHeader from '../../../components/Home/HomeHeader';
 import HomeSectionHeader from '../../../components/Home/HomeSectionHeader';
 import ImportantUpdatesSection from '../../../components/Home/ImportantUpdatesSection';
+import NotificationsSection from '../../../components/Home/NotificationsSection';
 import QuickAccessGrid from '../../../components/Home/QuickAccessGrid';
 import UpcomingEventsSection from '../../../components/Home/UpcomingEventsSection';
 import { HORIZONTAL_LIST_PERF } from '../../../constants/listPerformance';
@@ -135,6 +136,8 @@ function HomeScreen() {
         </View>
 
         <ImportantUpdatesSection />
+
+        <NotificationsSection />
 
         <View style={styles.section}>
           <HomeSectionHeader title="Quick access" />

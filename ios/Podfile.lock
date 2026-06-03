@@ -1216,6 +1216,12 @@ PODS:
   - Firebase/Firestore (12.10.0):
     - Firebase/CoreOnly
     - FirebaseFirestore (~> 12.10.0)
+  - Firebase/Functions (12.10.0):
+    - Firebase/CoreOnly
+    - FirebaseFunctions (~> 12.10.0)
+  - Firebase/Messaging (12.10.0):
+    - Firebase/CoreOnly
+    - FirebaseMessaging (~> 12.10.0)
   - Firebase/Storage (12.10.0):
     - Firebase/CoreOnly
     - FirebaseStorage (~> 12.10.0)
@@ -1258,6 +1264,29 @@ PODS:
     - gRPC-Core (~> 1.69.0)
     - leveldb-library (~> 1.22)
     - nanopb (~> 3.30910.0)
+  - FirebaseFunctions (12.10.0):
+    - FirebaseAppCheckInterop (~> 12.10.0)
+    - FirebaseAuthInterop (~> 12.10.0)
+    - FirebaseCore (~> 12.10.0)
+    - FirebaseCoreExtension (~> 12.10.0)
+    - FirebaseMessagingInterop (~> 12.10.0)
+    - FirebaseSharedSwift (~> 12.10.0)
+    - GTMSessionFetcher/Core (< 6.0, >= 3.4)
+  - FirebaseInstallations (12.10.0):
+    - FirebaseCore (~> 12.10.0)
+    - GoogleUtilities/Environment (~> 8.1)
+    - GoogleUtilities/UserDefaults (~> 8.1)
+    - PromisesObjC (~> 2.4)
+  - FirebaseMessaging (12.10.0):
+    - FirebaseCore (~> 12.10.0)
+    - FirebaseInstallations (~> 12.10.0)
+    - GoogleDataTransport (~> 10.1)
+    - GoogleUtilities/AppDelegateSwizzler (~> 8.1)
+    - GoogleUtilities/Environment (~> 8.1)
+    - GoogleUtilities/Reachability (~> 8.1)
+    - GoogleUtilities/UserDefaults (~> 8.1)
+    - nanopb (~> 3.30910.0)
+  - FirebaseMessagingInterop (12.10.0)
   - FirebaseSharedSwift (12.10.0)
   - FirebaseStorage (12.10.0):
     - FirebaseAppCheckInterop (~> 12.10.0)
@@ -1268,6 +1297,9 @@ PODS:
     - GTMSessionFetcher/Core (< 6.0, >= 3.4)
   - fmt (11.0.2)
   - glog (0.3.5)
+  - GoogleDataTransport (10.1.0):
+    - nanopb (~> 3.30910.0)
+    - PromisesObjC (~> 2.4)
   - GoogleSignIn (9.1.0):
     - AppAuth (~> 2.0)
     - AppCheckCore (~> 11.0)
@@ -3863,6 +3895,69 @@ PODS:
     - RNFBApp
     - SocketRocket
     - Yoga
+  - RNFBFunctions (24.0.0):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - Firebase/Functions (= 12.10.0)
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-hermes
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - RNFBApp
+    - SocketRocket
+    - Yoga
+  - RNFBMessaging (24.0.0):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - Firebase/Messaging (= 12.10.0)
+    - FirebaseCoreExtension
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-hermes
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - RNFBApp
+    - SocketRocket
+    - Yoga
   - RNFBStorage (24.0.0):
     - boost
     - DoubleConversion
@@ -4342,6 +4437,8 @@ DEPENDENCIES:
   - "RNFBApp (from `../node_modules/@react-native-firebase/app`)"
   - "RNFBAuth (from `../node_modules/@react-native-firebase/auth`)"
   - "RNFBFirestore (from `../node_modules/@react-native-firebase/firestore`)"
+  - "RNFBFunctions (from `../node_modules/@react-native-firebase/functions`)"
+  - "RNFBMessaging (from `../node_modules/@react-native-firebase/messaging`)"
   - "RNFBStorage (from `../node_modules/@react-native-firebase/storage`)"
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - "RNGoogleSignin (from `../node_modules/@react-native-google-signin/google-signin`)"
@@ -4367,8 +4464,13 @@ SPEC REPOS:
     - FirebaseCoreInternal
     - FirebaseFirestore
     - FirebaseFirestoreInternal
+    - FirebaseFunctions
+    - FirebaseInstallations
+    - FirebaseMessaging
+    - FirebaseMessagingInterop
     - FirebaseSharedSwift
     - FirebaseStorage
+    - GoogleDataTransport
     - GoogleSignIn
     - GoogleUtilities
     - "gRPC-C++"
@@ -4543,6 +4645,10 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-firebase/auth"
   RNFBFirestore:
     :path: "../node_modules/@react-native-firebase/firestore"
+  RNFBFunctions:
+    :path: "../node_modules/@react-native-firebase/functions"
+  RNFBMessaging:
+    :path: "../node_modules/@react-native-firebase/messaging"
   RNFBStorage:
     :path: "../node_modules/@react-native-firebase/storage"
   RNGestureHandler:
@@ -4578,10 +4684,15 @@ SPEC CHECKSUMS:
   FirebaseCoreInternal: e7bbaeb00ab73011298f35ed223aa7371e212948
   FirebaseFirestore: 3c85b7fc1cbad3bcfc0ba807861aa55e0ad4af22
   FirebaseFirestoreInternal: a5120d3aea03c837ff9937c90e8a95f81e6a0706
+  FirebaseFunctions: 8fcae1e736d3665f4411ea647d407cb3a8151454
+  FirebaseInstallations: 047343aa91fd6a1ebfa3eb374ddecf36a8aaddfd
+  FirebaseMessaging: ed18fb50634e6e85b5d3e77e628c21e2c928cc53
+  FirebaseMessagingInterop: 2729786ffbc2b3414d157ed832420859248f03e3
   FirebaseSharedSwift: 3d1e448b7202e36821a492941c84592d1308ea14
   FirebaseStorage: dd2dcbd47f603777206c04d2bd837e5f47ca3f4d
   fmt: a40bb5bd0294ea969aaaba240a927bd33d878cdd
   glog: 5683914934d5b6e4240e497e0f4a3b42d1854183
+  GoogleDataTransport: aae35b7ea0c09004c3797d53c8c41f66f219d6a7
   GoogleSignIn: fcee2257188d5eda57a5e2b6a715550ffff9206d
   GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1
   "gRPC-C++": cc207623316fb041a7a3e774c252cf68a058b9e8
@@ -4666,6 +4777,8 @@ SPEC CHECKSUMS:
   RNFBApp: a6160177d87e6ba0c38673d40e804f25190565d9
   RNFBAuth: 71cbdd23547aab1e3f8fa58e7fc6bf04d6293eda
   RNFBFirestore: bb605a7571b99f4f42c40f7f77573191f28383bb
+  RNFBFunctions: bd3f3f0fd2b92a878529244e05500b1bb3a6f0ca
+  RNFBMessaging: 3fb977ab6231c27e8cbd8113a67bfce29e80cf33
   RNFBStorage: 5f148e2d934b0bba5990f9199ff9d39aff7c7a85
   RNGestureHandler: 9fc6fc2c95c1b8cdd71e3c24525bf384a16d7df2
   RNGoogleSignin: da34fb682f544369568f3af541532049d91eda11
@@ -4678,4 +4791,4 @@ SPEC CHECKSUMS:
 
 PODFILE CHECKSUM: 52c01d75dc1997e2df58c04341878baa9ef8ba5a
 
-COCOAPODS: 1.15.2
+COCOAPODS: 1.16.2
