@@ -4,12 +4,18 @@ import type {
   UpdateData,
 } from '@react-native-firebase/firestore';
 
+import type { ContentSubscribeOptions } from '../../store/content/types/schoolAudience.types';
 import type {
   AppNotification,
   AppNotificationDocument,
   CreateAppNotificationInput,
   UpdateAppNotificationInput,
 } from '../../store/content/types/notifications.types';
+import {
+  applyLearnerContentFilters,
+  buildSchoolAudienceWriteFields,
+  mapSchoolAudienceFields,
+} from './schoolAudienceFirestore';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { FIRESTORE_COLLECTIONS } from './constants';
 import {
@@ -57,6 +63,7 @@ function mapNotification(
     lastSentAt: isTimestamp(data.lastSentAt) ? data.lastSentAt : null,
     createdAt: isTimestamp(data.createdAt) ? data.createdAt : null,
     updatedAt: isTimestamp(data.updatedAt) ? data.updatedAt : null,
+    ...mapSchoolAudienceFields(data),
   };
 }
 
@@ -66,10 +73,9 @@ function sortNotifications(items: AppNotification[]): AppNotification[] {
 
 export function subscribeNotifications(
   listener: (notifications: AppNotification[]) => void,
-  options?: { includeUnpublished?: boolean },
+  options?: ContentSubscribeOptions,
   onError?: (error: unknown) => void,
 ): () => void {
-  const includeUnpublished = options?.includeUnpublished === true;
   const notificationsQuery = query(
     notificationsCollection(),
     orderBy('sortOrder', 'asc'),
@@ -85,11 +91,9 @@ export function subscribeNotifications(
         ),
       );
 
-      const filtered = includeUnpublished
-        ? items
-        : items.filter(item => item.isPublished);
-
-      listener(sortNotifications(filtered));
+      listener(
+        sortNotifications(applyLearnerContentFilters(items, options)),
+      );
     },
     error => onError?.(error),
   );
@@ -119,6 +123,7 @@ export async function createNotification(
       body: input.body.trim(),
       sortOrder,
       isPublished: input.isPublished ?? true,
+      ...buildSchoolAudienceWriteFields(input),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
@@ -159,6 +164,9 @@ export async function updateNotification(
     }
     if (input.isPublished !== undefined) {
       updates.isPublished = input.isPublished;
+    }
+    if (input.audience !== undefined || input.schoolIds !== undefined) {
+      Object.assign(updates, buildSchoolAudienceWriteFields(input));
     }
 
     await updateDoc(

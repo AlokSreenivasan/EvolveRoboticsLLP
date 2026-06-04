@@ -1,5 +1,11 @@
 import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
+import type {
+  SchoolAudienceDocument,
+  SchoolAudienceFields,
+  SchoolAudienceInput,
+} from './schoolAudience.types';
+
 /** Singleton config at appContent/importantUpdates */
 export interface ImportantUpdatesSectionDocument {
   sectionTitle: string;
@@ -15,7 +21,7 @@ export interface ImportantUpdatesSection {
   updatedAt: FirebaseFirestoreTypes.Timestamp | null;
 }
 
-export interface ImportantUpdateNoticeDocument {
+export interface ImportantUpdateNoticeDocument extends SchoolAudienceDocument {
   tag: string;
   title: string;
   subtitle: string;
@@ -26,7 +32,7 @@ export interface ImportantUpdateNoticeDocument {
   updatedAt: FirebaseFirestoreTypes.Timestamp | FirebaseFirestoreTypes.FieldValue;
 }
 
-export interface ImportantUpdateNotice {
+export interface ImportantUpdateNotice extends SchoolAudienceFields {
   id: string;
   tag: string;
   title: string;
@@ -44,7 +50,7 @@ export type CreateImportantUpdateNoticeInput = {
   subtitle: string;
   description: string;
   isPublished?: boolean;
-};
+} & SchoolAudienceInput;
 
 export type UpdateImportantUpdateNoticeInput = Partial<
   CreateImportantUpdateNoticeInput & { sortOrder: number }

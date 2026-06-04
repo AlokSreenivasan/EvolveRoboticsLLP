@@ -5,6 +5,7 @@ import type {
 } from '@react-native-firebase/firestore';
 
 import { DEFAULT_RESOURCES_SECTION } from '../../constants/resourcesDefaults';
+import type { ContentSubscribeOptions } from '../../store/content/types/schoolAudience.types';
 import type {
   CreateResourceNoteInput,
   ResourceNote,
@@ -14,6 +15,11 @@ import type {
   UpdateResourceNoteInput,
   UpdateResourcesSectionInput,
 } from '../../store/content/types/resources.types';
+import {
+  applyLearnerContentFilters,
+  buildSchoolAudienceWriteFields,
+  mapSchoolAudienceFields,
+} from './schoolAudienceFirestore';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { APP_CONTENT_DOCS, FIRESTORE_COLLECTIONS } from './constants';
 import {
@@ -85,6 +91,7 @@ function mapNote(id: string, data: ResourceNoteDocument): ResourceNote {
     isPublished: data.isPublished === true,
     createdAt: isTimestamp(data.createdAt) ? data.createdAt : null,
     updatedAt: isTimestamp(data.updatedAt) ? data.updatedAt : null,
+    ...mapSchoolAudienceFields(data),
   };
 }
 
@@ -108,7 +115,7 @@ export function subscribeResourcesSection(
 
 export function subscribeResourceNotes(
   listener: (notes: ResourceNote[]) => void,
-  options?: { includeUnpublished?: boolean },
+  options?: ContentSubscribeOptions,
   onError?: (error: unknown) => void,
 ): () => void {
   const includeUnpublished = options?.includeUnpublished === true;
@@ -120,9 +127,10 @@ export function subscribeResourceNotes(
       const notes = snapshot.docs.map(noteDoc =>
         mapNote(noteDoc.id, noteDoc.data() as ResourceNoteDocument),
       );
-      const filtered = includeUnpublished
-        ? notes
-        : notes.filter(note => note.isPublished && note.pdfUrl.length > 0);
+      let filtered = applyLearnerContentFilters(notes, options);
+      if (!includeUnpublished) {
+        filtered = filtered.filter(note => note.pdfUrl.length > 0);
+      }
       listener(sortNotes(filtered));
     },
     error => onError?.(error),
@@ -204,6 +212,7 @@ export async function createResourceNote(
       pdfUrl: input.pdfUrl.trim(),
       sortOrder,
       isPublished: input.isPublished ?? true,
+      ...buildSchoolAudienceWriteFields(input),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
@@ -243,6 +252,9 @@ export async function updateResourceNote(
     }
     if (input.isPublished !== undefined) {
       updates.isPublished = input.isPublished;
+    }
+    if (input.audience !== undefined || input.schoolIds !== undefined) {
+      Object.assign(updates, buildSchoolAudienceWriteFields(input));
     }
 
     await updateDoc(

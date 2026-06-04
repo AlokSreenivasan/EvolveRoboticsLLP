@@ -1,5 +1,11 @@
 import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
+import type {
+  SchoolAudienceDocument,
+  SchoolAudienceFields,
+  SchoolAudienceInput,
+} from './schoolAudience.types';
+
 /** Singleton config at appContent/upcomingEvents */
 export interface UpcomingEventsSectionDocument {
   sectionTitle: string;
@@ -15,7 +21,7 @@ export interface UpcomingEventsSection {
   updatedAt: FirebaseFirestoreTypes.Timestamp | null;
 }
 
-export interface UpcomingEventDocument {
+export interface UpcomingEventDocument extends SchoolAudienceDocument {
   month: string;
   day: string;
   year?: number;
@@ -29,7 +35,7 @@ export interface UpcomingEventDocument {
   updatedAt: FirebaseFirestoreTypes.Timestamp | FirebaseFirestoreTypes.FieldValue;
 }
 
-export interface UpcomingEvent {
+export interface UpcomingEvent extends SchoolAudienceFields {
   id: string;
   month: string;
   day: string;
@@ -53,7 +59,7 @@ export type CreateUpcomingEventInput = {
   timeRange: string;
   daysLeftLabel: string;
   isPublished?: boolean;
-};
+} & SchoolAudienceInput;
 
 export type UpdateUpcomingEventInput = Partial<
   CreateUpcomingEventInput & { sortOrder: number }

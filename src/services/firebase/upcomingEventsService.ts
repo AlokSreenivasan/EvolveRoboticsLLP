@@ -5,6 +5,7 @@ import type {
 } from '@react-native-firebase/firestore';
 
 import { DEFAULT_UPCOMING_EVENTS_SECTION } from '../../constants/upcomingEventsDefaults';
+import type { ContentSubscribeOptions } from '../../store/content/types/schoolAudience.types';
 import type {
   CreateUpcomingEventInput,
   UpcomingEvent,
@@ -14,6 +15,11 @@ import type {
   UpdateUpcomingEventInput,
   UpdateUpcomingEventsSectionInput,
 } from '../../store/content/types/upcomingEvents.types';
+import {
+  applyLearnerContentFilters,
+  buildSchoolAudienceWriteFields,
+  mapSchoolAudienceFields,
+} from './schoolAudienceFirestore';
 import { parseStoredEventYear } from '../../utils/upcomingEventDate';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { APP_CONTENT_DOCS, FIRESTORE_COLLECTIONS } from './constants';
@@ -91,6 +97,7 @@ function mapEvent(id: string, data: UpcomingEventDocument): UpcomingEvent {
     isPublished: data.isPublished === true,
     createdAt: isTimestamp(data.createdAt) ? data.createdAt : null,
     updatedAt: isTimestamp(data.updatedAt) ? data.updatedAt : null,
+    ...mapSchoolAudienceFields(data),
   };
 }
 
@@ -114,10 +121,9 @@ export function subscribeUpcomingEventsSection(
 
 export function subscribeUpcomingEvents(
   listener: (events: UpcomingEvent[]) => void,
-  options?: { includeUnpublished?: boolean },
+  options?: ContentSubscribeOptions,
   onError?: (error: unknown) => void,
 ): () => void {
-  const includeUnpublished = options?.includeUnpublished === true;
   const eventsQuery = query(eventsCollection(), orderBy('sortOrder', 'asc'));
 
   return onSnapshot(
@@ -126,10 +132,7 @@ export function subscribeUpcomingEvents(
       const events = snapshot.docs.map(eventDoc =>
         mapEvent(eventDoc.id, eventDoc.data() as UpcomingEventDocument),
       );
-      const filtered = includeUnpublished
-        ? events
-        : events.filter(event => event.isPublished);
-      listener(sortEvents(filtered));
+      listener(sortEvents(applyLearnerContentFilters(events, options)));
     },
     error => onError?.(error),
   );
@@ -214,6 +217,7 @@ export async function createUpcomingEvent(
       daysLeftLabel: input.daysLeftLabel.trim(),
       sortOrder,
       isPublished: input.isPublished ?? true,
+      ...buildSchoolAudienceWriteFields(input),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
@@ -265,6 +269,9 @@ export async function updateUpcomingEvent(
     }
     if (input.isPublished !== undefined) {
       updates.isPublished = input.isPublished;
+    }
+    if (input.audience !== undefined || input.schoolIds !== undefined) {
+      Object.assign(updates, buildSchoolAudienceWriteFields(input));
     }
 
     await updateDoc(doc(eventsCollection(), eventId), updates as UpdateData<DocumentData>);

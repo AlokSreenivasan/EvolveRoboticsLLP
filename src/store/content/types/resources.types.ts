@@ -1,5 +1,11 @@
 import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
+import type {
+  SchoolAudienceDocument,
+  SchoolAudienceFields,
+  SchoolAudienceInput,
+} from './schoolAudience.types';
+
 /** Singleton config at appContent/resources */
 export interface ResourcesSectionDocument {
   sectionTitle: string;
@@ -18,7 +24,7 @@ export interface ResourcesSection {
   updatedAt: FirebaseFirestoreTypes.Timestamp | null;
 }
 
-export interface ResourceNoteDocument {
+export interface ResourceNoteDocument extends SchoolAudienceDocument {
   title: string;
   subtitle: string;
   pdfUrl: string;
@@ -32,7 +38,7 @@ export interface ResourceNoteDocument {
     | FirebaseFirestoreTypes.FieldValue;
 }
 
-export interface ResourceNote {
+export interface ResourceNote extends SchoolAudienceFields {
   id: string;
   title: string;
   subtitle: string;
@@ -48,7 +54,7 @@ export type CreateResourceNoteInput = {
   subtitle?: string;
   pdfUrl: string;
   isPublished?: boolean;
-};
+} & SchoolAudienceInput;
 
 export type UpdateResourceNoteInput = Partial<
   CreateResourceNoteInput & { sortOrder: number }

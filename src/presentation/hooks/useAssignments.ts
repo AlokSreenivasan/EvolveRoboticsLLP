@@ -10,6 +10,7 @@ import type {
   AssignmentsSection,
 } from '../../store/content/types/assignments.types';
 import { getErrorMessage } from '../../utils/firebase/errors';
+import { useContentSubscribeOptions } from './useContentSubscribeOptions';
 
 type UseAssignmentsOptions = {
   /** When true, includes draft (unpublished) assignments — for admin screens. */
@@ -18,6 +19,7 @@ type UseAssignmentsOptions = {
 
 export function useAssignments(options?: UseAssignmentsOptions) {
   const includeUnpublished = options?.includeUnpublished === true;
+  const subscribeOptions = useContentSubscribeOptions(includeUnpublished);
   const [section, setSection] = useState<AssignmentsSection>(
     DEFAULT_ASSIGNMENTS_SECTION,
   );
@@ -55,7 +57,7 @@ export function useAssignments(options?: UseAssignmentsOptions) {
         assignmentsReady = true;
         markReady();
       },
-      { includeUnpublished },
+      subscribeOptions,
       err => {
         setError(getErrorMessage(err));
         assignmentsReady = true;
@@ -67,7 +69,7 @@ export function useAssignments(options?: UseAssignmentsOptions) {
       unsubSection();
       unsubAssignments();
     };
-  }, [includeUnpublished]);
+  }, [subscribeOptions]);
 
   const displayAssignments = useMemo(() => assignments, [assignments]);
 

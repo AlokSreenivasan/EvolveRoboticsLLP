@@ -10,9 +10,13 @@ import AdminListLayout from '../../../components/Admin/AdminListLayout';
 import AdminListRow from '../../../components/Admin/AdminListRow';
 import AdminListSectionHeader from '../../../components/Admin/AdminListSectionHeader';
 import AdminPublishedSwitch from '../../../components/Admin/AdminPublishedSwitch';
+import AdminSchoolAudiencePicker from '../../../components/Admin/AdminSchoolAudiencePicker';
 import { adminStyles } from '../../../components/Admin/adminStyles';
 import { colors, spacing } from '../../../constants/theme';
 import { useExams } from '../../hooks/useExams';
+import { useSchools } from '../../hooks/useSchools';
+import { useAdminSchoolAudienceForm } from '../../hooks/admin/useAdminSchoolAudienceForm';
+import { formatSchoolAudienceSummary } from '../../../utils/content/schoolAudience';
 import {
   createExam,
   deleteExam,
@@ -110,6 +114,8 @@ const EMPTY_QUESTION_DRAFT: QuestionDraft = {
 
 function ManageExams() {
   const { exams, loading } = useExams({ includeUnpublished: true });
+  const { schools, loading: schoolsLoading, error: schoolsError } = useSchools();
+  const audienceForm = useAdminSchoolAudienceForm();
   const { reorderingId, handleMove } = useAdminReorder(exams, moveExam);
 
   const [editorVisible, setEditorVisible] = useState(false);
@@ -130,6 +136,7 @@ function ManageExams() {
   const openCreateEditor = () => {
     setEditingId(null);
     setForm(EMPTY_EXAM_FORM);
+    audienceForm.resetAudience();
     setEditorVisible(true);
   };
 
@@ -142,6 +149,10 @@ function ManageExams() {
       isPublished: exam.isPublished,
       questions: exam.questions ?? [],
     });
+    audienceForm.resetAudience({
+      audience: exam.audience,
+      schoolIds: exam.schoolIds,
+    });
     setEditorVisible(true);
   };
 
@@ -149,6 +160,7 @@ function ManageExams() {
     setEditorVisible(false);
     setEditingId(null);
     setForm(EMPTY_EXAM_FORM);
+    audienceForm.resetAudience();
     closeQuestionEditor();
   };
 
@@ -239,12 +251,19 @@ function ManageExams() {
       return;
     }
 
+    const audienceError = audienceForm.validate();
+    if (audienceError) {
+      Alert.alert('Audience required', audienceError);
+      return;
+    }
+
     const payload = {
       title: form.title,
       description: form.description,
       timerSeconds: toTimerSeconds(form.timerMinutes),
       questions: form.questions,
       isPublished: form.isPublished,
+      ...audienceForm.toPayload(),
     };
 
     setSaving(true);
@@ -297,9 +316,9 @@ function ManageExams() {
         subtitle={`${exam.questions?.length ?? 0} questions • ${toTimerMinutes(
           exam.timerSeconds,
         )} min`}
-        statusLine={
+        statusLine={`${
           exam.questions?.length ? 'Ready to publish' : 'Add questions'
-        }
+        } · ${formatSchoolAudienceSummary(exam, schools)}`}
         isPublished={exam.isPublished}
         index={index}
         itemCount={exams.length}
@@ -310,7 +329,7 @@ function ManageExams() {
         onDelete={() => confirmDeleteExam(exam)}
       />
     ),
-    [exams.length, handleMove, reorderingId],
+    [exams.length, handleMove, reorderingId, schools],
   );
 
   const keyExtractor = useCallback((item: Exam) => item.id, []);
@@ -493,6 +512,15 @@ function ManageExams() {
               onValueChange={isPublished =>
                 setForm(prev => ({ ...prev, isPublished }))
               }
+            />
+            <AdminSchoolAudiencePicker
+              audience={audienceForm.audience}
+              selectedSchoolIds={audienceForm.schoolIds}
+              schools={schools}
+              schoolsLoading={schoolsLoading}
+              schoolsError={schoolsError}
+              onAudienceChange={audienceForm.setAudienceMode}
+              onToggleSchool={audienceForm.toggleSchoolId}
             />
           </>
         )}

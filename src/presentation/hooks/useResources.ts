@@ -10,6 +10,7 @@ import type {
   ResourcesSection,
 } from '../../store/content/types/resources.types';
 import { getErrorMessage } from '../../utils/firebase/errors';
+import { useContentSubscribeOptions } from './useContentSubscribeOptions';
 
 type UseResourcesOptions = {
   /** When true, includes draft (unpublished) notes — for admin screens. */
@@ -18,6 +19,7 @@ type UseResourcesOptions = {
 
 export function useResources(options?: UseResourcesOptions) {
   const includeUnpublished = options?.includeUnpublished === true;
+  const subscribeOptions = useContentSubscribeOptions(includeUnpublished);
   const [section, setSection] = useState<ResourcesSection>(
     DEFAULT_RESOURCES_SECTION,
   );
@@ -55,7 +57,7 @@ export function useResources(options?: UseResourcesOptions) {
         notesReady = true;
         markReady();
       },
-      { includeUnpublished },
+      subscribeOptions,
       err => {
         setError(getErrorMessage(err));
         notesReady = true;
@@ -67,7 +69,7 @@ export function useResources(options?: UseResourcesOptions) {
       unsubSection();
       unsubNotes();
     };
-  }, [includeUnpublished]);
+  }, [subscribeOptions]);
 
   const displayNotes = useMemo(() => notes, [notes]);
 

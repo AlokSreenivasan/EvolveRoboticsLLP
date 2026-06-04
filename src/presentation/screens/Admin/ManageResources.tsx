@@ -8,10 +8,14 @@ import AdminListRow from '../../../components/Admin/AdminListRow';
 import AdminListSectionHeader from '../../../components/Admin/AdminListSectionHeader';
 import AdminPdfPicker from '../../../components/Admin/AdminPdfPicker';
 import AdminPublishedSwitch from '../../../components/Admin/AdminPublishedSwitch';
+import AdminSchoolAudiencePicker from '../../../components/Admin/AdminSchoolAudiencePicker';
 import AdminSectionCard from '../../../components/Admin/AdminSectionCard';
 import { adminStyles } from '../../../components/Admin/adminStyles';
 import { useResources } from '../../hooks/useResources';
+import { useSchools } from '../../hooks/useSchools';
 import { useAdminPdfPicker } from '../../hooks/admin/useAdminPdfPicker';
+import { useAdminSchoolAudienceForm } from '../../hooks/admin/useAdminSchoolAudienceForm';
+import { formatSchoolAudienceSummary } from '../../../utils/content/schoolAudience';
 import { useAdminReorder } from '../../hooks/admin/useAdminReorder';
 import { useAdminSectionDefaults } from '../../hooks/admin/useAdminSectionDefaults';
 import {
@@ -57,6 +61,8 @@ function ManageResources() {
   const [noteForm, setNoteForm] = useState<NoteFormState>(EMPTY_NOTE_FORM);
   const [savingNote, setSavingNote] = useState(false);
 
+  const { schools, loading: schoolsLoading, error: schoolsError } = useSchools();
+  const audienceForm = useAdminSchoolAudienceForm();
   const pdfPicker = useAdminPdfPicker();
   const { reorderingId, handleMove } = useAdminReorder(notes, moveResourceNote);
 
@@ -70,6 +76,7 @@ function ManageResources() {
   const openCreateEditor = () => {
     setEditingNoteId(null);
     setNoteForm(EMPTY_NOTE_FORM);
+    audienceForm.resetAudience();
     pdfPicker.resetPdfState();
     setEditorVisible(true);
   };
@@ -81,6 +88,10 @@ function ManageResources() {
       subtitle: note.subtitle,
       isPublished: note.isPublished,
     });
+    audienceForm.resetAudience({
+      audience: note.audience,
+      schoolIds: note.schoolIds,
+    });
     pdfPicker.loadExistingPdf(note.pdfUrl);
     setEditorVisible(true);
   };
@@ -89,6 +100,7 @@ function ManageResources() {
     setEditorVisible(false);
     setEditingNoteId(null);
     setNoteForm(EMPTY_NOTE_FORM);
+    audienceForm.resetAudience();
     pdfPicker.resetPdfState();
   };
 
@@ -125,6 +137,13 @@ function ManageResources() {
       return;
     }
 
+    const audienceError = audienceForm.validate();
+    if (audienceError) {
+      Alert.alert('Audience required', audienceError);
+      return;
+    }
+
+    const audiencePayload = audienceForm.toPayload();
     setSavingNote(true);
     try {
       await saveAdminPdfEntity({
@@ -139,6 +158,7 @@ function ManageResources() {
             subtitle: noteForm.subtitle,
             pdfUrl: '',
             isPublished: noteForm.isPublished,
+            ...audiencePayload,
           }),
         updateEntity: (id, pdfUrl) =>
           updateResourceNote(id, {
@@ -146,6 +166,7 @@ function ManageResources() {
             subtitle: noteForm.subtitle,
             pdfUrl,
             isPublished: noteForm.isPublished,
+            ...audiencePayload,
           }),
       });
       closeEditor();
@@ -200,7 +221,7 @@ function ManageResources() {
       <AdminListRow
         title={note.title}
         subtitle={note.subtitle}
-        statusLine={note.pdfUrl.trim() ? 'PDF attached' : 'Missing PDF'}
+        statusLine={`${note.pdfUrl.trim() ? 'PDF attached' : 'Missing PDF'} · ${formatSchoolAudienceSummary(note, schools)}`}
         isPublished={note.isPublished}
         index={index}
         itemCount={notes.length}
@@ -211,7 +232,7 @@ function ManageResources() {
         onDelete={() => confirmDeleteNote(note)}
       />
     ),
-    [handleMove, notes.length, reorderingId],
+    [handleMove, notes.length, reorderingId, schools],
   );
 
   const keyExtractor = useCallback((item: ResourceNote) => item.id, []);
@@ -262,6 +283,15 @@ function ManageResources() {
           onValueChange={isPublished =>
             setNoteForm(prev => ({ ...prev, isPublished }))
           }
+        />
+        <AdminSchoolAudiencePicker
+          audience={audienceForm.audience}
+          selectedSchoolIds={audienceForm.schoolIds}
+          schools={schools}
+          schoolsLoading={schoolsLoading}
+          schoolsError={schoolsError}
+          onAudienceChange={audienceForm.setAudienceMode}
+          onToggleSchool={audienceForm.toggleSchoolId}
         />
       </AdminEntityForm>
     </>

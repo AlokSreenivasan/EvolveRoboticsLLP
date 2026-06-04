@@ -1,5 +1,11 @@
 import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
+import type {
+  SchoolAudienceDocument,
+  SchoolAudienceFields,
+  SchoolAudienceInput,
+} from './schoolAudience.types';
+
 /** Singleton config at appContent/assignments */
 export interface AssignmentsSectionDocument {
   sectionTitle: string;
@@ -18,7 +24,7 @@ export interface AssignmentsSection {
   updatedAt: FirebaseFirestoreTypes.Timestamp | null;
 }
 
-export interface AssignmentDocument {
+export interface AssignmentDocument extends SchoolAudienceDocument {
   title: string;
   subtitle: string;
   dueDateLabel: string;
@@ -33,7 +39,7 @@ export interface AssignmentDocument {
     | FirebaseFirestoreTypes.FieldValue;
 }
 
-export interface Assignment {
+export interface Assignment extends SchoolAudienceFields {
   id: string;
   title: string;
   subtitle: string;
@@ -51,7 +57,7 @@ export type CreateAssignmentInput = {
   dueDateLabel?: string;
   pdfUrl: string;
   isPublished?: boolean;
-};
+} & SchoolAudienceInput;
 
 export type UpdateAssignmentInput = Partial<
   CreateAssignmentInput & { sortOrder: number }

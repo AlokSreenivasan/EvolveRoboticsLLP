@@ -1,6 +1,12 @@
 import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
-export interface AppNotificationDocument {
+import type {
+  SchoolAudienceDocument,
+  SchoolAudienceFields,
+  SchoolAudienceInput,
+} from './schoolAudience.types';
+
+export interface AppNotificationDocument extends SchoolAudienceDocument {
   title: string;
   body: string;
   sortOrder: number;
@@ -10,7 +16,7 @@ export interface AppNotificationDocument {
   updatedAt: FirebaseFirestoreTypes.Timestamp | FirebaseFirestoreTypes.FieldValue;
 }
 
-export interface AppNotification {
+export interface AppNotification extends SchoolAudienceFields {
   id: string;
   title: string;
   body: string;
@@ -31,7 +37,7 @@ export type CreateAppNotificationInput = {
   title: string;
   body: string;
   isPublished?: boolean;
-};
+} & SchoolAudienceInput;
 
 export type UpdateAppNotificationInput = Partial<
   CreateAppNotificationInput & { sortOrder: number }

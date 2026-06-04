@@ -137,8 +137,21 @@ function isValidAppContentSection() {
     && data.actionLabel.size() <= 60;
 }
 
+function isValidSchoolAudienceFields(data) {
+  return (!('audience' in data) || data.audience == 'all' || data.audience == 'schools')
+    && (
+      !('schoolIds' in data)
+      || (
+        data.schoolIds is list
+        && data.schoolIds.size() <= 50
+        && (data.audience != 'schools' || data.schoolIds.size() >= 1)
+      )
+    );
+}
+
 function isValidImportantUpdateNoticeFields(data) {
-  return data.tag is string
+  return isValidSchoolAudienceFields(data)
+    && data.tag is string
     && data.tag.size() <= 60
     && data.title is string
     && data.title.size() > 0
@@ -172,7 +185,8 @@ function isValidImportantUpdateNoticeUpdate() {
 }
 
 function isValidUpcomingEventFields(data) {
-  return data.month is string
+  return isValidSchoolAudienceFields(data)
+    && data.month is string
     && data.month.size() > 0
     && data.month.size() <= 20
     && data.day is string
@@ -254,7 +268,8 @@ function isValidCourseUpdate() {
 }
 
 function isValidResourceNoteFields(data) {
-  return data.title is string
+  return isValidSchoolAudienceFields(data)
+    && data.title is string
     && data.title.size() > 0
     && data.title.size() <= 200
     && data.subtitle is string
@@ -275,7 +290,8 @@ function isValidResourceNoteUpdate() {
 }
 
 function isValidAssignmentFields(data) {
-  return data.title is string
+  return isValidSchoolAudienceFields(data)
+    && data.title is string
     && data.title.size() > 0
     && data.title.size() <= 200
     && data.subtitle is string
@@ -298,7 +314,8 @@ function isValidAssignmentUpdate() {
 }
 
 function isValidExamFields(data) {
-  return data.title is string
+  return isValidSchoolAudienceFields(data)
+    && data.title is string
     && data.title.size() > 0
     && data.title.size() <= 200
     && data.description is string
@@ -322,7 +339,8 @@ function isValidExamUpdate() {
 }
 
 function isValidNotificationFields(data) {
-  return data.title is string
+  return isValidSchoolAudienceFields(data)
+    && data.title is string
     && data.title.size() > 0
     && data.title.size() <= 200
     && data.body is string

@@ -7,10 +7,14 @@ import AdminListLayout from '../../../components/Admin/AdminListLayout';
 import AdminListRow from '../../../components/Admin/AdminListRow';
 import AdminListSectionHeader from '../../../components/Admin/AdminListSectionHeader';
 import AdminPublishedSwitch from '../../../components/Admin/AdminPublishedSwitch';
+import AdminSchoolAudiencePicker from '../../../components/Admin/AdminSchoolAudiencePicker';
 import AdminSectionCard from '../../../components/Admin/AdminSectionCard';
 import { adminStyles } from '../../../components/Admin/adminStyles';
 import { useImportantUpdates } from '../../hooks/useImportantUpdates';
+import { useSchools } from '../../hooks/useSchools';
 import { useAdminReorder } from '../../hooks/admin/useAdminReorder';
+import { useAdminSchoolAudienceForm } from '../../hooks/admin/useAdminSchoolAudienceForm';
+import { formatSchoolAudienceSummary } from '../../../utils/content/schoolAudience';
 import { useAdminSectionDefaults } from '../../hooks/admin/useAdminSectionDefaults';
 import {
   createImportantUpdateNotice,
@@ -57,6 +61,8 @@ function ManageImportantUpdates() {
   const [noticeForm, setNoticeForm] = useState<NoticeFormState>(EMPTY_NOTICE_FORM);
   const [savingNotice, setSavingNotice] = useState(false);
 
+  const { schools, loading: schoolsLoading, error: schoolsError } = useSchools();
+  const audienceForm = useAdminSchoolAudienceForm();
   const { reorderingId, handleMove } = useAdminReorder(
     notices,
     moveImportantUpdateNotice,
@@ -73,6 +79,7 @@ function ManageImportantUpdates() {
   const openCreateEditor = () => {
     setEditingNoticeId(null);
     setNoticeForm(EMPTY_NOTICE_FORM);
+    audienceForm.resetAudience();
     setEditorVisible(true);
   };
 
@@ -85,6 +92,10 @@ function ManageImportantUpdates() {
       description: notice.description,
       isPublished: notice.isPublished,
     });
+    audienceForm.resetAudience({
+      audience: notice.audience,
+      schoolIds: notice.schoolIds,
+    });
     setEditorVisible(true);
   };
 
@@ -92,6 +103,7 @@ function ManageImportantUpdates() {
     setEditorVisible(false);
     setEditingNoticeId(null);
     setNoticeForm(EMPTY_NOTICE_FORM);
+    audienceForm.resetAudience();
   };
 
   const handleSaveSection = async () => {
@@ -123,8 +135,15 @@ function ManageImportantUpdates() {
       return;
     }
 
+    const audienceError = audienceForm.validate();
+    if (audienceError) {
+      Alert.alert('Audience required', audienceError);
+      return;
+    }
+
     setSavingNotice(true);
     try {
+      const audiencePayload = audienceForm.toPayload();
       if (editingNoticeId) {
         await updateImportantUpdateNotice(editingNoticeId, {
           tag: noticeForm.tag,
@@ -132,6 +151,7 @@ function ManageImportantUpdates() {
           subtitle: noticeForm.subtitle,
           description: noticeForm.description,
           isPublished: noticeForm.isPublished,
+          ...audiencePayload,
         });
       } else {
         await createImportantUpdateNotice({
@@ -140,6 +160,7 @@ function ManageImportantUpdates() {
           subtitle: noticeForm.subtitle,
           description: noticeForm.description,
           isPublished: noticeForm.isPublished,
+          ...audiencePayload,
         });
       }
       closeEditor();
@@ -201,7 +222,11 @@ function ManageImportantUpdates() {
     ({ item: notice, index }: { item: ImportantUpdateNotice; index: number }) => (
       <AdminListRow
         title={notice.title}
-        subtitle={notice.subtitle}
+        subtitle={
+          notice.subtitle
+            ? `${notice.subtitle} · ${formatSchoolAudienceSummary(notice, schools)}`
+            : formatSchoolAudienceSummary(notice, schools)
+        }
         tag={notice.tag}
         isPublished={notice.isPublished}
         index={index}
@@ -213,7 +238,7 @@ function ManageImportantUpdates() {
         onDelete={() => confirmDeleteNotice(notice)}
       />
     ),
-    [handleMove, notices.length, reorderingId],
+    [handleMove, notices.length, reorderingId, schools],
   );
 
   const keyExtractor = useCallback(
@@ -277,6 +302,15 @@ function ManageImportantUpdates() {
           onValueChange={isPublished =>
             setNoticeForm(prev => ({ ...prev, isPublished }))
           }
+        />
+        <AdminSchoolAudiencePicker
+          audience={audienceForm.audience}
+          selectedSchoolIds={audienceForm.schoolIds}
+          schools={schools}
+          schoolsLoading={schoolsLoading}
+          schoolsError={schoolsError}
+          onAudienceChange={audienceForm.setAudienceMode}
+          onToggleSchool={audienceForm.toggleSchoolId}
         />
       </AdminEntityForm>
     </>

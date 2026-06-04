@@ -7,6 +7,7 @@ import type {
 import {
   DEFAULT_IMPORTANT_UPDATES_SECTION,
 } from '../../constants/importantUpdatesDefaults';
+import type { ContentSubscribeOptions } from '../../store/content/types/schoolAudience.types';
 import type {
   CreateImportantUpdateNoticeInput,
   ImportantUpdateNotice,
@@ -16,6 +17,11 @@ import type {
   UpdateImportantUpdateNoticeInput,
   UpdateImportantUpdatesSectionInput,
 } from '../../store/content/types/importantUpdates.types';
+import {
+  applyLearnerContentFilters,
+  buildSchoolAudienceWriteFields,
+  mapSchoolAudienceFields,
+} from './schoolAudienceFirestore';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import {
   APP_CONTENT_DOCS,
@@ -94,6 +100,7 @@ function mapNotice(
     isPublished: data.isPublished === true,
     createdAt: isTimestamp(data.createdAt) ? data.createdAt : null,
     updatedAt: isTimestamp(data.updatedAt) ? data.updatedAt : null,
+    ...mapSchoolAudienceFields(data),
   };
 }
 
@@ -117,10 +124,9 @@ export function subscribeImportantUpdatesSection(
 
 export function subscribeImportantUpdates(
   listener: (notices: ImportantUpdateNotice[]) => void,
-  options?: { includeUnpublished?: boolean },
+  options?: ContentSubscribeOptions,
   onError?: (error: unknown) => void,
 ): () => void {
-  const includeUnpublished = options?.includeUnpublished === true;
   const noticesQuery = query(
     noticesCollection(),
     orderBy('sortOrder', 'asc'),
@@ -132,10 +138,7 @@ export function subscribeImportantUpdates(
       const notices = snapshot.docs.map(noticeDoc =>
         mapNotice(noticeDoc.id, noticeDoc.data() as ImportantUpdateNoticeDocument),
       );
-      const filtered = includeUnpublished
-        ? notices
-        : notices.filter(notice => notice.isPublished);
-      listener(sortNotices(filtered));
+      listener(sortNotices(applyLearnerContentFilters(notices, options)));
     },
     error => onError?.(error),
   );
@@ -217,6 +220,7 @@ export async function createImportantUpdateNotice(
       description: input.description.trim(),
       sortOrder,
       isPublished: input.isPublished ?? true,
+      ...buildSchoolAudienceWriteFields(input),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
@@ -263,6 +267,9 @@ export async function updateImportantUpdateNotice(
     }
     if (input.isPublished !== undefined) {
       updates.isPublished = input.isPublished;
+    }
+    if (input.audience !== undefined || input.schoolIds !== undefined) {
+      Object.assign(updates, buildSchoolAudienceWriteFields(input));
     }
 
     await updateDoc(doc(noticesCollection(), noticeId), updates as UpdateData<DocumentData>);

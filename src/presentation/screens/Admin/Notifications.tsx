@@ -9,9 +9,13 @@ import AdminListLayout from '../../../components/Admin/AdminListLayout';
 import AdminListRow from '../../../components/Admin/AdminListRow';
 import AdminListSectionHeader from '../../../components/Admin/AdminListSectionHeader';
 import AdminPublishedSwitch from '../../../components/Admin/AdminPublishedSwitch';
+import AdminSchoolAudiencePicker from '../../../components/Admin/AdminSchoolAudiencePicker';
 import { sendLiveNotificationToUsers } from '../../../services/firebase/liveNotificationService';
 import { useNotifications } from '../../hooks/useNotifications';
+import { useSchools } from '../../hooks/useSchools';
 import { useAdminReorder } from '../../hooks/admin/useAdminReorder';
+import { useAdminSchoolAudienceForm } from '../../hooks/admin/useAdminSchoolAudienceForm';
+import { formatSchoolAudienceSummary } from '../../../utils/content/schoolAudience';
 import {
   createNotification,
   deleteNotification,
@@ -38,6 +42,8 @@ function AdminNotifications() {
   const { notifications, loading } = useNotifications({
     includeUnpublished: true,
   });
+  const { schools, loading: schoolsLoading, error: schoolsError } = useSchools();
+  const audienceForm = useAdminSchoolAudienceForm();
 
   const [editorVisible, setEditorVisible] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -53,6 +59,7 @@ function AdminNotifications() {
   const openCreateEditor = () => {
     setEditingId(null);
     setForm(EMPTY_FORM);
+    audienceForm.resetAudience();
     setEditorVisible(true);
   };
 
@@ -63,6 +70,10 @@ function AdminNotifications() {
       body: notification.body,
       isPublished: notification.isPublished,
     });
+    audienceForm.resetAudience({
+      audience: notification.audience,
+      schoolIds: notification.schoolIds,
+    });
     setEditorVisible(true);
   };
 
@@ -70,6 +81,7 @@ function AdminNotifications() {
     setEditorVisible(false);
     setEditingId(null);
     setForm(EMPTY_FORM);
+    audienceForm.resetAudience();
   };
 
   const handleSave = async () => {
@@ -82,12 +94,19 @@ function AdminNotifications() {
       return;
     }
 
+    const audienceError = audienceForm.validate();
+    if (audienceError) {
+      Alert.alert('Audience required', audienceError);
+      return;
+    }
+
     setSaving(true);
     try {
       const payload = {
         title: form.title,
         body: form.body,
         isPublished: form.isPublished,
+        ...audienceForm.toPayload(),
       };
       if (editingId) {
         await updateNotification(editingId, payload);
@@ -142,9 +161,10 @@ function AdminNotifications() {
       return;
     }
 
+    const audienceLabel = formatSchoolAudienceSummary(notification, schools);
     Alert.alert(
       'Send live notification',
-      `Send push "${notification.title}" to all learners with notifications enabled?`,
+      `Send push "${notification.title}" to learners at ${audienceLabel} who have notifications enabled?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -185,11 +205,14 @@ function AdminNotifications() {
       index: number;
     }) => {
       const isSending = sendingLiveId === notification.id;
+      const audienceLine = formatSchoolAudienceSummary(notification, schools);
       return (
         <AdminListRow
           title={notification.title}
           statusLine={
-            notification.isPublished ? 'Visible on home' : undefined
+            notification.isPublished
+              ? `Visible on home · ${audienceLine}`
+              : audienceLine
           }
           isPublished={notification.isPublished}
           index={index}
@@ -211,7 +234,7 @@ function AdminNotifications() {
         />
       );
     },
-    [handleMove, notifications.length, reorderingId, sendingLiveId],
+    [handleMove, notifications.length, reorderingId, schools, sendingLiveId],
   );
 
   const keyExtractor = useCallback((item: AppNotification) => item.id, []);
@@ -262,6 +285,15 @@ function AdminNotifications() {
           onValueChange={isPublished =>
             setForm(prev => ({ ...prev, isPublished }))
           }
+        />
+        <AdminSchoolAudiencePicker
+          audience={audienceForm.audience}
+          selectedSchoolIds={audienceForm.schoolIds}
+          schools={schools}
+          schoolsLoading={schoolsLoading}
+          schoolsError={schoolsError}
+          onAudienceChange={audienceForm.setAudienceMode}
+          onToggleSchool={audienceForm.toggleSchoolId}
         />
         {editingNotification ? (
           <>

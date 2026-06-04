@@ -8,11 +8,15 @@ import AdminListLayout from '../../../components/Admin/AdminListLayout';
 import AdminListRowActions from '../../../components/Admin/AdminListRowActions';
 import AdminListSectionHeader from '../../../components/Admin/AdminListSectionHeader';
 import AdminPublishedSwitch from '../../../components/Admin/AdminPublishedSwitch';
+import AdminSchoolAudiencePicker from '../../../components/Admin/AdminSchoolAudiencePicker';
 import AdminSectionCard from '../../../components/Admin/AdminSectionCard';
 import EventDateBlock from '../../../components/Home/EventDateBlock';
 import { adminStyles } from '../../../components/Admin/adminStyles';
 import { useUpcomingEvents } from '../../hooks/useUpcomingEvents';
+import { useSchools } from '../../hooks/useSchools';
 import { useAdminReorder } from '../../hooks/admin/useAdminReorder';
+import { useAdminSchoolAudienceForm } from '../../hooks/admin/useAdminSchoolAudienceForm';
+import { formatSchoolAudienceSummary } from '../../../utils/content/schoolAudience';
 import { useAdminSectionDefaults } from '../../hooks/admin/useAdminSectionDefaults';
 import {
   createUpcomingEvent,
@@ -73,6 +77,8 @@ function ManageUpcomingEvents() {
   const [eventForm, setEventForm] = useState<EventFormState>(EMPTY_EVENT_FORM);
   const [savingEvent, setSavingEvent] = useState(false);
 
+  const { schools, loading: schoolsLoading, error: schoolsError } = useSchools();
+  const audienceForm = useAdminSchoolAudienceForm();
   const { reorderingId, handleMove } = useAdminReorder(events, moveUpcomingEvent);
 
   useAdminSectionDefaults(ensureUpcomingEventsSectionDefaults);
@@ -94,6 +100,7 @@ function ManageUpcomingEvents() {
       year,
       daysLeftLabel: computeDaysLeftLabel(month, day, { year }),
     });
+    audienceForm.resetAudience();
     setEditorVisible(true);
   };
 
@@ -113,6 +120,10 @@ function ManageUpcomingEvents() {
       daysLeftLabel: event.daysLeftLabel,
       isPublished: event.isPublished,
     });
+    audienceForm.resetAudience({
+      audience: event.audience,
+      schoolIds: event.schoolIds,
+    });
     setEditorVisible(true);
   };
 
@@ -120,6 +131,7 @@ function ManageUpcomingEvents() {
     setEditorVisible(false);
     setEditingEventId(null);
     setEventForm(EMPTY_EVENT_FORM);
+    audienceForm.resetAudience();
   };
 
   const handleSaveSection = async () => {
@@ -181,6 +193,12 @@ function ManageUpcomingEvents() {
       { year },
     );
 
+    const audienceError = audienceForm.validate();
+    if (audienceError) {
+      Alert.alert('Audience required', audienceError);
+      return;
+    }
+
     setSavingEvent(true);
     try {
       const payload = {
@@ -192,6 +210,7 @@ function ManageUpcomingEvents() {
         timeRange: eventForm.timeRange,
         daysLeftLabel,
         isPublished: eventForm.isPublished,
+        ...audienceForm.toPayload(),
       };
       if (editingEventId) {
         await updateUpcomingEvent(editingEventId, payload);
@@ -271,6 +290,9 @@ function ManageUpcomingEvents() {
             {event.timeRange ? (
               <Text style={adminStyles.listRowSubtitle}>{event.timeRange}</Text>
             ) : null}
+            <Text style={adminStyles.listRowSubtitle}>
+              {formatSchoolAudienceSummary(event, schools)}
+            </Text>
             {getDisplayDaysLeftLabel(
               event.month,
               event.day,
@@ -302,7 +324,7 @@ function ManageUpcomingEvents() {
         </View>
       </View>
     ),
-    [events.length, handleMove, reorderingId],
+    [events.length, handleMove, reorderingId, schools],
   );
 
   const keyExtractor = useCallback((item: UpcomingEvent) => item.id, []);
@@ -370,6 +392,15 @@ function ManageUpcomingEvents() {
           onValueChange={isPublished =>
             setEventForm(prev => ({ ...prev, isPublished }))
           }
+        />
+        <AdminSchoolAudiencePicker
+          audience={audienceForm.audience}
+          selectedSchoolIds={audienceForm.schoolIds}
+          schools={schools}
+          schoolsLoading={schoolsLoading}
+          schoolsError={schoolsError}
+          onAudienceChange={audienceForm.setAudienceMode}
+          onToggleSchool={audienceForm.toggleSchoolId}
         />
       </AdminEntityForm>
     </>

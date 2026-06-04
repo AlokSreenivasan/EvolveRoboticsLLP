@@ -5,6 +5,7 @@ import type {
 } from '@react-native-firebase/firestore';
 
 import { DEFAULT_ASSIGNMENTS_SECTION } from '../../constants/assignmentsDefaults';
+import type { ContentSubscribeOptions } from '../../store/content/types/schoolAudience.types';
 import type {
   Assignment,
   AssignmentDocument,
@@ -14,6 +15,11 @@ import type {
   UpdateAssignmentInput,
   UpdateAssignmentsSectionInput,
 } from '../../store/content/types/assignments.types';
+import {
+  applyLearnerContentFilters,
+  buildSchoolAudienceWriteFields,
+  mapSchoolAudienceFields,
+} from './schoolAudienceFirestore';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { APP_CONTENT_DOCS, FIRESTORE_COLLECTIONS } from './constants';
 import {
@@ -89,6 +95,7 @@ function mapAssignment(
     isPublished: data.isPublished === true,
     createdAt: isTimestamp(data.createdAt) ? data.createdAt : null,
     updatedAt: isTimestamp(data.updatedAt) ? data.updatedAt : null,
+    ...mapSchoolAudienceFields(data),
   };
 }
 
@@ -112,7 +119,7 @@ export function subscribeAssignmentsSection(
 
 export function subscribeAssignments(
   listener: (assignments: Assignment[]) => void,
-  options?: { includeUnpublished?: boolean },
+  options?: ContentSubscribeOptions,
   onError?: (error: unknown) => void,
 ): () => void {
   const includeUnpublished = options?.includeUnpublished === true;
@@ -127,11 +134,10 @@ export function subscribeAssignments(
       const items = snapshot.docs.map(itemDoc =>
         mapAssignment(itemDoc.id, itemDoc.data() as AssignmentDocument),
       );
-      const filtered = includeUnpublished
-        ? items
-        : items.filter(
-            item => item.isPublished && item.pdfUrl.length > 0,
-          );
+      let filtered = applyLearnerContentFilters(items, options);
+      if (!includeUnpublished) {
+        filtered = filtered.filter(item => item.pdfUrl.length > 0);
+      }
       listener(sortAssignments(filtered));
     },
     error => onError?.(error),
@@ -214,6 +220,7 @@ export async function createAssignment(
       pdfUrl: input.pdfUrl.trim(),
       sortOrder,
       isPublished: input.isPublished ?? true,
+      ...buildSchoolAudienceWriteFields(input),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
@@ -260,6 +267,9 @@ export async function updateAssignment(
     }
     if (input.isPublished !== undefined) {
       updates.isPublished = input.isPublished;
+    }
+    if (input.audience !== undefined || input.schoolIds !== undefined) {
+      Object.assign(updates, buildSchoolAudienceWriteFields(input));
     }
 
     await updateDoc(

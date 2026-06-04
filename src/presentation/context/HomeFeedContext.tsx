@@ -33,6 +33,7 @@ import type {
   UpcomingEventsSection,
 } from '../../store/content/types/upcomingEvents.types';
 import { getErrorMessage } from '../../utils/firebase/errors';
+import type { ContentSubscribeOptions } from '../../store/content/types/schoolAudience.types';
 import { useAuth } from './AuthContext';
 
 export type HomeFeedContinueLearning = {
@@ -133,8 +134,30 @@ type HomeFeedProviderProps = {
  * Owns published home-feed Firestore listeners once for Home and
  * ContinueLearningList. Subscribes only while those routes are focused.
  */
+function buildHomeFeedSubscribeOptions(
+  isAdmin: boolean,
+  schoolId: string | null | undefined,
+): ContentSubscribeOptions {
+  if (isAdmin) {
+    return { includeUnpublished: false };
+  }
+
+  return {
+    includeUnpublished: false,
+    viewerSchoolId: schoolId ?? null,
+  };
+}
+
 export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
-  const { user } = useAuth();
+  const { user, profile, isAdmin, roleLoading } = useAuth();
+  const contentSubscribeOptions = useMemo(
+    () =>
+      buildHomeFeedSubscribeOptions(
+        !roleLoading && isAdmin,
+        profile?.schoolId,
+      ),
+    [isAdmin, profile?.schoolId, roleLoading],
+  );
   const [focusCount, setFocusCount] = useState(0);
   const isActive = focusCount > 0;
 
@@ -241,7 +264,7 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
         importantNoticesReady = true;
         markImportantReady();
       },
-      { includeUnpublished: false },
+      contentSubscribeOptions,
       err => {
         setImportantError(getErrorMessage(err));
         importantNoticesReady = true;
@@ -275,7 +298,7 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
         eventsReady = true;
         markEventsReady();
       },
-      { includeUnpublished: false },
+      contentSubscribeOptions,
       err => {
         setEventsError(getErrorMessage(err));
         eventsReady = true;
@@ -289,7 +312,7 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
         setNotificationsError(null);
         setNotificationsLoading(false);
       },
-      { includeUnpublished: false },
+      contentSubscribeOptions,
       err => {
         setNotificationsError(getErrorMessage(err));
         setNotificationsLoading(false);
@@ -304,7 +327,7 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
       unsubEvents();
       unsubNotifications();
     };
-  }, [isActive, refreshNonce]);
+  }, [contentSubscribeOptions, isActive, refreshNonce]);
 
   useEffect(() => {
     if (!isActive) {

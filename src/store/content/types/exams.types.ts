@@ -1,5 +1,11 @@
 import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
+import type {
+  SchoolAudienceDocument,
+  SchoolAudienceFields,
+  SchoolAudienceInput,
+} from './schoolAudience.types';
+
 export type ExamChoice = {
   id: string;
   text: string;
@@ -13,7 +19,7 @@ export type ExamQuestion = {
   correctChoiceIndex: number;
 };
 
-export interface ExamDocument {
+export interface ExamDocument extends SchoolAudienceDocument {
   title: string;
   description: string;
   /** Exam duration in seconds. */
@@ -29,7 +35,7 @@ export interface ExamDocument {
     | FirebaseFirestoreTypes.FieldValue;
 }
 
-export interface Exam {
+export interface Exam extends SchoolAudienceFields {
   id: string;
   title: string;
   description: string;
@@ -47,7 +53,7 @@ export type CreateExamInput = {
   timerSeconds: number;
   questions: ExamQuestion[];
   isPublished?: boolean;
-};
+} & SchoolAudienceInput;
 
 export type UpdateExamInput = Partial<CreateExamInput & { sortOrder: number }>;
 

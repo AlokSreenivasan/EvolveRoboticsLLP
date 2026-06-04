@@ -4,12 +4,22 @@ import type {
   UpdateData,
 } from '@react-native-firebase/firestore';
 
+import type { ContentSubscribeOptions } from '../../store/content/types/schoolAudience.types';
 import type {
   CreateExamInput,
   Exam,
   ExamDocument,
   UpdateExamInput,
 } from '../../store/content/types/exams.types';
+import {
+  isVisibleForViewerSchool,
+  shouldFilterByViewerSchool,
+} from '../../utils/content/schoolAudience';
+import {
+  applyLearnerContentFilters,
+  buildSchoolAudienceWriteFields,
+  mapSchoolAudienceFields,
+} from './schoolAudienceFirestore';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { FIRESTORE_COLLECTIONS } from './constants';
 import {
@@ -65,6 +75,7 @@ function mapExam(id: string, data: ExamDocument): Exam {
     isPublished: data.isPublished === true,
     createdAt: isTimestamp(data.createdAt) ? data.createdAt : null,
     updatedAt: isTimestamp(data.updatedAt) ? data.updatedAt : null,
+    ...mapSchoolAudienceFields(data),
   };
 }
 
@@ -74,7 +85,7 @@ function sortExams(items: Exam[]): Exam[] {
 
 export function subscribeExams(
   listener: (exams: Exam[]) => void,
-  options?: { includeUnpublished?: boolean },
+  options?: ContentSubscribeOptions,
   onError?: (error: unknown) => void,
 ): () => void {
   const includeUnpublished = options?.includeUnpublished === true;
@@ -87,11 +98,10 @@ export function subscribeExams(
         mapExam(examDoc.id, examDoc.data() as ExamDocument),
       );
 
-      const filtered = includeUnpublished
-        ? items
-        : items.filter(
-            item => item.isPublished && item.questions.length > 0,
-          );
+      let filtered = applyLearnerContentFilters(items, options);
+      if (!includeUnpublished) {
+        filtered = filtered.filter(item => item.questions.length > 0);
+      }
 
       listener(sortExams(filtered));
     },
@@ -102,6 +112,7 @@ export function subscribeExams(
 export function subscribeExam(
   examId: string,
   listener: (exam: Exam | null) => void,
+  options?: ContentSubscribeOptions,
   onError?: (error: unknown) => void,
 ): () => void {
   return onSnapshot(
@@ -111,7 +122,19 @@ export function subscribeExam(
         listener(null);
         return;
       }
-      listener(mapExam(snapshot.id, snapshot.data() as ExamDocument));
+      const exam = mapExam(snapshot.id, snapshot.data() as ExamDocument);
+      const includeUnpublished = options?.includeUnpublished === true;
+      if (
+        !includeUnpublished &&
+        (!exam.isPublished ||
+          exam.questions.length === 0 ||
+          (shouldFilterByViewerSchool(options) &&
+            !isVisibleForViewerSchool(exam, options?.viewerSchoolId)))
+      ) {
+        listener(null);
+        return;
+      }
+      listener(exam);
     },
     error => onError?.(error),
   );
@@ -153,6 +176,7 @@ export async function createExam(input: CreateExamInput): Promise<Exam> {
       questions: input.questions,
       sortOrder,
       isPublished: input.isPublished ?? true,
+      ...buildSchoolAudienceWriteFields(input),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
@@ -195,6 +219,9 @@ export async function updateExam(
     }
     if (input.isPublished !== undefined) {
       updates.isPublished = input.isPublished;
+    }
+    if (input.audience !== undefined || input.schoolIds !== undefined) {
+      Object.assign(updates, buildSchoolAudienceWriteFields(input));
     }
 
     await updateDoc(

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { subscribeExams } from '../../services/firebase/examsService';
 import type { Exam } from '../../store/content/types/exams.types';
 import { getErrorMessage } from '../../utils/firebase/errors';
+import { useContentSubscribeOptions } from './useContentSubscribeOptions';
 
 type UseExamsOptions = {
   /** When true, includes draft (unpublished) exams — for admin screens. */
@@ -11,6 +12,7 @@ type UseExamsOptions = {
 
 export function useExams(options?: UseExamsOptions) {
   const includeUnpublished = options?.includeUnpublished === true;
+  const subscribeOptions = useContentSubscribeOptions(includeUnpublished);
   const [exams, setExams] = useState<Exam[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +24,7 @@ export function useExams(options?: UseExamsOptions) {
         setError(null);
         setLoading(false);
       },
-      { includeUnpublished },
+      subscribeOptions,
       err => {
         setError(getErrorMessage(err));
         setLoading(false);
@@ -30,7 +32,7 @@ export function useExams(options?: UseExamsOptions) {
     );
 
     return () => unsub();
-  }, [includeUnpublished]);
+  }, [subscribeOptions]);
 
   const displayExams = useMemo(() => exams, [exams]);
 
