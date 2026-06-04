@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   Megaphone,
   PlayCircle,
+  School,
   Users,
 } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -76,6 +77,12 @@ const MENU_ITEMS: AdminMenuItem[] = [
     title: 'Manage Users',
     description: 'View accounts and assign roles',
     icon: Users,
+  },
+  {
+    key: 'ManageSchools',
+    title: 'Add Schools',
+    description: 'Register partner schools and manage the list',
+    icon: School,
   },
   {
     key: 'AdminNotifications',

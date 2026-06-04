@@ -99,6 +99,13 @@ service cloud.firestore {
       allow delete: if isAdmin(database);
     }
 
+    match /schools/{schoolId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin(database) && isValidSchoolCreate();
+      allow update: if isAdmin(database) && isValidSchoolUpdate();
+      allow delete: if isAdmin(database);
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
@@ -342,6 +349,24 @@ function isValidNotificationCreate() {
 
 function isValidNotificationUpdate() {
   return isValidNotificationFields(request.resource.data);
+}
+
+function isValidSchoolFields(data) {
+  return data.name is string
+    && data.name.size() > 0
+    && data.name.size() <= 200
+    && data.city is string
+    && data.city.size() <= 200
+    && data.sortOrder is number
+    && data.sortOrder >= 0;
+}
+
+function isValidSchoolCreate() {
+  return isValidSchoolFields(request.resource.data);
+}
+
+function isValidSchoolUpdate() {
+  return isValidSchoolFields(request.resource.data);
 }
 
 function isValidExamAttemptCreate() {

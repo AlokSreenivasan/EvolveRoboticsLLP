@@ -12,6 +12,7 @@ import ManageUpcomingEvents from '../presentation/screens/Admin/ManageUpcomingEv
 import ManageContinueLearningPlaylists from '../presentation/screens/Admin/ManageContinueLearningPlaylists';
 import ManageCourses from '../presentation/screens/Admin/ManageCourses';
 import ManageUsers from '../presentation/screens/Admin/ManageUsers';
+import ManageSchools from '../presentation/screens/Admin/ManageSchools';
 import type { AdminStackParamList } from '../types/navigation';
 
 const Stack = createNativeStackNavigator<AdminStackParamList>();
@@ -45,6 +46,7 @@ function AdminStackNavigator() {
         <Stack.Screen name="ManageExams" component={ManageExams} />
         <Stack.Screen name="ManageCourses" component={ManageCourses} />
         <Stack.Screen name="ManageUsers" component={ManageUsers} />
+        <Stack.Screen name="ManageSchools" component={ManageSchools} />
         <Stack.Screen
           name="AdminNotifications"
           component={AdminNotifications}

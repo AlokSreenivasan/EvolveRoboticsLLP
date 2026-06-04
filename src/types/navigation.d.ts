@@ -14,6 +14,7 @@ export type AdminStackParamList = {
   ManageCourses: undefined;
   ManageUsers: undefined;
   AdminNotifications: undefined;
+  ManageSchools: undefined;
 };
 
 export type RootStackParamList = {
