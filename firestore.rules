@@ -421,13 +421,14 @@ function isValidProfileData() {
     && data.phoneNumber.size() >= 10
     && data.phoneNumber.size() <= 15
     && isValidUserRole(data.role)
-    && isOptionalProfileImage(data.profileImage);
+    && isOptionalProfileImage(data.profileImage)
+    && isOptionalSchoolId(data.schoolId);
 }
 
 // Updates use .update() with partial fields — validate merged document, not serverTimestamp equality.
 function onlyProfileFieldsChanged() {
   return request.resource.data.diff(resource.data).affectedKeys()
-    .hasOnly(['fullName', 'phoneNumber', 'profileImage', 'updatedAt']);
+    .hasOnly(['fullName', 'phoneNumber', 'profileImage', 'schoolId', 'updatedAt']);
 }
 
 function isValidProfileDataAfterUpdate() {
@@ -439,7 +440,8 @@ function isValidProfileDataAfterUpdate() {
     && data.phoneNumber.size() >= 10
     && data.phoneNumber.size() <= 15
     && isValidUserRole(data.role)
-    && isOptionalProfileImage(data.profileImage);
+    && isOptionalProfileImage(data.profileImage)
+    && isOptionalSchoolId(data.schoolId);
 }
 
 function isValidUserRole(value) {
@@ -449,4 +451,9 @@ function isValidUserRole(value) {
 function isOptionalProfileImage(value) {
   return value == null
     || (value is string && value.size() <= 8192);
+}
+
+function isOptionalSchoolId(value) {
+  return value == null
+    || (value is string && value.size() > 0 && value.size() <= 128);
 }

@@ -17,9 +17,11 @@ import AppButton from '../../../components/AppButton.tsx';
 import BackButton, { backButtonOverlayStyle } from '../../../components/BackButton';
 import Header from '../../../components/Header.tsx';
 import ProfilePhotoSection from '../../../components/Profile/ProfilePhotoSection.tsx';
+import SchoolPicker from '../../../components/Profile/SchoolPicker.tsx';
 import { CONTACT_NUMBER_MAX_LENGTH } from '../../../domain/Profile/validation/formatContactNumber';
 import { useAuth } from '../../context/AuthContext';
 import { useProfileForm } from '../../hooks/useProfileForm';
+import { useSchools } from '../../hooks/useSchools';
 import {
   pickProfilePhotoFromGallery,
   showPhotoPickerError,
@@ -36,9 +38,15 @@ function ProfileScreen() {
     setFullName,
     setContactNumber,
     setPhotoUri,
+    setSchoolId,
     validate,
     persistProfile,
   } = useProfileForm();
+  const {
+    schools,
+    loading: schoolsLoading,
+    error: schoolsError,
+  } = useSchools();
 
   const isFormDisabled = isLoading || isSaving;
 
@@ -151,6 +159,20 @@ function ProfileScreen() {
             />
             {errors.contactNumber ? (
               <Text style={styles.errorText}>{errors.contactNumber}</Text>
+            ) : null}
+
+            <Text style={styles.label}>School</Text>
+            <SchoolPicker
+              schools={schools}
+              selectedSchoolId={profile.schoolId}
+              onSelectSchool={setSchoolId}
+              loading={schoolsLoading}
+              error={schoolsError}
+              disabled={isFormDisabled}
+              hasError={Boolean(errors.schoolId)}
+            />
+            {errors.schoolId ? (
+              <Text style={styles.errorText}>{errors.schoolId}</Text>
             ) : null}
 
             {saveError && !isSaving ? (

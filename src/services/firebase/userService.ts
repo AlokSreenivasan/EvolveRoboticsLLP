@@ -64,6 +64,7 @@ function mapDocumentToUserProfile(
     email: data.email ?? '',
     phoneNumber: data.phoneNumber ?? '',
     profileImage: data.profileImage ?? null,
+    schoolId: data.schoolId ?? null,
     role,
     createdAt: isTimestamp(data.createdAt) ? data.createdAt : null,
     updatedAt: isTimestamp(data.updatedAt) ? data.updatedAt : null,
@@ -113,6 +114,7 @@ export async function createUserProfile(
       email: input.email.trim(),
       phoneNumber: input.phoneNumber.trim(),
       profileImage: input.profileImage ?? null,
+      schoolId: input.schoolId ?? null,
       role: DEFAULT_USER_ROLE,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
@@ -127,6 +129,7 @@ export async function createUserProfile(
       email: payload.email,
       phoneNumber: payload.phoneNumber,
       profileImage: payload.profileImage ?? null,
+      schoolId: payload.schoolId,
       role: DEFAULT_USER_ROLE,
       createdAt: null,
       updatedAt: null,
@@ -218,6 +221,9 @@ export async function updateUserProfile(
     if (input.profileImage !== undefined) {
       updates.profileImage = input.profileImage;
     }
+    if (input.schoolId !== undefined) {
+      updates.schoolId = input.schoolId;
+    }
 
     await updateDoc(userDocRef(uid), updates as UpdateData<DocumentData>);
 
@@ -247,6 +253,8 @@ function mergeUserProfile(
       input.profileImage !== undefined
         ? input.profileImage
         : base.profileImage,
+    schoolId:
+      input.schoolId !== undefined ? input.schoolId : base.schoolId,
   };
 }
 

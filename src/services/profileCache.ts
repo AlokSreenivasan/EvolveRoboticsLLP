@@ -16,6 +16,7 @@ type CachedUserProfilePayload = {
   email: string;
   phoneNumber: string;
   profileImage: string | null;
+  schoolId?: string | null;
   role?: UserRole;
   cachedAt: number;
 };
@@ -36,6 +37,7 @@ function toCachePayload(profile: UserProfile): CachedUserProfilePayload {
     email: profile.email,
     phoneNumber: profile.phoneNumber,
     profileImage: profile.profileImage,
+    schoolId: profile.schoolId,
     role: profile.role,
     cachedAt: Date.now(),
   };
@@ -50,6 +52,7 @@ function fromCachePayload(payload: CachedUserProfilePayload): UserProfile {
     email: payload.email,
     phoneNumber: payload.phoneNumber,
     profileImage: payload.profileImage,
+    schoolId: payload.schoolId ?? null,
     role,
     createdAt: null,
     updatedAt: null,

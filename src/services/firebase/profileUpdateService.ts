@@ -13,6 +13,7 @@ export type ProfileEditPayload = {
   phoneNumber: string;
   /** Local picker URI or existing remote download URL. */
   photoUri: string | null;
+  schoolId: string | null;
 };
 
 function buildOptimisticProfile(
@@ -25,6 +26,7 @@ function buildOptimisticProfile(
     fullName: payload.fullName.trim(),
     phoneNumber: payload.phoneNumber.trim(),
     profileImage: nextImageUrl,
+    schoolId: payload.schoolId,
   };
 }
 
@@ -75,6 +77,7 @@ export async function updateUserProfileWithSync(
         fullName: payload.fullName,
         phoneNumber: payload.phoneNumber,
         profileImage: nextImageUrl,
+        schoolId: payload.schoolId,
       },
       currentProfile,
     );

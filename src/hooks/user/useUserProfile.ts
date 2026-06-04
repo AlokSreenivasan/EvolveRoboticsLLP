@@ -39,6 +39,8 @@ export function useUserProfile(): UseUserProfileResult {
           input.profileImage !== undefined
             ? input.profileImage
             : profile.profileImage,
+        schoolId:
+          input.schoolId !== undefined ? input.schoolId : profile.schoolId,
       });
 
       if (!success) {
@@ -53,6 +55,8 @@ export function useUserProfile(): UseUserProfileResult {
           input.profileImage !== undefined
             ? input.profileImage
             : profile.profileImage,
+        schoolId:
+          input.schoolId !== undefined ? input.schoolId : profile.schoolId,
       };
     },
     [profile, updateSessionProfile],

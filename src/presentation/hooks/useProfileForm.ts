@@ -41,6 +41,7 @@ export function useProfileForm() {
       fullName: prev.fullName || nextForm.fullName,
       contactNumber: prev.contactNumber || nextForm.contactNumber,
       photoUri: prev.photoUri ?? nextForm.photoUri,
+      schoolId: prev.schoolId ?? nextForm.schoolId,
     }));
   }, [sessionProfile]);
 
@@ -68,20 +69,32 @@ export function useProfileForm() {
     setProfileForm(prev => ({ ...prev, photoUri: uri }));
   }, [markDirty]);
 
+  const setSchoolId = useCallback((schoolId: string | null) => {
+    markDirty();
+    setProfileForm(prev => ({ ...prev, schoolId }));
+    setErrors(prev => ({ ...prev, schoolId: undefined }));
+  }, [markDirty]);
+
   const validate = useCallback((): boolean => {
     const nextErrors = validateProfileForm({
       fullName: profileForm.fullName,
       contactNumber: profileForm.contactNumber,
+      schoolId: profileForm.schoolId,
     });
     setErrors(nextErrors);
     return !hasProfileFormErrors(nextErrors);
-  }, [profileForm.contactNumber, profileForm.fullName]);
+  }, [
+    profileForm.contactNumber,
+    profileForm.fullName,
+    profileForm.schoolId,
+  ]);
 
   const persistProfile = useCallback(async (): Promise<boolean> => {
     const success = await updateSessionProfile({
       fullName: profileForm.fullName,
       phoneNumber: profileForm.contactNumber,
       photoUri: profileForm.photoUri,
+      schoolId: profileForm.schoolId,
     });
 
     if (success) {
@@ -100,6 +113,7 @@ export function useProfileForm() {
     setFullName,
     setContactNumber,
     setPhotoUri,
+    setSchoolId,
     validate,
     persistProfile,
   };
