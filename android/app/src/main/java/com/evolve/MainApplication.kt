@@ -44,13 +44,27 @@ class MainApplication : Application(), ReactApplication {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
       return
     }
-    val channel =
+
+    val manager = getSystemService(NotificationManager::class.java) ?: return
+
+    val defaultChannel =
         NotificationChannel(
             "evolve_default",
             "Evolve",
             NotificationManager.IMPORTANCE_HIGH,
         )
-    val manager = getSystemService(NotificationManager::class.java)
-    manager?.createNotificationChannel(channel)
+    defaultChannel.description = "Alerts with sound and vibration"
+    manager.createNotificationChannel(defaultChannel)
+
+    val silentChannel =
+        NotificationChannel(
+            "evolve_silent",
+            "Evolve (Silent)",
+            NotificationManager.IMPORTANCE_HIGH,
+        )
+    silentChannel.description = "Alerts without sound or vibration"
+    silentChannel.setSound(null, null)
+    silentChannel.enableVibration(false)
+    manager.createNotificationChannel(silentChannel)
   }
 }

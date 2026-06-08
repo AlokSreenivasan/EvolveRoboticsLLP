@@ -71,8 +71,12 @@ function userMatchesSchoolGradeTarget(userData, schoolGradeIds) {
   return grade.length > 0 && gradeIds.includes(grade);
 }
 
-async function loadPushDisabledUserIds(db) {
-  const disabled = new Set();
+const ANDROID_CHANNEL_DEFAULT = 'evolve_default';
+const ANDROID_CHANNEL_SILENT = 'evolve_silent';
+
+async function loadNotificationPreferenceUserSets(db) {
+  const pushDisabled = new Set();
+  const soundDisabled = new Set();
   const prefsSnap = await db.collectionGroup('notificationPreferences').get();
 
   prefsSnap.docs.forEach(prefDoc => {
@@ -80,15 +84,105 @@ async function loadPushDisabledUserIds(db) {
       return;
     }
 
-    if (prefDoc.data()?.pushNotifications === false) {
-      const userId = prefDoc.ref.parent?.parent?.id;
-      if (typeof userId === 'string' && userId.length > 0) {
-        disabled.add(userId);
-      }
+    const userId = prefDoc.ref.parent?.parent?.id;
+    if (typeof userId !== 'string' || userId.length === 0) {
+      return;
+    }
+
+    const prefs = prefDoc.data() ?? {};
+    if (prefs.pushNotifications === false) {
+      pushDisabled.add(userId);
+    }
+    if (prefs.soundAndVibration === false) {
+      soundDisabled.add(userId);
     }
   });
 
-  return disabled;
+  return { pushDisabled, soundDisabled };
+}
+
+function collectEligibleTokens(
+  tokenSnap,
+  pushDisabledUserIds,
+  soundDisabledUserIds,
+  allowedUserIds,
+) {
+  const withSound = [];
+  const silent = [];
+  const seen = new Set();
+
+  tokenSnap.docs.forEach(tokenDoc => {
+    const userId = tokenDoc.ref.parent?.parent?.id;
+    if (typeof userId !== 'string' || pushDisabledUserIds.has(userId)) {
+      return;
+    }
+
+    if (allowedUserIds != null && !allowedUserIds.has(userId)) {
+      return;
+    }
+
+    const token = tokenDoc.data().token;
+    if (typeof token !== 'string' || token.length === 0 || seen.has(token)) {
+      return;
+    }
+
+    seen.add(token);
+    if (soundDisabledUserIds.has(userId)) {
+      silent.push(token);
+    } else {
+      withSound.push(token);
+    }
+  });
+
+  return { withSound, silent };
+}
+
+function buildMulticastMessage(title, body, notificationId, withSound) {
+  const message = {
+    notification: {
+      title: title.trim(),
+      body: body.trim(),
+    },
+    data: {
+      notificationId: notificationId.trim(),
+      type: 'live_notification',
+    },
+    android: {
+      priority: 'high',
+      notification: {
+        channelId: withSound ? ANDROID_CHANNEL_DEFAULT : ANDROID_CHANNEL_SILENT,
+      },
+    },
+  };
+
+  if (withSound) {
+    message.apns = {
+      payload: {
+        aps: {
+          sound: 'default',
+        },
+      },
+    };
+  }
+
+  return message;
+}
+
+async function sendMulticastBatches(messaging, tokens, message, batchSize) {
+  let successCount = 0;
+  let failureCount = 0;
+
+  for (let i = 0; i < tokens.length; i += batchSize) {
+    const chunk = tokens.slice(i, i + batchSize);
+    const response = await messaging.sendEachForMulticast({
+      ...message,
+      tokens: chunk,
+    });
+    successCount += response.successCount;
+    failureCount += response.failureCount;
+  }
+
+  return { successCount, failureCount };
 }
 
 async function loadAllowedUserIds(db, targetSchoolIds, schoolGradeIds) {
@@ -170,29 +264,18 @@ exports.sendLiveNotification = onCall(async request => {
       ? await loadAllowedUserIds(db, targetSchoolIds, schoolGradeIds)
       : null;
 
-  const pushDisabledUserIds = await loadPushDisabledUserIds(db);
+  const { pushDisabled, soundDisabled } =
+    await loadNotificationPreferenceUserSets(db);
   const tokenSnap = await db.collectionGroup('fcmTokens').get();
-  const tokens = [
-    ...new Set(
-      tokenSnap.docs
-        .filter(tokenDoc => {
-          const userId = tokenDoc.ref.parent?.parent?.id;
-          if (typeof userId !== 'string' || pushDisabledUserIds.has(userId)) {
-            return false;
-          }
+  const { withSound, silent } = collectEligibleTokens(
+    tokenSnap,
+    pushDisabled,
+    soundDisabled,
+    allowedUserIds,
+  );
+  const recipientCount = withSound.length + silent.length;
 
-          if (allowedUserIds == null) {
-            return true;
-          }
-
-          return allowedUserIds.has(userId);
-        })
-        .map(doc => doc.data().token)
-        .filter(token => typeof token === 'string' && token.length > 0),
-    ),
-  ];
-
-  if (tokens.length === 0) {
+  if (recipientCount === 0) {
     throw new HttpsError(
       'failed-precondition',
       audience === 'schools'
@@ -202,39 +285,23 @@ exports.sendLiveNotification = onCall(async request => {
   }
 
   const messaging = getMessaging();
-  let successCount = 0;
-  let failureCount = 0;
+  const soundMessage = buildMulticastMessage(
+    title,
+    body,
+    notificationId,
+    true,
+  );
+  const silentMessage = buildMulticastMessage(
+    title,
+    body,
+    notificationId,
+    false,
+  );
 
-  for (let i = 0; i < tokens.length; i += FCM_BATCH_SIZE) {
-    const chunk = tokens.slice(i, i + FCM_BATCH_SIZE);
-    const response = await messaging.sendEachForMulticast({
-      tokens: chunk,
-      notification: {
-        title: title.trim(),
-        body: body.trim(),
-      },
-      data: {
-        notificationId: notificationId.trim(),
-        type: 'live_notification',
-      },
-      android: {
-        priority: 'high',
-        notification: {
-          channelId: 'evolve_default',
-        },
-      },
-      apns: {
-        payload: {
-          aps: {
-            sound: 'default',
-          },
-        },
-      },
-    });
-
-    successCount += response.successCount;
-    failureCount += response.failureCount;
-  }
+  const [soundResult, silentResult] = await Promise.all([
+    sendMulticastBatches(messaging, withSound, soundMessage, FCM_BATCH_SIZE),
+    sendMulticastBatches(messaging, silent, silentMessage, FCM_BATCH_SIZE),
+  ]);
 
   await db.doc(`notifications/${notificationId}`).update({
     lastSentAt: FieldValue.serverTimestamp(),
@@ -242,8 +309,8 @@ exports.sendLiveNotification = onCall(async request => {
   });
 
   return {
-    successCount,
-    failureCount,
-    recipientCount: tokens.length,
+    successCount: soundResult.successCount + silentResult.successCount,
+    failureCount: soundResult.failureCount + silentResult.failureCount,
+    recipientCount,
   };
 });
