@@ -1,6 +1,5 @@
 export type NotificationPreferenceKey =
   | 'pushNotifications'
-  | 'emailNotifications'
   | 'soundAndVibration'
   | 'courseUpdates'
   | 'liveClassReminders'
@@ -19,7 +18,6 @@ export type NotificationPreferences = Record<
 
 export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   pushNotifications: true,
-  emailNotifications: true,
   soundAndVibration: true,
   courseUpdates: true,
   liveClassReminders: true,

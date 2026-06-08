@@ -5,7 +5,6 @@ import {
   BookOpen,
   CalendarDays,
   ClipboardList,
-  Mail,
   Megaphone,
   Shield,
   Sparkles,
@@ -174,17 +173,6 @@ function NotificationPreferencesScreen() {
             value={preferences.pushNotifications}
             onValueChange={value =>
               handleToggle('pushNotifications', value)
-            }
-          />
-          <NotificationToggleRow
-            icon={Mail}
-            iconColor={colors.accentBlue}
-            iconBackgroundColor="#E3F2FD"
-            title="Email Notifications"
-            subtitle="Get summaries and important updates by email"
-            value={preferences.emailNotifications}
-            onValueChange={value =>
-              handleToggle('emailNotifications', value)
             }
           />
           <NotificationToggleRow

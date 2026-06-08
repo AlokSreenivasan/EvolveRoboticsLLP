@@ -386,7 +386,6 @@ function isValidNotificationFields(data) {
 function isValidNotificationPreferencesWrite() {
   let data = request.resource.data;
   return data.pushNotifications is bool
-    && data.emailNotifications is bool
     && data.soundAndVibration is bool
     && data.courseUpdates is bool
     && data.liveClassReminders is bool
