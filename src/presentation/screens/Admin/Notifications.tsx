@@ -8,8 +8,14 @@ import AdminFormField from '../../../components/Admin/AdminFormField';
 import AdminListLayout from '../../../components/Admin/AdminListLayout';
 import AdminListRow from '../../../components/Admin/AdminListRow';
 import AdminListSectionHeader from '../../../components/Admin/AdminListSectionHeader';
+import AdminNotificationCategoryPicker from '../../../components/Admin/AdminNotificationCategoryPicker';
 import AdminPublishedSwitch from '../../../components/Admin/AdminPublishedSwitch';
 import AdminSchoolAudiencePicker from '../../../components/Admin/AdminSchoolAudiencePicker';
+import {
+  DEFAULT_NOTIFICATION_CATEGORY,
+  getNotificationCategoryLabel,
+} from '../../../constants/notificationCategories';
+import type { NotificationCategory } from '../../../constants/notificationCategories';
 import { sendLiveNotificationToUsers } from '../../../services/firebase/liveNotificationService';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useSchools } from '../../hooks/useSchools';
@@ -29,12 +35,14 @@ import { getErrorMessage } from '../../../utils/firebase/errors';
 type NotificationFormState = {
   title: string;
   body: string;
+  category: NotificationCategory;
   isPublished: boolean;
 };
 
 const EMPTY_FORM: NotificationFormState = {
   title: '',
   body: '',
+  category: DEFAULT_NOTIFICATION_CATEGORY,
   isPublished: true,
 };
 
@@ -68,6 +76,7 @@ function AdminNotifications() {
     setForm({
       title: notification.title,
       body: notification.body,
+      category: notification.category,
       isPublished: notification.isPublished,
     });
     audienceForm.resetAudience({
@@ -106,6 +115,7 @@ function AdminNotifications() {
       const payload = {
         title: form.title,
         body: form.body,
+        category: form.category,
         isPublished: form.isPublished,
         ...audienceForm.toPayload(),
       };
@@ -163,9 +173,10 @@ function AdminNotifications() {
     }
 
     const audienceLabel = formatSchoolAudienceSummary(notification, schools);
+    const categoryLabel = getNotificationCategoryLabel(notification.category);
     Alert.alert(
       'Send live notification',
-      `Send push "${notification.title}" to learners at ${audienceLabel} who have notifications enabled?`,
+      `Send push "${notification.title}" (${categoryLabel}) to learners at ${audienceLabel} who have notifications enabled for this category?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -207,13 +218,14 @@ function AdminNotifications() {
     }) => {
       const isSending = sendingLiveId === notification.id;
       const audienceLine = formatSchoolAudienceSummary(notification, schools);
+      const categoryLine = getNotificationCategoryLabel(notification.category);
       return (
         <AdminListRow
           title={notification.title}
           statusLine={
             notification.isPublished
-              ? `Visible on home · ${audienceLine}`
-              : audienceLine
+              ? `Visible on home · ${categoryLine} · ${audienceLine}`
+              : `${categoryLine} · ${audienceLine}`
           }
           isPublished={notification.isPublished}
           index={index}
@@ -279,6 +291,10 @@ function AdminNotifications() {
           onChangeText={body => setForm(prev => ({ ...prev, body }))}
           placeholder="Check the Courses tab to start learning."
           multiline
+        />
+        <AdminNotificationCategoryPicker
+          value={form.category}
+          onChange={category => setForm(prev => ({ ...prev, category }))}
         />
         <AdminPublishedSwitch
           label="Published for learners"

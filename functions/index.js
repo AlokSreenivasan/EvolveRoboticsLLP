@@ -74,9 +74,62 @@ function userMatchesSchoolGradeTarget(userData, schoolGradeIds) {
 const ANDROID_CHANNEL_DEFAULT = 'evolve_default';
 const ANDROID_CHANNEL_SILENT = 'evolve_silent';
 
-async function loadNotificationPreferenceUserSets(db) {
-  const pushDisabled = new Set();
-  const soundDisabled = new Set();
+const DEFAULT_NOTIFICATION_PREFERENCES = {
+  pushNotifications: true,
+  soundAndVibration: true,
+  courseUpdates: true,
+  liveClassReminders: true,
+  assignmentDeadlines: true,
+  progressAchievements: true,
+  securityAlerts: true,
+  accountChanges: true,
+  appUpdates: false,
+  promotionalOffers: false,
+  eventsAndWorkshops: true,
+};
+
+const CATEGORY_PREFERENCE_KEYS = {
+  course_updates: 'courseUpdates',
+  live_class_reminders: 'liveClassReminders',
+  assignment_deadlines: 'assignmentDeadlines',
+  progress_achievements: 'progressAchievements',
+  security_alerts: 'securityAlerts',
+  account_changes: 'accountChanges',
+  app_updates: 'appUpdates',
+  events_workshops: 'eventsAndWorkshops',
+  promotional_offers: 'promotionalOffers',
+};
+
+function normalizeNotificationCategory(value) {
+  if (typeof value === 'string' && value in CATEGORY_PREFERENCE_KEYS) {
+    return value;
+  }
+
+  return 'general';
+}
+
+function resolveUserPreferences(storedPrefs) {
+  return {
+    ...DEFAULT_NOTIFICATION_PREFERENCES,
+    ...(storedPrefs ?? {}),
+  };
+}
+
+function isCategoryEnabledForUser(prefs, category) {
+  if (!category || category === 'general') {
+    return true;
+  }
+
+  const preferenceKey = CATEGORY_PREFERENCE_KEYS[category];
+  if (!preferenceKey) {
+    return true;
+  }
+
+  return prefs[preferenceKey] !== false;
+}
+
+async function loadNotificationPreferencesByUser(db) {
+  const byUser = new Map();
   const prefsSnap = await db.collectionGroup('notificationPreferences').get();
 
   prefsSnap.docs.forEach(prefDoc => {
@@ -89,22 +142,16 @@ async function loadNotificationPreferenceUserSets(db) {
       return;
     }
 
-    const prefs = prefDoc.data() ?? {};
-    if (prefs.pushNotifications === false) {
-      pushDisabled.add(userId);
-    }
-    if (prefs.soundAndVibration === false) {
-      soundDisabled.add(userId);
-    }
+    byUser.set(userId, resolveUserPreferences(prefDoc.data()));
   });
 
-  return { pushDisabled, soundDisabled };
+  return byUser;
 }
 
 function collectEligibleTokens(
   tokenSnap,
-  pushDisabledUserIds,
-  soundDisabledUserIds,
+  preferencesByUser,
+  category,
   allowedUserIds,
 ) {
   const withSound = [];
@@ -113,7 +160,16 @@ function collectEligibleTokens(
 
   tokenSnap.docs.forEach(tokenDoc => {
     const userId = tokenDoc.ref.parent?.parent?.id;
-    if (typeof userId !== 'string' || pushDisabledUserIds.has(userId)) {
+    if (typeof userId !== 'string') {
+      return;
+    }
+
+    const prefs = resolveUserPreferences(preferencesByUser.get(userId));
+    if (prefs.pushNotifications === false) {
+      return;
+    }
+
+    if (!isCategoryEnabledForUser(prefs, category)) {
       return;
     }
 
@@ -127,7 +183,7 @@ function collectEligibleTokens(
     }
 
     seen.add(token);
-    if (soundDisabledUserIds.has(userId)) {
+    if (prefs.soundAndVibration === false) {
       silent.push(token);
     } else {
       withSound.push(token);
@@ -137,7 +193,7 @@ function collectEligibleTokens(
   return { withSound, silent };
 }
 
-function buildMulticastMessage(title, body, notificationId, withSound) {
+function buildMulticastMessage(title, body, notificationId, category, withSound) {
   const message = {
     notification: {
       title: title.trim(),
@@ -146,6 +202,7 @@ function buildMulticastMessage(title, body, notificationId, withSound) {
     data: {
       notificationId: notificationId.trim(),
       type: 'live_notification',
+      category,
     },
     android: {
       priority: 'high',
@@ -245,6 +302,7 @@ exports.sendLiveNotification = onCall(async request => {
   }
 
   const notificationData = notificationSnap.data() ?? {};
+  const category = normalizeNotificationCategory(notificationData.category);
   const audience = normalizeAudience(notificationData);
   const targetSchoolIds = normalizeSchoolIds(notificationData);
   const schoolGradeIds = normalizeSchoolGradeIds(
@@ -264,13 +322,12 @@ exports.sendLiveNotification = onCall(async request => {
       ? await loadAllowedUserIds(db, targetSchoolIds, schoolGradeIds)
       : null;
 
-  const { pushDisabled, soundDisabled } =
-    await loadNotificationPreferenceUserSets(db);
+  const preferencesByUser = await loadNotificationPreferencesByUser(db);
   const tokenSnap = await db.collectionGroup('fcmTokens').get();
   const { withSound, silent } = collectEligibleTokens(
     tokenSnap,
-    pushDisabled,
-    soundDisabled,
+    preferencesByUser,
+    category,
     allowedUserIds,
   );
   const recipientCount = withSound.length + silent.length;
@@ -279,8 +336,12 @@ exports.sendLiveNotification = onCall(async request => {
     throw new HttpsError(
       'failed-precondition',
       audience === 'schools'
-        ? 'No devices are registered for learners at the selected schools.'
-        : 'No devices are registered for push notifications yet.',
+        ? category === 'general'
+          ? 'No devices are registered for learners at the selected schools.'
+          : 'No devices are registered for learners at the selected schools with this notification category enabled.'
+        : category === 'general'
+          ? 'No devices are registered for push notifications yet.'
+          : 'No devices are registered with this notification category enabled.',
     );
   }
 
@@ -289,12 +350,14 @@ exports.sendLiveNotification = onCall(async request => {
     title,
     body,
     notificationId,
+    category,
     true,
   );
   const silentMessage = buildMulticastMessage(
     title,
     body,
     notificationId,
+    category,
     false,
   );
 

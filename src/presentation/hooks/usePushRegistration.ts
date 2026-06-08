@@ -4,7 +4,7 @@ import {
   registerDeviceForPushNotifications,
   subscribeFcmTokenRefresh,
 } from '../../services/firebase/fcmTokenService';
-import { loadNotificationPreferences } from '../../services/notificationPreferencesStorage';
+import { hydrateNotificationPreferences } from '../../services/notificationPreferencesStorage';
 import { useAuth } from '../context/AuthContext';
 
 /**
@@ -21,7 +21,7 @@ export function usePushRegistration() {
     let unsubRefresh: (() => void) | undefined;
     let cancelled = false;
 
-    loadNotificationPreferences().then(preferences => {
+    hydrateNotificationPreferences(user.uid).then(preferences => {
       if (cancelled || !preferences.pushNotifications) {
         return;
       }

@@ -2,15 +2,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import {
   Bell,
-  BookOpen,
   CalendarDays,
-  ClipboardList,
   Megaphone,
-  Shield,
   Sparkles,
-  Trophy,
-  UserCog,
-  Video,
   Volume2,
 } from 'lucide-react-native';
 
@@ -31,6 +25,7 @@ import {
 } from '../../../services/firebase/fcmTokenService';
 import { syncNotificationPreferencesToFirestore } from '../../../services/firebase/notificationPreferencesFirestoreService';
 import {
+  hydrateNotificationPreferences,
   loadNotificationPreferences,
   resetNotificationPreferences,
   saveNotificationPreferences,
@@ -48,7 +43,12 @@ function NotificationPreferencesScreen() {
   useEffect(() => {
     let mounted = true;
 
-    loadNotificationPreferences().then(stored => {
+    const loadPreferences = () =>
+      user?.uid
+        ? hydrateNotificationPreferences(user.uid)
+        : loadNotificationPreferences();
+
+    loadPreferences().then(stored => {
       if (mounted) {
         setPreferences(stored);
         setLoading(false);
@@ -58,7 +58,7 @@ function NotificationPreferencesScreen() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [user?.uid]);
 
   const persistPreferences = useCallback(
     async (
@@ -154,7 +154,7 @@ function NotificationPreferencesScreen() {
       <SettingsInfoCard
         icon={Bell}
         title="Stay in the loop"
-        description="Choose how you receive alerts about classes, assignments, and account activity on your robotics learning journey."
+        description="Choose how you receive alerts and updates on your robotics learning journey."
       />
 
       <View style={styles.sectionBlock}>
@@ -186,84 +186,6 @@ function NotificationPreferencesScreen() {
               handleToggle('soundAndVibration', value)
             }
             disabled={!pushEnabled}
-            isLast
-          />
-        </SettingsCard>
-      </View>
-
-      <View style={styles.sectionBlock}>
-        <SettingsSectionHeader title="Learning Alerts" />
-        <SettingsCard>
-          <NotificationToggleRow
-            icon={BookOpen}
-            iconColor={colors.accentBlue}
-            iconBackgroundColor="#E3F2FD"
-            title="Course Updates"
-            subtitle="New lessons, materials, and module releases"
-            value={preferences.courseUpdates}
-            onValueChange={value => handleToggle('courseUpdates', value)}
-            disabled={!pushEnabled}
-          />
-          <NotificationToggleRow
-            icon={Video}
-            iconColor="#9C27B0"
-            iconBackgroundColor="#F3E5F5"
-            title="Live Class Reminders"
-            subtitle="Reminders before webinars and live sessions"
-            value={preferences.liveClassReminders}
-            onValueChange={value =>
-              handleToggle('liveClassReminders', value)
-            }
-            disabled={!pushEnabled}
-          />
-          <NotificationToggleRow
-            icon={ClipboardList}
-            iconColor={colors.accentOrange}
-            iconBackgroundColor="#FFF3E0"
-            title="Assignment Deadlines"
-            subtitle="Due dates and submission reminders"
-            value={preferences.assignmentDeadlines}
-            onValueChange={value =>
-              handleToggle('assignmentDeadlines', value)
-            }
-            disabled={!pushEnabled}
-          />
-          <NotificationToggleRow
-            icon={Trophy}
-            iconColor={colors.accentGreen}
-            iconBackgroundColor="#E8F5E9"
-            title="Progress & Achievements"
-            subtitle="Milestones, badges, and course completions"
-            value={preferences.progressAchievements}
-            onValueChange={value =>
-              handleToggle('progressAchievements', value)
-            }
-            disabled={!pushEnabled}
-            isLast
-          />
-        </SettingsCard>
-      </View>
-
-      <View style={styles.sectionBlock}>
-        <SettingsSectionHeader title="Account Activity" />
-        <SettingsCard>
-          <NotificationToggleRow
-            icon={Shield}
-            iconColor={colors.danger}
-            iconBackgroundColor="#FFEBEE"
-            title="Security Alerts"
-            subtitle="Sign-in attempts and password changes"
-            value={preferences.securityAlerts}
-            onValueChange={value => handleToggle('securityAlerts', value)}
-          />
-          <NotificationToggleRow
-            icon={UserCog}
-            iconColor={colors.textPrimary}
-            iconBackgroundColor="#F3F4F6"
-            title="Account Changes"
-            subtitle="Profile updates and linked account activity"
-            value={preferences.accountChanges}
-            onValueChange={value => handleToggle('accountChanges', value)}
             isLast
           />
         </SettingsCard>
@@ -313,7 +235,7 @@ function NotificationPreferencesScreen() {
       {!pushEnabled ? (
         <View style={styles.hintCard}>
           <Text style={styles.hintText}>
-            Push notifications are off. Learning alert toggles will apply
+            Push notifications are off. Category toggles below will apply
             when you turn push notifications back on.
           </Text>
         </View>

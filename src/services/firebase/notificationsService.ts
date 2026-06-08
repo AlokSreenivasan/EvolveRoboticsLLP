@@ -5,6 +5,10 @@ import type {
 } from '@react-native-firebase/firestore';
 
 import type { ContentSubscribeOptions } from '../../store/content/types/schoolAudience.types';
+import {
+  DEFAULT_NOTIFICATION_CATEGORY,
+  normalizeNotificationCategory,
+} from '../../constants/notificationCategories';
 import type {
   AppNotification,
   AppNotificationDocument,
@@ -58,6 +62,7 @@ function mapNotification(
     id,
     title: data.title?.trim() ?? '',
     body: data.body?.trim() ?? '',
+    category: normalizeNotificationCategory(data.category),
     sortOrder: typeof data.sortOrder === 'number' ? data.sortOrder : 0,
     isPublished: data.isPublished === true,
     lastSentAt: isTimestamp(data.lastSentAt) ? data.lastSentAt : null,
@@ -121,6 +126,7 @@ export async function createNotification(
     const payload: AppNotificationDocument = {
       title: input.title.trim(),
       body: input.body.trim(),
+      category: input.category ?? DEFAULT_NOTIFICATION_CATEGORY,
       sortOrder,
       isPublished: input.isPublished ?? true,
       ...buildSchoolAudienceWriteFields(input),
@@ -158,6 +164,9 @@ export async function updateNotification(
     }
     if (input.body !== undefined) {
       updates.body = input.body.trim();
+    }
+    if (input.category !== undefined) {
+      updates.category = input.category;
     }
     if (input.sortOrder !== undefined) {
       updates.sortOrder = input.sortOrder;
