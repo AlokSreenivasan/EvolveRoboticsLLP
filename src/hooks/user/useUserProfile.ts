@@ -41,6 +41,7 @@ export function useUserProfile(): UseUserProfileResult {
             : profile.profileImage,
         schoolId:
           input.schoolId !== undefined ? input.schoolId : profile.schoolId,
+        grade: input.grade !== undefined ? input.grade : profile.grade,
       });
 
       if (!success) {
@@ -57,6 +58,7 @@ export function useUserProfile(): UseUserProfileResult {
             : profile.profileImage,
         schoolId:
           input.schoolId !== undefined ? input.schoolId : profile.schoolId,
+        grade: input.grade !== undefined ? input.grade : profile.grade,
       };
     },
     [profile, updateSessionProfile],

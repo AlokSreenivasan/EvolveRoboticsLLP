@@ -17,6 +17,7 @@ import AppButton from '../../../components/AppButton.tsx';
 import BackButton, { backButtonOverlayStyle } from '../../../components/BackButton';
 import Header from '../../../components/Header.tsx';
 import ProfilePhotoSection from '../../../components/Profile/ProfilePhotoSection.tsx';
+import GradePicker from '../../../components/Profile/GradePicker.tsx';
 import SchoolPicker from '../../../components/Profile/SchoolPicker.tsx';
 import { CONTACT_NUMBER_MAX_LENGTH } from '../../../domain/Profile/validation/formatContactNumber';
 import { useAuth } from '../../context/AuthContext';
@@ -39,6 +40,7 @@ function ProfileScreen() {
     setContactNumber,
     setPhotoUri,
     setSchoolId,
+    setGrade,
     validate,
     persistProfile,
   } = useProfileForm();
@@ -173,6 +175,17 @@ function ProfileScreen() {
             />
             {errors.schoolId ? (
               <Text style={styles.errorText}>{errors.schoolId}</Text>
+            ) : null}
+
+            <Text style={styles.label}>Grade</Text>
+            <GradePicker
+              selectedGrade={profile.grade}
+              onSelectGrade={setGrade}
+              disabled={isFormDisabled}
+              hasError={Boolean(errors.grade)}
+            />
+            {errors.grade ? (
+              <Text style={styles.errorText}>{errors.grade}</Text>
             ) : null}
 
             {saveError && !isSaving ? (

@@ -12,7 +12,7 @@ import type {
   UpdateExamInput,
 } from '../../store/content/types/exams.types';
 import {
-  isVisibleForViewerSchool,
+  isVisibleForViewer,
   shouldFilterByViewerSchool,
 } from '../../utils/content/schoolAudience';
 import {
@@ -129,7 +129,11 @@ export function subscribeExam(
         (!exam.isPublished ||
           exam.questions.length === 0 ||
           (shouldFilterByViewerSchool(options) &&
-            !isVisibleForViewerSchool(exam, options?.viewerSchoolId)))
+            !isVisibleForViewer(
+              exam,
+              options?.viewerSchoolId,
+              options?.viewerGrade,
+            )))
       ) {
         listener(null);
         return;

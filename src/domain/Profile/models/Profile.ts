@@ -3,6 +3,7 @@ export type Profile = {
   contactNumber: string;
   photoUri: string | null;
   schoolId: string | null;
+  grade: string | null;
 };
 
 export const emptyProfile = (): Profile => ({
@@ -10,4 +11,5 @@ export const emptyProfile = (): Profile => ({
   contactNumber: '',
   photoUri: null,
   schoolId: null,
+  grade: null,
 });

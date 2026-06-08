@@ -25,7 +25,53 @@ function normalizeSchoolIds(data) {
   ];
 }
 
-async function loadAllowedUserIds(db, targetSchoolIds) {
+function normalizeSchoolGradeIds(data, targetSchoolIds) {
+  const raw = data?.schoolGradeIds;
+  if (raw == null || typeof raw !== 'object' || Array.isArray(raw)) {
+    return {};
+  }
+
+  const allowedSchools = new Set(targetSchoolIds);
+  const result = {};
+
+  for (const [schoolId, gradeIds] of Object.entries(raw)) {
+    if (!allowedSchools.has(schoolId) || !Array.isArray(gradeIds)) {
+      continue;
+    }
+
+    const normalized = [
+      ...new Set(
+        gradeIds
+          .filter(id => typeof id === 'string' && id.trim().length > 0)
+          .map(id => id.trim()),
+      ),
+    ];
+
+    if (normalized.length > 0) {
+      result[schoolId] = normalized;
+    }
+  }
+
+  return result;
+}
+
+function userMatchesSchoolGradeTarget(userData, schoolGradeIds) {
+  const schoolId =
+    typeof userData?.schoolId === 'string' ? userData.schoolId.trim() : '';
+  if (!schoolId) {
+    return false;
+  }
+
+  const gradeIds = schoolGradeIds[schoolId];
+  if (!gradeIds || gradeIds.length === 0) {
+    return true;
+  }
+
+  const grade = typeof userData?.grade === 'string' ? userData.grade.trim() : '';
+  return grade.length > 0 && gradeIds.includes(grade);
+}
+
+async function loadAllowedUserIds(db, targetSchoolIds, schoolGradeIds) {
   const allowed = new Set();
 
   for (let i = 0; i < targetSchoolIds.length; i += 10) {
@@ -35,7 +81,11 @@ async function loadAllowedUserIds(db, targetSchoolIds) {
       .where('schoolId', 'in', chunk)
       .get();
 
-    snapshot.docs.forEach(doc => allowed.add(doc.id));
+    snapshot.docs.forEach(doc => {
+      if (userMatchesSchoolGradeTarget(doc.data(), schoolGradeIds)) {
+        allowed.add(doc.id);
+      }
+    });
   }
 
   return allowed;
@@ -83,6 +133,10 @@ exports.sendLiveNotification = onCall(async request => {
   const notificationData = notificationSnap.data() ?? {};
   const audience = normalizeAudience(notificationData);
   const targetSchoolIds = normalizeSchoolIds(notificationData);
+  const schoolGradeIds = normalizeSchoolGradeIds(
+    notificationData,
+    targetSchoolIds,
+  );
 
   if (audience === 'schools' && targetSchoolIds.length === 0) {
     throw new HttpsError(
@@ -92,7 +146,9 @@ exports.sendLiveNotification = onCall(async request => {
   }
 
   const allowedUserIds =
-    audience === 'schools' ? await loadAllowedUserIds(db, targetSchoolIds) : null;
+    audience === 'schools'
+      ? await loadAllowedUserIds(db, targetSchoolIds, schoolGradeIds)
+      : null;
 
   const tokenSnap = await db.collectionGroup('fcmTokens').get();
   const tokens = [

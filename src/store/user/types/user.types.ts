@@ -10,6 +10,8 @@ export interface UserProfileDocument {
   profileImage: string | null;
   /** Reference to schools/{schoolId}; null when not set. */
   schoolId: string | null;
+  /** Student grade level; null when not set. */
+  grade: string | null;
   role: UserRole;
   createdAt: FirebaseFirestoreTypes.Timestamp | FirebaseFirestoreTypes.FieldValue;
   updatedAt: FirebaseFirestoreTypes.Timestamp | FirebaseFirestoreTypes.FieldValue;
@@ -23,6 +25,7 @@ export interface UserProfile {
   phoneNumber: string;
   profileImage: string | null;
   schoolId: string | null;
+  grade: string | null;
   role: UserRole;
   createdAt: FirebaseFirestoreTypes.Timestamp | null;
   updatedAt: FirebaseFirestoreTypes.Timestamp | null;
@@ -34,8 +37,9 @@ export interface CreateUserProfileInput {
   phoneNumber: string;
   profileImage?: string | null;
   schoolId?: string | null;
+  grade?: string | null;
 }
 
 export type UpdateUserProfileInput = Partial<
-  Pick<UserProfile, 'fullName' | 'phoneNumber' | 'profileImage' | 'schoolId'>
+  Pick<UserProfile, 'fullName' | 'phoneNumber' | 'profileImage' | 'schoolId' | 'grade'>
 >;

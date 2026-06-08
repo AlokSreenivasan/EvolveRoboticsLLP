@@ -18,6 +18,7 @@ export function buildFallbackUserProfile(
     phoneNumber: '',
     profileImage: null,
     schoolId: null,
+    grade: null,
     role: DEFAULT_USER_ROLE,
     createdAt: null,
     updatedAt: null,
@@ -60,6 +61,7 @@ export function userProfileToFormProfile(profile: UserProfile | null): Profile {
       contactNumber: '',
       photoUri: null,
       schoolId: null,
+      grade: null,
     };
   }
 
@@ -68,6 +70,7 @@ export function userProfileToFormProfile(profile: UserProfile | null): Profile {
     contactNumber: profile.phoneNumber,
     photoUri: profile.profileImage,
     schoolId: profile.schoolId,
+    grade: profile.grade,
   };
 }
 
@@ -87,7 +90,8 @@ export function isRicherUserProfile(
     (profile.fullName?.trim() ? 1 : 0) +
     (profile.phoneNumber?.trim() ? 1 : 0) +
     (profile.profileImage?.trim() ? 1 : 0) +
-    (profile.schoolId?.trim() ? 1 : 0);
+    (profile.schoolId?.trim() ? 1 : 0) +
+    (profile.grade?.trim() ? 1 : 0);
 
   return score(candidate) > score(baseline);
 }

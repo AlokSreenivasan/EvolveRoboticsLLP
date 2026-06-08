@@ -1,3 +1,4 @@
+import { getGradeLabel } from '../../constants/gradeOptions';
 import type { School } from '../../store/content/types/schools.types';
 import type {
   ContentSubscribeOptions,
@@ -5,9 +6,51 @@ import type {
   SchoolAudienceDocument,
   SchoolAudienceFields,
   SchoolAudienceInput,
+  SchoolGradeIdsMap,
 } from '../../store/content/types/schoolAudience.types';
 
 const MAX_SCHOOL_IDS = 50;
+const MAX_GRADES_PER_SCHOOL = 20;
+
+function normalizeGradeIds(raw: unknown): string[] {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+
+  return [
+    ...new Set(
+      raw
+        .filter((id): id is string => typeof id === 'string' && id.trim().length > 0)
+        .map(id => id.trim())
+        .slice(0, MAX_GRADES_PER_SCHOOL),
+    ),
+  ];
+}
+
+function normalizeSchoolGradeIdsMap(
+  raw: unknown,
+  allowedSchoolIds: string[],
+): SchoolGradeIdsMap {
+  if (raw == null || typeof raw !== 'object' || Array.isArray(raw)) {
+    return {};
+  }
+
+  const allowed = new Set(allowedSchoolIds);
+  const result: SchoolGradeIdsMap = {};
+
+  for (const [schoolId, gradeIds] of Object.entries(raw)) {
+    if (!allowed.has(schoolId)) {
+      continue;
+    }
+
+    const normalized = normalizeGradeIds(gradeIds);
+    if (normalized.length > 0) {
+      result[schoolId] = normalized;
+    }
+  }
+
+  return result;
+}
 
 export function parseSchoolAudienceFromDoc(
   data: SchoolAudienceDocument | undefined,
@@ -20,16 +63,21 @@ export function parseSchoolAudienceFromDoc(
     .filter((id): id is string => typeof id === 'string' && id.trim().length > 0)
     .map(id => id.trim())
     .slice(0, MAX_SCHOOL_IDS);
+  const schoolGradeIds =
+    audience === 'schools'
+      ? normalizeSchoolGradeIdsMap(doc.schoolGradeIds, schoolIds)
+      : {};
 
   return {
     audience,
     schoolIds: audience === 'schools' ? schoolIds : [],
+    schoolGradeIds,
   };
 }
 
 export function schoolAudienceToFirestorePayload(
   input: SchoolAudienceInput,
-): Pick<SchoolAudienceDocument, 'audience' | 'schoolIds'> {
+): Pick<SchoolAudienceDocument, 'audience' | 'schoolIds' | 'schoolGradeIds'> {
   const audience: SchoolAudience =
     input.audience === 'schools' ? 'schools' : 'all';
   const rawIds = Array.isArray(input.schoolIds) ? input.schoolIds : [];
@@ -39,10 +87,14 @@ export function schoolAudienceToFirestorePayload(
     .slice(0, MAX_SCHOOL_IDS);
 
   if (audience === 'schools') {
-    return { audience: 'schools', schoolIds };
+    return {
+      audience: 'schools',
+      schoolIds,
+      schoolGradeIds: normalizeSchoolGradeIdsMap(input.schoolGradeIds, schoolIds),
+    };
   }
 
-  return { audience: 'all', schoolIds: [] };
+  return { audience: 'all', schoolIds: [], schoolGradeIds: {} };
 }
 
 export function isVisibleForViewerSchool(
@@ -59,6 +111,49 @@ export function isVisibleForViewerSchool(
   }
 
   return item.schoolIds.includes(schoolId);
+}
+
+export function isVisibleForViewerGrade(
+  item: SchoolAudienceFields,
+  viewerSchoolId: string | null | undefined,
+  viewerGrade: string | null | undefined,
+): boolean {
+  if (item.audience !== 'schools') {
+    return true;
+  }
+
+  const schoolId = viewerSchoolId?.trim();
+  if (!schoolId) {
+    return true;
+  }
+
+  const gradeIds = item.schoolGradeIds[schoolId];
+  if (!gradeIds || gradeIds.length === 0) {
+    return true;
+  }
+
+  const grade = viewerGrade?.trim();
+  if (!grade) {
+    return false;
+  }
+
+  return gradeIds.includes(grade);
+}
+
+export function isVisibleForViewer(
+  item: SchoolAudienceFields,
+  viewerSchoolId: string | null | undefined,
+  viewerGrade?: string | null | undefined,
+): boolean {
+  if (!isVisibleForViewerSchool(item, viewerSchoolId)) {
+    return false;
+  }
+
+  if (viewerGrade === undefined) {
+    return true;
+  }
+
+  return isVisibleForViewerGrade(item, viewerSchoolId, viewerGrade);
 }
 
 export function shouldFilterByViewerSchool(
@@ -83,7 +178,7 @@ export function filterByViewerSchool<T extends SchoolAudienceFields>(
   }
 
   return items.filter(item =>
-    isVisibleForViewerSchool(item, options?.viewerSchoolId),
+    isVisibleForViewer(item, options?.viewerSchoolId, options?.viewerGrade),
   );
 }
 
@@ -107,7 +202,45 @@ export function validateSchoolAudienceInput(
     return `You can select up to ${MAX_SCHOOL_IDS} schools.`;
   }
 
+  const rawSchoolGradeIds =
+    input.schoolGradeIds != null &&
+    typeof input.schoolGradeIds === 'object' &&
+    !Array.isArray(input.schoolGradeIds)
+      ? input.schoolGradeIds
+      : {};
+
+  for (const schoolId of ids) {
+    const pendingGradeIds = rawSchoolGradeIds[schoolId];
+    if (Array.isArray(pendingGradeIds) && pendingGradeIds.length === 0) {
+      return 'Select at least one grade for each school using Selected grades, or switch to All grades.';
+    }
+  }
+
+  const schoolGradeIds = normalizeSchoolGradeIdsMap(input.schoolGradeIds, ids);
+  for (const schoolId of ids) {
+    const gradeIds = schoolGradeIds[schoolId];
+    if (gradeIds && gradeIds.length > MAX_GRADES_PER_SCHOOL) {
+      return `You can select up to ${MAX_GRADES_PER_SCHOOL} grades per school.`;
+    }
+  }
+
   return null;
+}
+
+function formatSchoolGradeSummary(gradeIds: string[]): string {
+  const labels = gradeIds
+    .map(id => getGradeLabel(id) ?? id)
+    .filter((label): label is string => Boolean(label));
+
+  if (labels.length === 0) {
+    return 'selected grades';
+  }
+
+  if (labels.length <= 2) {
+    return labels.join(', ');
+  }
+
+  return `${labels.slice(0, 2).join(', ')} +${labels.length - 2} more`;
 }
 
 export function formatSchoolAudienceSummary(
@@ -122,17 +255,21 @@ export function formatSchoolAudienceSummary(
     return 'No schools selected';
   }
 
-  const names = fields.schoolIds
-    .map(id => schools.find(school => school.id === id)?.name?.trim())
-    .filter((name): name is string => Boolean(name));
+  const parts = fields.schoolIds.map(schoolId => {
+    const name = schools.find(school => school.id === schoolId)?.name?.trim();
+    const schoolLabel = name || schoolId;
+    const gradeIds = fields.schoolGradeIds[schoolId];
 
-  if (names.length === 0) {
-    return `${fields.schoolIds.length} school(s)`;
+    if (gradeIds && gradeIds.length > 0) {
+      return `${schoolLabel} (${formatSchoolGradeSummary(gradeIds)})`;
+    }
+
+    return schoolLabel;
+  });
+
+  if (parts.length <= 2) {
+    return parts.join(' · ');
   }
 
-  if (names.length <= 2) {
-    return names.join(', ');
-  }
-
-  return `${names.slice(0, 2).join(', ')} +${names.length - 2} more`;
+  return `${parts.slice(0, 2).join(' · ')} +${parts.length - 2} more`;
 }

@@ -152,6 +152,7 @@ function ManageExams() {
     audienceForm.resetAudience({
       audience: exam.audience,
       schoolIds: exam.schoolIds,
+      schoolGradeIds: exam.schoolGradeIds,
     });
     setEditorVisible(true);
   };
@@ -516,11 +517,15 @@ function ManageExams() {
             <AdminSchoolAudiencePicker
               audience={audienceForm.audience}
               selectedSchoolIds={audienceForm.schoolIds}
+              schoolGradeIds={audienceForm.schoolGradeIds}
               schools={schools}
               schoolsLoading={schoolsLoading}
               schoolsError={schoolsError}
               onAudienceChange={audienceForm.setAudienceMode}
               onToggleSchool={audienceForm.toggleSchoolId}
+              onSchoolGradeModeChange={audienceForm.setSchoolGradeMode}
+              onToggleSchoolGrade={audienceForm.toggleSchoolGrade}
+              getSchoolGradeMode={audienceForm.getSchoolGradeMode}
             />
           </>
         )}

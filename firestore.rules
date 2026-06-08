@@ -137,6 +137,14 @@ function isValidAppContentSection() {
     && data.actionLabel.size() <= 60;
 }
 
+function isValidSchoolGradeIdsMap(data) {
+  return !('schoolGradeIds' in data)
+    || (
+      data.schoolGradeIds is map
+      && data.schoolGradeIds.size() <= 50
+    );
+}
+
 function isValidSchoolAudienceFields(data) {
   return (!('audience' in data) || data.audience == 'all' || data.audience == 'schools')
     && (
@@ -146,7 +154,8 @@ function isValidSchoolAudienceFields(data) {
         && data.schoolIds.size() <= 50
         && (data.audience != 'schools' || data.schoolIds.size() >= 1)
       )
-    );
+    )
+    && isValidSchoolGradeIdsMap(data);
 }
 
 function isValidImportantUpdateNoticeFields(data) {
@@ -440,13 +449,14 @@ function isValidProfileData() {
     && data.phoneNumber.size() <= 15
     && isValidUserRole(data.role)
     && isOptionalProfileImage(data.profileImage)
-    && isOptionalSchoolId(data.schoolId);
+    && isOptionalSchoolId(data.schoolId)
+    && isOptionalGrade(data.grade);
 }
 
 // Updates use .update() with partial fields — validate merged document, not serverTimestamp equality.
 function onlyProfileFieldsChanged() {
   return request.resource.data.diff(resource.data).affectedKeys()
-    .hasOnly(['fullName', 'phoneNumber', 'profileImage', 'schoolId', 'updatedAt']);
+    .hasOnly(['fullName', 'phoneNumber', 'profileImage', 'schoolId', 'grade', 'updatedAt']);
 }
 
 function isValidProfileDataAfterUpdate() {
@@ -459,7 +469,8 @@ function isValidProfileDataAfterUpdate() {
     && data.phoneNumber.size() <= 15
     && isValidUserRole(data.role)
     && isOptionalProfileImage(data.profileImage)
-    && isOptionalSchoolId(data.schoolId);
+    && isOptionalSchoolId(data.schoolId)
+    && isOptionalGrade(data.grade);
 }
 
 function isValidUserRole(value) {
@@ -474,4 +485,9 @@ function isOptionalProfileImage(value) {
 function isOptionalSchoolId(value) {
   return value == null
     || (value is string && value.size() > 0 && value.size() <= 128);
+}
+
+function isOptionalGrade(value) {
+  return value == null
+    || (value is string && value.size() > 0 && value.size() <= 32);
 }

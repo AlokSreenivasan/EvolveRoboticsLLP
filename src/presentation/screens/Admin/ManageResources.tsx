@@ -91,6 +91,7 @@ function ManageResources() {
     audienceForm.resetAudience({
       audience: note.audience,
       schoolIds: note.schoolIds,
+      schoolGradeIds: note.schoolGradeIds,
     });
     pdfPicker.loadExistingPdf(note.pdfUrl);
     setEditorVisible(true);
@@ -287,11 +288,15 @@ function ManageResources() {
         <AdminSchoolAudiencePicker
           audience={audienceForm.audience}
           selectedSchoolIds={audienceForm.schoolIds}
+          schoolGradeIds={audienceForm.schoolGradeIds}
           schools={schools}
           schoolsLoading={schoolsLoading}
           schoolsError={schoolsError}
           onAudienceChange={audienceForm.setAudienceMode}
           onToggleSchool={audienceForm.toggleSchoolId}
+          onSchoolGradeModeChange={audienceForm.setSchoolGradeMode}
+          onToggleSchoolGrade={audienceForm.toggleSchoolGrade}
+          getSchoolGradeMode={audienceForm.getSchoolGradeMode}
         />
       </AdminEntityForm>
     </>

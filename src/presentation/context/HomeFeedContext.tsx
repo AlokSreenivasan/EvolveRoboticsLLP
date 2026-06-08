@@ -137,6 +137,7 @@ type HomeFeedProviderProps = {
 function buildHomeFeedSubscribeOptions(
   isAdmin: boolean,
   schoolId: string | null | undefined,
+  grade: string | null | undefined,
 ): ContentSubscribeOptions {
   if (isAdmin) {
     return { includeUnpublished: false };
@@ -145,6 +146,7 @@ function buildHomeFeedSubscribeOptions(
   return {
     includeUnpublished: false,
     viewerSchoolId: schoolId ?? null,
+    viewerGrade: grade ?? null,
   };
 }
 
@@ -155,8 +157,9 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
       buildHomeFeedSubscribeOptions(
         !roleLoading && isAdmin,
         profile?.schoolId,
+        profile?.grade,
       ),
-    [isAdmin, profile?.schoolId, roleLoading],
+    [isAdmin, profile?.grade, profile?.schoolId, roleLoading],
   );
   const [focusCount, setFocusCount] = useState(0);
   const isActive = focusCount > 0;

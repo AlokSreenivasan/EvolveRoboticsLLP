@@ -9,34 +9,46 @@ import {
 import { Check } from 'lucide-react-native';
 
 import { adminStyles } from './adminStyles';
+import { GRADE_OPTIONS } from '../../constants/gradeOptions';
 import { colors } from '../../constants/theme';
 import type { School } from '../../store/content/types/schools.types';
-import type { SchoolAudience } from '../../store/content/types/schoolAudience.types';
+import type {
+  SchoolAudience,
+  SchoolGradeIdsMap,
+} from '../../store/content/types/schoolAudience.types';
 
 type AdminSchoolAudiencePickerProps = {
   audience: SchoolAudience;
   selectedSchoolIds: string[];
+  schoolGradeIds: SchoolGradeIdsMap;
   schools: School[];
   schoolsLoading?: boolean;
   schoolsError?: string | null;
   onAudienceChange: (audience: SchoolAudience) => void;
   onToggleSchool: (schoolId: string) => void;
+  onSchoolGradeModeChange: (schoolId: string, mode: 'all' | 'grades') => void;
+  onToggleSchoolGrade: (schoolId: string, gradeId: string) => void;
+  getSchoolGradeMode: (schoolId: string) => 'all' | 'grades';
 };
 
 function AdminSchoolAudiencePicker({
   audience,
   selectedSchoolIds,
+  schoolGradeIds,
   schools,
   schoolsLoading = false,
   schoolsError = null,
   onAudienceChange,
   onToggleSchool,
+  onSchoolGradeModeChange,
+  onToggleSchoolGrade,
+  getSchoolGradeMode,
 }: AdminSchoolAudiencePickerProps) {
   return (
     <View style={styles.wrap}>
       <Text style={adminStyles.fieldLabel}>Audience</Text>
       <Text style={adminStyles.sectionHint}>
-        Send to all schools, or limit to specific partner schools.
+        Send to all schools, specific schools, or limit grades within each school.
       </Text>
 
       <View style={styles.modeRow}>
@@ -88,33 +100,116 @@ function AdminSchoolAudiencePicker({
             schools.map(school => {
               const selected = selectedSchoolIds.includes(school.id);
               const city = school.city.trim();
+              const gradeMode = getSchoolGradeMode(school.id);
+              const selectedGrades = schoolGradeIds[school.id] ?? [];
 
               return (
-                <Pressable
-                  key={school.id}
-                  style={[
-                    styles.schoolRow,
-                    selected ? styles.schoolRowSelected : null,
-                  ]}
-                  onPress={() => onToggleSchool(school.id)}
-                  accessibilityRole="checkbox"
-                  accessibilityState={{ checked: selected }}>
-                  <View
+                <View key={school.id}>
+                  <Pressable
                     style={[
-                      styles.checkbox,
-                      selected ? styles.checkboxSelected : null,
-                    ]}>
-                    {selected ? (
-                      <Check size={14} color="#fff" strokeWidth={3} />
-                    ) : null}
-                  </View>
-                  <View style={styles.schoolMeta}>
-                    <Text style={styles.schoolName}>{school.name}</Text>
-                    {city ? (
-                      <Text style={styles.schoolCity}>{city}</Text>
-                    ) : null}
-                  </View>
-                </Pressable>
+                      styles.schoolRow,
+                      selected ? styles.schoolRowSelected : null,
+                    ]}
+                    onPress={() => onToggleSchool(school.id)}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: selected }}>
+                    <View
+                      style={[
+                        styles.checkbox,
+                        selected ? styles.checkboxSelected : null,
+                      ]}>
+                      {selected ? (
+                        <Check size={14} color="#fff" strokeWidth={3} />
+                      ) : null}
+                    </View>
+                    <View style={styles.schoolMeta}>
+                      <Text style={styles.schoolName}>{school.name}</Text>
+                      {city ? (
+                        <Text style={styles.schoolCity}>{city}</Text>
+                      ) : null}
+                    </View>
+                  </Pressable>
+
+                  {selected ? (
+                    <View style={styles.gradeSection}>
+                      <Text style={styles.gradeSectionLabel}>Grades</Text>
+                      <View style={styles.gradeModeRow}>
+                        <Pressable
+                          style={[
+                            styles.gradeModeChip,
+                            gradeMode === 'all' ? styles.gradeModeChipActive : null,
+                          ]}
+                          onPress={() => onSchoolGradeModeChange(school.id, 'all')}
+                          accessibilityRole="button"
+                          accessibilityState={{ selected: gradeMode === 'all' }}>
+                          <Text
+                            style={[
+                              styles.gradeModeChipText,
+                              gradeMode === 'all'
+                                ? styles.gradeModeChipTextActive
+                                : null,
+                            ]}>
+                            All grades
+                          </Text>
+                        </Pressable>
+                        <Pressable
+                          style={[
+                            styles.gradeModeChip,
+                            gradeMode === 'grades' ? styles.gradeModeChipActive : null,
+                          ]}
+                          onPress={() =>
+                            onSchoolGradeModeChange(school.id, 'grades')
+                          }
+                          accessibilityRole="button"
+                          accessibilityState={{ selected: gradeMode === 'grades' }}>
+                          <Text
+                            style={[
+                              styles.gradeModeChipText,
+                              gradeMode === 'grades'
+                                ? styles.gradeModeChipTextActive
+                                : null,
+                            ]}>
+                            Selected grades
+                          </Text>
+                        </Pressable>
+                      </View>
+
+                      {gradeMode === 'grades' ? (
+                        <View style={styles.gradeGrid}>
+                          {GRADE_OPTIONS.map(option => {
+                            const gradeSelected = selectedGrades.includes(
+                              option.value,
+                            );
+
+                            return (
+                              <Pressable
+                                key={option.value}
+                                style={[
+                                  styles.gradeChip,
+                                  gradeSelected ? styles.gradeChipSelected : null,
+                                ]}
+                                onPress={() =>
+                                  onToggleSchoolGrade(school.id, option.value)
+                                }
+                                accessibilityRole="checkbox"
+                                accessibilityState={{ checked: gradeSelected }}>
+                                <Text
+                                  style={[
+                                    styles.gradeChipText,
+                                    gradeSelected
+                                      ? styles.gradeChipTextSelected
+                                      : null,
+                                  ]}>
+                                  {option.label}
+                                </Text>
+                              </Pressable>
+                            );
+                          })}
+                        </View>
+                      ) : null}
+                    </View>
+                  ) : null}
+                </View>
               );
             })
           )}
@@ -200,6 +295,72 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textSecondary,
     marginTop: 2,
+  },
+  gradeSection: {
+    paddingHorizontal: 12,
+    paddingBottom: 12,
+    paddingTop: 4,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  gradeSectionLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    marginBottom: 8,
+  },
+  gradeModeRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 10,
+  },
+  gradeModeChip: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
+    alignItems: 'center',
+  },
+  gradeModeChipActive: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primaryLight,
+  },
+  gradeModeChipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  gradeModeChipTextActive: {
+    color: colors.primary,
+  },
+  gradeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  gradeChip: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
+  },
+  gradeChipSelected: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primaryLight,
+  },
+  gradeChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  gradeChipTextSelected: {
+    color: colors.primary,
   },
   loader: {
     marginVertical: 16,

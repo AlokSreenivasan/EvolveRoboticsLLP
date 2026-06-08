@@ -42,6 +42,7 @@ export function useProfileForm() {
       contactNumber: prev.contactNumber || nextForm.contactNumber,
       photoUri: prev.photoUri ?? nextForm.photoUri,
       schoolId: prev.schoolId ?? nextForm.schoolId,
+      grade: prev.grade ?? nextForm.grade,
     }));
   }, [sessionProfile]);
 
@@ -75,11 +76,18 @@ export function useProfileForm() {
     setErrors(prev => ({ ...prev, schoolId: undefined }));
   }, [markDirty]);
 
+  const setGrade = useCallback((grade: string | null) => {
+    markDirty();
+    setProfileForm(prev => ({ ...prev, grade }));
+    setErrors(prev => ({ ...prev, grade: undefined }));
+  }, [markDirty]);
+
   const validate = useCallback((): boolean => {
     const nextErrors = validateProfileForm({
       fullName: profileForm.fullName,
       contactNumber: profileForm.contactNumber,
       schoolId: profileForm.schoolId,
+      grade: profileForm.grade,
     });
     setErrors(nextErrors);
     return !hasProfileFormErrors(nextErrors);
@@ -87,6 +95,7 @@ export function useProfileForm() {
     profileForm.contactNumber,
     profileForm.fullName,
     profileForm.schoolId,
+    profileForm.grade,
   ]);
 
   const persistProfile = useCallback(async (): Promise<boolean> => {
@@ -95,6 +104,7 @@ export function useProfileForm() {
       phoneNumber: profileForm.contactNumber,
       photoUri: profileForm.photoUri,
       schoolId: profileForm.schoolId,
+      grade: profileForm.grade,
     });
 
     if (success) {
@@ -114,6 +124,7 @@ export function useProfileForm() {
     setContactNumber,
     setPhotoUri,
     setSchoolId,
+    setGrade,
     validate,
     persistProfile,
   };
