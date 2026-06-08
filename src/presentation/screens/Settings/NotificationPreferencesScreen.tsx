@@ -27,12 +27,19 @@ import {
   type NotificationPreferences,
 } from '../../../constants/notificationPreferences';
 import {
+  registerDeviceForPushNotifications,
+  unregisterDeviceForPushNotifications,
+} from '../../../services/firebase/fcmTokenService';
+import { syncNotificationPreferencesToFirestore } from '../../../services/firebase/notificationPreferencesFirestoreService';
+import {
   loadNotificationPreferences,
   resetNotificationPreferences,
   saveNotificationPreferences,
 } from '../../../services/notificationPreferencesStorage';
+import { useAuth } from '../../context/AuthContext';
 
 function NotificationPreferencesScreen() {
+  const { user } = useAuth();
   const [preferences, setPreferences] = useState<NotificationPreferences>(
     DEFAULT_NOTIFICATION_PREFERENCES,
   );
@@ -55,11 +62,24 @@ function NotificationPreferencesScreen() {
   }, []);
 
   const persistPreferences = useCallback(
-    async (next: NotificationPreferences) => {
+    async (
+      next: NotificationPreferences,
+      previous: NotificationPreferences,
+    ) => {
       setPreferences(next);
       setSaving(true);
       try {
         await saveNotificationPreferences(next);
+
+        if (user?.uid) {
+          await syncNotificationPreferencesToFirestore(user.uid, next);
+
+          if (next.pushNotifications && !previous.pushNotifications) {
+            await registerDeviceForPushNotifications(user.uid);
+          } else if (!next.pushNotifications && previous.pushNotifications) {
+            await unregisterDeviceForPushNotifications(user.uid);
+          }
+        }
       } catch {
         Alert.alert(
           'Save Failed',
@@ -69,10 +89,11 @@ function NotificationPreferencesScreen() {
         setSaving(false);
       }
     },
-    [],
+    [user?.uid],
   );
 
   const handleToggle = (key: NotificationPreferenceKey, value: boolean) => {
+    const previous = preferences;
     const next = { ...preferences, [key]: value };
 
     if (key === 'pushNotifications' && !value) {
@@ -83,7 +104,7 @@ function NotificationPreferencesScreen() {
       next.pushNotifications = true;
     }
 
-    void persistPreferences(next);
+    void persistPreferences(next, previous);
   };
 
   const handleReset = () => {
@@ -95,10 +116,21 @@ function NotificationPreferencesScreen() {
         {
           text: 'Reset',
           onPress: async () => {
+            const previousPushEnabled = preferences.pushNotifications;
             setSaving(true);
             try {
               const defaults = await resetNotificationPreferences();
               setPreferences(defaults);
+
+              if (user?.uid) {
+                await syncNotificationPreferencesToFirestore(user.uid, defaults);
+
+                if (defaults.pushNotifications && !previousPushEnabled) {
+                  await registerDeviceForPushNotifications(user.uid);
+                } else if (!defaults.pushNotifications && previousPushEnabled) {
+                  await unregisterDeviceForPushNotifications(user.uid);
+                }
+              }
             } catch {
               Alert.alert(
                 'Reset Failed',

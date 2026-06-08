@@ -71,6 +71,26 @@ function userMatchesSchoolGradeTarget(userData, schoolGradeIds) {
   return grade.length > 0 && gradeIds.includes(grade);
 }
 
+async function loadPushDisabledUserIds(db) {
+  const disabled = new Set();
+  const prefsSnap = await db.collectionGroup('notificationPreferences').get();
+
+  prefsSnap.docs.forEach(prefDoc => {
+    if (prefDoc.id !== 'current') {
+      return;
+    }
+
+    if (prefDoc.data()?.pushNotifications === false) {
+      const userId = prefDoc.ref.parent?.parent?.id;
+      if (typeof userId === 'string' && userId.length > 0) {
+        disabled.add(userId);
+      }
+    }
+  });
+
+  return disabled;
+}
+
 async function loadAllowedUserIds(db, targetSchoolIds, schoolGradeIds) {
   const allowed = new Set();
 
@@ -150,17 +170,22 @@ exports.sendLiveNotification = onCall(async request => {
       ? await loadAllowedUserIds(db, targetSchoolIds, schoolGradeIds)
       : null;
 
+  const pushDisabledUserIds = await loadPushDisabledUserIds(db);
   const tokenSnap = await db.collectionGroup('fcmTokens').get();
   const tokens = [
     ...new Set(
       tokenSnap.docs
         .filter(tokenDoc => {
+          const userId = tokenDoc.ref.parent?.parent?.id;
+          if (typeof userId !== 'string' || pushDisabledUserIds.has(userId)) {
+            return false;
+          }
+
           if (allowedUserIds == null) {
             return true;
           }
 
-          const userId = tokenDoc.ref.parent?.parent?.id;
-          return typeof userId === 'string' && allowedUserIds.has(userId);
+          return allowedUserIds.has(userId);
         })
         .map(doc => doc.data().token)
         .filter(token => typeof token === 'string' && token.length > 0),

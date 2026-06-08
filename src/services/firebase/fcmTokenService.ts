@@ -1,5 +1,6 @@
 import {
   AuthorizationStatus,
+  deleteToken,
   getMessaging,
   getToken,
   onTokenRefresh,
@@ -7,9 +8,18 @@ import {
 } from '@react-native-firebase/messaging';
 import { PermissionsAndroid, Platform } from 'react-native';
 
+import { loadNotificationPreferences } from '../notificationPreferencesStorage';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { FIRESTORE_COLLECTIONS } from './constants';
-import { db, doc, serverTimestamp, setDoc } from './firestoreClient';
+import {
+  collection,
+  db,
+  deleteDoc,
+  doc,
+  getDocs,
+  serverTimestamp,
+  setDoc,
+} from './firestoreClient';
 
 const firebaseMessaging = getMessaging();
 
@@ -90,12 +100,49 @@ export async function registerDeviceForPushNotifications(
   }
 }
 
+async function deleteStoredFcmTokens(uid: string): Promise<void> {
+  const tokensRef = collection(
+    db,
+    FIRESTORE_COLLECTIONS.users,
+    uid,
+    FCM_TOKENS_SUBCOLLECTION,
+  );
+  const snapshot = await getDocs(tokensRef);
+  await Promise.all(snapshot.docs.map(tokenDoc => deleteDoc(tokenDoc.ref)));
+}
+
+/**
+ * Deletes the device FCM token and removes all stored tokens for the user.
+ */
+export async function unregisterDeviceForPushNotifications(
+  uid: string,
+): Promise<void> {
+  try {
+    try {
+      await deleteToken(firebaseMessaging);
+    } catch {
+      // No token on device — still clear Firestore records.
+    }
+
+    await deleteStoredFcmTokens(uid);
+  } catch (error) {
+    throw wrapFirebaseError(
+      error,
+      'PUSH_UNREGISTRATION_ERROR',
+      'Failed to unregister from push notifications.',
+    );
+  }
+}
+
 export function subscribeFcmTokenRefresh(uid: string): () => void {
   return onTokenRefresh(firebaseMessaging, async token => {
     try {
-      if (token) {
-        await persistFcmToken(uid, token);
+      const preferences = await loadNotificationPreferences();
+      if (!preferences.pushNotifications || !token) {
+        return;
       }
+
+      await persistFcmToken(uid, token);
     } catch {
       // Non-fatal; next app open will retry registration.
     }

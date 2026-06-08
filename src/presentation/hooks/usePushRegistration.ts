@@ -4,10 +4,11 @@ import {
   registerDeviceForPushNotifications,
   subscribeFcmTokenRefresh,
 } from '../../services/firebase/fcmTokenService';
+import { loadNotificationPreferences } from '../../services/notificationPreferencesStorage';
 import { useAuth } from '../context/AuthContext';
 
 /**
- * Registers the signed-in user's device for FCM when the session is active.
+ * Registers the signed-in user's device for FCM when push is enabled.
  */
 export function usePushRegistration() {
   const { user } = useAuth();
@@ -18,11 +19,19 @@ export function usePushRegistration() {
     }
 
     let unsubRefresh: (() => void) | undefined;
+    let cancelled = false;
 
-    registerDeviceForPushNotifications(user.uid).catch(() => undefined);
-    unsubRefresh = subscribeFcmTokenRefresh(user.uid);
+    loadNotificationPreferences().then(preferences => {
+      if (cancelled || !preferences.pushNotifications) {
+        return;
+      }
+
+      registerDeviceForPushNotifications(user.uid).catch(() => undefined);
+      unsubRefresh = subscribeFcmTokenRefresh(user.uid);
+    });
 
     return () => {
+      cancelled = true;
       unsubRefresh?.();
     };
   }, [user?.uid]);

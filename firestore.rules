@@ -35,6 +35,12 @@ service cloud.firestore {
         allow create, update: if isOwner(userId) && isValidFcmTokenWrite();
         allow delete: if isOwner(userId);
       }
+
+      match /notificationPreferences/{docId} {
+        allow read: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidNotificationPreferencesWrite();
+        allow delete: if isOwner(userId);
+      }
     }
 
     match /appContent/{docId} {
@@ -347,6 +353,22 @@ function isValidExamUpdate() {
   return isValidExamFields(request.resource.data);
 }
 
+function isValidNotificationCategory(value) {
+  return value == null
+    || value in [
+      'general',
+      'course_updates',
+      'live_class_reminders',
+      'assignment_deadlines',
+      'progress_achievements',
+      'security_alerts',
+      'account_changes',
+      'app_updates',
+      'events_workshops',
+      'promotional_offers'
+    ];
+}
+
 function isValidNotificationFields(data) {
   return isValidSchoolAudienceFields(data)
     && data.title is string
@@ -355,9 +377,26 @@ function isValidNotificationFields(data) {
     && data.body is string
     && data.body.size() > 0
     && data.body.size() <= 2000
+    && isValidNotificationCategory(data.category)
     && data.sortOrder is number
     && data.sortOrder >= 0
     && data.isPublished is bool;
+}
+
+function isValidNotificationPreferencesWrite() {
+  let data = request.resource.data;
+  return data.pushNotifications is bool
+    && data.emailNotifications is bool
+    && data.soundAndVibration is bool
+    && data.courseUpdates is bool
+    && data.liveClassReminders is bool
+    && data.assignmentDeadlines is bool
+    && data.progressAchievements is bool
+    && data.securityAlerts is bool
+    && data.accountChanges is bool
+    && data.appUpdates is bool
+    && data.promotionalOffers is bool
+    && data.eventsAndWorkshops is bool;
 }
 
 function isValidFcmTokenWrite() {
