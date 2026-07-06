@@ -20,6 +20,7 @@ import ChangePasswordScreen from '../presentation/screens/Settings/ChangePasswor
 import PrivacySettingsScreen from '../presentation/screens/Settings/PrivacySettingsScreen';
 import NotificationPreferencesScreen from '../presentation/screens/Settings/NotificationPreferencesScreen';
 import SupportScreen from '../presentation/screens/Settings/SupportScreen';
+import ChatbotScreen from '../presentation/screens/Chatbot/ChatbotScreen';
 import { HomeFeedProvider } from '../presentation/context/HomeFeedContext';
 import { useUserRole } from '../presentation/hooks/useUserRole';
 
@@ -67,6 +68,7 @@ function MainStack() {
       <Stack.Screen name="Support" component={SupportScreen} />
       <Stack.Screen name="Profile" component={ProfileScreen} />
       <Stack.Screen name="About" component={AboutScreen} />
+      <Stack.Screen name="ChatbotScreen" component={ChatbotScreen} />
       <Stack.Screen name="Unauthorized" component={UnauthorizedRoute} />
       {showAdminStack ? (
         <Stack.Screen name="AdminStack" component={AdminStackNavigator} />

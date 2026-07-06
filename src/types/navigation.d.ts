@@ -60,6 +60,8 @@ export type RootStackParamList = {
   AdminStack: undefined;
   /** Fallback when a non-admin attempts restricted navigation. */
   Unauthorized: undefined;
+  /** AI chat assistant — opened from the home screen floating button. */
+  ChatbotScreen: undefined;
 };
 
 // Navigation prop for a specific screen

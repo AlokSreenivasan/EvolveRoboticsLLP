@@ -13,6 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import ContinueLearningCard from '../../../components/Home/ContinueLearningCard';
+import FloatingChatAssistant from '../../../components/Home/FloatingChatAssistant';
 import HeroBannerCarousel from '../../../components/Home/HeroBannerCarousel';
 import HomeBottomTabBar, {
   type HomeTabKey,
@@ -154,6 +155,10 @@ function HomeScreen() {
           onTabPress={handleTabPress}
         />
       </View>
+
+      <FloatingChatAssistant
+        onPress={() => navigation.navigate('ChatbotScreen')}
+      />
     </SafeAreaView>
   );
 }
