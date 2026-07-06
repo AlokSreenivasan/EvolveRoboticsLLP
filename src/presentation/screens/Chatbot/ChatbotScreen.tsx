@@ -4,7 +4,9 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -16,6 +18,8 @@ import { MessageCircle, Send } from 'lucide-react-native';
 
 import BackButton from '../../../components/BackButton';
 import { cardShadow, colors, spacing } from '../../../constants/theme';
+import { findChatKeywordResponse } from '../../../services/firebase/chatKeywordsService';
+import { useChatKeywords } from '../../hooks/useChatKeywords';
 import type { LoginScreenNavigationProp } from '../../../types/navigation';
 
 type ChatMessage = {
@@ -32,6 +36,7 @@ const WELCOME_MESSAGE: ChatMessage = {
 
 function ChatbotScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const { keywords } = useChatKeywords();
   const [isChatActive, setIsChatActive] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState('');
@@ -53,18 +58,52 @@ function ChatbotScreen() {
     }
   };
 
+  const appendExchange = useCallback(
+    (userText: string) => {
+      const trimmed = userText.trim();
+      if (!trimmed) {
+        return;
+      }
+
+      const response = findChatKeywordResponse(keywords, trimmed);
+      const timestamp = Date.now();
+
+      setMessages(current => {
+        const nextMessages: ChatMessage[] = [
+          ...current,
+          { id: `user-${timestamp}`, text: trimmed, role: 'user' },
+        ];
+
+        if (response) {
+          nextMessages.push({
+            id: `assistant-${timestamp}`,
+            text: response,
+            role: 'assistant',
+          });
+        }
+
+        return nextMessages;
+      });
+    },
+    [keywords],
+  );
+
   const handleSend = useCallback(() => {
     const trimmed = draft.trim();
     if (!trimmed) {
       return;
     }
 
-    setMessages((current) => [
-      ...current,
-      { id: `user-${Date.now()}`, text: trimmed, role: 'user' },
-    ]);
+    appendExchange(trimmed);
     setDraft('');
-  }, [draft]);
+  }, [appendExchange, draft]);
+
+  const handleKeywordPress = useCallback(
+    (label: string) => {
+      appendExchange(label);
+    },
+    [appendExchange],
+  );
 
   const renderMessage = useCallback(
     ({ item }: { item: ChatMessage }) => {
@@ -127,6 +166,31 @@ function ChatbotScreen() {
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
             />
+
+            {keywords.length > 0 ? (
+              <View style={styles.keywordSection}>
+                <Text style={styles.keywordHint}>Try one of these:</Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.keywordList}
+                  keyboardShouldPersistTaps="handled">
+                  {keywords.map(keyword => (
+                    <Pressable
+                      key={keyword.id}
+                      onPress={() => handleKeywordPress(keyword.label)}
+                      style={({ pressed }) => [
+                        styles.keywordChip,
+                        pressed && styles.keywordChipPressed,
+                      ]}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Send keyword ${keyword.label}`}>
+                      <Text style={styles.keywordChipText}>{keyword.label}</Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              </View>
+            ) : null}
 
             <View style={styles.inputBar}>
               <TextInput
@@ -296,6 +360,39 @@ const styles = StyleSheet.create({
   },
   userMessageText: {
     color: colors.surface,
+  },
+  keywordSection: {
+    paddingHorizontal: spacing.screenHorizontal,
+    paddingTop: 4,
+    paddingBottom: 8,
+    zIndex: 2,
+  },
+  keywordHint: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginBottom: 10,
+  },
+  keywordList: {
+    gap: 8,
+    paddingRight: 4,
+  },
+  keywordChip: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.primaryMuted,
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    ...cardShadow,
+  },
+  keywordChipPressed: {
+    opacity: 0.85,
+    backgroundColor: colors.primaryLight,
+  },
+  keywordChipText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.primary,
   },
   inputBar: {
     flexDirection: 'row',

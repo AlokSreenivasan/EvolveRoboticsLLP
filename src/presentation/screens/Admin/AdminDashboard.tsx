@@ -9,6 +9,7 @@ import {
   FolderOpen,
   LayoutDashboard,
   Megaphone,
+  MessageSquare,
   PlayCircle,
   School,
   Users,
@@ -83,6 +84,12 @@ const MENU_ITEMS: AdminMenuItem[] = [
     title: 'Add Schools',
     description: 'Register partner schools and manage the list',
     icon: School,
+  },
+  {
+    key: 'ManageChatKeywords',
+    title: 'Chat Keywords',
+    description: 'Configure quick-reply options for the chat assistant',
+    icon: MessageSquare,
   },
   {
     key: 'AdminNotifications',

@@ -96,6 +96,14 @@ export {
   updateAssignmentsSection,
 } from './assignmentsService';
 export {
+  createChatKeyword,
+  deleteChatKeyword,
+  moveChatKeyword,
+  reorderChatKeywords,
+  subscribeChatKeywords,
+  updateChatKeyword,
+} from './chatKeywordsService';
+export {
   deleteAssignmentPdfByUrlSafe,
   deleteResourceNotePdfByUrlSafe,
   uploadAssignmentPdf,

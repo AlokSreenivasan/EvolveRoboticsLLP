@@ -112,6 +112,13 @@ service cloud.firestore {
       allow delete: if isAdmin(database);
     }
 
+    match /chatKeywords/{keywordId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin(database) && isValidChatKeywordCreate();
+      allow update: if isAdmin(database) && isValidChatKeywordUpdate();
+      allow delete: if isAdmin(database);
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
@@ -432,6 +439,25 @@ function isValidSchoolCreate() {
 
 function isValidSchoolUpdate() {
   return isValidSchoolFields(request.resource.data);
+}
+
+function isValidChatKeywordFields(data) {
+  return data.label is string
+    && data.label.size() > 0
+    && data.label.size() <= 80
+    && data.response is string
+    && data.response.size() <= 1000
+    && data.sortOrder is number
+    && data.sortOrder >= 0
+    && data.isPublished is bool;
+}
+
+function isValidChatKeywordCreate() {
+  return isValidChatKeywordFields(request.resource.data);
+}
+
+function isValidChatKeywordUpdate() {
+  return isValidChatKeywordFields(request.resource.data);
 }
 
 function isValidExamAttemptCreate() {

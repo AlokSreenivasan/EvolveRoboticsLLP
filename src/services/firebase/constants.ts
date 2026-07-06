@@ -10,6 +10,7 @@ export const FIRESTORE_COLLECTIONS = {
   exams: 'exams',
   notifications: 'notifications',
   schools: 'schools',
+  chatKeywords: 'chatKeywords',
 } as const;
 
 /** Document IDs inside {@link FIRESTORE_COLLECTIONS.appContent}. */
