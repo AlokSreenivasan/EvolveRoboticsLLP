@@ -14,6 +14,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { Eye, EyeOff } from 'lucide-react-native';
 import { signInWithEmailPassword } from '../../../services/firebase/authService';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
 import AppButton from '../../../components/AppButton.tsx';
@@ -46,6 +47,7 @@ function LoginScreen() {
   const { notifyAuthSuccess } = useAuthFlow();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -160,11 +162,24 @@ function LoginScreen() {
                 placeholder="Enter your password"
                 value={password}
                 onChangeText={setPassword}
-                secureTextEntry
+                secureTextEntry={!isPasswordVisible}
                 textContentType="password"
                 autoCapitalize="none"
                 style={styles.passwordInput}
               />
+              <TouchableOpacity
+                onPress={() => setIsPasswordVisible(v => !v)}
+                style={styles.passwordToggle}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                accessibilityRole="button"
+                accessibilityLabel={isPasswordVisible ? 'Hide password' : 'Show password'}
+              >
+                {isPasswordVisible ? (
+                  <EyeOff size={20} color="#a42a8b" />
+                ) : (
+                  <Eye size={20} color="#a42a8b" />
+                )}
+              </TouchableOpacity>
             </View>
 
             {/* Forgot Password */}
@@ -300,6 +315,12 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     marginBottom: 20,
     paddingHorizontal: 10,
+  },
+  passwordToggle: {
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   loginButton: {
     backgroundColor: '#a42a8b',

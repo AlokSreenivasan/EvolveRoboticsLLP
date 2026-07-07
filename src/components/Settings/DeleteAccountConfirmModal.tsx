@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Eye, EyeOff } from 'lucide-react-native';
 
 import AppButton from '../AppButton.tsx';
 
@@ -27,10 +28,12 @@ function DeleteAccountConfirmModal({
   onConfirm,
 }: DeleteAccountConfirmModalProps) {
   const [password, setPassword] = useState('');
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   useEffect(() => {
     if (!visible) {
       setPassword('');
+      setIsPasswordVisible(false);
     }
   }, [visible]);
 
@@ -58,17 +61,33 @@ function DeleteAccountConfirmModal({
               <Text style={styles.passwordLabel}>
                 Enter your password to confirm
               </Text>
-              <TextInput
-                style={styles.passwordInput}
-                placeholder="Current password"
-                placeholderTextColor="#999"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoCapitalize="none"
-                autoCorrect={false}
-                editable={!loading}
-              />
+              <View style={styles.passwordRow}>
+                <TextInput
+                  style={[styles.passwordInput, styles.passwordInputInner]}
+                  placeholder="Current password"
+                  placeholderTextColor="#999"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!isPasswordVisible}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  editable={!loading}
+                />
+                <TouchableOpacity
+                  onPress={() => setIsPasswordVisible(v => !v)}
+                  style={styles.passwordToggle}
+                  disabled={loading}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  accessibilityRole="button"
+                  accessibilityLabel={isPasswordVisible ? 'Hide password' : 'Show password'}
+                >
+                  {isPasswordVisible ? (
+                    <EyeOff size={20} color="#c62828" />
+                  ) : (
+                    <Eye size={20} color="#c62828" />
+                  )}
+                </TouchableOpacity>
+              </View>
             </>
           ) : null}
 
@@ -131,13 +150,28 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   passwordInput: {
-    borderWidth: 1,
-    borderColor: '#ef9a9a',
-    borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,
     marginBottom: 16,
+  },
+  passwordRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ef9a9a',
+    borderRadius: 10,
+    marginBottom: 16,
+  },
+  passwordInputInner: {
+    flex: 1,
+    marginBottom: 0,
+  },
+  passwordToggle: {
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   actions: {
     gap: 10,

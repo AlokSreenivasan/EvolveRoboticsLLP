@@ -1,14 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Lock } from 'lucide-react-native';
+import { Eye, EyeOff, Lock } from 'lucide-react-native';
 
 import AppButton from '../../../components/AppButton.tsx';
 import SettingsCard from '../../../components/Settings/SettingsCard';
@@ -21,6 +22,9 @@ import { useChangePasswordForm } from '../../hooks/useChangePasswordForm';
 
 function ChangePasswordScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const [isCurrentVisible, setIsCurrentVisible] = useState(false);
+  const [isNewVisible, setIsNewVisible] = useState(false);
+  const [isConfirmVisible, setIsConfirmVisible] = useState(false);
   const {
     currentPassword,
     newPassword,
@@ -66,58 +70,109 @@ function ChangePasswordScreen() {
         <SettingsSectionHeader title="New credentials" />
         <SettingsCard style={styles.formCard}>
           <Text style={styles.label}>Current Password</Text>
-          <TextInput
-            style={[
-              styles.input,
-              errors.currentPassword ? styles.inputError : null,
-            ]}
-            placeholder="Enter current password"
-            placeholderTextColor={colors.textMuted}
-            value={currentPassword}
-            onChangeText={setCurrentPassword}
-            secureTextEntry
-            autoCapitalize="none"
-            autoCorrect={false}
-            editable={!isSubmitting}
-          />
+          <View style={styles.passwordRow}>
+            <TextInput
+              style={[
+                styles.input,
+                styles.passwordInput,
+                errors.currentPassword ? styles.inputError : null,
+              ]}
+              placeholder="Enter current password"
+              placeholderTextColor={colors.textMuted}
+              value={currentPassword}
+              onChangeText={setCurrentPassword}
+              secureTextEntry={!isCurrentVisible}
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!isSubmitting}
+            />
+            <TouchableOpacity
+              onPress={() => setIsCurrentVisible(v => !v)}
+              style={styles.passwordToggle}
+              disabled={isSubmitting}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityRole="button"
+              accessibilityLabel={isCurrentVisible ? 'Hide password' : 'Show password'}
+            >
+              {isCurrentVisible ? (
+                <EyeOff size={20} color={colors.primary} />
+              ) : (
+                <Eye size={20} color={colors.primary} />
+              )}
+            </TouchableOpacity>
+          </View>
           {errors.currentPassword ? (
             <Text style={styles.errorText}>{errors.currentPassword}</Text>
           ) : null}
 
           <Text style={styles.label}>New Password</Text>
-          <TextInput
-            style={[
-              styles.input,
-              errors.newPassword ? styles.inputError : null,
-            ]}
-            placeholder="Enter new password"
-            placeholderTextColor={colors.textMuted}
-            value={newPassword}
-            onChangeText={setNewPassword}
-            secureTextEntry
-            autoCapitalize="none"
-            autoCorrect={false}
-            editable={!isSubmitting}
-          />
+          <View style={styles.passwordRow}>
+            <TextInput
+              style={[
+                styles.input,
+                styles.passwordInput,
+                errors.newPassword ? styles.inputError : null,
+              ]}
+              placeholder="Enter new password"
+              placeholderTextColor={colors.textMuted}
+              value={newPassword}
+              onChangeText={setNewPassword}
+              secureTextEntry={!isNewVisible}
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!isSubmitting}
+            />
+            <TouchableOpacity
+              onPress={() => setIsNewVisible(v => !v)}
+              style={styles.passwordToggle}
+              disabled={isSubmitting}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityRole="button"
+              accessibilityLabel={isNewVisible ? 'Hide password' : 'Show password'}
+            >
+              {isNewVisible ? (
+                <EyeOff size={20} color={colors.primary} />
+              ) : (
+                <Eye size={20} color={colors.primary} />
+              )}
+            </TouchableOpacity>
+          </View>
           {errors.newPassword ? (
             <Text style={styles.errorText}>{errors.newPassword}</Text>
           ) : null}
 
           <Text style={styles.label}>Confirm New Password</Text>
-          <TextInput
-            style={[
-              styles.input,
-              errors.confirmNewPassword ? styles.inputError : null,
-            ]}
-            placeholder="Re-enter new password"
-            placeholderTextColor={colors.textMuted}
-            value={confirmNewPassword}
-            onChangeText={setConfirmNewPassword}
-            secureTextEntry
-            autoCapitalize="none"
-            autoCorrect={false}
-            editable={!isSubmitting}
-          />
+          <View style={styles.passwordRow}>
+            <TextInput
+              style={[
+                styles.input,
+                styles.passwordInput,
+                errors.confirmNewPassword ? styles.inputError : null,
+              ]}
+              placeholder="Re-enter new password"
+              placeholderTextColor={colors.textMuted}
+              value={confirmNewPassword}
+              onChangeText={setConfirmNewPassword}
+              secureTextEntry={!isConfirmVisible}
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!isSubmitting}
+            />
+            <TouchableOpacity
+              onPress={() => setIsConfirmVisible(v => !v)}
+              style={styles.passwordToggle}
+              disabled={isSubmitting}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityRole="button"
+              accessibilityLabel={isConfirmVisible ? 'Hide password' : 'Show password'}
+            >
+              {isConfirmVisible ? (
+                <EyeOff size={20} color={colors.primary} />
+              ) : (
+                <Eye size={20} color={colors.primary} />
+              )}
+            </TouchableOpacity>
+          </View>
           {errors.confirmNewPassword ? (
             <Text style={styles.errorText}>{errors.confirmNewPassword}</Text>
           ) : null}
@@ -165,6 +220,27 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     marginBottom: 4,
     backgroundColor: colors.surface,
+  },
+  passwordRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+    borderWidth: 1,
+    borderColor: colors.primaryMuted,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+  },
+  passwordInput: {
+    flex: 1,
+    borderWidth: 0,
+    marginBottom: 0,
+    backgroundColor: 'transparent',
+  },
+  passwordToggle: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   inputError: {
     borderColor: '#e57373',

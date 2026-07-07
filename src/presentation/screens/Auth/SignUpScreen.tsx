@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { Eye, EyeOff } from 'lucide-react-native';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
 import AppButton from '../../../components/AppButton.tsx';
 import { isValidEmail } from '../../../domain/Auth/validation/isValidEmail.ts';
@@ -40,6 +41,8 @@ const SignUpScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const [loading, setLoading] = useState(false);
 
@@ -156,23 +159,59 @@ const SignUpScreen = () => {
         {errors.email && <Text style={styles.error}>{errors.email}</Text>}
 
         <Text style={styles.label}>Password</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Minimum 8 characters"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
+        <View style={styles.passwordRow}>
+          <TextInput
+            style={[styles.input, styles.passwordInput]}
+            placeholder="Minimum 8 characters"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!isPasswordVisible}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          <TouchableOpacity
+            onPress={() => setIsPasswordVisible(v => !v)}
+            style={styles.passwordToggle}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityRole="button"
+            accessibilityLabel={isPasswordVisible ? 'Hide password' : 'Show password'}
+          >
+            {isPasswordVisible ? (
+              <EyeOff size={20} color="#a42a8b" />
+            ) : (
+              <Eye size={20} color="#a42a8b" />
+            )}
+          </TouchableOpacity>
+        </View>
         {errors.password && <Text style={styles.error}>{errors.password}</Text>}
 
         <Text style={styles.label}>Confirm Password</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Re-enter password"
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          secureTextEntry
-        />
+        <View style={styles.passwordRow}>
+          <TextInput
+            style={[styles.input, styles.passwordInput]}
+            placeholder="Re-enter password"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            secureTextEntry={!isConfirmPasswordVisible}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          <TouchableOpacity
+            onPress={() => setIsConfirmPasswordVisible(v => !v)}
+            style={styles.passwordToggle}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityRole="button"
+            accessibilityLabel={
+              isConfirmPasswordVisible ? 'Hide password' : 'Show password'
+            }
+          >
+            {isConfirmPasswordVisible ? (
+              <EyeOff size={20} color="#a42a8b" />
+            ) : (
+              <Eye size={20} color="#a42a8b" />
+            )}
+          </TouchableOpacity>
+        </View>
         {errors.confirmPassword && (
           <Text style={styles.error}>{errors.confirmPassword}</Text>
         )}
@@ -228,6 +267,25 @@ const styles = StyleSheet.create({
     padding: 10,
     marginTop: 5,
     color: '#a42a8b',
+  },
+  passwordRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#eecdf4',
+    borderRadius: 6,
+    marginTop: 5,
+  },
+  passwordInput: {
+    flex: 1,
+    borderWidth: 0,
+    marginTop: 0,
+  },
+  passwordToggle: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   error: { fontSize: 12, color: 'red', marginBottom: 5 },
   inputError: {
