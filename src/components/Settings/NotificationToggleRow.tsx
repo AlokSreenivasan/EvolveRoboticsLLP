@@ -1,8 +1,9 @@
 import React from 'react';
-import { Platform, StyleSheet, Switch, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import type { LucideIcon } from 'lucide-react-native';
 
 import { colors } from '../../constants/theme';
+import AppSwitch from '../AppSwitch';
 
 type NotificationToggleRowProps = {
   icon: LucideIcon;
@@ -39,17 +40,7 @@ function NotificationToggleRow({
         <Text style={styles.subtitle}>{subtitle}</Text>
       </View>
 
-      <Switch
-        value={value}
-        onValueChange={onValueChange}
-        disabled={disabled}
-        trackColor={{
-          false: colors.border,
-          true: Platform.OS === 'ios' ? colors.primarySoft : colors.primary,
-        }}
-        thumbColor={value ? colors.primary : '#f4f4f5'}
-        ios_backgroundColor={colors.border}
-      />
+      <AppSwitch value={value} onValueChange={onValueChange} disabled={disabled} />
     </View>
   );
 }

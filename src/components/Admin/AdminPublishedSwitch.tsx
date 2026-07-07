@@ -1,8 +1,8 @@
 import React from 'react';
-import { Switch, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
-import { colors } from '../../constants/theme';
 import { adminStyles } from './adminStyles';
+import AppSwitch from '../AppSwitch';
 
 type AdminPublishedSwitchProps = {
   label: string;
@@ -18,12 +18,7 @@ function AdminPublishedSwitch({
   return (
     <View style={adminStyles.switchRow}>
       <Text style={adminStyles.switchLabel}>{label}</Text>
-      <Switch
-        value={value}
-        onValueChange={onValueChange}
-        trackColor={{ true: colors.primarySoft, false: colors.border }}
-        thumbColor={value ? colors.primary : colors.textMuted}
-      />
+      <AppSwitch value={value} onValueChange={onValueChange} />
     </View>
   );
 }

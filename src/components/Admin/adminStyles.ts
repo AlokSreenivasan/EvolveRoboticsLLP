@@ -258,6 +258,9 @@ export const adminStyles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: colors.textPrimary,
+    flex: 1,
+    flexShrink: 1,
+    paddingRight: 12,
   },
   modalActions: {
     flexDirection: 'row',

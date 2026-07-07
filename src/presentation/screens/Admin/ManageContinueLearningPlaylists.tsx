@@ -9,7 +9,6 @@ import {
   FlatList,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   TouchableOpacity,
@@ -30,6 +29,7 @@ import {
 } from 'lucide-react-native';
 
 import AdminScreenLayout from '../../../components/Admin/AdminScreenLayout';
+import AppSwitch from '../../../components/AppSwitch';
 import AppButton from '../../../components/AppButton';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import { colors, cardShadow, spacing } from '../../../constants/theme';
@@ -489,14 +489,10 @@ function ManageContinueLearningPlaylists() {
             ) : null}
             <View style={styles.switchRow}>
               <Text style={styles.switchLabel}>Published on home</Text>
-              <Switch
+              <AppSwitch
                 value={form.isPublished}
                 onValueChange={isPublished =>
                   setForm(prev => ({ ...prev, isPublished }))
-                }
-                trackColor={{ true: colors.primarySoft, false: colors.border }}
-                thumbColor={
-                  form.isPublished ? colors.primary : colors.textMuted
                 }
               />
             </View>
@@ -753,6 +749,9 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: colors.textPrimary,
+    flex: 1,
+    flexShrink: 1,
+    paddingRight: 12,
   },
   primaryButton: {
     backgroundColor: colors.primary,
