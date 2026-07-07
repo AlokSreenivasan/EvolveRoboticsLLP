@@ -131,8 +131,15 @@ export async function fetchYouTubePlaylistVideos(
     throw new Error('Invalid course link.');
   }
 
+  // Prefer the official API when configured, but fall back gracefully:
+  // quota limits, key restrictions, and regional blocks can break API calls.
   if (YOUTUBE_API_KEY.trim()) {
-    return fetchPlaylistVideosFromApi(playlistId);
+    try {
+      return await fetchPlaylistVideosFromApi(playlistId);
+    } catch {
+      // Fallback RSS is public and often still works even when API fails.
+      return fetchPlaylistVideosFromRss(playlistId);
+    }
   }
 
   return fetchPlaylistVideosFromRss(playlistId);
