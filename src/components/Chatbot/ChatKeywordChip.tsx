@@ -2,7 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
 import { Sparkles } from 'lucide-react-native';
 
-import { cardShadowLight, colors } from '../../constants/theme';
+import { colors } from '../../constants/theme';
 
 const CHIP_MIN_HEIGHT = 44;
 
@@ -39,7 +39,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.primaryMuted,
-    ...cardShadowLight,
   },
   chipPressed: {
     backgroundColor: colors.primaryLight,
