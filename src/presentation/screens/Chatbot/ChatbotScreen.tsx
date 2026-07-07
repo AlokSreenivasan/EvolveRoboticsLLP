@@ -4,19 +4,17 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   SafeAreaView,
-  ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { MessageCircle, Send } from 'lucide-react-native';
+import { MessageCircle } from 'lucide-react-native';
 
 import BackButton from '../../../components/BackButton';
+import ChatComposer from '../../../components/Chatbot/ChatComposer';
 import { cardShadow, colors, spacing } from '../../../constants/theme';
 import { findChatKeywordResponse } from '../../../services/firebase/chatKeywordsService';
 import { useChatKeywords } from '../../hooks/useChatKeywords';
@@ -167,56 +165,13 @@ function ChatbotScreen() {
               keyboardShouldPersistTaps="handled"
             />
 
-            {keywords.length > 0 ? (
-              <View style={styles.keywordSection}>
-                <Text style={styles.keywordHint}>Try one of these:</Text>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.keywordList}
-                  keyboardShouldPersistTaps="handled">
-                  {keywords.map(keyword => (
-                    <Pressable
-                      key={keyword.id}
-                      onPress={() => handleKeywordPress(keyword.label)}
-                      style={({ pressed }) => [
-                        styles.keywordChip,
-                        pressed && styles.keywordChipPressed,
-                      ]}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Send keyword ${keyword.label}`}>
-                      <Text style={styles.keywordChipText}>{keyword.label}</Text>
-                    </Pressable>
-                  ))}
-                </ScrollView>
-              </View>
-            ) : null}
-
-            <View style={styles.inputBar}>
-              <TextInput
-                style={styles.input}
-                placeholder="Type a message..."
-                placeholderTextColor={colors.textMuted}
-                value={draft}
-                onChangeText={setDraft}
-                multiline
-                maxLength={500}
-                returnKeyType="send"
-                onSubmitEditing={handleSend}
-              />
-              <TouchableOpacity
-                style={[
-                  styles.sendButton,
-                  !draft.trim() && styles.sendButtonDisabled,
-                ]}
-                activeOpacity={0.85}
-                onPress={handleSend}
-                disabled={!draft.trim()}
-                accessibilityRole="button"
-                accessibilityLabel="Send message">
-                <Send size={18} color={colors.surface} strokeWidth={2.5} />
-              </TouchableOpacity>
-            </View>
+            <ChatComposer
+              keywords={keywords}
+              draft={draft}
+              onDraftChange={setDraft}
+              onSend={handleSend}
+              onKeywordPress={handleKeywordPress}
+            />
           </View>
         ) : (
           <>
@@ -360,73 +315,6 @@ const styles = StyleSheet.create({
   },
   userMessageText: {
     color: colors.surface,
-  },
-  keywordSection: {
-    paddingHorizontal: spacing.screenHorizontal,
-    paddingTop: 4,
-    paddingBottom: 8,
-    zIndex: 2,
-  },
-  keywordHint: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginBottom: 10,
-  },
-  keywordList: {
-    gap: 8,
-    paddingRight: 4,
-  },
-  keywordChip: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.primaryMuted,
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    ...cardShadow,
-  },
-  keywordChipPressed: {
-    opacity: 0.85,
-    backgroundColor: colors.primaryLight,
-  },
-  keywordChipText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.primary,
-  },
-  inputBar: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 10,
-    paddingHorizontal: spacing.screenHorizontal,
-    paddingTop: 10,
-    paddingBottom: 16,
-    zIndex: 2,
-  },
-  input: {
-    flex: 1,
-    minHeight: 44,
-    maxHeight: 120,
-    backgroundColor: colors.surface,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: colors.primaryMuted,
-    paddingHorizontal: 16,
-    paddingVertical: Platform.OS === 'ios' ? 12 : 10,
-    fontSize: 15,
-    color: colors.textPrimary,
-  },
-  sendButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...cardShadow,
-  },
-  sendButtonDisabled: {
-    opacity: 0.45,
   },
 });
 
