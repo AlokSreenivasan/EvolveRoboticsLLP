@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { colors, spacing } from '../../constants/theme';
 import type { ChatKeyword } from '../../store/content/types/chatKeywords.types';
@@ -21,11 +21,7 @@ function ChatKeywordOptions({
   return (
     <View style={styles.container}>
       <Text style={styles.hint}>Quick options</Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.list}
-        keyboardShouldPersistTaps="handled">
+      <View style={styles.list}>
         {keywords.map(keyword => (
           <ChatKeywordChip
             key={keyword.id}
@@ -33,7 +29,7 @@ function ChatKeywordOptions({
             onPress={() => onKeywordPress(keyword.label)}
           />
         ))}
-      </ScrollView>
+      </View>
     </View>
   );
 }
@@ -56,9 +52,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.screenHorizontal,
   },
   list: {
-    gap: 10,
+    gap: 8,
     paddingHorizontal: spacing.screenHorizontal,
-    paddingRight: spacing.screenHorizontal + 4,
   },
 });
 

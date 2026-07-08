@@ -19,9 +19,7 @@ function ChatKeywordChip({ label, onPress }: ChatKeywordChipProps) {
       accessibilityRole="button"
       accessibilityLabel={`Send keyword ${label}`}>
       <Sparkles size={12} color={colors.primary} strokeWidth={2.5} />
-      <Text style={styles.label} numberOfLines={1}>
-        {label}
-      </Text>
+      <Text style={styles.label}>{label}</Text>
     </Pressable>
   );
 }
@@ -30,12 +28,12 @@ const styles = StyleSheet.create({
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
+    alignSelf: 'stretch',
+    gap: 8,
     minHeight: CHIP_MIN_HEIGHT,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: CHIP_MIN_HEIGHT / 2,
+    borderRadius: 12,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.primaryMuted,
@@ -45,11 +43,11 @@ const styles = StyleSheet.create({
     borderColor: colors.primarySoft,
   },
   label: {
+    flex: 1,
     fontSize: 14,
     fontWeight: '600',
     color: colors.primary,
     letterSpacing: 0.1,
-    maxWidth: 200,
   },
 });
 
