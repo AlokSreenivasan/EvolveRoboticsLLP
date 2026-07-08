@@ -105,7 +105,8 @@ function HomeScreen() {
           { paddingBottom: scrollBottomPadding },
         ]}>
         <HeroBannerCarousel
-          onCtaPress={() => navigation.navigate('Courses')}
+          onStudentsPress={() => navigation.navigate('Courses')}
+          onProfessionalPress={() => navigation.navigate('Courses')}
         />
 
         <View style={styles.section}>

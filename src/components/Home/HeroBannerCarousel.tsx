@@ -1,52 +1,68 @@
 import React from 'react';
 import {
-  Dimensions,
-  ImageBackground,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { ChevronRight } from 'lucide-react-native';
+import { Briefcase, GraduationCap, type LucideIcon } from 'lucide-react-native';
 
-import { HERO_SLIDES } from '../../constants/homeScreenData';
-import { colors } from '../../constants/theme';
+import { cardShadow, colors } from '../../constants/theme';
 
-const heroBanner = require('../../presentation/screens/Home/assets/Homepage banner.png');
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const BANNER_WIDTH = SCREEN_WIDTH - 32;
-const BANNER_HEIGHT = 168;
+type TrackCardProps = {
+  label: string;
+  Icon: LucideIcon;
+  onPress?: () => void;
+};
+
+function TrackCard({ label, Icon, onPress }: TrackCardProps) {
+  return (
+    <TouchableOpacity
+      style={styles.card}
+      activeOpacity={0.9}
+      onPress={onPress}
+      disabled={!onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}>
+      <View style={styles.iconChip}>
+        <Icon size={22} color={colors.primary} strokeWidth={2.2} />
+      </View>
+      <Text style={styles.label} numberOfLines={1}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+}
 
 type HeroBannerCarouselProps = {
+  onStudentsPress?: () => void;
+  onProfessionalPress?: () => void;
+  /** Backwards compatibility: if provided, used for both cards. */
   onCtaPress?: () => void;
 };
 
-function HeroBannerCarousel({ onCtaPress }: HeroBannerCarouselProps) {
-  const slide = HERO_SLIDES[0];
+function HeroBannerCarousel({
+  onStudentsPress,
+  onProfessionalPress,
+  onCtaPress,
+}: HeroBannerCarouselProps) {
+  const handleKidsPress = onStudentsPress ?? onCtaPress;
+  const handleProfessionalsPress = onProfessionalPress ?? onCtaPress;
 
   return (
     <View style={styles.wrapper}>
-      <ImageBackground
-        source={heroBanner}
-        style={styles.banner}
-        imageStyle={styles.bannerImage}
-        resizeMode="cover">
-        <View style={styles.overlay}>
-          <Text style={styles.headline}>
-            {slide.headline}{' '}
-            <Text style={styles.headlineHighlight}>{slide.highlight}</Text>
-          </Text>
-          <Text style={styles.subtitle}>{slide.subtitle}</Text>
-
-          <TouchableOpacity
-            style={styles.ctaButton}
-            activeOpacity={0.85}
-            onPress={onCtaPress}>
-            <Text style={styles.ctaText}>{slide.cta}</Text>
-            <ChevronRight size={16} color={colors.primary} strokeWidth={2.5} />
-          </TouchableOpacity>
-        </View>
-      </ImageBackground>
+      <View style={styles.row}>
+        <TrackCard
+          label="For Kids"
+          Icon={GraduationCap}
+          onPress={handleKidsPress}
+        />
+        <TrackCard
+          label="For Professionals"
+          Icon={Briefcase}
+          onPress={handleProfessionalsPress}
+        />
+      </View>
     </View>
   );
 }
@@ -55,53 +71,44 @@ const styles = StyleSheet.create({
   wrapper: {
     marginBottom: 24,
   },
-  banner: {
-    width: BANNER_WIDTH,
-    height: BANNER_HEIGHT,
-    borderRadius: 16,
-    overflow: 'hidden',
-    alignSelf: 'center',
-  },
-  bannerImage: {
-    borderRadius: 16,
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: colors.heroOverlay,
-    padding: 18,
-    justifyContent: 'center',
-  },
-  headline: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#fff',
-    lineHeight: 26,
-    marginBottom: 6,
-  },
-  headlineHighlight: {
-    color: colors.heroHighlight,
-  },
-  subtitle: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.9)',
-    lineHeight: 17,
-    marginBottom: 14,
-    maxWidth: '72%',
-  },
-  ctaButton: {
+  row: {
     flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    backgroundColor: '#fff',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    gap: 2,
+    gap: 12,
+    alignItems: 'stretch',
   },
-  ctaText: {
-    fontSize: 13,
-    fontWeight: '700',
+  card: {
+    flex: 1,
+    minHeight: 120,
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 20,
+    backgroundColor: colors.primaryLight,
+    borderWidth: 1,
+    borderColor: colors.primaryMuted,
+    ...cardShadow,
+  },
+  iconChip: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.primaryMuted,
+  },
+  label: {
+    width: '100%',
+    height: 20,
+    fontSize: 15,
+    fontWeight: '800',
     color: colors.primary,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });
 
