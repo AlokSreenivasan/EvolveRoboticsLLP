@@ -1,4 +1,5 @@
 import { getGradeLabel } from '../../constants/gradeOptions';
+import type { CourseTrack } from '../../store/content/types/courses.types';
 import type { School } from '../../store/content/types/schools.types';
 import type {
   ContentSubscribeOptions,
@@ -179,6 +180,19 @@ export function filterByViewerSchool<T extends SchoolAudienceFields>(
 
   return items.filter(item =>
     isVisibleForViewer(item, options?.viewerSchoolId, options?.viewerGrade),
+  );
+}
+
+export function filterByViewerTrack<T extends { track?: CourseTrack | null }>(
+  items: T[],
+  viewerTrack?: CourseTrack,
+): T[] {
+  if (!viewerTrack) {
+    return items;
+  }
+
+  return items.filter(
+    item => item.track === viewerTrack || item.track == null,
   );
 }
 

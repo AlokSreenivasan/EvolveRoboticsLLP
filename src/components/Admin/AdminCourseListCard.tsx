@@ -6,7 +6,8 @@ import AdminListRowActions from './AdminListRowActions';
 import { adminStyles } from './adminStyles';
 import { cardShadow, colors, spacing } from '../../constants/theme';
 import type { Course } from '../../store/content/types/courses.types';
-import { courseTrackLabel } from '../../store/content/types/courses.types';
+import type { School } from '../../store/content/types/schools.types';
+import { formatContentVisibilitySummary } from '../../utils/admin/contentVisibility';
 
 const CARD_ACCENTS = [
   { badgeColor: colors.primaryLight, accentColor: colors.primary },
@@ -16,6 +17,7 @@ const CARD_ACCENTS = [
 
 type AdminCourseListCardProps = {
   course: Course;
+  schools: School[];
   accentIndex: number;
   index: number;
   itemCount: number;
@@ -28,6 +30,7 @@ type AdminCourseListCardProps = {
 
 function AdminCourseListCard({
   course,
+  schools,
   accentIndex,
   index,
   itemCount,
@@ -87,7 +90,7 @@ function AdminCourseListCard({
           </Text>
         ) : null}
         <Text style={styles.statusLine}>
-          {courseTrackLabel(course.track)}
+          {formatContentVisibilitySummary(course.track, course, schools)}
           {' · '}
           {course.isPublished
             ? 'Visible for learners'

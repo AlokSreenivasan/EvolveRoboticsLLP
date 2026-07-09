@@ -17,9 +17,12 @@ import type {
 } from '../../store/content/types/resources.types';
 import {
   applyLearnerContentFilters,
-  buildSchoolAudienceWriteFields,
+  buildTrackAwareSchoolAudienceWriteFields,
+  mapContentTrack,
   mapSchoolAudienceFields,
+  shouldApplyTrackAwareSchoolAudienceUpdate,
 } from './schoolAudienceFirestore';
+import { isCourseTrack } from '../../store/content/types/courses.types';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { APP_CONTENT_DOCS, FIRESTORE_COLLECTIONS } from './constants';
 import {
@@ -87,6 +90,7 @@ function mapNote(id: string, data: ResourceNoteDocument): ResourceNote {
     title: data.title?.trim() ?? '',
     subtitle: data.subtitle?.trim() ?? '',
     pdfUrl: data.pdfUrl?.trim() ?? '',
+    track: mapContentTrack(data),
     sortOrder: typeof data.sortOrder === 'number' ? data.sortOrder : 0,
     isPublished: data.isPublished === true,
     createdAt: isTimestamp(data.createdAt) ? data.createdAt : null,
@@ -204,15 +208,24 @@ export async function createResourceNote(
   input: CreateResourceNoteInput,
 ): Promise<ResourceNote> {
   try {
+    if (!isCourseTrack(input.track)) {
+      throw wrapFirebaseError(
+        new Error('Note track is required.'),
+        'FIRESTORE_ERROR',
+        'Select whether this note is for kids or professionals.',
+      );
+    }
+
     const sortOrder = Math.trunc(await getNextSortOrder());
     const ref = doc(notesCollection());
     const payload: ResourceNoteDocument = {
       title: input.title.trim(),
       subtitle: input.subtitle?.trim() ?? '',
       pdfUrl: input.pdfUrl.trim(),
+      track: input.track,
       sortOrder,
       isPublished: input.isPublished ?? true,
-      ...buildSchoolAudienceWriteFields(input),
+      ...buildTrackAwareSchoolAudienceWriteFields(input.track, input),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
@@ -253,8 +266,24 @@ export async function updateResourceNote(
     if (input.isPublished !== undefined) {
       updates.isPublished = input.isPublished;
     }
-    if (input.audience !== undefined || input.schoolIds !== undefined) {
-      Object.assign(updates, buildSchoolAudienceWriteFields(input));
+    if (input.track !== undefined) {
+      if (!isCourseTrack(input.track)) {
+        throw wrapFirebaseError(
+          new Error('Note track is required.'),
+          'FIRESTORE_ERROR',
+          'Select whether this note is for kids or professionals.',
+        );
+      }
+      updates.track = input.track;
+    }
+    if (shouldApplyTrackAwareSchoolAudienceUpdate(input)) {
+      Object.assign(
+        updates,
+        buildTrackAwareSchoolAudienceWriteFields(
+          input.track === 'professionals' ? 'professionals' : input.track ?? 'kids',
+          input,
+        ),
+      );
     }
 
     await updateDoc(

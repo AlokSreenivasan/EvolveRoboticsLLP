@@ -8,9 +8,9 @@ import AdminFormField from '../../../components/Admin/AdminFormField';
 import AdminListLayout from '../../../components/Admin/AdminListLayout';
 import AdminListRow from '../../../components/Admin/AdminListRow';
 import AdminListSectionHeader from '../../../components/Admin/AdminListSectionHeader';
+import AdminContentVisibilityFields from '../../../components/Admin/AdminContentVisibilityFields';
 import AdminNotificationCategoryPicker from '../../../components/Admin/AdminNotificationCategoryPicker';
 import AdminPublishedSwitch from '../../../components/Admin/AdminPublishedSwitch';
-import AdminSchoolAudiencePicker from '../../../components/Admin/AdminSchoolAudiencePicker';
 import {
   DEFAULT_NOTIFICATION_CATEGORY,
   getNotificationCategoryLabel,
@@ -21,7 +21,11 @@ import { useNotifications } from '../../hooks/useNotifications';
 import { useSchools } from '../../hooks/useSchools';
 import { useAdminReorder } from '../../hooks/admin/useAdminReorder';
 import { useAdminSchoolAudienceForm } from '../../hooks/admin/useAdminSchoolAudienceForm';
-import { formatSchoolAudienceSummary } from '../../../utils/content/schoolAudience';
+import {
+  buildContentVisibilityPayload,
+  formatContentVisibilitySummary,
+  validateContentVisibility,
+} from '../../../utils/admin/contentVisibility';
 import {
   createNotification,
   deleteNotification,
@@ -29,6 +33,7 @@ import {
   updateNotification,
 } from '../../../services/firebase/notificationsService';
 import type { AppNotification } from '../../../store/content/types/notifications.types';
+import type { CourseTrack } from '../../../store/content/types/courses.types';
 import { toAdminWriteErrorMessage } from '../../../utils/admin/adminWriteErrorMessage';
 import { getErrorMessage } from '../../../utils/firebase/errors';
 
@@ -36,6 +41,7 @@ type NotificationFormState = {
   title: string;
   body: string;
   category: NotificationCategory;
+  track: CourseTrack | null;
   isPublished: boolean;
 };
 
@@ -43,6 +49,7 @@ const EMPTY_FORM: NotificationFormState = {
   title: '',
   body: '',
   category: DEFAULT_NOTIFICATION_CATEGORY,
+  track: null,
   isPublished: true,
 };
 
@@ -77,6 +84,7 @@ function AdminNotifications() {
       title: notification.title,
       body: notification.body,
       category: notification.category,
+      track: notification.track,
       isPublished: notification.isPublished,
     });
     audienceForm.resetAudience({
@@ -104,20 +112,27 @@ function AdminNotifications() {
       return;
     }
 
-    const audienceError = audienceForm.validate();
-    if (audienceError) {
-      Alert.alert('Audience required', audienceError);
+    const visibilityError = validateContentVisibility(
+      form.track,
+      audienceForm.validate,
+    );
+    if (visibilityError) {
+      Alert.alert('Visibility required', visibilityError);
       return;
     }
 
     setSaving(true);
     try {
+      const visibilityPayload = buildContentVisibilityPayload(
+        form.track!,
+        audienceForm.toPayload(),
+      );
       const payload = {
         title: form.title,
         body: form.body,
         category: form.category,
         isPublished: form.isPublished,
-        ...audienceForm.toPayload(),
+        ...visibilityPayload,
       };
       if (editingId) {
         await updateNotification(editingId, payload);
@@ -172,7 +187,11 @@ function AdminNotifications() {
       return;
     }
 
-    const audienceLabel = formatSchoolAudienceSummary(notification, schools);
+    const audienceLabel = formatContentVisibilitySummary(
+      notification.track,
+      notification,
+      schools,
+    );
     const categoryLabel = getNotificationCategoryLabel(notification.category);
     Alert.alert(
       'Send live notification',
@@ -217,7 +236,11 @@ function AdminNotifications() {
       index: number;
     }) => {
       const isSending = sendingLiveId === notification.id;
-      const audienceLine = formatSchoolAudienceSummary(notification, schools);
+      const audienceLine = formatContentVisibilitySummary(
+        notification.track,
+        notification,
+        schools,
+      );
       const categoryLine = getNotificationCategoryLabel(notification.category);
       return (
         <AdminListRow
@@ -303,7 +326,10 @@ function AdminNotifications() {
             setForm(prev => ({ ...prev, isPublished }))
           }
         />
-        <AdminSchoolAudiencePicker
+        <AdminContentVisibilityFields
+          track={form.track}
+          onTrackChange={track => setForm(prev => ({ ...prev, track }))}
+          onProfessionalsTrackSelected={() => audienceForm.resetAudience()}
           audience={audienceForm.audience}
           selectedSchoolIds={audienceForm.schoolIds}
           schoolGradeIds={audienceForm.schoolGradeIds}
@@ -315,6 +341,7 @@ function AdminNotifications() {
           onSchoolGradeModeChange={audienceForm.setSchoolGradeMode}
           onToggleSchoolGrade={audienceForm.toggleSchoolGrade}
           getSchoolGradeMode={audienceForm.getSchoolGradeMode}
+          trackHint="Required. Choose whether this notification targets kids or professionals."
         />
         {editingNotification ? (
           <>

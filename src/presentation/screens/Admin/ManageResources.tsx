@@ -7,15 +7,19 @@ import AdminListLayout from '../../../components/Admin/AdminListLayout';
 import AdminListRow from '../../../components/Admin/AdminListRow';
 import AdminListSectionHeader from '../../../components/Admin/AdminListSectionHeader';
 import AdminPdfPicker from '../../../components/Admin/AdminPdfPicker';
+import AdminContentVisibilityFields from '../../../components/Admin/AdminContentVisibilityFields';
 import AdminPublishedSwitch from '../../../components/Admin/AdminPublishedSwitch';
-import AdminSchoolAudiencePicker from '../../../components/Admin/AdminSchoolAudiencePicker';
 import AdminSectionCard from '../../../components/Admin/AdminSectionCard';
 import { adminStyles } from '../../../components/Admin/adminStyles';
 import { useResources } from '../../hooks/useResources';
 import { useSchools } from '../../hooks/useSchools';
 import { useAdminPdfPicker } from '../../hooks/admin/useAdminPdfPicker';
 import { useAdminSchoolAudienceForm } from '../../hooks/admin/useAdminSchoolAudienceForm';
-import { formatSchoolAudienceSummary } from '../../../utils/content/schoolAudience';
+import {
+  buildContentVisibilityPayload,
+  formatContentVisibilitySummary,
+  validateContentVisibility,
+} from '../../../utils/admin/contentVisibility';
 import { useAdminReorder } from '../../hooks/admin/useAdminReorder';
 import { useAdminSectionDefaults } from '../../hooks/admin/useAdminSectionDefaults';
 import {
@@ -34,18 +38,21 @@ import type {
   ResourceNote,
   UpdateResourcesSectionInput,
 } from '../../../store/content/types/resources.types';
+import type { CourseTrack } from '../../../store/content/types/courses.types';
 import { toAdminWriteErrorMessage } from '../../../utils/admin/adminWriteErrorMessage';
 import { saveAdminPdfEntity } from '../../../utils/admin/saveAdminPdfEntity';
 
 type NoteFormState = {
   title: string;
   subtitle: string;
+  track: CourseTrack | null;
   isPublished: boolean;
 };
 
 const EMPTY_NOTE_FORM: NoteFormState = {
   title: '',
   subtitle: '',
+  track: null,
   isPublished: true,
 };
 
@@ -86,6 +93,7 @@ function ManageResources() {
     setNoteForm({
       title: note.title,
       subtitle: note.subtitle,
+      track: note.track,
       isPublished: note.isPublished,
     });
     audienceForm.resetAudience({
@@ -138,13 +146,19 @@ function ManageResources() {
       return;
     }
 
-    const audienceError = audienceForm.validate();
-    if (audienceError) {
-      Alert.alert('Audience required', audienceError);
+    const visibilityError = validateContentVisibility(
+      noteForm.track,
+      audienceForm.validate,
+    );
+    if (visibilityError) {
+      Alert.alert('Visibility required', visibilityError);
       return;
     }
 
-    const audiencePayload = audienceForm.toPayload();
+    const visibilityPayload = buildContentVisibilityPayload(
+      noteForm.track!,
+      audienceForm.toPayload(),
+    );
     setSavingNote(true);
     try {
       await saveAdminPdfEntity({
@@ -159,7 +173,7 @@ function ManageResources() {
             subtitle: noteForm.subtitle,
             pdfUrl: '',
             isPublished: noteForm.isPublished,
-            ...audiencePayload,
+            ...visibilityPayload,
           }),
         updateEntity: (id, pdfUrl) =>
           updateResourceNote(id, {
@@ -167,7 +181,7 @@ function ManageResources() {
             subtitle: noteForm.subtitle,
             pdfUrl,
             isPublished: noteForm.isPublished,
-            ...audiencePayload,
+            ...visibilityPayload,
           }),
       });
       closeEditor();
@@ -222,7 +236,7 @@ function ManageResources() {
       <AdminListRow
         title={note.title}
         subtitle={note.subtitle}
-        statusLine={`${note.pdfUrl.trim() ? 'PDF attached' : 'Missing PDF'} · ${formatSchoolAudienceSummary(note, schools)}`}
+        statusLine={`${note.pdfUrl.trim() ? 'PDF attached' : 'Missing PDF'} · ${formatContentVisibilitySummary(note.track, note, schools)}`}
         isPublished={note.isPublished}
         index={index}
         itemCount={notes.length}
@@ -285,7 +299,10 @@ function ManageResources() {
             setNoteForm(prev => ({ ...prev, isPublished }))
           }
         />
-        <AdminSchoolAudiencePicker
+        <AdminContentVisibilityFields
+          track={noteForm.track}
+          onTrackChange={track => setNoteForm(prev => ({ ...prev, track }))}
+          onProfessionalsTrackSelected={() => audienceForm.resetAudience()}
           audience={audienceForm.audience}
           selectedSchoolIds={audienceForm.schoolIds}
           schoolGradeIds={audienceForm.schoolGradeIds}
@@ -297,6 +314,7 @@ function ManageResources() {
           onSchoolGradeModeChange={audienceForm.setSchoolGradeMode}
           onToggleSchoolGrade={audienceForm.toggleSchoolGrade}
           getSchoolGradeMode={audienceForm.getSchoolGradeMode}
+          trackHint="Required. Choose whether this note is visible to kids or professionals."
         />
       </AdminEntityForm>
     </>

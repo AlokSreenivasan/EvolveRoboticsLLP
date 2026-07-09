@@ -1,5 +1,6 @@
 import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
+import type { CourseTrack } from './courses.types';
 import type {
   SchoolAudienceDocument,
   SchoolAudienceFields,
@@ -28,6 +29,7 @@ export interface ResourceNoteDocument extends SchoolAudienceDocument {
   title: string;
   subtitle: string;
   pdfUrl: string;
+  track: CourseTrack;
   sortOrder: number;
   isPublished: boolean;
   createdAt:
@@ -43,6 +45,7 @@ export interface ResourceNote extends SchoolAudienceFields {
   title: string;
   subtitle: string;
   pdfUrl: string;
+  track: CourseTrack | null;
   sortOrder: number;
   isPublished: boolean;
   createdAt: FirebaseFirestoreTypes.Timestamp | null;
@@ -53,6 +56,7 @@ export type CreateResourceNoteInput = {
   title: string;
   subtitle?: string;
   pdfUrl: string;
+  track: CourseTrack;
   isPublished?: boolean;
 } & SchoolAudienceInput;
 

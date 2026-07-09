@@ -1,5 +1,6 @@
 import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
+import type { CourseTrack } from './courses.types';
 import type {
   SchoolAudienceDocument,
   SchoolAudienceFields,
@@ -26,6 +27,7 @@ export interface ImportantUpdateNoticeDocument extends SchoolAudienceDocument {
   title: string;
   subtitle: string;
   description: string;
+  track: CourseTrack;
   sortOrder: number;
   isPublished: boolean;
   createdAt: FirebaseFirestoreTypes.Timestamp | FirebaseFirestoreTypes.FieldValue;
@@ -38,6 +40,7 @@ export interface ImportantUpdateNotice extends SchoolAudienceFields {
   title: string;
   subtitle: string;
   description: string;
+  track: CourseTrack | null;
   sortOrder: number;
   isPublished: boolean;
   createdAt: FirebaseFirestoreTypes.Timestamp | null;
@@ -49,6 +52,7 @@ export type CreateImportantUpdateNoticeInput = {
   title: string;
   subtitle: string;
   description: string;
+  track: CourseTrack;
   isPublished?: boolean;
 } & SchoolAudienceInput;
 

@@ -17,9 +17,12 @@ import type {
 } from '../../store/content/types/upcomingEvents.types';
 import {
   applyLearnerContentFilters,
-  buildSchoolAudienceWriteFields,
+  buildTrackAwareSchoolAudienceWriteFields,
+  mapContentTrack,
   mapSchoolAudienceFields,
+  shouldApplyTrackAwareSchoolAudienceUpdate,
 } from './schoolAudienceFirestore';
+import { isCourseTrack } from '../../store/content/types/courses.types';
 import { parseStoredEventYear } from '../../utils/upcomingEventDate';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { APP_CONTENT_DOCS, FIRESTORE_COLLECTIONS } from './constants';
@@ -93,6 +96,7 @@ function mapEvent(id: string, data: UpcomingEventDocument): UpcomingEvent {
     dateRange: data.dateRange?.trim() ?? '',
     timeRange: data.timeRange?.trim() ?? '',
     daysLeftLabel: data.daysLeftLabel?.trim() ?? '',
+    track: mapContentTrack(data),
     sortOrder: typeof data.sortOrder === 'number' ? data.sortOrder : 0,
     isPublished: data.isPublished === true,
     createdAt: isTimestamp(data.createdAt) ? data.createdAt : null,
@@ -205,6 +209,14 @@ export async function createUpcomingEvent(
   input: CreateUpcomingEventInput,
 ): Promise<UpcomingEvent> {
   try {
+    if (!isCourseTrack(input.track)) {
+      throw wrapFirebaseError(
+        new Error('Event track is required.'),
+        'FIRESTORE_ERROR',
+        'Select whether this event is for kids or professionals.',
+      );
+    }
+
     const sortOrder = Math.trunc(await getNextSortOrder());
     const ref = doc(eventsCollection());
     const payload: UpcomingEventDocument = {
@@ -215,9 +227,10 @@ export async function createUpcomingEvent(
       dateRange: input.dateRange.trim(),
       timeRange: input.timeRange.trim(),
       daysLeftLabel: input.daysLeftLabel.trim(),
+      track: input.track,
       sortOrder,
       isPublished: input.isPublished ?? true,
-      ...buildSchoolAudienceWriteFields(input),
+      ...buildTrackAwareSchoolAudienceWriteFields(input.track, input),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
@@ -270,8 +283,24 @@ export async function updateUpcomingEvent(
     if (input.isPublished !== undefined) {
       updates.isPublished = input.isPublished;
     }
-    if (input.audience !== undefined || input.schoolIds !== undefined) {
-      Object.assign(updates, buildSchoolAudienceWriteFields(input));
+    if (input.track !== undefined) {
+      if (!isCourseTrack(input.track)) {
+        throw wrapFirebaseError(
+          new Error('Event track is required.'),
+          'FIRESTORE_ERROR',
+          'Select whether this event is for kids or professionals.',
+        );
+      }
+      updates.track = input.track;
+    }
+    if (shouldApplyTrackAwareSchoolAudienceUpdate(input)) {
+      Object.assign(
+        updates,
+        buildTrackAwareSchoolAudienceWriteFields(
+          input.track === 'professionals' ? 'professionals' : input.track ?? 'kids',
+          input,
+        ),
+      );
     }
 
     await updateDoc(doc(eventsCollection(), eventId), updates as UpdateData<DocumentData>);

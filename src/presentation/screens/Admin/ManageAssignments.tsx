@@ -7,15 +7,19 @@ import AdminListLayout from '../../../components/Admin/AdminListLayout';
 import AdminListRow from '../../../components/Admin/AdminListRow';
 import AdminListSectionHeader from '../../../components/Admin/AdminListSectionHeader';
 import AdminPdfPicker from '../../../components/Admin/AdminPdfPicker';
+import AdminContentVisibilityFields from '../../../components/Admin/AdminContentVisibilityFields';
 import AdminPublishedSwitch from '../../../components/Admin/AdminPublishedSwitch';
-import AdminSchoolAudiencePicker from '../../../components/Admin/AdminSchoolAudiencePicker';
 import AdminSectionCard from '../../../components/Admin/AdminSectionCard';
 import { adminStyles } from '../../../components/Admin/adminStyles';
 import { useAssignments } from '../../hooks/useAssignments';
 import { useSchools } from '../../hooks/useSchools';
 import { useAdminPdfPicker } from '../../hooks/admin/useAdminPdfPicker';
 import { useAdminSchoolAudienceForm } from '../../hooks/admin/useAdminSchoolAudienceForm';
-import { formatSchoolAudienceSummary } from '../../../utils/content/schoolAudience';
+import {
+  buildContentVisibilityPayload,
+  formatContentVisibilitySummary,
+  validateContentVisibility,
+} from '../../../utils/admin/contentVisibility';
 import { useAdminReorder } from '../../hooks/admin/useAdminReorder';
 import { useAdminSectionDefaults } from '../../hooks/admin/useAdminSectionDefaults';
 import {
@@ -34,6 +38,7 @@ import type {
   Assignment,
   UpdateAssignmentsSectionInput,
 } from '../../../store/content/types/assignments.types';
+import type { CourseTrack } from '../../../store/content/types/courses.types';
 import { toAdminWriteErrorMessage } from '../../../utils/admin/adminWriteErrorMessage';
 import { saveAdminPdfEntity } from '../../../utils/admin/saveAdminPdfEntity';
 
@@ -41,6 +46,7 @@ type AssignmentFormState = {
   title: string;
   subtitle: string;
   dueDateLabel: string;
+  track: CourseTrack | null;
   isPublished: boolean;
 };
 
@@ -48,6 +54,7 @@ const EMPTY_FORM: AssignmentFormState = {
   title: '',
   subtitle: '',
   dueDateLabel: '',
+  track: null,
   isPublished: true,
 };
 
@@ -94,6 +101,7 @@ function ManageAssignments() {
       title: assignment.title,
       subtitle: assignment.subtitle,
       dueDateLabel: assignment.dueDateLabel,
+      track: assignment.track,
       isPublished: assignment.isPublished,
     });
     audienceForm.resetAudience({
@@ -149,13 +157,19 @@ function ManageAssignments() {
       return;
     }
 
-    const audienceError = audienceForm.validate();
-    if (audienceError) {
-      Alert.alert('Audience required', audienceError);
+    const visibilityError = validateContentVisibility(
+      form.track,
+      audienceForm.validate,
+    );
+    if (visibilityError) {
+      Alert.alert('Visibility required', visibilityError);
       return;
     }
 
-    const audiencePayload = audienceForm.toPayload();
+    const visibilityPayload = buildContentVisibilityPayload(
+      form.track!,
+      audienceForm.toPayload(),
+    );
     setSaving(true);
     try {
       await saveAdminPdfEntity({
@@ -171,7 +185,7 @@ function ManageAssignments() {
             dueDateLabel: form.dueDateLabel,
             pdfUrl: '',
             isPublished: form.isPublished,
-            ...audiencePayload,
+            ...visibilityPayload,
           }),
         updateEntity: (id, pdfUrl) =>
           updateAssignment(id, {
@@ -180,7 +194,7 @@ function ManageAssignments() {
             dueDateLabel: form.dueDateLabel,
             pdfUrl,
             isPublished: form.isPublished,
-            ...audiencePayload,
+            ...visibilityPayload,
           }),
       });
       closeEditor();
@@ -235,7 +249,7 @@ function ManageAssignments() {
       <AdminListRow
         title={assignment.title}
         subtitle={assignment.subtitle || assignment.dueDateLabel}
-        statusLine={`${assignment.pdfUrl.trim() ? 'PDF attached' : 'Missing PDF'} · ${formatSchoolAudienceSummary(assignment, schools)}`}
+        statusLine={`${assignment.pdfUrl.trim() ? 'PDF attached' : 'Missing PDF'} · ${formatContentVisibilitySummary(assignment.track, assignment, schools)}`}
         isPublished={assignment.isPublished}
         index={index}
         itemCount={assignments.length}
@@ -304,7 +318,10 @@ function ManageAssignments() {
             setForm(prev => ({ ...prev, isPublished }))
           }
         />
-        <AdminSchoolAudiencePicker
+        <AdminContentVisibilityFields
+          track={form.track}
+          onTrackChange={track => setForm(prev => ({ ...prev, track }))}
+          onProfessionalsTrackSelected={() => audienceForm.resetAudience()}
           audience={audienceForm.audience}
           selectedSchoolIds={audienceForm.schoolIds}
           schoolGradeIds={audienceForm.schoolGradeIds}
@@ -316,6 +333,7 @@ function ManageAssignments() {
           onSchoolGradeModeChange={audienceForm.setSchoolGradeMode}
           onToggleSchoolGrade={audienceForm.toggleSchoolGrade}
           getSchoolGradeMode={audienceForm.getSchoolGradeMode}
+          trackHint="Required. Choose whether this assignment is visible to kids or professionals."
         />
       </AdminEntityForm>
     </>

@@ -19,9 +19,12 @@ import type {
 } from '../../store/content/types/importantUpdates.types';
 import {
   applyLearnerContentFilters,
-  buildSchoolAudienceWriteFields,
+  buildTrackAwareSchoolAudienceWriteFields,
+  mapContentTrack,
   mapSchoolAudienceFields,
+  shouldApplyTrackAwareSchoolAudienceUpdate,
 } from './schoolAudienceFirestore';
+import { isCourseTrack } from '../../store/content/types/courses.types';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import {
   APP_CONTENT_DOCS,
@@ -96,6 +99,7 @@ function mapNotice(
     title: data.title?.trim() ?? '',
     subtitle: data.subtitle?.trim() ?? '',
     description: data.description?.trim() ?? '',
+    track: mapContentTrack(data),
     sortOrder: typeof data.sortOrder === 'number' ? data.sortOrder : 0,
     isPublished: data.isPublished === true,
     createdAt: isTimestamp(data.createdAt) ? data.createdAt : null,
@@ -211,6 +215,14 @@ export async function createImportantUpdateNotice(
   input: CreateImportantUpdateNoticeInput,
 ): Promise<ImportantUpdateNotice> {
   try {
+    if (!isCourseTrack(input.track)) {
+      throw wrapFirebaseError(
+        new Error('Notice track is required.'),
+        'FIRESTORE_ERROR',
+        'Select whether this notice is for kids or professionals.',
+      );
+    }
+
     const sortOrder = Math.trunc(await getNextSortOrder());
     const ref = doc(noticesCollection());
     const payload: ImportantUpdateNoticeDocument = {
@@ -218,9 +230,10 @@ export async function createImportantUpdateNotice(
       title: input.title.trim(),
       subtitle: input.subtitle.trim(),
       description: input.description.trim(),
+      track: input.track,
       sortOrder,
       isPublished: input.isPublished ?? true,
-      ...buildSchoolAudienceWriteFields(input),
+      ...buildTrackAwareSchoolAudienceWriteFields(input.track, input),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
@@ -268,8 +281,24 @@ export async function updateImportantUpdateNotice(
     if (input.isPublished !== undefined) {
       updates.isPublished = input.isPublished;
     }
-    if (input.audience !== undefined || input.schoolIds !== undefined) {
-      Object.assign(updates, buildSchoolAudienceWriteFields(input));
+    if (input.track !== undefined) {
+      if (!isCourseTrack(input.track)) {
+        throw wrapFirebaseError(
+          new Error('Notice track is required.'),
+          'FIRESTORE_ERROR',
+          'Select whether this notice is for kids or professionals.',
+        );
+      }
+      updates.track = input.track;
+    }
+    if (shouldApplyTrackAwareSchoolAudienceUpdate(input)) {
+      Object.assign(
+        updates,
+        buildTrackAwareSchoolAudienceWriteFields(
+          input.track === 'professionals' ? 'professionals' : input.track ?? 'kids',
+          input,
+        ),
+      );
     }
 
     await updateDoc(doc(noticesCollection(), noticeId), updates as UpdateData<DocumentData>);

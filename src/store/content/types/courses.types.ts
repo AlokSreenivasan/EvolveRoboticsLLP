@@ -1,5 +1,11 @@
 import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
+import type {
+  SchoolAudienceDocument,
+  SchoolAudienceFields,
+  SchoolAudienceInput,
+} from './schoolAudience.types';
+
 /** Learner track a course belongs to — required for catalog segregation. */
 export type CourseTrack = 'kids' | 'professionals';
 
@@ -34,7 +40,7 @@ export function courseTrackLabel(track: CourseTrack | null | undefined): string 
   return 'Unassigned';
 }
 
-export type CourseDocument = {
+export type CourseDocument = SchoolAudienceDocument & {
   title: string;
   subtitle: string;
   imageUri: string;
@@ -48,7 +54,7 @@ export type CourseDocument = {
   updatedAt: FirebaseFirestoreTypes.FieldValue;
 };
 
-export type Course = {
+export type Course = SchoolAudienceFields & {
   id: string;
   title: string;
   subtitle: string;
@@ -70,6 +76,6 @@ export type CreateCourseInput = {
   description: string;
   track: CourseTrack;
   isPublished?: boolean;
-};
+} & SchoolAudienceInput;
 
 export type UpdateCourseInput = Partial<CreateCourseInput & { sortOrder: number }>;

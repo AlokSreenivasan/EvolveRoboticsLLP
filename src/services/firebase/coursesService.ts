@@ -8,6 +8,14 @@ import type {
   UpdateCourseInput,
 } from '../../store/content/types/courses.types';
 import { isCourseTrack } from '../../store/content/types/courses.types';
+import type { ContentSubscribeOptions } from '../../store/content/types/schoolAudience.types';
+import {
+  applyLearnerContentFilters,
+  buildTrackAwareSchoolAudienceWriteFields,
+  mapContentTrack,
+  mapSchoolAudienceFields,
+  shouldApplyTrackAwareSchoolAudienceUpdate,
+} from './schoolAudienceFirestore';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { syncFirestoreAuthSession } from '../../utils/firebase/firestoreSessionSync';
 import { FIRESTORE_COLLECTIONS } from './constants';
@@ -53,11 +61,12 @@ function mapCourse(
     imageUri: data?.imageUri?.trim() ?? '',
     durationLabel: data?.durationLabel?.trim() ?? '',
     description: data?.description?.trim() ?? '',
-    track: isCourseTrack(data?.track) ? data.track : null,
+    track: mapContentTrack(data),
     sortOrder: typeof data?.sortOrder === 'number' ? data.sortOrder : 0,
     isPublished: data?.isPublished === true,
     createdAt: data && isTimestamp(data.createdAt) ? data.createdAt : null,
     updatedAt: data && isTimestamp(data.updatedAt) ? data.updatedAt : null,
+    ...mapSchoolAudienceFields(data),
   };
 }
 
@@ -67,10 +76,9 @@ function sortCourses(courses: Course[]): Course[] {
 
 export function subscribeCourses(
   listener: (courses: Course[]) => void,
-  options?: { includeUnpublished?: boolean },
+  options?: ContentSubscribeOptions,
   onError?: (error: unknown) => void,
 ): () => void {
-  const includeUnpublished = options?.includeUnpublished === true;
   const coursesQuery = query(coursesCollection(), orderBy('sortOrder', 'asc'));
 
   return onSnapshot(
@@ -83,11 +91,7 @@ export function subscribeCourses(
         ),
       );
 
-      const filtered = includeUnpublished
-        ? courses
-        : courses.filter(course => course.isPublished);
-
-      listener(sortCourses(filtered));
+      listener(sortCourses(applyLearnerContentFilters(courses, options)));
     },
     error => onError?.(error),
   );
@@ -139,6 +143,7 @@ export async function createCourse(
       track: input.track,
       sortOrder,
       isPublished: input.isPublished ?? true,
+      ...buildTrackAwareSchoolAudienceWriteFields(input.track, input),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
@@ -178,6 +183,9 @@ export async function updateCourse(
       sortOrder: number;
       isPublished: boolean;
       updatedAt: ReturnType<typeof serverTimestamp>;
+      audience?: 'all' | 'schools';
+      schoolIds?: string[];
+      schoolGradeIds?: Record<string, string[]>;
     } = {
       title: input.title !== undefined ? input.title.trim() : current.title,
       subtitle:
@@ -212,6 +220,18 @@ export async function updateCourse(
       payload.track = input.track;
     } else if (isCourseTrack(current.track)) {
       payload.track = current.track;
+    }
+
+    if (shouldApplyTrackAwareSchoolAudienceUpdate(input)) {
+      Object.assign(
+        payload,
+        buildTrackAwareSchoolAudienceWriteFields(
+          input.track === 'professionals'
+            ? 'professionals'
+            : input.track ?? current.track ?? 'kids',
+          input,
+        ),
+      );
     }
 
     await setDoc(ref, payload, { merge: true });

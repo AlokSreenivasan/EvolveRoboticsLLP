@@ -16,8 +16,8 @@ import {
 } from '../../../services/firebase/firestoreClient';
 import { ImagePlus } from 'lucide-react-native';
 
+import AdminContentVisibilityFields from '../../../components/Admin/AdminContentVisibilityFields';
 import AdminCourseListCard from '../../../components/Admin/AdminCourseListCard';
-import AdminCourseTrackPicker from '../../../components/Admin/AdminCourseTrackPicker';
 import AdminEntityForm from '../../../components/Admin/AdminEntityForm';
 import AdminFormField from '../../../components/Admin/AdminFormField';
 import AdminListLayout from '../../../components/Admin/AdminListLayout';
@@ -26,7 +26,9 @@ import AdminPublishedSwitch from '../../../components/Admin/AdminPublishedSwitch
 import { adminStyles } from '../../../components/Admin/adminStyles';
 import { colors } from '../../../constants/theme';
 import { useCourses } from '../../hooks/useCourses';
+import { useSchools } from '../../hooks/useSchools';
 import { useAdminImagePicker } from '../../hooks/admin/useAdminImagePicker';
+import { useAdminSchoolAudienceForm } from '../../hooks/admin/useAdminSchoolAudienceForm';
 import { useAdminReorder } from '../../hooks/admin/useAdminReorder';
 import { FIRESTORE_COLLECTIONS } from '../../../services/firebase/constants';
 import {
@@ -41,6 +43,10 @@ import type {
   CourseTrack,
 } from '../../../store/content/types/courses.types';
 import { toAdminWriteErrorMessage } from '../../../utils/admin/adminWriteErrorMessage';
+import {
+  buildContentVisibilityPayload,
+  validateContentVisibility,
+} from '../../../utils/admin/contentVisibility';
 
 type CourseFormState = {
   title: string;
@@ -62,6 +68,8 @@ const EMPTY_FORM: CourseFormState = {
 
 function ManageCourses() {
   const { courses, loading } = useCourses({ includeUnpublished: true });
+  const { schools, loading: schoolsLoading, error: schoolsError } = useSchools();
+  const audienceForm = useAdminSchoolAudienceForm();
 
   const [editorVisible, setEditorVisible] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -80,6 +88,7 @@ function ManageCourses() {
   const openCreateEditor = () => {
     setEditingId(null);
     setForm(EMPTY_FORM);
+    audienceForm.resetAudience();
     imagePicker.resetImageState();
     setEditorVisible(true);
   };
@@ -95,6 +104,11 @@ function ManageCourses() {
       isPublished: course.isPublished,
     });
     imagePicker.loadExistingImage(course.imageUri);
+    audienceForm.resetAudience({
+      audience: course.audience,
+      schoolIds: course.schoolIds,
+      schoolGradeIds: course.schoolGradeIds,
+    });
     setEditorVisible(true);
   };
 
@@ -102,6 +116,7 @@ function ManageCourses() {
     setEditorVisible(false);
     setEditingId(null);
     setForm(EMPTY_FORM);
+    audienceForm.resetAudience();
     imagePicker.resetImageState();
   };
 
@@ -123,13 +138,19 @@ function ManageCourses() {
       return;
     }
 
-    if (current.track !== 'kids' && current.track !== 'professionals') {
-      Alert.alert(
-        'Track required',
-        'Select whether this course is for kids or professionals.',
-      );
+    const visibilityError = validateContentVisibility(
+      current.track,
+      audienceForm.validate,
+    );
+    if (visibilityError) {
+      Alert.alert('Visibility required', visibilityError);
       return;
     }
+
+    const visibilityPayload = buildContentVisibilityPayload(
+      current.track!,
+      audienceForm.toPayload(),
+    );
 
     const courseId =
       editingId ??
@@ -151,8 +172,8 @@ function ManageCourses() {
         imageUri,
         durationLabel,
         description: current.description.trim(),
-        track: current.track,
         isPublished: current.isPublished,
+        ...visibilityPayload,
       };
 
       if (editingId) {
@@ -201,6 +222,7 @@ function ManageCourses() {
     ({ item: course, index }: { item: Course; index: number }) => (
       <AdminCourseListCard
         course={course}
+        schools={schools}
         accentIndex={index}
         index={index}
         itemCount={courses.length}
@@ -211,7 +233,7 @@ function ManageCourses() {
         onDelete={() => confirmDelete(course)}
       />
     ),
-    [courses.length, handleMove, reorderingId],
+    [courses.length, handleMove, reorderingId, schools],
   );
 
   const keyExtractor = useCallback((item: Course) => item.id, []);
@@ -249,9 +271,22 @@ function ManageCourses() {
           onChangeText={title => setForm(prev => ({ ...prev, title }))}
           placeholder="Introduction to Robotics"
         />
-        <AdminCourseTrackPicker
-          value={form.track}
-          onChange={track => setForm(prev => ({ ...prev, track }))}
+        <AdminContentVisibilityFields
+          track={form.track}
+          onTrackChange={track => setForm(prev => ({ ...prev, track }))}
+          onProfessionalsTrackSelected={() => audienceForm.resetAudience()}
+          audience={audienceForm.audience}
+          selectedSchoolIds={audienceForm.schoolIds}
+          schoolGradeIds={audienceForm.schoolGradeIds}
+          schools={schools}
+          schoolsLoading={schoolsLoading}
+          schoolsError={schoolsError}
+          onAudienceChange={audienceForm.setAudienceMode}
+          onToggleSchool={audienceForm.toggleSchoolId}
+          onSchoolGradeModeChange={audienceForm.setSchoolGradeMode}
+          onToggleSchoolGrade={audienceForm.toggleSchoolGrade}
+          getSchoolGradeMode={audienceForm.getSchoolGradeMode}
+          trackHint="Required. Choose whether this course is shown to kids or professionals."
         />
         <AdminFormField
           label="Subtitle (optional)"

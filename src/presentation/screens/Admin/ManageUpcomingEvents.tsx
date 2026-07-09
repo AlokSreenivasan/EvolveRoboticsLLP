@@ -7,8 +7,8 @@ import AdminFormField from '../../../components/Admin/AdminFormField';
 import AdminListLayout from '../../../components/Admin/AdminListLayout';
 import AdminListRowActions from '../../../components/Admin/AdminListRowActions';
 import AdminListSectionHeader from '../../../components/Admin/AdminListSectionHeader';
+import AdminContentVisibilityFields from '../../../components/Admin/AdminContentVisibilityFields';
 import AdminPublishedSwitch from '../../../components/Admin/AdminPublishedSwitch';
-import AdminSchoolAudiencePicker from '../../../components/Admin/AdminSchoolAudiencePicker';
 import AdminSectionCard from '../../../components/Admin/AdminSectionCard';
 import EventDateBlock from '../../../components/Home/EventDateBlock';
 import { adminStyles } from '../../../components/Admin/adminStyles';
@@ -16,7 +16,11 @@ import { useUpcomingEvents } from '../../hooks/useUpcomingEvents';
 import { useSchools } from '../../hooks/useSchools';
 import { useAdminReorder } from '../../hooks/admin/useAdminReorder';
 import { useAdminSchoolAudienceForm } from '../../hooks/admin/useAdminSchoolAudienceForm';
-import { formatSchoolAudienceSummary } from '../../../utils/content/schoolAudience';
+import {
+  buildContentVisibilityPayload,
+  formatContentVisibilitySummary,
+  validateContentVisibility,
+} from '../../../utils/admin/contentVisibility';
 import { useAdminSectionDefaults } from '../../hooks/admin/useAdminSectionDefaults';
 import {
   createUpcomingEvent,
@@ -30,6 +34,7 @@ import type {
   UpcomingEvent,
   UpdateUpcomingEventsSectionInput,
 } from '../../../store/content/types/upcomingEvents.types';
+import type { CourseTrack } from '../../../store/content/types/courses.types';
 import { toAdminWriteErrorMessage } from '../../../utils/admin/adminWriteErrorMessage';
 import {
   EVENT_YEAR_MAX,
@@ -48,6 +53,7 @@ type EventFormState = {
   dateRange: string;
   timeRange: string;
   daysLeftLabel: string;
+  track: CourseTrack | null;
   isPublished: boolean;
 };
 
@@ -59,6 +65,7 @@ const EMPTY_EVENT_FORM: EventFormState = {
   dateRange: '',
   timeRange: '',
   daysLeftLabel: '',
+  track: null,
   isPublished: true,
 };
 
@@ -118,6 +125,7 @@ function ManageUpcomingEvents() {
       dateRange: event.dateRange,
       timeRange: event.timeRange,
       daysLeftLabel: event.daysLeftLabel,
+      track: event.track,
       isPublished: event.isPublished,
     });
     audienceForm.resetAudience({
@@ -194,14 +202,21 @@ function ManageUpcomingEvents() {
       { year },
     );
 
-    const audienceError = audienceForm.validate();
-    if (audienceError) {
-      Alert.alert('Audience required', audienceError);
+    const visibilityError = validateContentVisibility(
+      eventForm.track,
+      audienceForm.validate,
+    );
+    if (visibilityError) {
+      Alert.alert('Visibility required', visibilityError);
       return;
     }
 
     setSavingEvent(true);
     try {
+      const visibilityPayload = buildContentVisibilityPayload(
+        eventForm.track!,
+        audienceForm.toPayload(),
+      );
       const payload = {
         month: eventForm.month,
         day: eventForm.day,
@@ -211,7 +226,7 @@ function ManageUpcomingEvents() {
         timeRange: eventForm.timeRange,
         daysLeftLabel,
         isPublished: eventForm.isPublished,
-        ...audienceForm.toPayload(),
+        ...visibilityPayload,
       };
       if (editingEventId) {
         await updateUpcomingEvent(editingEventId, payload);
@@ -292,7 +307,7 @@ function ManageUpcomingEvents() {
               <Text style={adminStyles.listRowSubtitle}>{event.timeRange}</Text>
             ) : null}
             <Text style={adminStyles.listRowSubtitle}>
-              {formatSchoolAudienceSummary(event, schools)}
+              {formatContentVisibilitySummary(event.track, event, schools)}
             </Text>
             {getDisplayDaysLeftLabel(
               event.month,
@@ -394,7 +409,10 @@ function ManageUpcomingEvents() {
             setEventForm(prev => ({ ...prev, isPublished }))
           }
         />
-        <AdminSchoolAudiencePicker
+        <AdminContentVisibilityFields
+          track={eventForm.track}
+          onTrackChange={track => setEventForm(prev => ({ ...prev, track }))}
+          onProfessionalsTrackSelected={() => audienceForm.resetAudience()}
           audience={audienceForm.audience}
           selectedSchoolIds={audienceForm.schoolIds}
           schoolGradeIds={audienceForm.schoolGradeIds}
@@ -406,6 +424,7 @@ function ManageUpcomingEvents() {
           onSchoolGradeModeChange={audienceForm.setSchoolGradeMode}
           onToggleSchoolGrade={audienceForm.toggleSchoolGrade}
           getSchoolGradeMode={audienceForm.getSchoolGradeMode}
+          trackHint="Required. Choose whether this event is shown to kids or professionals on Home."
         />
       </AdminEntityForm>
     </>

@@ -10,13 +10,17 @@ import AdminListLayout from '../../../components/Admin/AdminListLayout';
 import AdminListRow from '../../../components/Admin/AdminListRow';
 import AdminListSectionHeader from '../../../components/Admin/AdminListSectionHeader';
 import AdminPublishedSwitch from '../../../components/Admin/AdminPublishedSwitch';
-import AdminSchoolAudiencePicker from '../../../components/Admin/AdminSchoolAudiencePicker';
+import AdminContentVisibilityFields from '../../../components/Admin/AdminContentVisibilityFields';
 import { adminStyles } from '../../../components/Admin/adminStyles';
 import { colors, spacing } from '../../../constants/theme';
 import { useExams } from '../../hooks/useExams';
 import { useSchools } from '../../hooks/useSchools';
 import { useAdminSchoolAudienceForm } from '../../hooks/admin/useAdminSchoolAudienceForm';
-import { formatSchoolAudienceSummary } from '../../../utils/content/schoolAudience';
+import {
+  buildContentVisibilityPayload,
+  formatContentVisibilitySummary,
+  validateContentVisibility,
+} from '../../../utils/admin/contentVisibility';
 import {
   createExam,
   deleteExam,
@@ -25,12 +29,14 @@ import {
 } from '../../../services/firebase/examsService';
 import { useAdminReorder } from '../../hooks/admin/useAdminReorder';
 import type { Exam, ExamQuestion } from '../../../store/content/types/exams.types';
+import type { CourseTrack } from '../../../store/content/types/courses.types';
 import { toAdminWriteErrorMessage } from '../../../utils/admin/adminWriteErrorMessage';
 
 type ExamFormState = {
   title: string;
   description: string;
   timerMinutes: string;
+  track: CourseTrack | null;
   isPublished: boolean;
   questions: ExamQuestion[];
 };
@@ -46,6 +52,7 @@ const EMPTY_EXAM_FORM: ExamFormState = {
   title: '',
   description: '',
   timerMinutes: '0',
+  track: null,
   isPublished: true,
   questions: [],
 };
@@ -146,6 +153,7 @@ function ManageExams() {
       title: exam.title,
       description: exam.description,
       timerMinutes: toTimerMinutes(exam.timerSeconds),
+      track: exam.track,
       isPublished: exam.isPublished,
       questions: exam.questions ?? [],
     });
@@ -252,19 +260,26 @@ function ManageExams() {
       return;
     }
 
-    const audienceError = audienceForm.validate();
-    if (audienceError) {
-      Alert.alert('Audience required', audienceError);
+    const visibilityError = validateContentVisibility(
+      form.track,
+      audienceForm.validate,
+    );
+    if (visibilityError) {
+      Alert.alert('Visibility required', visibilityError);
       return;
     }
 
+    const visibilityPayload = buildContentVisibilityPayload(
+      form.track!,
+      audienceForm.toPayload(),
+    );
     const payload = {
       title: form.title,
       description: form.description,
       timerSeconds: toTimerSeconds(form.timerMinutes),
       questions: form.questions,
       isPublished: form.isPublished,
-      ...audienceForm.toPayload(),
+      ...visibilityPayload,
     };
 
     setSaving(true);
@@ -319,7 +334,7 @@ function ManageExams() {
         )} min`}
         statusLine={`${
           exam.questions?.length ? 'Ready to publish' : 'Add questions'
-        } · ${formatSchoolAudienceSummary(exam, schools)}`}
+        } · ${formatContentVisibilitySummary(exam.track, exam, schools)}`}
         isPublished={exam.isPublished}
         index={index}
         itemCount={exams.length}
@@ -514,7 +529,10 @@ function ManageExams() {
                 setForm(prev => ({ ...prev, isPublished }))
               }
             />
-            <AdminSchoolAudiencePicker
+            <AdminContentVisibilityFields
+              track={form.track}
+              onTrackChange={track => setForm(prev => ({ ...prev, track }))}
+              onProfessionalsTrackSelected={() => audienceForm.resetAudience()}
               audience={audienceForm.audience}
               selectedSchoolIds={audienceForm.schoolIds}
               schoolGradeIds={audienceForm.schoolGradeIds}
@@ -526,6 +544,7 @@ function ManageExams() {
               onSchoolGradeModeChange={audienceForm.setSchoolGradeMode}
               onToggleSchoolGrade={audienceForm.toggleSchoolGrade}
               getSchoolGradeMode={audienceForm.getSchoolGradeMode}
+              trackHint="Required. Choose whether this exam is visible to kids or professionals."
             />
           </>
         )}

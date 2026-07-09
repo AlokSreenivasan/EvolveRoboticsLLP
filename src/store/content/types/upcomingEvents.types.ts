@@ -1,5 +1,6 @@
 import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
+import type { CourseTrack } from './courses.types';
 import type {
   SchoolAudienceDocument,
   SchoolAudienceFields,
@@ -29,6 +30,7 @@ export interface UpcomingEventDocument extends SchoolAudienceDocument {
   dateRange: string;
   timeRange: string;
   daysLeftLabel: string;
+  track: CourseTrack;
   sortOrder: number;
   isPublished: boolean;
   createdAt: FirebaseFirestoreTypes.Timestamp | FirebaseFirestoreTypes.FieldValue;
@@ -44,6 +46,7 @@ export interface UpcomingEvent extends SchoolAudienceFields {
   dateRange: string;
   timeRange: string;
   daysLeftLabel: string;
+  track: CourseTrack | null;
   sortOrder: number;
   isPublished: boolean;
   createdAt: FirebaseFirestoreTypes.Timestamp | null;
@@ -58,6 +61,7 @@ export type CreateUpcomingEventInput = {
   dateRange: string;
   timeRange: string;
   daysLeftLabel: string;
+  track: CourseTrack;
   isPublished?: boolean;
 } & SchoolAudienceInput;
 

@@ -1,20 +1,24 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Text } from 'react-native';
 
+import AdminContentVisibilityFields from '../../../components/Admin/AdminContentVisibilityFields';
 import AdminEntityForm from '../../../components/Admin/AdminEntityForm';
 import AdminFormField from '../../../components/Admin/AdminFormField';
 import AdminListLayout from '../../../components/Admin/AdminListLayout';
 import AdminListRow from '../../../components/Admin/AdminListRow';
 import AdminListSectionHeader from '../../../components/Admin/AdminListSectionHeader';
 import AdminPublishedSwitch from '../../../components/Admin/AdminPublishedSwitch';
-import AdminSchoolAudiencePicker from '../../../components/Admin/AdminSchoolAudiencePicker';
 import AdminSectionCard from '../../../components/Admin/AdminSectionCard';
 import { adminStyles } from '../../../components/Admin/adminStyles';
 import { useImportantUpdates } from '../../hooks/useImportantUpdates';
 import { useSchools } from '../../hooks/useSchools';
 import { useAdminReorder } from '../../hooks/admin/useAdminReorder';
 import { useAdminSchoolAudienceForm } from '../../hooks/admin/useAdminSchoolAudienceForm';
-import { formatSchoolAudienceSummary } from '../../../utils/content/schoolAudience';
+import {
+  buildContentVisibilityPayload,
+  formatContentVisibilitySummary,
+  validateContentVisibility,
+} from '../../../utils/admin/contentVisibility';
 import { useAdminSectionDefaults } from '../../hooks/admin/useAdminSectionDefaults';
 import {
   createImportantUpdateNotice,
@@ -28,6 +32,7 @@ import type {
   ImportantUpdateNotice,
   UpdateImportantUpdatesSectionInput,
 } from '../../../store/content/types/importantUpdates.types';
+import type { CourseTrack } from '../../../store/content/types/courses.types';
 import { toAdminWriteErrorMessage } from '../../../utils/admin/adminWriteErrorMessage';
 
 type NoticeFormState = {
@@ -35,6 +40,7 @@ type NoticeFormState = {
   title: string;
   subtitle: string;
   description: string;
+  track: CourseTrack | null;
   isPublished: boolean;
 };
 
@@ -43,6 +49,7 @@ const EMPTY_NOTICE_FORM: NoticeFormState = {
   title: '',
   subtitle: '',
   description: '',
+  track: null,
   isPublished: true,
 };
 
@@ -90,6 +97,7 @@ function ManageImportantUpdates() {
       title: notice.title,
       subtitle: notice.subtitle,
       description: notice.description,
+      track: notice.track,
       isPublished: notice.isPublished,
     });
     audienceForm.resetAudience({
@@ -136,15 +144,21 @@ function ManageImportantUpdates() {
       return;
     }
 
-    const audienceError = audienceForm.validate();
-    if (audienceError) {
-      Alert.alert('Audience required', audienceError);
+    const visibilityError = validateContentVisibility(
+      noticeForm.track,
+      audienceForm.validate,
+    );
+    if (visibilityError) {
+      Alert.alert('Visibility required', visibilityError);
       return;
     }
 
     setSavingNotice(true);
     try {
-      const audiencePayload = audienceForm.toPayload();
+      const visibilityPayload = buildContentVisibilityPayload(
+        noticeForm.track!,
+        audienceForm.toPayload(),
+      );
       if (editingNoticeId) {
         await updateImportantUpdateNotice(editingNoticeId, {
           tag: noticeForm.tag,
@@ -152,7 +166,7 @@ function ManageImportantUpdates() {
           subtitle: noticeForm.subtitle,
           description: noticeForm.description,
           isPublished: noticeForm.isPublished,
-          ...audiencePayload,
+          ...visibilityPayload,
         });
       } else {
         await createImportantUpdateNotice({
@@ -161,7 +175,7 @@ function ManageImportantUpdates() {
           subtitle: noticeForm.subtitle,
           description: noticeForm.description,
           isPublished: noticeForm.isPublished,
-          ...audiencePayload,
+          ...visibilityPayload,
         });
       }
       closeEditor();
@@ -225,8 +239,8 @@ function ManageImportantUpdates() {
         title={notice.title}
         subtitle={
           notice.subtitle
-            ? `${notice.subtitle} · ${formatSchoolAudienceSummary(notice, schools)}`
-            : formatSchoolAudienceSummary(notice, schools)
+            ? `${notice.subtitle} · ${formatContentVisibilitySummary(notice.track, notice, schools)}`
+            : formatContentVisibilitySummary(notice.track, notice, schools)
         }
         tag={notice.tag}
         isPublished={notice.isPublished}
@@ -304,7 +318,10 @@ function ManageImportantUpdates() {
             setNoticeForm(prev => ({ ...prev, isPublished }))
           }
         />
-        <AdminSchoolAudiencePicker
+        <AdminContentVisibilityFields
+          track={noticeForm.track}
+          onTrackChange={track => setNoticeForm(prev => ({ ...prev, track }))}
+          onProfessionalsTrackSelected={() => audienceForm.resetAudience()}
           audience={audienceForm.audience}
           selectedSchoolIds={audienceForm.schoolIds}
           schoolGradeIds={audienceForm.schoolGradeIds}
@@ -316,6 +333,7 @@ function ManageImportantUpdates() {
           onSchoolGradeModeChange={audienceForm.setSchoolGradeMode}
           onToggleSchoolGrade={audienceForm.toggleSchoolGrade}
           getSchoolGradeMode={audienceForm.getSchoolGradeMode}
+          trackHint="Required. Choose whether this notice is shown to kids or professionals on Home."
         />
       </AdminEntityForm>
     </>

@@ -91,7 +91,6 @@ export function subscribeContinueLearningPlaylists(
   options?: ContinueLearningPlaylistSubscribeOptions,
   onError?: (error: unknown) => void,
 ): () => void {
-  const viewerTrack = options?.viewerTrack;
   const playlistsQuery = query(
     playlistsCollection(),
     orderBy('sortOrder', 'asc'),
@@ -108,12 +107,6 @@ export function subscribeContinueLearningPlaylists(
       );
 
       let filtered = applyLearnerContentFilters(playlists, options);
-
-      if (viewerTrack) {
-        filtered = filtered.filter(
-          item => item.track === viewerTrack || item.track == null,
-        );
-      }
 
       listener(sortPlaylists(filtered));
     },

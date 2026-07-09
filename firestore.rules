@@ -173,6 +173,7 @@ function isValidSchoolAudienceFields(data) {
 
 function isValidImportantUpdateNoticeFields(data) {
   return isValidSchoolAudienceFields(data)
+    && (!('track' in data) || isValidCourseTrack(data))
     && data.tag is string
     && data.tag.size() <= 60
     && data.title is string
@@ -199,7 +200,8 @@ function isValidImportantUpdateNoticeCreate() {
       'createdAt',
       'updatedAt',
     ])
-    && isValidImportantUpdateNoticeFields(data);
+    && isValidImportantUpdateNoticeFields(data)
+    && isValidCourseTrack(data);
 }
 
 function isValidImportantUpdateNoticeUpdate() {
@@ -208,6 +210,7 @@ function isValidImportantUpdateNoticeUpdate() {
 
 function isValidUpcomingEventFields(data) {
   return isValidSchoolAudienceFields(data)
+    && (!('track' in data) || isValidCourseTrack(data))
     && data.month is string
     && data.month.size() > 0
     && data.month.size() <= 20
@@ -229,7 +232,8 @@ function isValidUpcomingEventFields(data) {
 }
 
 function isValidUpcomingEventCreate() {
-  return isValidUpcomingEventFields(request.resource.data);
+  return isValidUpcomingEventFields(request.resource.data)
+    && isValidCourseTrack(request.resource.data);
 }
 
 function isValidUpcomingEventUpdate() {
@@ -271,7 +275,8 @@ function isValidCourseTrack(data) {
 }
 
 function isValidCourseFields(data) {
-  return data.title is string
+  return isValidSchoolAudienceFields(data)
+    && data.title is string
     && data.title.size() > 0
     && data.title.size() <= 200
     && data.subtitle is string
@@ -300,6 +305,7 @@ function isValidCourseUpdate() {
 
 function isValidResourceNoteFields(data) {
   return isValidSchoolAudienceFields(data)
+    && (!('track' in data) || isValidCourseTrack(data))
     && data.title is string
     && data.title.size() > 0
     && data.title.size() <= 200
@@ -313,7 +319,8 @@ function isValidResourceNoteFields(data) {
 }
 
 function isValidResourceNoteCreate() {
-  return isValidResourceNoteFields(request.resource.data);
+  return isValidResourceNoteFields(request.resource.data)
+    && isValidCourseTrack(request.resource.data);
 }
 
 function isValidResourceNoteUpdate() {
@@ -322,6 +329,7 @@ function isValidResourceNoteUpdate() {
 
 function isValidAssignmentFields(data) {
   return isValidSchoolAudienceFields(data)
+    && (!('track' in data) || isValidCourseTrack(data))
     && data.title is string
     && data.title.size() > 0
     && data.title.size() <= 200
@@ -337,7 +345,8 @@ function isValidAssignmentFields(data) {
 }
 
 function isValidAssignmentCreate() {
-  return isValidAssignmentFields(request.resource.data);
+  return isValidAssignmentFields(request.resource.data)
+    && isValidCourseTrack(request.resource.data);
 }
 
 function isValidAssignmentUpdate() {
@@ -346,6 +355,7 @@ function isValidAssignmentUpdate() {
 
 function isValidExamFields(data) {
   return isValidSchoolAudienceFields(data)
+    && (!('track' in data) || isValidCourseTrack(data))
     && data.title is string
     && data.title.size() > 0
     && data.title.size() <= 200
@@ -362,7 +372,8 @@ function isValidExamFields(data) {
 }
 
 function isValidExamCreate() {
-  return isValidExamFields(request.resource.data);
+  return isValidExamFields(request.resource.data)
+    && isValidCourseTrack(request.resource.data);
 }
 
 function isValidExamUpdate() {
@@ -387,6 +398,7 @@ function isValidNotificationCategory(value) {
 
 function isValidNotificationFields(data) {
   return isValidSchoolAudienceFields(data)
+    && (!('track' in data) || isValidCourseTrack(data))
     && data.title is string
     && data.title.size() > 0
     && data.title.size() <= 200
@@ -425,7 +437,8 @@ function isValidFcmTokenWrite() {
 }
 
 function isValidNotificationCreate() {
-  return isValidNotificationFields(request.resource.data);
+  return isValidNotificationFields(request.resource.data)
+    && isValidCourseTrack(request.resource.data);
 }
 
 function isValidNotificationUpdate() {

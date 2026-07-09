@@ -1,5 +1,6 @@
 import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
+import type { CourseTrack } from './courses.types';
 import type {
   SchoolAudienceDocument,
   SchoolAudienceFields,
@@ -29,6 +30,7 @@ export interface AssignmentDocument extends SchoolAudienceDocument {
   subtitle: string;
   dueDateLabel: string;
   pdfUrl: string;
+  track: CourseTrack;
   sortOrder: number;
   isPublished: boolean;
   createdAt:
@@ -45,6 +47,7 @@ export interface Assignment extends SchoolAudienceFields {
   subtitle: string;
   dueDateLabel: string;
   pdfUrl: string;
+  track: CourseTrack | null;
   sortOrder: number;
   isPublished: boolean;
   createdAt: FirebaseFirestoreTypes.Timestamp | null;
@@ -56,6 +59,7 @@ export type CreateAssignmentInput = {
   subtitle?: string;
   dueDateLabel?: string;
   pdfUrl: string;
+  track: CourseTrack;
   isPublished?: boolean;
 } & SchoolAudienceInput;
 

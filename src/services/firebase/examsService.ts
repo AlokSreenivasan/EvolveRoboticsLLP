@@ -17,9 +17,12 @@ import {
 } from '../../utils/content/schoolAudience';
 import {
   applyLearnerContentFilters,
-  buildSchoolAudienceWriteFields,
+  buildTrackAwareSchoolAudienceWriteFields,
+  mapContentTrack,
   mapSchoolAudienceFields,
+  shouldApplyTrackAwareSchoolAudienceUpdate,
 } from './schoolAudienceFirestore';
+import { isCourseTrack } from '../../store/content/types/courses.types';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { FIRESTORE_COLLECTIONS } from './constants';
 import {
@@ -71,6 +74,7 @@ function mapExam(id: string, data: ExamDocument): Exam {
     description: data.description?.trim() ?? '',
     timerSeconds,
     questions: Array.isArray(data.questions) ? data.questions : [],
+    track: mapContentTrack(data),
     sortOrder: typeof data.sortOrder === 'number' ? data.sortOrder : 0,
     isPublished: data.isPublished === true,
     createdAt: isTimestamp(data.createdAt) ? data.createdAt : null,
@@ -128,6 +132,9 @@ export function subscribeExam(
         !includeUnpublished &&
         (!exam.isPublished ||
           exam.questions.length === 0 ||
+          (options?.viewerTrack &&
+            exam.track !== options.viewerTrack &&
+            exam.track != null) ||
           (shouldFilterByViewerSchool(options) &&
             !isVisibleForViewer(
               exam,
@@ -171,6 +178,14 @@ async function getNextSortOrder(): Promise<number> {
 
 export async function createExam(input: CreateExamInput): Promise<Exam> {
   try {
+    if (!isCourseTrack(input.track)) {
+      throw wrapFirebaseError(
+        new Error('Exam track is required.'),
+        'FIRESTORE_ERROR',
+        'Select whether this exam is for kids or professionals.',
+      );
+    }
+
     const sortOrder = Math.trunc(await getNextSortOrder());
     const ref = doc(examsCollection());
     const payload: ExamDocument = {
@@ -178,9 +193,10 @@ export async function createExam(input: CreateExamInput): Promise<Exam> {
       description: input.description?.trim() ?? '',
       timerSeconds: Math.max(0, Math.trunc(input.timerSeconds)),
       questions: input.questions,
+      track: input.track,
       sortOrder,
       isPublished: input.isPublished ?? true,
-      ...buildSchoolAudienceWriteFields(input),
+      ...buildTrackAwareSchoolAudienceWriteFields(input.track, input),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
@@ -224,8 +240,24 @@ export async function updateExam(
     if (input.isPublished !== undefined) {
       updates.isPublished = input.isPublished;
     }
-    if (input.audience !== undefined || input.schoolIds !== undefined) {
-      Object.assign(updates, buildSchoolAudienceWriteFields(input));
+    if (input.track !== undefined) {
+      if (!isCourseTrack(input.track)) {
+        throw wrapFirebaseError(
+          new Error('Exam track is required.'),
+          'FIRESTORE_ERROR',
+          'Select whether this exam is for kids or professionals.',
+        );
+      }
+      updates.track = input.track;
+    }
+    if (shouldApplyTrackAwareSchoolAudienceUpdate(input)) {
+      Object.assign(
+        updates,
+        buildTrackAwareSchoolAudienceWriteFields(
+          input.track === 'professionals' ? 'professionals' : input.track ?? 'kids',
+          input,
+        ),
+      );
     }
 
     await updateDoc(

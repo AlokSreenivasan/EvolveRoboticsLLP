@@ -17,9 +17,12 @@ import type {
 } from '../../store/content/types/notifications.types';
 import {
   applyLearnerContentFilters,
-  buildSchoolAudienceWriteFields,
+  buildTrackAwareSchoolAudienceWriteFields,
+  mapContentTrack,
   mapSchoolAudienceFields,
+  shouldApplyTrackAwareSchoolAudienceUpdate,
 } from './schoolAudienceFirestore';
+import { isCourseTrack } from '../../store/content/types/courses.types';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { FIRESTORE_COLLECTIONS } from './constants';
 import {
@@ -63,6 +66,7 @@ function mapNotification(
     title: data.title?.trim() ?? '',
     body: data.body?.trim() ?? '',
     category: normalizeNotificationCategory(data.category),
+    track: mapContentTrack(data),
     sortOrder: typeof data.sortOrder === 'number' ? data.sortOrder : 0,
     isPublished: data.isPublished === true,
     lastSentAt: isTimestamp(data.lastSentAt) ? data.lastSentAt : null,
@@ -121,15 +125,24 @@ export async function createNotification(
   input: CreateAppNotificationInput,
 ): Promise<AppNotification> {
   try {
+    if (!isCourseTrack(input.track)) {
+      throw wrapFirebaseError(
+        new Error('Notification track is required.'),
+        'FIRESTORE_ERROR',
+        'Select whether this notification is for kids or professionals.',
+      );
+    }
+
     const sortOrder = Math.trunc(await getNextSortOrder());
     const ref = doc(notificationsCollection());
     const payload: AppNotificationDocument = {
       title: input.title.trim(),
       body: input.body.trim(),
       category: input.category ?? DEFAULT_NOTIFICATION_CATEGORY,
+      track: input.track,
       sortOrder,
       isPublished: input.isPublished ?? true,
-      ...buildSchoolAudienceWriteFields(input),
+      ...buildTrackAwareSchoolAudienceWriteFields(input.track, input),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
@@ -174,8 +187,24 @@ export async function updateNotification(
     if (input.isPublished !== undefined) {
       updates.isPublished = input.isPublished;
     }
-    if (input.audience !== undefined || input.schoolIds !== undefined) {
-      Object.assign(updates, buildSchoolAudienceWriteFields(input));
+    if (input.track !== undefined) {
+      if (!isCourseTrack(input.track)) {
+        throw wrapFirebaseError(
+          new Error('Notification track is required.'),
+          'FIRESTORE_ERROR',
+          'Select whether this notification is for kids or professionals.',
+        );
+      }
+      updates.track = input.track;
+    }
+    if (shouldApplyTrackAwareSchoolAudienceUpdate(input)) {
+      Object.assign(
+        updates,
+        buildTrackAwareSchoolAudienceWriteFields(
+          input.track === 'professionals' ? 'professionals' : input.track ?? 'kids',
+          input,
+        ),
+      );
     }
 
     await updateDoc(

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import type { ContentSubscribeOptions } from '../../store/content/types/schoolAudience.types';
+import { useAuth } from '../context/AuthContext';
 import { useContentViewerGradeId } from './useContentViewerGradeId';
 import { useContentViewerSchoolId } from './useContentViewerSchoolId';
 
@@ -8,6 +9,7 @@ import { useContentViewerSchoolId } from './useContentViewerSchoolId';
 export function useContentSubscribeOptions(
   includeUnpublished = false,
 ): ContentSubscribeOptions {
+  const { profile, isAdmin, roleLoading } = useAuth();
   const viewerSchoolId = useContentViewerSchoolId();
   const viewerGrade = useContentViewerGradeId();
 
@@ -16,14 +18,29 @@ export function useContentSubscribeOptions(
       return { includeUnpublished: true };
     }
 
-    if (viewerSchoolId === undefined) {
+    if (roleLoading || isAdmin) {
       return { includeUnpublished: false };
     }
 
+    const viewerTrack = profile?.track ?? undefined;
+    const isKids = profile?.track === 'kids';
+
     return {
       includeUnpublished: false,
-      viewerSchoolId,
-      viewerGrade,
+      viewerTrack,
+      ...(isKids
+        ? {
+            viewerSchoolId: viewerSchoolId ?? null,
+            viewerGrade,
+          }
+        : {}),
     };
-  }, [includeUnpublished, viewerGrade, viewerSchoolId]);
+  }, [
+    includeUnpublished,
+    isAdmin,
+    profile?.track,
+    roleLoading,
+    viewerGrade,
+    viewerSchoolId,
+  ]);
 }

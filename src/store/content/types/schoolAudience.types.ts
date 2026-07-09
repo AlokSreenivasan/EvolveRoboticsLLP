@@ -1,3 +1,5 @@
+import type { CourseTrack } from './courses.types';
+
 /** Who can see this content item or receive a targeted push. */
 export type SchoolAudience = 'all' | 'schools';
 
@@ -25,6 +27,11 @@ export type SchoolAudienceInput = {
 export type ContentSubscribeOptions = {
   /** Admin: include draft items. */
   includeUnpublished?: boolean;
+  /**
+   * Learner view: only items matching this track (kids vs professionals).
+   * Omit to skip track filtering (admin lists).
+   */
+  viewerTrack?: CourseTrack;
   /**
    * Learner view: only items for all schools or this school id.
    * Omit to skip school filtering (admin lists).

@@ -136,6 +136,7 @@ type HomeFeedProviderProps = {
  */
 function buildHomeFeedSubscribeOptions(
   isAdmin: boolean,
+  track: string | null | undefined,
   schoolId: string | null | undefined,
   grade: string | null | undefined,
 ): ContentSubscribeOptions {
@@ -143,10 +144,19 @@ function buildHomeFeedSubscribeOptions(
     return { includeUnpublished: false };
   }
 
+  const viewerTrack =
+    track === 'kids' || track === 'professionals' ? track : undefined;
+  const isKids = track === 'kids';
+
   return {
     includeUnpublished: false,
-    viewerSchoolId: schoolId ?? null,
-    viewerGrade: grade ?? null,
+    viewerTrack,
+    ...(isKids
+      ? {
+          viewerSchoolId: schoolId ?? null,
+          viewerGrade: grade ?? null,
+        }
+      : {}),
   };
 }
 
@@ -156,36 +166,13 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
     () =>
       buildHomeFeedSubscribeOptions(
         !roleLoading && isAdmin,
+        profile?.track,
         profile?.schoolId,
         profile?.grade,
       ),
-    [isAdmin, profile?.grade, profile?.schoolId, roleLoading],
+    [isAdmin, profile?.grade, profile?.schoolId, profile?.track, roleLoading],
   );
-  const playlistSubscribeOptions = useMemo(() => {
-    if (!roleLoading && isAdmin) {
-      return { includeUnpublished: false as const };
-    }
-
-    const viewerTrack = profile?.track ?? undefined;
-    const isKids = profile?.track === 'kids';
-
-    return {
-      includeUnpublished: false as const,
-      viewerTrack,
-      ...(isKids
-        ? {
-            viewerSchoolId: profile?.schoolId ?? null,
-            viewerGrade: profile?.grade ?? null,
-          }
-        : {}),
-    };
-  }, [
-    isAdmin,
-    profile?.grade,
-    profile?.schoolId,
-    profile?.track,
-    roleLoading,
-  ]);
+  const playlistSubscribeOptions = contentSubscribeOptions;
   const [focusCount, setFocusCount] = useState(0);
   const isActive = focusCount > 0;
 

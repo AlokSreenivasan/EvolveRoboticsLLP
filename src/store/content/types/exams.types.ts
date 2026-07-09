@@ -1,5 +1,6 @@
 import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
+import type { CourseTrack } from './courses.types';
 import type {
   SchoolAudienceDocument,
   SchoolAudienceFields,
@@ -25,6 +26,7 @@ export interface ExamDocument extends SchoolAudienceDocument {
   /** Exam duration in seconds. */
   timerSeconds: number;
   questions: ExamQuestion[];
+  track: CourseTrack;
   sortOrder: number;
   isPublished: boolean;
   createdAt:
@@ -41,6 +43,7 @@ export interface Exam extends SchoolAudienceFields {
   description: string;
   timerSeconds: number;
   questions: ExamQuestion[];
+  track: CourseTrack | null;
   sortOrder: number;
   isPublished: boolean;
   createdAt: FirebaseFirestoreTypes.Timestamp | null;
@@ -52,6 +55,7 @@ export type CreateExamInput = {
   description?: string;
   timerSeconds: number;
   questions: ExamQuestion[];
+  track: CourseTrack;
   isPublished?: boolean;
 } & SchoolAudienceInput;
 
