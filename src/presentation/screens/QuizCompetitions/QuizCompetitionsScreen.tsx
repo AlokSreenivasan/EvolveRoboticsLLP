@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   SafeAreaView,
   StyleSheet,
@@ -9,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { CheckCircle2, Lock } from 'lucide-react-native';
 
 import BackButton from '../../../components/BackButton';
 import QuizCompetitionIcon from '../../../components/Home/icons/QuizCompetitionIcon';
@@ -16,6 +18,8 @@ import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import { colors, spacing } from '../../../constants/theme';
 import type { QuizCompetition } from '../../../store/content/types/quizCompetitions.types';
 import type { LoginScreenNavigationProp } from '../../../types/navigation';
+import { getQuizAccessStatus } from '../../../utils/quizAccess';
+import { useQuizAttempts } from '../../hooks/useQuizAttempts';
 import { useQuizCompetitions } from '../../hooks/useQuizCompetitions';
 
 function formatMinutes(timerSeconds: number): number {
@@ -28,41 +32,162 @@ function formatMinutes(timerSeconds: number): number {
 function QuizCompetitionsScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const { quizzes, loading, error } = useQuizCompetitions();
+  const {
+    completedQuizIds,
+    attemptByQuizId,
+    loading: attemptsLoading,
+    error: attemptsError,
+  } = useQuizAttempts();
+
+  const handleQuizPress = useCallback(
+    (quiz: QuizCompetition, index: number) => {
+      const status = getQuizAccessStatus(
+        quiz,
+        index,
+        quizzes,
+        completedQuizIds,
+      );
+
+      if (status === 'locked') {
+        const previousQuiz = index > 0 ? quizzes[index - 1] : null;
+        Alert.alert(
+          'Quiz locked',
+          previousQuiz
+            ? `Complete "${previousQuiz.title}" first to unlock this quiz.`
+            : 'Complete the previous quiz first to unlock this one.',
+        );
+        return;
+      }
+
+      if (status === 'completed') {
+        const attempt = attemptByQuizId.get(quiz.id);
+        Alert.alert(
+          'Already completed',
+          attempt
+            ? `You scored ${attempt.correctCount}/${attempt.totalQuestions} (${attempt.percentage}%). Each quiz can only be attempted once.`
+            : 'You have already completed this quiz.',
+        );
+        return;
+      }
+
+      navigation.navigate('QuizAttempt', { quizId: quiz.id });
+    },
+    [attemptByQuizId, completedQuizIds, navigation, quizzes],
+  );
 
   const renderQuiz = useCallback(
-    ({ item }: { item: QuizCompetition }) => (
-      <TouchableOpacity
-        style={styles.card}
-        activeOpacity={0.85}
-        onPress={() => navigation.navigate('QuizAttempt', { quizId: item.id })}
-        accessibilityRole="button"
-        accessibilityLabel={`Quiz ${item.title}`}>
-        <View style={styles.cardIcon}>
-          <QuizCompetitionIcon size={22} color={colors.accentBlue} strokeWidth={2.5} />
-        </View>
-        <View style={styles.cardText}>
-          <Text style={styles.cardTitle}>{item.title}</Text>
-          {item.description.trim() ? (
-            <Text style={styles.cardSubtitle} numberOfLines={2}>
-              {item.description.trim()}
+    ({ item, index }: { item: QuizCompetition; index: number }) => {
+      const status = getQuizAccessStatus(
+        item,
+        index,
+        quizzes,
+        completedQuizIds,
+      );
+      const attempt = attemptByQuizId.get(item.id);
+      const isLocked = status === 'locked';
+      const isCompleted = status === 'completed';
+
+      return (
+        <TouchableOpacity
+          style={[
+            styles.card,
+            isLocked && styles.cardLocked,
+            isCompleted && styles.cardCompleted,
+          ]}
+          activeOpacity={isLocked ? 1 : 0.85}
+          onPress={() => handleQuizPress(item, index)}
+          accessibilityRole="button"
+          accessibilityLabel={`Quiz ${item.title}${
+            isLocked ? ', locked' : isCompleted ? ', completed' : ', available'
+          }`}
+          accessibilityState={{ disabled: isLocked }}>
+          <View
+            style={[
+              styles.cardIcon,
+              isLocked && styles.cardIconLocked,
+              isCompleted && styles.cardIconCompleted,
+            ]}>
+            {isLocked ? (
+              <Lock size={20} color={colors.textMuted} strokeWidth={2.5} />
+            ) : isCompleted ? (
+              <CheckCircle2
+                size={22}
+                color={colors.accentGreen}
+                strokeWidth={2.5}
+              />
+            ) : (
+              <QuizCompetitionIcon
+                size={22}
+                color={colors.accentBlue}
+                strokeWidth={2.5}
+              />
+            )}
+          </View>
+          <View style={styles.cardText}>
+            <View style={styles.cardTitleRow}>
+              <Text
+                style={[
+                  styles.cardTitle,
+                  isLocked && styles.cardTitleLocked,
+                ]}>
+                {index + 1}. {item.title}
+              </Text>
+              {isLocked ? (
+                <View style={styles.statusBadgeLocked}>
+                  <Text style={styles.statusBadgeTextLocked}>Locked</Text>
+                </View>
+              ) : isCompleted ? (
+                <View style={styles.statusBadgeCompleted}>
+                  <Text style={styles.statusBadgeTextCompleted}>Done</Text>
+                </View>
+              ) : (
+                <View style={styles.statusBadgeAvailable}>
+                  <Text style={styles.statusBadgeTextAvailable}>Start</Text>
+                </View>
+              )}
+            </View>
+            {item.description.trim() ? (
+              <Text
+                style={[
+                  styles.cardSubtitle,
+                  isLocked && styles.cardSubtitleLocked,
+                ]}
+                numberOfLines={2}>
+                {item.description.trim()}
+              </Text>
+            ) : null}
+            <Text
+              style={[
+                styles.cardMeta,
+                isLocked && styles.cardMetaLocked,
+              ]}>
+              {item.questions.length} questions • {formatMinutes(item.timerSeconds)} min
+              {isCompleted && attempt
+                ? ` • Score ${attempt.correctCount}/${attempt.totalQuestions}`
+                : ''}
             </Text>
-          ) : null}
-          <Text style={styles.cardMeta}>
-            {item.questions.length} questions • {formatMinutes(item.timerSeconds)} min
-          </Text>
-        </View>
-      </TouchableOpacity>
-    ),
-    [navigation],
+            {isLocked ? (
+              <Text style={styles.lockedHint}>
+                Complete quiz {index} to unlock
+              </Text>
+            ) : null}
+          </View>
+        </TouchableOpacity>
+      );
+    },
+    [attemptByQuizId, completedQuizIds, handleQuizPress, quizzes],
   );
 
   const keyExtractor = useCallback((item: QuizCompetition) => item.id, []);
 
+  const isLoading = loading || attemptsLoading;
+  const loadError = error ?? attemptsError;
+
   const listEmpty = useCallback(() => {
-    if (loading) {
+    if (isLoading) {
       return <ActivityIndicator color={colors.primary} style={styles.loader} />;
     }
-    if (error) {
+    if (loadError) {
       return (
         <View style={styles.messageCard}>
           <Text style={styles.messageTitle}>Could not load quizzes</Text>
@@ -80,7 +205,7 @@ function QuizCompetitionsScreen() {
         </Text>
       </View>
     );
-  }, [error, loading]);
+  }, [isLoading, loadError]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -88,12 +213,13 @@ function QuizCompetitionsScreen() {
         <BackButton withSpacingBelow />
         <Text style={styles.title}>Quiz competition</Text>
         <Text style={styles.subtitle}>
-          Attempt published quizzes within the given time.
+          Complete quizzes in order. Each quiz unlocks after the previous one is
+          finished.
         </Text>
       </View>
 
       <FlatList
-        data={loading || error ? [] : quizzes}
+        data={isLoading || loadError ? [] : quizzes}
         keyExtractor={keyExtractor}
         renderItem={renderQuiz}
         ListEmptyComponent={listEmpty}
@@ -169,6 +295,15 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     marginBottom: 12,
   },
+  cardLocked: {
+    backgroundColor: '#F3F4F6',
+    borderColor: '#E5E7EB',
+    opacity: 0.92,
+  },
+  cardCompleted: {
+    borderColor: '#C8E6C9',
+    backgroundColor: '#F9FFF9',
+  },
   cardIcon: {
     width: 44,
     height: 44,
@@ -179,13 +314,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  cardIconLocked: {
+    backgroundColor: '#ECEFF1',
+    borderColor: colors.border,
+  },
+  cardIconCompleted: {
+    backgroundColor: '#E8F5E9',
+    borderColor: '#C8E6C9',
+  },
   cardText: {
     flex: 1,
   },
+  cardTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
   cardTitle: {
+    flex: 1,
     fontSize: 15,
     fontWeight: '700',
     color: colors.textPrimary,
+  },
+  cardTitleLocked: {
+    color: colors.textMuted,
   },
   cardSubtitle: {
     marginTop: 4,
@@ -193,10 +346,55 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     lineHeight: 18,
   },
+  cardSubtitleLocked: {
+    color: colors.textMuted,
+  },
   cardMeta: {
     marginTop: 8,
     fontSize: 12,
     color: colors.textMuted,
+  },
+  cardMetaLocked: {
+    color: '#B0B7C3',
+  },
+  lockedHint: {
+    marginTop: 6,
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textMuted,
+  },
+  statusBadgeLocked: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+    backgroundColor: '#ECEFF1',
+  },
+  statusBadgeTextLocked: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.textMuted,
+  },
+  statusBadgeCompleted: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+    backgroundColor: '#E8F5E9',
+  },
+  statusBadgeTextCompleted: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.accentGreen,
+  },
+  statusBadgeAvailable: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+    backgroundColor: '#E8F4FD',
+  },
+  statusBadgeTextAvailable: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.accentBlue,
   },
 });
 

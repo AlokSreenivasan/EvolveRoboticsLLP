@@ -17,7 +17,11 @@ import AppButton from '../../../components/AppButton';
 import BackButton from '../../../components/BackButton';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import { colors, spacing } from '../../../constants/theme';
+import { createQuizAttempt } from '../../../services/firebase/quizAttemptsService';
+import { canAttemptQuiz } from '../../../utils/quizAccess';
+import { useQuizAttempts } from '../../hooks/useQuizAttempts';
 import { useQuizCompetition } from '../../hooks/useQuizCompetition';
+import { useQuizCompetitions } from '../../hooks/useQuizCompetitions';
 import type { ExamQuestion } from '../../../store/content/types/exams.types';
 import type { RootStackParamList } from '../../../types/navigation';
 
@@ -47,6 +51,12 @@ function QuizAttemptScreen() {
   const quizId = route.params?.quizId ?? '';
 
   const { quiz, loading, error } = useQuizCompetition(quizId);
+  const { quizzes, loading: quizzesLoading } = useQuizCompetitions();
+  const {
+    completedQuizIds,
+    attemptByQuizId,
+    loading: attemptsLoading,
+  } = useQuizAttempts();
 
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
@@ -61,8 +71,15 @@ function QuizAttemptScreen() {
     [answers],
   );
 
+  const canStartAttempt =
+    !quizzesLoading &&
+    !attemptsLoading &&
+    quiz != null &&
+    !completedQuizIds.has(quizId) &&
+    canAttemptQuiz(quizId, quizzes, completedQuizIds);
+
   useEffect(() => {
-    if (!quiz) {
+    if (!quiz || !canStartAttempt) {
       return;
     }
 
@@ -94,7 +111,7 @@ function QuizAttemptScreen() {
         tickRef.current = null;
       }
     };
-  }, [quiz?.id]);
+  }, [canStartAttempt, quiz]);
 
   const handleSelect = useCallback(
     (questionId: string, choiceIndex: number) => {
@@ -177,13 +194,28 @@ function QuizAttemptScreen() {
         return selected === question.correctChoiceIndex ? count + 1 : count;
       }, 0);
 
-      Alert.alert(
-        reason === 'timeout' ? 'Time up' : 'Submitted',
-        `Score: ${correct}/${total} (${total > 0 ? Math.round((correct / total) * 100) : 0}%)`,
-        [{ text: 'OK', onPress: () => navigation.goBack() }],
-      );
+      try {
+        await createQuizAttempt({
+          quizId: quiz.id,
+          answers,
+          correctCount: correct,
+          totalQuestions: total,
+        });
 
-      setSubmitting(false);
+        Alert.alert(
+          reason === 'timeout' ? 'Time up' : 'Submitted',
+          `Score: ${correct}/${total} (${total > 0 ? Math.round((correct / total) * 100) : 0}%)`,
+          [{ text: 'OK', onPress: () => navigation.goBack() }],
+        );
+      } catch (submitError) {
+        submittedRef.current = false;
+        Alert.alert(
+          'Submit failed',
+          String((submitError as Error)?.message ?? submitError),
+        );
+      } finally {
+        setSubmitting(false);
+      }
     },
     [answers, navigation, questionCount, quiz, quizQuestions, submitting],
   );
@@ -208,7 +240,11 @@ function QuizAttemptScreen() {
   const timeLabel =
     remainingSeconds == null ? '' : formatTimeMMSS(remainingSeconds);
 
-  if (loading) {
+  const accessLoading = quizzesLoading || attemptsLoading;
+  const existingAttempt = attemptByQuizId.get(quizId);
+  const isAlreadyCompleted = completedQuizIds.has(quizId);
+
+  if (loading || accessLoading) {
     return (
       <SafeAreaView style={styles.container}>
         <ActivityIndicator color={colors.primary} style={styles.loader} />
@@ -227,6 +263,47 @@ function QuizAttemptScreen() {
           <Text style={styles.messageTitle}>Could not load quiz</Text>
           <Text style={styles.messageText}>
             {error ?? 'This quiz was not found.'}
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (isAlreadyCompleted) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <BackButton withSpacingBelow />
+          <Text style={styles.title}>{quiz.title}</Text>
+        </View>
+        <View style={styles.messageCard}>
+          <Text style={styles.messageTitle}>Already completed</Text>
+          <Text style={styles.messageText}>
+            {existingAttempt
+              ? `You scored ${existingAttempt.correctCount}/${existingAttempt.totalQuestions} (${existingAttempt.percentage}%). Each quiz can only be attempted once.`
+              : 'You have already completed this quiz.'}
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!canStartAttempt) {
+    const quizIndex = quizzes.findIndex(item => item.id === quizId);
+    const previousQuiz = quizIndex > 0 ? quizzes[quizIndex - 1] : null;
+
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <BackButton withSpacingBelow />
+          <Text style={styles.title}>{quiz.title}</Text>
+        </View>
+        <View style={styles.messageCard}>
+          <Text style={styles.messageTitle}>Quiz locked</Text>
+          <Text style={styles.messageText}>
+            {previousQuiz
+              ? `Complete "${previousQuiz.title}" first to unlock this quiz.`
+              : 'Complete the previous quiz first to unlock this one.'}
           </Text>
         </View>
       </SafeAreaView>

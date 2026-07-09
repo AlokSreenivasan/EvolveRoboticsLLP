@@ -30,6 +30,12 @@ service cloud.firestore {
         allow update, delete: if false;
       }
 
+      match /quizAttempts/{quizId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidQuizAttemptCreate(quizId);
+        allow update, delete: if false;
+      }
+
       match /fcmTokens/{tokenId} {
         allow read: if isOwner(userId);
         allow create, update: if isOwner(userId) && isValidFcmTokenWrite();
@@ -521,6 +527,26 @@ function isValidExamAttemptCreate() {
   return data.examId is string
     && data.examId.size() > 0
     && data.examId.size() <= 200
+    && data.answers is map
+    && data.answers.size() >= 0
+    && data.answers.size() <= 500
+    && data.correctCount is number
+    && data.correctCount >= 0
+    && data.correctCount <= 500
+    && data.totalQuestions is number
+    && data.totalQuestions >= 0
+    && data.totalQuestions <= 500
+    && data.percentage is number
+    && data.percentage >= 0
+    && data.percentage <= 100
+    && data.submittedAt == request.time;
+}
+
+function isValidQuizAttemptCreate(quizId) {
+  let data = request.resource.data;
+  return quizId.size() > 0
+    && quizId.size() <= 200
+    && data.quizId == quizId
     && data.answers is map
     && data.answers.size() >= 0
     && data.answers.size() <= 500
