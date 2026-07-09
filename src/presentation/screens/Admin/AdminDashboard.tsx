@@ -12,6 +12,7 @@ import {
   MessageSquare,
   PlayCircle,
   School,
+  Trophy,
   Users,
 } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -66,6 +67,12 @@ const MENU_ITEMS: AdminMenuItem[] = [
     title: 'Exams',
     description: 'Create timed exams with multiple-choice questions',
     icon: ClipboardCheck,
+  },
+  {
+    key: 'ManageQuizCompetitions',
+    title: 'Quiz Competition',
+    description: 'Create timed quizzes with multiple-choice questions',
+    icon: Trophy,
   },
   {
     key: 'ManageCourses',

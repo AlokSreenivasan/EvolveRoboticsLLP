@@ -8,6 +8,7 @@ export const FIRESTORE_COLLECTIONS = {
   resourceNotes: 'resourceNotes',
   assignments: 'assignments',
   exams: 'exams',
+  quizCompetitions: 'quizCompetitions',
   notifications: 'notifications',
   schools: 'schools',
   chatKeywords: 'chatKeywords',

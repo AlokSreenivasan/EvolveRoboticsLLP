@@ -11,6 +11,7 @@ export type AdminStackParamList = {
   ManageResources: undefined;
   ManageAssignments: undefined;
   ManageExams: undefined;
+  ManageQuizCompetitions: undefined;
   ManageCourses: undefined;
   ManageUsers: undefined;
   AdminNotifications: undefined;
@@ -52,6 +53,10 @@ export type RootStackParamList = {
   Assignments: undefined;
   /** Timed exams from Quick Access → Exams. */
   Exams: undefined;
+  /** Quiz competitions from Quick Access → Quiz Competition. */
+  QuizCompetitions: undefined;
+  /** Single quiz attempt screen. */
+  QuizAttempt: { quizId: string };
   /** Exam attempt screen for users. */
   ExamAttempt: { examId: string };
   /** User's submitted exam attempts / results. */

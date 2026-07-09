@@ -7,6 +7,7 @@ import AdminNotifications from '../presentation/screens/Admin/Notifications';
 import ManageImportantUpdates from '../presentation/screens/Admin/ManageImportantUpdates';
 import ManageAssignments from '../presentation/screens/Admin/ManageAssignments';
 import ManageExams from '../presentation/screens/Admin/ManageExams';
+import ManageQuizCompetitions from '../presentation/screens/Admin/ManageQuizCompetitions';
 import ManageResources from '../presentation/screens/Admin/ManageResources';
 import ManageUpcomingEvents from '../presentation/screens/Admin/ManageUpcomingEvents';
 import ManageContinueLearningPlaylists from '../presentation/screens/Admin/ManageContinueLearningPlaylists';
@@ -45,6 +46,10 @@ function AdminStackNavigator() {
           component={ManageAssignments}
         />
         <Stack.Screen name="ManageExams" component={ManageExams} />
+        <Stack.Screen
+          name="ManageQuizCompetitions"
+          component={ManageQuizCompetitions}
+        />
         <Stack.Screen name="ManageCourses" component={ManageCourses} />
         <Stack.Screen name="ManageUsers" component={ManageUsers} />
         <Stack.Screen name="ManageSchools" component={ManageSchools} />

@@ -9,7 +9,8 @@ export type QuickAccessItem = {
     | 'clipboard'
     | 'file'
     | 'folder'
-    | 'grid';
+    | 'grid'
+    | 'quiz-competition';
   iconColor: string;
   backgroundColor: string;
 };
@@ -70,6 +71,13 @@ export const QUICK_ACCESS_ITEMS: QuickAccessItem[] = [
     iconName: 'file',
     iconColor: '#F44336',
     backgroundColor: '#FFEBEE',
+  },
+  {
+    id: 'quiz-competition',
+    label: 'Quiz Competition',
+    iconName: 'quiz-competition',
+    iconColor: colors.accentBlue,
+    backgroundColor: '#E8F4FD',
   },
   {
     id: 'resources',

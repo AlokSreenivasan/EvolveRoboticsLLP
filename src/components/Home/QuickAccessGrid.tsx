@@ -17,6 +17,7 @@ import {
 } from '../../constants/homeScreenData';
 import { colors } from '../../constants/theme';
 import type { LoginScreenNavigationProp } from '../../types/navigation';
+import QuizCompetitionIcon from './icons/QuizCompetitionIcon';
 
 function QuickAccessIcon({
   item,
@@ -40,6 +41,10 @@ function QuickAccessIcon({
       return <FolderOpen size={size} color={color} strokeWidth={stroke} />;
     case 'grid':
       return <Grid3x3 size={size} color={color} strokeWidth={stroke} />;
+    case 'quiz-competition':
+      return (
+        <QuizCompetitionIcon size={size} color={color} strokeWidth={stroke} />
+      );
     default:
       return null;
   }
@@ -55,6 +60,8 @@ function QuickAccessGrid() {
       navigation.navigate('Assignments');
     } else if (itemId === 'exams') {
       navigation.navigate('Exams');
+    } else if (itemId === 'quiz-competition') {
+      navigation.navigate('QuizCompetitions');
     }
   };
 
@@ -90,7 +97,8 @@ const styles = StyleSheet.create({
   item: {
     flex: 1,
     alignItems: 'center',
-    maxWidth: '33%',
+    minWidth: '22%',
+    maxWidth: '25%',
   },
   iconBox: {
     width: 56,
