@@ -24,6 +24,8 @@ type AdminSchoolAudiencePickerProps = {
   schools: School[];
   schoolsLoading?: boolean;
   schoolsError?: string | null;
+  label?: string;
+  hint?: string;
   onAudienceChange: (audience: SchoolAudience) => void;
   onToggleSchool: (schoolId: string) => void;
   onSchoolGradeModeChange: (schoolId: string, mode: 'all' | 'grades') => void;
@@ -38,6 +40,8 @@ function AdminSchoolAudiencePicker({
   schools,
   schoolsLoading = false,
   schoolsError = null,
+  label = 'Audience',
+  hint = 'Send to all schools, specific schools, or limit grades within each school.',
   onAudienceChange,
   onToggleSchool,
   onSchoolGradeModeChange,
@@ -46,10 +50,8 @@ function AdminSchoolAudiencePicker({
 }: AdminSchoolAudiencePickerProps) {
   return (
     <View style={styles.wrap}>
-      <Text style={adminStyles.fieldLabel}>Audience</Text>
-      <Text style={adminStyles.sectionHint}>
-        Send to all schools, specific schools, or limit grades within each school.
-      </Text>
+      <Text style={adminStyles.fieldLabel}>{label}</Text>
+      <Text style={adminStyles.sectionHint}>{hint}</Text>
 
       <View style={styles.modeRow}>
         <Pressable

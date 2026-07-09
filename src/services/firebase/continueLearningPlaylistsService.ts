@@ -12,6 +12,12 @@ import type {
 } from '../../store/content/types/continueLearningPlaylists.types';
 import { isCourseTrack } from '../../store/content/types/courses.types';
 import type { CourseTrack } from '../../store/content/types/courses.types';
+import type { ContentSubscribeOptions } from '../../store/content/types/schoolAudience.types';
+import {
+  applyLearnerContentFilters,
+  buildSchoolAudienceWriteFields,
+  mapSchoolAudienceFields,
+} from './schoolAudienceFirestore';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { syncFirestoreAuthSession } from '../../utils/firebase/firestoreSessionSync';
 import { FIRESTORE_COLLECTIONS } from './constants';
@@ -62,10 +68,11 @@ function mapPlaylist(
         ? Math.trunc(data.videoCount)
         : 1,
     sortOrder: typeof data?.sortOrder === 'number' ? data.sortOrder : 0,
-    track: isCourseTrack(data?.track) ? data.track : null,
+    track: data && isCourseTrack(data.track) ? data.track : null,
     isPublished: data?.isPublished === true,
     createdAt: data && isTimestamp(data.createdAt) ? data.createdAt : null,
     updatedAt: data && isTimestamp(data.updatedAt) ? data.updatedAt : null,
+    ...mapSchoolAudienceFields(data),
   };
 }
 
@@ -75,12 +82,15 @@ function sortPlaylists(
   return [...playlists].sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
+export type ContinueLearningPlaylistSubscribeOptions = ContentSubscribeOptions & {
+  viewerTrack?: CourseTrack;
+};
+
 export function subscribeContinueLearningPlaylists(
   listener: (playlists: ContinueLearningPlaylist[]) => void,
-  options?: { includeUnpublished?: boolean; viewerTrack?: CourseTrack },
+  options?: ContinueLearningPlaylistSubscribeOptions,
   onError?: (error: unknown) => void,
 ): () => void {
-  const includeUnpublished = options?.includeUnpublished === true;
   const viewerTrack = options?.viewerTrack;
   const playlistsQuery = query(
     playlistsCollection(),
@@ -97,9 +107,7 @@ export function subscribeContinueLearningPlaylists(
         ),
       );
 
-      let filtered = includeUnpublished
-        ? playlists
-        : playlists.filter(item => item.isPublished);
+      let filtered = applyLearnerContentFilters(playlists, options);
 
       if (viewerTrack) {
         filtered = filtered.filter(
@@ -153,6 +161,11 @@ export async function createContinueLearningPlaylist(
       sortOrder,
       track: input.track,
       isPublished: input.isPublished ?? true,
+      ...buildSchoolAudienceWriteFields(
+        input.track === 'kids'
+          ? input
+          : { audience: 'all', schoolIds: [], schoolGradeIds: {} },
+      ),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
@@ -213,6 +226,21 @@ export async function updateContinueLearningPlaylist(
         );
       }
       updates.track = input.track;
+    }
+    if (
+      input.audience !== undefined ||
+      input.schoolIds !== undefined ||
+      input.schoolGradeIds !== undefined ||
+      input.track === 'professionals'
+    ) {
+      Object.assign(
+        updates,
+        buildSchoolAudienceWriteFields(
+          input.track === 'professionals'
+            ? { audience: 'all', schoolIds: [], schoolGradeIds: {} }
+            : input,
+        ),
+      );
     }
 
     await updateDoc(doc(playlistsCollection(), playlistId), updates as UpdateData<DocumentData>);

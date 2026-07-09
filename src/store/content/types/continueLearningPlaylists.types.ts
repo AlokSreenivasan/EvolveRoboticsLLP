@@ -1,8 +1,13 @@
 import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
 import type { CourseTrack } from './courses.types';
+import type {
+  SchoolAudienceDocument,
+  SchoolAudienceFields,
+  SchoolAudienceInput,
+} from './schoolAudience.types';
 
-export type ContinueLearningPlaylistDocument = {
+export type ContinueLearningPlaylistDocument = SchoolAudienceDocument & {
   title: string;
   subtitle: string;
   imageUri: string;
@@ -16,7 +21,7 @@ export type ContinueLearningPlaylistDocument = {
   updatedAt: FirebaseFirestoreTypes.FieldValue;
 };
 
-export type ContinueLearningPlaylist = {
+export type ContinueLearningPlaylist = SchoolAudienceFields & {
   id: string;
   title: string;
   subtitle: string;
@@ -38,7 +43,7 @@ export type CreateContinueLearningPlaylistInput = {
   videoCount: number;
   track: CourseTrack;
   isPublished?: boolean;
-};
+} & SchoolAudienceInput;
 
 export type UpdateContinueLearningPlaylistInput = Partial<
   Omit<CreateContinueLearningPlaylistInput, 'isPublished'>

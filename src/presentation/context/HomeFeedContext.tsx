@@ -161,14 +161,31 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
       ),
     [isAdmin, profile?.grade, profile?.schoolId, roleLoading],
   );
-  const playlistSubscribeOptions = useMemo(
-    () => ({
+  const playlistSubscribeOptions = useMemo(() => {
+    if (!roleLoading && isAdmin) {
+      return { includeUnpublished: false as const };
+    }
+
+    const viewerTrack = profile?.track ?? undefined;
+    const isKids = profile?.track === 'kids';
+
+    return {
       includeUnpublished: false as const,
-      viewerTrack:
-        !roleLoading && isAdmin ? undefined : profile?.track ?? undefined,
-    }),
-    [isAdmin, profile?.track, roleLoading],
-  );
+      viewerTrack,
+      ...(isKids
+        ? {
+            viewerSchoolId: profile?.schoolId ?? null,
+            viewerGrade: profile?.grade ?? null,
+          }
+        : {}),
+    };
+  }, [
+    isAdmin,
+    profile?.grade,
+    profile?.schoolId,
+    profile?.track,
+    roleLoading,
+  ]);
   const [focusCount, setFocusCount] = useState(0);
   const isActive = focusCount > 0;
 

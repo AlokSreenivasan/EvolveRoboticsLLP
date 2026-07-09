@@ -30,11 +30,14 @@ import {
 
 import AdminScreenLayout from '../../../components/Admin/AdminScreenLayout';
 import AdminCourseTrackPicker from '../../../components/Admin/AdminCourseTrackPicker';
+import AdminSchoolAudiencePicker from '../../../components/Admin/AdminSchoolAudiencePicker';
 import AppSwitch from '../../../components/AppSwitch';
 import AppButton from '../../../components/AppButton';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import { colors, cardShadow, spacing } from '../../../constants/theme';
 import { useContinueLearningPlaylists } from '../../hooks/useContinueLearningPlaylists';
+import { useSchools } from '../../hooks/useSchools';
+import { useAdminSchoolAudienceForm } from '../../hooks/admin/useAdminSchoolAudienceForm';
 import { FIRESTORE_COLLECTIONS } from '../../../services/firebase/constants';
 import {
   createContinueLearningPlaylist,
@@ -52,6 +55,7 @@ import {
   type CourseTrack,
 } from '../../../store/content/types/courses.types';
 import { extractFirebaseErrorDetails } from '../../../utils/firebase/extractFirebaseError';
+import { formatSchoolAudienceSummary } from '../../../utils/content/schoolAudience';
 import { getErrorMessage } from '../../../utils/firebase/errors';
 import { getCurrentUserId } from '../../../services/firebase/authService';
 import { isAdmin } from '../../../services/firebase/roleService';
@@ -120,6 +124,8 @@ function ManageContinueLearningPlaylists() {
   const { playlists, loading } = useContinueLearningPlaylists({
     includeUnpublished: true,
   });
+  const { schools, loading: schoolsLoading, error: schoolsError } = useSchools();
+  const audienceForm = useAdminSchoolAudienceForm();
 
   const [editorVisible, setEditorVisible] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -145,6 +151,7 @@ function ManageContinueLearningPlaylists() {
     setEditingId(null);
     setForm(EMPTY_FORM);
     setLocalThumbnailUri(null);
+    audienceForm.resetAudience();
     setEditorVisible(true);
   };
 
@@ -159,6 +166,15 @@ function ManageContinueLearningPlaylists() {
       track: playlist.track,
       isPublished: playlist.isPublished,
     });
+    if (playlist.track === 'kids') {
+      audienceForm.resetAudience({
+        audience: playlist.audience,
+        schoolIds: playlist.schoolIds,
+        schoolGradeIds: playlist.schoolGradeIds,
+      });
+    } else {
+      audienceForm.resetAudience();
+    }
     setLocalThumbnailUri(null);
     setEditorVisible(true);
   };
@@ -168,6 +184,7 @@ function ManageContinueLearningPlaylists() {
     setEditingId(null);
     setForm(EMPTY_FORM);
     setLocalThumbnailUri(null);
+    audienceForm.resetAudience();
   };
 
   const handlePickThumbnail = async () => {
@@ -224,6 +241,14 @@ function ManageContinueLearningPlaylists() {
       return;
     }
 
+    if (current.track === 'kids') {
+      const audienceError = audienceForm.validate();
+      if (audienceError) {
+        Alert.alert('School visibility required', audienceError);
+        return;
+      }
+    }
+
     const hasAdmin = await isAdmin();
     if (!hasAdmin) {
       const uid = getCurrentUserId();
@@ -259,6 +284,9 @@ function ManageContinueLearningPlaylists() {
         videoCount,
         track: current.track,
         isPublished: current.isPublished,
+        ...(current.track === 'kids'
+          ? audienceForm.toPayload()
+          : { audience: 'all' as const, schoolIds: [], schoolGradeIds: {} }),
       };
 
       if (editingId) {
@@ -375,6 +403,9 @@ function ManageContinueLearningPlaylists() {
             ) : null}
             <Text style={styles.cardDetail}>
               {courseTrackLabel(playlist.track)}
+              {playlist.track === 'kids'
+                ? ` · ${formatSchoolAudienceSummary(playlist, schools)}`
+                : ''}
               {' · '}
               {playlist.videoCount} video
               {playlist.videoCount === 1 ? '' : 's'}
@@ -412,6 +443,7 @@ function ManageContinueLearningPlaylists() {
       openEditEditor,
       playlists.length,
       reorderingId,
+      schools,
     ],
   );
 
@@ -508,10 +540,32 @@ function ManageContinueLearningPlaylists() {
             ) : null}
             <AdminCourseTrackPicker
               value={form.track}
-              onChange={track => setForm(prev => ({ ...prev, track }))}
+              onChange={track => {
+                setForm(prev => ({ ...prev, track }));
+                if (track === 'professionals') {
+                  audienceForm.resetAudience();
+                }
+              }}
               label="Visibility *"
               hint="Required. Choose whether this playlist is shown to kids or professionals on Home."
             />
+            {form.track === 'kids' ? (
+              <AdminSchoolAudiencePicker
+                label="School visibility"
+                hint="Choose all schools or specific schools, then set grade visibility for each selected school."
+                audience={audienceForm.audience}
+                selectedSchoolIds={audienceForm.schoolIds}
+                schoolGradeIds={audienceForm.schoolGradeIds}
+                schools={schools}
+                schoolsLoading={schoolsLoading}
+                schoolsError={schoolsError}
+                onAudienceChange={audienceForm.setAudienceMode}
+                onToggleSchool={audienceForm.toggleSchoolId}
+                onSchoolGradeModeChange={audienceForm.setSchoolGradeMode}
+                onToggleSchoolGrade={audienceForm.toggleSchoolGrade}
+                getSchoolGradeMode={audienceForm.getSchoolGradeMode}
+              />
+            ) : null}
             <View style={styles.switchRow}>
               <Text style={styles.switchLabel}>Published on home</Text>
               <AppSwitch
