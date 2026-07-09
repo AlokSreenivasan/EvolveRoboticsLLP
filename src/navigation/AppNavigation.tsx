@@ -43,7 +43,7 @@ function AppNavigation() {
    */
   const [awaitingAuthFromIntro, setAwaitingAuthFromIntro] = useState(false);
 
-  const { user, initializing } = useAuth();
+  const { user, initializing, profileLoading } = useAuth();
   const hadUserRef = useRef(false);
 
   useEffect(() => {
@@ -105,7 +105,13 @@ function AppNavigation() {
     setAwaitingAuthFromIntro(false);
   }, []);
 
-  const showSplash = !bootstrapComplete || initializing;
+  const showSplash =
+    !bootstrapComplete ||
+    initializing ||
+    (Boolean(user) && profileLoading);
+
+  const navigationReady =
+    bootstrapComplete && !initializing && (!user || !profileLoading);
 
   const rootScreen = useMemo(() => {
     if (showIntro) {
@@ -122,7 +128,7 @@ function AppNavigation() {
 
   return (
     <View style={styles.root}>
-      {bootstrapComplete && !initializing ? (
+      {navigationReady ? (
         <NavigationContainer>
           <IntroFlowProvider finishIntro={finishIntro}>
             <AuthFlowProvider onAuthSuccess={handleAuthSuccess}>

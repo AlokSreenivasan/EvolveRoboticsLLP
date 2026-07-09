@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -26,8 +26,10 @@ import QuickAccessGrid from '../../../components/Home/QuickAccessGrid';
 import UpcomingEventsSection from '../../../components/Home/UpcomingEventsSection';
 import { HORIZONTAL_LIST_PERF } from '../../../constants/listPerformance';
 import { colors, spacing } from '../../../constants/theme';
+import { isProfileComplete } from '../../../domain/Profile/validation/isProfileComplete';
 import type { ContinueLearningPlaylist } from '../../../store/content/types/continueLearningPlaylists.types';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
+import { useAuth } from '../../context/AuthContext';
 import { useHomeFeedFocus, useHomeFeedRefresh } from '../../context/HomeFeedContext';
 import { useAdminNavigation } from '../../hooks/useAdminNavigation';
 import { useContinueLearningPlaylists } from '../../hooks/useContinueLearningPlaylists';
@@ -40,12 +42,24 @@ function HomeScreen() {
   useHomeFeedFocus();
   const { refresh, refreshing } = useHomeFeedRefresh();
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const { profile, profileLoading } = useAuth();
   const insets = useSafeAreaInsets();
   const displayName = useStoredProfileFullName();
   const { isAdmin, roleLoading } = useUserRole();
   const { openAdmin } = useAdminNavigation();
   const { playlists, loading: playlistsLoading } = useContinueLearningPlaylists();
   const scrollRef = useRef<ScrollView>(null);
+
+  useEffect(() => {
+    if (profileLoading || isProfileComplete(profile)) {
+      return;
+    }
+
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'Profile', params: { requireCompletion: true } }],
+    });
+  }, [navigation, profile, profileLoading]);
 
   const handleTabPress = (tab: HomeTabKey) => {
     switch (tab) {
@@ -105,8 +119,12 @@ function HomeScreen() {
           { paddingBottom: scrollBottomPadding },
         ]}>
         <HeroBannerCarousel
-          onStudentsPress={() => navigation.navigate('Courses')}
-          onProfessionalPress={() => navigation.navigate('Courses')}
+          onStudentsPress={() =>
+            navigation.navigate('Courses', { track: 'kids' })
+          }
+          onProfessionalPress={() =>
+            navigation.navigate('Courses', { track: 'professionals' })
+          }
         />
 
         <View style={styles.section}>

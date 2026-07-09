@@ -44,6 +44,7 @@ import {
   resolveAvatarUri,
   resolveDisplayName,
 } from '../../utils/profile/mapUserProfile';
+import { isProfileComplete } from '../../domain/Profile/validation/isProfileComplete';
 
 export interface AuthContextType {
   user: FirebaseAuthTypes.User | null;
@@ -206,7 +207,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         !forceNetwork &&
         hydratedUidRef.current === uid &&
         existing?.uid === uid &&
-        existing.phoneNumber?.trim()
+        isProfileComplete(existing)
       ) {
         setProfileLoading(false);
         return;
@@ -233,7 +234,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setRoleLoading(false);
         }
 
-        if (!forceNetwork && cacheIsFresh) {
+        if (!forceNetwork && cacheIsFresh && isProfileComplete(cachedProfile)) {
           setProfileLoading(false);
           hydratedUidRef.current = uid;
 

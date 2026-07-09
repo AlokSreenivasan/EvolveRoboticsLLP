@@ -17,6 +17,7 @@ import {
 import { ImagePlus } from 'lucide-react-native';
 
 import AdminCourseListCard from '../../../components/Admin/AdminCourseListCard';
+import AdminCourseTrackPicker from '../../../components/Admin/AdminCourseTrackPicker';
 import AdminEntityForm from '../../../components/Admin/AdminEntityForm';
 import AdminFormField from '../../../components/Admin/AdminFormField';
 import AdminListLayout from '../../../components/Admin/AdminListLayout';
@@ -35,7 +36,10 @@ import {
   updateCourse,
 } from '../../../services/firebase/coursesService';
 import { uploadCourseThumbnail } from '../../../services/firebase/storageService';
-import type { Course } from '../../../store/content/types/courses.types';
+import type {
+  Course,
+  CourseTrack,
+} from '../../../store/content/types/courses.types';
 import { toAdminWriteErrorMessage } from '../../../utils/admin/adminWriteErrorMessage';
 
 type CourseFormState = {
@@ -43,6 +47,7 @@ type CourseFormState = {
   subtitle: string;
   durationLabel: string;
   description: string;
+  track: CourseTrack | null;
   isPublished: boolean;
 };
 
@@ -51,6 +56,7 @@ const EMPTY_FORM: CourseFormState = {
   subtitle: '',
   durationLabel: '',
   description: '',
+  track: null,
   isPublished: true,
 };
 
@@ -85,6 +91,7 @@ function ManageCourses() {
       subtitle: course.subtitle,
       durationLabel: course.durationLabel,
       description: course.description,
+      track: course.track,
       isPublished: course.isPublished,
     });
     imagePicker.loadExistingImage(course.imageUri);
@@ -116,6 +123,14 @@ function ManageCourses() {
       return;
     }
 
+    if (current.track !== 'kids' && current.track !== 'professionals') {
+      Alert.alert(
+        'Track required',
+        'Select whether this course is for kids or professionals.',
+      );
+      return;
+    }
+
     const courseId =
       editingId ??
       doc(collection(db, FIRESTORE_COLLECTIONS.courses)).id;
@@ -136,6 +151,7 @@ function ManageCourses() {
         imageUri,
         durationLabel,
         description: current.description.trim(),
+        track: current.track,
         isPublished: current.isPublished,
       };
 
@@ -232,6 +248,10 @@ function ManageCourses() {
           value={form.title}
           onChangeText={title => setForm(prev => ({ ...prev, title }))}
           placeholder="Introduction to Robotics"
+        />
+        <AdminCourseTrackPicker
+          value={form.track}
+          onChange={track => setForm(prev => ({ ...prev, track }))}
         />
         <AdminFormField
           label="Subtitle (optional)"

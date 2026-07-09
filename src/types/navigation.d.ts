@@ -30,7 +30,7 @@ export type RootStackParamList = {
   PrivacySettings: undefined;
   NotificationPreferences: undefined;
   Support: undefined;
-  Profile: undefined;
+  Profile: { requireCompletion?: boolean } | undefined;
   /** Course playlist — lesson list only. */
   CoursePlaylist: { playlist: ContinueLearningPlaylist };
   /** In-app lesson player. */
@@ -40,8 +40,8 @@ export type RootStackParamList = {
     videoTitle: string;
     videoIndex: number;
   };
-  /** Course catalog — admin-managed list with thumbnails and duration. */
-  Courses: undefined;
+  /** Course catalog — optional `track` filters kids vs professionals. */
+  Courses: { track?: 'kids' | 'professionals' } | undefined;
   /** Full list of continue-learning course video cards from home. */
   ContinueLearningList: undefined;
   /** Full list of in-app announcements from home. */

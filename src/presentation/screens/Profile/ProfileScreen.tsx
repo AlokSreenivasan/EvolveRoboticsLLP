@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  BackHandler,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
@@ -12,6 +13,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RouteProp } from '@react-navigation/native';
 
 import AppButton from '../../../components/AppButton.tsx';
 import BackButton, { backButtonOverlayStyle } from '../../../components/BackButton';
@@ -20,6 +24,7 @@ import ProfilePhotoSection from '../../../components/Profile/ProfilePhotoSection
 import GradePicker from '../../../components/Profile/GradePicker.tsx';
 import SchoolPicker from '../../../components/Profile/SchoolPicker.tsx';
 import { CONTACT_NUMBER_MAX_LENGTH } from '../../../domain/Profile/validation/formatContactNumber';
+import { isProfileComplete } from '../../../domain/Profile/validation/isProfileComplete';
 import { useAuth } from '../../context/AuthContext';
 import { useProfileForm } from '../../hooks/useProfileForm';
 import { useSchools } from '../../hooks/useSchools';
@@ -27,8 +32,19 @@ import {
   pickProfilePhotoFromGallery,
   showPhotoPickerError,
 } from '../../../services/profilePhotoPicker';
+import type { RootStackParamList } from '../../../types/navigation';
+
+type ProfileScreenNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  'Profile'
+>;
+type ProfileScreenRouteProp = RouteProp<RootStackParamList, 'Profile'>;
+
 function ProfileScreen() {
-  const { user, profile: userProfile } = useAuth();
+  const navigation = useNavigation<ProfileScreenNavigationProp>();
+  const route = useRoute<ProfileScreenRouteProp>();
+  const requireCompletion = route.params?.requireCompletion === true;
+  const { user, profile: userProfile, profileLoading } = useAuth();
   const userEmail = userProfile?.email ?? user?.email ?? '';
   const {
     profile,
@@ -52,6 +68,34 @@ function ProfileScreen() {
 
   const isFormDisabled = isLoading || isSaving;
 
+  useEffect(() => {
+    if (!requireCompletion || profileLoading) {
+      return;
+    }
+
+    if (isProfileComplete(userProfile)) {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Home' }],
+      });
+    }
+  }, [navigation, profileLoading, requireCompletion, userProfile]);
+
+  useEffect(() => {
+    navigation.setOptions({
+      gestureEnabled: !requireCompletion,
+    });
+  }, [navigation, requireCompletion]);
+
+  useEffect(() => {
+    if (!requireCompletion) {
+      return undefined;
+    }
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => true);
+    return () => subscription.remove();
+  }, [requireCompletion]);
+
   const handleSave = async () => {
     if (!validate()) {
       return;
@@ -60,6 +104,14 @@ function ProfileScreen() {
     const success = await persistProfile();
 
     if (success) {
+      if (requireCompletion) {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Home' }],
+        });
+        return;
+      }
+
       Alert.alert(
         'Profile Updated',
         'Your changes have been saved and synced across the app.',
@@ -95,10 +147,12 @@ function ProfileScreen() {
       style={styles.container}>
       <SafeAreaView style={styles.container}>
         <View style={styles.screenHeader}>
-          <BackButton
-            style={backButtonOverlayStyle}
-            disabled={isFormDisabled}
-          />
+          {!requireCompletion ? (
+            <BackButton
+              style={backButtonOverlayStyle}
+              disabled={isFormDisabled}
+            />
+          ) : null}
           <Header title="Profile" />
         </View>
 
@@ -107,7 +161,9 @@ function ProfileScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
           <Text style={styles.pageSubtitle}>
-            Update your personal details below.
+            {requireCompletion
+              ? 'Complete your profile to get started.'
+              : 'Update your personal details below.'}
           </Text>
 
           <View style={styles.photoCard}>
@@ -193,7 +249,13 @@ function ProfileScreen() {
             ) : null}
 
             <AppButton
-              title={isSaving ? 'Saving...' : 'Save Changes'}
+              title={
+                isSaving
+                  ? 'Saving...'
+                  : requireCompletion
+                    ? 'Save & Continue'
+                    : 'Save Changes'
+              }
               onPress={handleSave}
               buttonStyle={styles.saveButton}
               textStyle={styles.saveButtonText}

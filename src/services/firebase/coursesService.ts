@@ -3,9 +3,11 @@ import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 import type {
   Course,
   CourseDocument,
+  CourseTrack,
   CreateCourseInput,
   UpdateCourseInput,
 } from '../../store/content/types/courses.types';
+import { isCourseTrack } from '../../store/content/types/courses.types';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { syncFirestoreAuthSession } from '../../utils/firebase/firestoreSessionSync';
 import { FIRESTORE_COLLECTIONS } from './constants';
@@ -51,6 +53,7 @@ function mapCourse(
     imageUri: data?.imageUri?.trim() ?? '',
     durationLabel: data?.durationLabel?.trim() ?? '',
     description: data?.description?.trim() ?? '',
+    track: isCourseTrack(data?.track) ? data.track : null,
     sortOrder: typeof data?.sortOrder === 'number' ? data.sortOrder : 0,
     isPublished: data?.isPublished === true,
     createdAt: data && isTimestamp(data.createdAt) ? data.createdAt : null,
@@ -119,12 +122,21 @@ export async function createCourse(
       ? doc(coursesCollection(), options.courseId)
       : doc(coursesCollection());
 
+    if (!isCourseTrack(input.track)) {
+      throw wrapFirebaseError(
+        new Error('Course track is required.'),
+        'FIRESTORE_ERROR',
+        'Select whether this course is for kids or professionals.',
+      );
+    }
+
     const payload: CourseDocument = {
       title: input.title.trim(),
       subtitle: input.subtitle.trim(),
       imageUri: input.imageUri.trim(),
       durationLabel: input.durationLabel.trim(),
       description: input.description.trim(),
+      track: input.track,
       sortOrder,
       isPublished: input.isPublished ?? true,
       createdAt: serverTimestamp(),
@@ -156,7 +168,17 @@ export async function updateCourse(
       existing.data() as Partial<CourseDocument> | undefined,
     );
 
-    const payload = {
+    const payload: {
+      title: string;
+      subtitle: string;
+      imageUri: string;
+      durationLabel: string;
+      description: string;
+      track?: CourseTrack;
+      sortOrder: number;
+      isPublished: boolean;
+      updatedAt: ReturnType<typeof serverTimestamp>;
+    } = {
       title: input.title !== undefined ? input.title.trim() : current.title,
       subtitle:
         input.subtitle !== undefined ? input.subtitle.trim() : current.subtitle,
@@ -178,6 +200,19 @@ export async function updateCourse(
           : current.isPublished,
       updatedAt: serverTimestamp(),
     };
+
+    if (input.track !== undefined) {
+      if (!isCourseTrack(input.track)) {
+        throw wrapFirebaseError(
+          new Error('Course track is required.'),
+          'FIRESTORE_ERROR',
+          'Select whether this course is for kids or professionals.',
+        );
+      }
+      payload.track = input.track;
+    } else if (isCourseTrack(current.track)) {
+      payload.track = current.track;
+    }
 
     await setDoc(ref, payload, { merge: true });
   } catch (error) {

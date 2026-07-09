@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import CoursePlaylistScreen from '../presentation/screens/Courses/CoursePlaylistScreen';
@@ -26,17 +26,40 @@ import { useUserRole } from '../presentation/hooks/useUserRole';
 
 import AdminStackNavigator from './AdminStack';
 import UnauthorizedRoute from './UnauthorizedRoute';
+import { isProfileComplete } from '../domain/Profile/validation/isProfileComplete';
+import { useAuth } from '../presentation/context/AuthContext';
 import type { RootStackParamList } from '../types/navigation';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function MainStack() {
+  const { profile } = useAuth();
   const { isAdmin, roleLoading } = useUserRole();
   const showAdminStack = !roleLoading && isAdmin;
+  const needsProfileCompletion = !isProfileComplete(profile);
+
+  const stackInitialState = useMemo(() => {
+    if (!needsProfileCompletion) {
+      return undefined;
+    }
+
+    return {
+      index: 0,
+      routes: [
+        {
+          name: 'Profile' as const,
+          params: { requireCompletion: true },
+        },
+      ],
+    };
+  }, [needsProfileCompletion]);
 
   return (
     <HomeFeedProvider>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator
+        initialRouteName={needsProfileCompletion ? 'Profile' : 'Home'}
+        initialState={stackInitialState}
+        screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen
         name="ContinueLearningList"

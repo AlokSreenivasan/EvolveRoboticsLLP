@@ -6,6 +6,7 @@ import AdminListRowActions from './AdminListRowActions';
 import { adminStyles } from './adminStyles';
 import { cardShadow, colors, spacing } from '../../constants/theme';
 import type { Course } from '../../store/content/types/courses.types';
+import { courseTrackLabel } from '../../store/content/types/courses.types';
 
 const CARD_ACCENTS = [
   { badgeColor: colors.primaryLight, accentColor: colors.primary },
@@ -86,6 +87,8 @@ function AdminCourseListCard({
           </Text>
         ) : null}
         <Text style={styles.statusLine}>
+          {courseTrackLabel(course.track)}
+          {' · '}
           {course.isPublished
             ? 'Visible for learners'
             : 'Draft — hidden from learners'}

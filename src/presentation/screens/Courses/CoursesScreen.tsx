@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -7,15 +7,34 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useRoute, type RouteProp } from '@react-navigation/native';
 import BackButton from '../../../components/BackButton';
 import CourseCatalogCard from '../../../components/Courses/CourseCatalogCard';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import { colors, spacing } from '../../../constants/theme';
 import type { Course } from '../../../store/content/types/courses.types';
+import { courseTrackLabel } from '../../../store/content/types/courses.types';
+import type { RootStackParamList } from '../../../types/navigation';
 import { useCourses } from '../../hooks/useCourses';
 
 function CoursesScreen() {
+  const route = useRoute<RouteProp<RootStackParamList, 'Courses'>>();
+  const trackFilter = route.params?.track;
   const { courses, loading, error } = useCourses();
+
+  const filteredCourses = useMemo(() => {
+    if (!trackFilter) {
+      return courses;
+    }
+    return courses.filter(course => course.track === trackFilter);
+  }, [courses, trackFilter]);
+
+  const headerTitle = trackFilter
+    ? courseTrackLabel(trackFilter)
+    : 'Courses';
+  const headerSubtitle = trackFilter
+    ? `Browse ${courseTrackLabel(trackFilter).toLowerCase()} courses, duration, and details.`
+    : 'Browse all available courses, duration, and details.';
 
   const renderCourse = useCallback(
     ({ item, index }: { item: Course; index: number }) => (
@@ -44,24 +63,24 @@ function CoursesScreen() {
       <View style={styles.messageCard}>
         <Text style={styles.messageTitle}>No courses yet</Text>
         <Text style={styles.messageText}>
-          New courses will appear here once they are published.
+          {trackFilter
+            ? `No ${courseTrackLabel(trackFilter).toLowerCase()} courses are published yet.`
+            : 'New courses will appear here once they are published.'}
         </Text>
       </View>
     );
-  }, [error, loading]);
+  }, [error, loading, trackFilter]);
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <BackButton withSpacingBelow />
-        <Text style={styles.title}>Courses</Text>
-        <Text style={styles.subtitle}>
-          Browse all available courses, duration, and details.
-        </Text>
+        <Text style={styles.title}>{headerTitle}</Text>
+        <Text style={styles.subtitle}>{headerSubtitle}</Text>
       </View>
 
       <FlatList
-        data={loading || error ? [] : courses}
+        data={loading || error ? [] : filteredCourses}
         keyExtractor={keyExtractor}
         renderItem={renderCourse}
         ListEmptyComponent={listEmpty}
