@@ -521,13 +521,14 @@ function isValidProfileData() {
     && isValidUserRole(data.role)
     && isOptionalProfileImage(data.profileImage)
     && isOptionalSchoolId(data.schoolId)
-    && isOptionalGrade(data.grade);
+    && isOptionalGrade(data.grade)
+    && isOptionalUserTrack(data.track);
 }
 
 // Updates use .update() with partial fields — validate merged document, not serverTimestamp equality.
 function onlyProfileFieldsChanged() {
   return request.resource.data.diff(resource.data).affectedKeys()
-    .hasOnly(['fullName', 'phoneNumber', 'profileImage', 'schoolId', 'grade', 'updatedAt']);
+    .hasOnly(['fullName', 'phoneNumber', 'profileImage', 'schoolId', 'grade', 'track', 'updatedAt']);
 }
 
 function isValidProfileDataAfterUpdate() {
@@ -538,27 +539,40 @@ function isValidProfileDataAfterUpdate() {
     && data.phoneNumber is string
     && data.phoneNumber.size() >= 10
     && data.phoneNumber.size() <= 15
-    && isValidUserRole(data.role)
+    && hasValidProfileRoleField(data)
     && isOptionalProfileImage(data.profileImage)
     && isOptionalSchoolId(data.schoolId)
-    && isOptionalGrade(data.grade);
+    && isOptionalGrade(data.grade)
+    && isOptionalUserTrack(data.track);
 }
 
 function isValidUserRole(value) {
   return value == 'user' || value == 'admin';
 }
 
+function hasValidProfileRoleField(data) {
+  return !('role' in data) || data.role == null || isValidUserRole(data.role);
+}
+
 function isOptionalProfileImage(value) {
   return value == null
+    || value == ''
     || (value is string && value.size() <= 8192);
 }
 
 function isOptionalSchoolId(value) {
   return value == null
+    || value == ''
     || (value is string && value.size() > 0 && value.size() <= 128);
 }
 
 function isOptionalGrade(value) {
   return value == null
+    || value == ''
     || (value is string && value.size() > 0 && value.size() <= 32);
+}
+
+function isOptionalUserTrack(value) {
+  return value == null
+    || value in ['kids', 'professionals'];
 }

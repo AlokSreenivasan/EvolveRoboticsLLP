@@ -66,6 +66,7 @@ function mapDocumentToUserProfile(
     profileImage: data.profileImage ?? null,
     schoolId: data.schoolId ?? null,
     grade: data.grade ?? null,
+    track: data.track ?? null,
     role,
     createdAt: isTimestamp(data.createdAt) ? data.createdAt : null,
     updatedAt: isTimestamp(data.updatedAt) ? data.updatedAt : null,
@@ -85,6 +86,94 @@ function isTimestamp(
 
 function userDocRef(uid: string) {
   return doc(usersCollection(), uid);
+}
+
+function normalizeOptionalString(
+  value: string | null | undefined,
+): string | null {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+}
+
+function buildProfileCreateInput(
+  baseProfile: UserProfile,
+  input: UpdateUserProfileInput,
+): CreateUserProfileInput {
+  return {
+    fullName: (input.fullName ?? baseProfile.fullName).trim(),
+    email: baseProfile.email.trim(),
+    phoneNumber: (input.phoneNumber ?? baseProfile.phoneNumber).trim(),
+    profileImage:
+      input.profileImage !== undefined
+        ? normalizeOptionalString(input.profileImage)
+        : baseProfile.profileImage,
+    schoolId:
+      input.schoolId !== undefined
+        ? normalizeOptionalString(input.schoolId)
+        : baseProfile.schoolId,
+    grade:
+      input.grade !== undefined
+        ? normalizeOptionalString(input.grade)
+        : baseProfile.grade,
+    track: input.track !== undefined ? input.track : baseProfile.track,
+  };
+}
+
+function buildProfileUpdatePayload(
+  input: UpdateUserProfileInput,
+): Record<string, unknown> {
+  const updates: Record<string, unknown> = {
+    updatedAt: serverTimestamp(),
+  };
+
+  if (input.fullName !== undefined) {
+    updates.fullName = input.fullName.trim();
+  }
+  if (input.phoneNumber !== undefined) {
+    updates.phoneNumber = input.phoneNumber.trim();
+  }
+  if (input.profileImage !== undefined) {
+    updates.profileImage = normalizeOptionalString(input.profileImage);
+  }
+  if (input.schoolId !== undefined) {
+    updates.schoolId = normalizeOptionalString(input.schoolId);
+  }
+  if (input.grade !== undefined) {
+    updates.grade = normalizeOptionalString(input.grade);
+  }
+  if (input.track !== undefined) {
+    updates.track = input.track;
+  }
+
+  return updates;
+}
+
+function mapProfileUpdateFirestoreError(error: unknown): FirebaseServiceError {
+  const normalized = normalizeFirebaseErrorCode(
+    extractFirebaseErrorDetails(error).code,
+  );
+
+  if (normalized === 'permission-denied') {
+    return new FirebaseServiceError(
+      'FIRESTORE_ERROR',
+      'Firestore denied this profile save. Sign out and sign in again, then retry. If it persists, ask an admin to deploy the latest firestore.rules.',
+      error,
+    );
+  }
+
+  if (normalized === 'unauthenticated') {
+    return new FirebaseServiceError(
+      'NOT_AUTHENTICATED',
+      'Your session has expired. Please sign in again.',
+      error,
+    );
+  }
+
+  return wrapFirebaseError(
+    error,
+    'FIRESTORE_ERROR',
+    'Failed to update user profile.',
+  );
 }
 
 /**
@@ -117,6 +206,7 @@ export async function createUserProfile(
       profileImage: input.profileImage ?? null,
       schoolId: input.schoolId ?? null,
       grade: input.grade ?? null,
+      track: input.track ?? null,
       role: DEFAULT_USER_ROLE,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
@@ -133,6 +223,7 @@ export async function createUserProfile(
       profileImage: payload.profileImage ?? null,
       schoolId: payload.schoolId,
       grade: payload.grade ?? null,
+      track: payload.track ?? null,
       role: DEFAULT_USER_ROLE,
       createdAt: null,
       updatedAt: null,
@@ -211,35 +302,20 @@ export async function updateUserProfile(
   baseProfile: UserProfile,
 ): Promise<UserProfile> {
   try {
-    const updates: Record<string, unknown> = {
-      updatedAt: serverTimestamp(),
-    };
+    await syncFirestoreAuthSession();
+    assertAuthUidMatches(uid);
 
-    if (input.fullName !== undefined) {
-      updates.fullName = input.fullName.trim();
-    }
-    if (input.phoneNumber !== undefined) {
-      updates.phoneNumber = input.phoneNumber.trim();
-    }
-    if (input.profileImage !== undefined) {
-      updates.profileImage = input.profileImage;
-    }
-    if (input.schoolId !== undefined) {
-      updates.schoolId = input.schoolId;
-    }
-    if (input.grade !== undefined) {
-      updates.grade = input.grade;
+    const snapshot = await getDoc(userDocRef(uid));
+    if (!snapshot.exists()) {
+      return createUserProfile(uid, buildProfileCreateInput(baseProfile, input));
     }
 
+    const updates = buildProfileUpdatePayload(input);
     await updateDoc(userDocRef(uid), updates as UpdateData<DocumentData>);
 
     return mergeUserProfile(baseProfile, input);
   } catch (error) {
-    throw wrapFirebaseError(
-      error,
-      'FIRESTORE_ERROR',
-      'Failed to update user profile.',
-    );
+    throw mapProfileUpdateFirestoreError(error);
   }
 }
 
@@ -257,11 +333,17 @@ function mergeUserProfile(
         : base.phoneNumber,
     profileImage:
       input.profileImage !== undefined
-        ? input.profileImage
+        ? normalizeOptionalString(input.profileImage)
         : base.profileImage,
     schoolId:
-      input.schoolId !== undefined ? input.schoolId : base.schoolId,
-    grade: input.grade !== undefined ? input.grade : base.grade,
+      input.schoolId !== undefined
+        ? normalizeOptionalString(input.schoolId)
+        : base.schoolId,
+    grade:
+      input.grade !== undefined
+        ? normalizeOptionalString(input.grade)
+        : base.grade,
+    track: input.track !== undefined ? input.track : base.track,
   };
 }
 

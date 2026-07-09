@@ -1,4 +1,5 @@
 import type { UserProfile } from '../../store/user/types';
+import type { CourseTrack } from '../../store/content/types/courses.types';
 import { isLocalImageUri } from '../../utils/profile/mapUserProfile';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { getCurrentUser } from './authService';
@@ -11,6 +12,7 @@ import { updateUserProfile } from './userService';
 export type ProfileEditPayload = {
   fullName: string;
   phoneNumber: string;
+  track: CourseTrack | null;
   /** Local picker URI or existing remote download URL. */
   photoUri: string | null;
   schoolId: string | null;
@@ -26,6 +28,7 @@ function buildOptimisticProfile(
     ...current,
     fullName: payload.fullName.trim(),
     phoneNumber: payload.phoneNumber.trim(),
+    track: payload.track,
     profileImage: nextImageUrl,
     schoolId: payload.schoolId,
     grade: payload.grade,
@@ -78,6 +81,7 @@ export async function updateUserProfileWithSync(
       {
         fullName: payload.fullName,
         phoneNumber: payload.phoneNumber,
+        track: payload.track,
         profileImage: nextImageUrl,
         schoolId: payload.schoolId,
         grade: payload.grade,

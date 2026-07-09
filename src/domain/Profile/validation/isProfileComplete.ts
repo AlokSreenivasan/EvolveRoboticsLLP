@@ -1,4 +1,5 @@
 import type { UserProfile } from '../../../store/user/types';
+import { isAdminRole } from '../../../utils/role/normalizeUserRole';
 
 import { hasProfileFormErrors, validateProfileForm } from './validateProfileForm';
 
@@ -8,12 +9,16 @@ export function isProfileComplete(profile: UserProfile | null | undefined): bool
     return false;
   }
 
-  const errors = validateProfileForm({
-    fullName: profile.fullName,
-    contactNumber: profile.phoneNumber,
-    schoolId: profile.schoolId,
-    grade: profile.grade,
-  });
+  const errors = validateProfileForm(
+    {
+      fullName: profile.fullName,
+      contactNumber: profile.phoneNumber,
+      track: profile.track,
+      schoolId: profile.schoolId,
+      grade: profile.grade,
+    },
+    { requireTrack: !isAdminRole(profile.role) },
+  );
 
   return !hasProfileFormErrors(errors);
 }

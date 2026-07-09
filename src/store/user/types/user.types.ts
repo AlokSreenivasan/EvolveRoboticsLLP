@@ -1,5 +1,6 @@
 import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
+import type { CourseTrack } from '../../content/types/courses.types';
 import type { UserRole } from './role.types';
 
 /** Firestore document shape at users/{uid} */
@@ -12,6 +13,8 @@ export interface UserProfileDocument {
   schoolId: string | null;
   /** Student grade level; null when not set. */
   grade: string | null;
+  /** Learner track — kids or professionals. */
+  track: CourseTrack | null;
   role: UserRole;
   createdAt: FirebaseFirestoreTypes.Timestamp | FirebaseFirestoreTypes.FieldValue;
   updatedAt: FirebaseFirestoreTypes.Timestamp | FirebaseFirestoreTypes.FieldValue;
@@ -26,6 +29,7 @@ export interface UserProfile {
   profileImage: string | null;
   schoolId: string | null;
   grade: string | null;
+  track: CourseTrack | null;
   role: UserRole;
   createdAt: FirebaseFirestoreTypes.Timestamp | null;
   updatedAt: FirebaseFirestoreTypes.Timestamp | null;
@@ -38,8 +42,12 @@ export interface CreateUserProfileInput {
   profileImage?: string | null;
   schoolId?: string | null;
   grade?: string | null;
+  track?: CourseTrack | null;
 }
 
 export type UpdateUserProfileInput = Partial<
-  Pick<UserProfile, 'fullName' | 'phoneNumber' | 'profileImage' | 'schoolId' | 'grade'>
+  Pick<
+    UserProfile,
+    'fullName' | 'phoneNumber' | 'profileImage' | 'schoolId' | 'grade' | 'track'
+  >
 >;

@@ -8,6 +8,7 @@ import {
   ProfileFormErrors,
   validateProfileForm,
 } from '../../domain/Profile/validation/validateProfileForm';
+import type { CourseTrack } from '../../store/content/types/courses.types';
 import { useAuth } from '../context/AuthContext';
 import { userProfileToFormProfile } from '../../utils/profile/mapUserProfile';
 
@@ -17,6 +18,7 @@ export function useProfileForm() {
     profileLoading,
     profileSaving,
     profileError,
+    isAdmin,
     updateSessionProfile,
   } = useAuth();
 
@@ -40,6 +42,7 @@ export function useProfileForm() {
     setProfileForm(prev => ({
       fullName: prev.fullName || nextForm.fullName,
       contactNumber: prev.contactNumber || nextForm.contactNumber,
+      track: prev.track ?? nextForm.track,
       photoUri: prev.photoUri ?? nextForm.photoUri,
       schoolId: prev.schoolId ?? nextForm.schoolId,
       grade: prev.grade ?? nextForm.grade,
@@ -65,6 +68,24 @@ export function useProfileForm() {
     setErrors(prev => ({ ...prev, contactNumber: undefined }));
   }, [markDirty]);
 
+  const setTrack = useCallback((track: CourseTrack) => {
+    markDirty();
+    setProfileForm(prev => ({
+      ...prev,
+      track,
+      ...(track === 'professionals'
+        ? { schoolId: null, grade: null }
+        : {}),
+    }));
+    setErrors(prev => ({
+      ...prev,
+      track: undefined,
+      ...(track === 'professionals'
+        ? { schoolId: undefined, grade: undefined }
+        : {}),
+    }));
+  }, [markDirty]);
+
   const setPhotoUri = useCallback((uri: string | null) => {
     markDirty();
     setProfileForm(prev => ({ ...prev, photoUri: uri }));
@@ -83,28 +104,37 @@ export function useProfileForm() {
   }, [markDirty]);
 
   const validate = useCallback((): boolean => {
-    const nextErrors = validateProfileForm({
-      fullName: profileForm.fullName,
-      contactNumber: profileForm.contactNumber,
-      schoolId: profileForm.schoolId,
-      grade: profileForm.grade,
-    });
+    const nextErrors = validateProfileForm(
+      {
+        fullName: profileForm.fullName,
+        contactNumber: profileForm.contactNumber,
+        track: profileForm.track,
+        schoolId: profileForm.schoolId,
+        grade: profileForm.grade,
+      },
+      { requireTrack: !isAdmin },
+    );
     setErrors(nextErrors);
     return !hasProfileFormErrors(nextErrors);
   }, [
+    isAdmin,
     profileForm.contactNumber,
     profileForm.fullName,
+    profileForm.track,
     profileForm.schoolId,
     profileForm.grade,
   ]);
 
   const persistProfile = useCallback(async (): Promise<boolean> => {
+    const isKidsTrack = profileForm.track === 'kids';
+
     const success = await updateSessionProfile({
       fullName: profileForm.fullName,
       phoneNumber: profileForm.contactNumber,
+      track: profileForm.track,
       photoUri: profileForm.photoUri,
-      schoolId: profileForm.schoolId,
-      grade: profileForm.grade,
+      schoolId: isKidsTrack ? profileForm.schoolId : null,
+      grade: isKidsTrack ? profileForm.grade : null,
     });
 
     if (success) {
@@ -122,6 +152,7 @@ export function useProfileForm() {
     saveError: profileError,
     setFullName,
     setContactNumber,
+    setTrack,
     setPhotoUri,
     setSchoolId,
     setGrade,

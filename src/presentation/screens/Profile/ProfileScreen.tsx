@@ -22,6 +22,7 @@ import BackButton, { backButtonOverlayStyle } from '../../../components/BackButt
 import Header from '../../../components/Header.tsx';
 import ProfilePhotoSection from '../../../components/Profile/ProfilePhotoSection.tsx';
 import GradePicker from '../../../components/Profile/GradePicker.tsx';
+import ProfileTrackPicker from '../../../components/Profile/ProfileTrackPicker.tsx';
 import SchoolPicker from '../../../components/Profile/SchoolPicker.tsx';
 import { CONTACT_NUMBER_MAX_LENGTH } from '../../../domain/Profile/validation/formatContactNumber';
 import { isProfileComplete } from '../../../domain/Profile/validation/isProfileComplete';
@@ -44,7 +45,7 @@ function ProfileScreen() {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
   const route = useRoute<ProfileScreenRouteProp>();
   const requireCompletion = route.params?.requireCompletion === true;
-  const { user, profile: userProfile, profileLoading } = useAuth();
+  const { user, profile: userProfile, profileLoading, isAdmin } = useAuth();
   const userEmail = userProfile?.email ?? user?.email ?? '';
   const {
     profile,
@@ -54,6 +55,7 @@ function ProfileScreen() {
     saveError,
     setFullName,
     setContactNumber,
+    setTrack,
     setPhotoUri,
     setSchoolId,
     setGrade,
@@ -67,6 +69,7 @@ function ProfileScreen() {
   } = useSchools();
 
   const isFormDisabled = isLoading || isSaving;
+  const showSchoolAndGrade = profile.track === 'kids';
 
   useEffect(() => {
     if (!requireCompletion || profileLoading) {
@@ -219,29 +222,47 @@ function ProfileScreen() {
               <Text style={styles.errorText}>{errors.contactNumber}</Text>
             ) : null}
 
-            <Text style={styles.label}>School</Text>
-            <SchoolPicker
-              schools={schools}
-              selectedSchoolId={profile.schoolId}
-              onSelectSchool={setSchoolId}
-              loading={schoolsLoading}
-              error={schoolsError}
-              disabled={isFormDisabled}
-              hasError={Boolean(errors.schoolId)}
-            />
-            {errors.schoolId ? (
-              <Text style={styles.errorText}>{errors.schoolId}</Text>
+            {!isAdmin ? (
+              <>
+                <ProfileTrackPicker
+                  selectedTrack={profile.track}
+                  onSelectTrack={setTrack}
+                  disabled={isFormDisabled}
+                  hasError={Boolean(errors.track)}
+                />
+                {errors.track ? (
+                  <Text style={styles.errorText}>{errors.track}</Text>
+                ) : null}
+              </>
             ) : null}
 
-            <Text style={styles.label}>Grade</Text>
-            <GradePicker
-              selectedGrade={profile.grade}
-              onSelectGrade={setGrade}
-              disabled={isFormDisabled}
-              hasError={Boolean(errors.grade)}
-            />
-            {errors.grade ? (
-              <Text style={styles.errorText}>{errors.grade}</Text>
+            {showSchoolAndGrade ? (
+              <>
+                <Text style={styles.label}>School</Text>
+                <SchoolPicker
+                  schools={schools}
+                  selectedSchoolId={profile.schoolId}
+                  onSelectSchool={setSchoolId}
+                  loading={schoolsLoading}
+                  error={schoolsError}
+                  disabled={isFormDisabled}
+                  hasError={Boolean(errors.schoolId)}
+                />
+                {errors.schoolId ? (
+                  <Text style={styles.errorText}>{errors.schoolId}</Text>
+                ) : null}
+
+                <Text style={styles.label}>Grade</Text>
+                <GradePicker
+                  selectedGrade={profile.grade}
+                  onSelectGrade={setGrade}
+                  disabled={isFormDisabled}
+                  hasError={Boolean(errors.grade)}
+                />
+                {errors.grade ? (
+                  <Text style={styles.errorText}>{errors.grade}</Text>
+                ) : null}
+              </>
             ) : null}
 
             {saveError && !isSaving ? (
