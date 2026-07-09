@@ -14,7 +14,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import ContinueLearningCard from '../../../components/Home/ContinueLearningCard';
 import FloatingChatAssistant from '../../../components/Home/FloatingChatAssistant';
-import HeroBannerCarousel from '../../../components/Home/HeroBannerCarousel';
 import HomeBottomTabBar, {
   type HomeTabKey,
 } from '../../../components/Home/HomeBottomTabBar';
@@ -118,15 +117,6 @@ function HomeScreen() {
           styles.scrollContent,
           { paddingBottom: scrollBottomPadding },
         ]}>
-        <HeroBannerCarousel
-          onStudentsPress={() =>
-            navigation.navigate('Courses', { track: 'kids' })
-          }
-          onProfessionalPress={() =>
-            navigation.navigate('Courses', { track: 'professionals' })
-          }
-        />
-
         <View style={styles.section}>
           <HomeSectionHeader
             title="Continue learning"

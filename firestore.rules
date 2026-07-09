@@ -252,12 +252,13 @@ function isValidContinueLearningPlaylistFields(data) {
     && data.videoCount <= 500
     && data.sortOrder is number
     && data.sortOrder >= 0
-    && data.isPublished is bool;
+    && data.isPublished is bool
+    && (!('track' in data) || isValidCourseTrack(data));
 }
 
 function isValidContinueLearningPlaylistCreate() {
-  // Match upcomingEvents: validate fields only (serverTimestamp keys are optional in rules).
-  return isValidContinueLearningPlaylistFields(request.resource.data);
+  return isValidContinueLearningPlaylistFields(request.resource.data)
+    && isValidCourseTrack(request.resource.data);
 }
 
 function isValidContinueLearningPlaylistUpdate() {
