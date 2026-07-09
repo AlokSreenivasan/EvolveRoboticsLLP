@@ -1,15 +1,24 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Award } from 'lucide-react-native';
+import { useNavigation } from '@react-navigation/native';
+import { Award, Bell } from 'lucide-react-native';
 
 import { cardShadowLight, colors } from '../../constants/theme';
+import { useNotifications } from '../../presentation/hooks/useNotifications';
+import type { LoginScreenNavigationProp } from '../../types/navigation';
 
 type HomeHeaderProps = {
   displayName: string;
 };
 
 function HomeHeader({ displayName }: HomeHeaderProps) {
+  const navigation = useNavigation<LoginScreenNavigationProp>();
+  const { displayNotifications, loading, error } = useNotifications();
   const firstName = displayName.trim().split(/\s+/)[0] || 'Learner';
+  const notificationCount =
+    !loading && !error ? displayNotifications.length : 0;
+  const badgeLabel =
+    notificationCount > 9 ? '9+' : String(notificationCount);
 
   return (
     <View style={styles.container}>
@@ -20,19 +29,38 @@ function HomeHeader({ displayName }: HomeHeaderProps) {
         </Text>
       </View>
 
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Certificates"
-        accessibilityHint="View your earned certificates"
-        style={({ pressed }) => [
-          styles.certificateButton,
-          pressed && styles.certificateButtonPressed,
-        ]}>
-        <View style={styles.certificateIconWrap}>
-          <Award size={20} color={colors.primary} strokeWidth={2.25} />
-        </View>
-        <Text style={styles.certificateLabel}>Certificates</Text>
-      </Pressable>
+      <View style={styles.actions}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Certificates"
+          accessibilityHint="View your earned certificates"
+          style={({ pressed }) => [
+            styles.certificateButton,
+            pressed && styles.certificateButtonPressed,
+          ]}>
+          <View style={styles.certificateIconWrap}>
+            <Award size={20} color={colors.primary} strokeWidth={2.25} />
+          </View>
+          <Text style={styles.certificateLabel}>Certificates</Text>
+        </Pressable>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Notifications"
+          accessibilityHint="View your notifications"
+          onPress={() => navigation.navigate('NotificationsList')}
+          style={({ pressed }) => [
+            styles.notificationButton,
+            pressed && styles.notificationButtonPressed,
+          ]}>
+          <Bell size={22} color={colors.primary} strokeWidth={2.25} />
+          {notificationCount > 0 ? (
+            <View style={styles.notificationBadge}>
+              <Text style={styles.notificationBadgeText}>{badgeLabel}</Text>
+            </View>
+          ) : null}
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -61,6 +89,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSecondary,
     lineHeight: 16,
+  },
+  actions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   certificateButton: {
     flexDirection: 'row',
@@ -92,6 +125,41 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.primary,
     lineHeight: 16,
+  },
+  notificationButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.primaryMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...cardShadowLight,
+  },
+  notificationButtonPressed: {
+    opacity: 0.88,
+    backgroundColor: colors.primaryLight,
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: colors.primary,
+    borderWidth: 2,
+    borderColor: colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  notificationBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.surface,
+    lineHeight: 12,
   },
 });
 
