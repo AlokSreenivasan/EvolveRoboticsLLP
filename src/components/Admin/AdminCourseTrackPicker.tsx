@@ -11,19 +11,20 @@ import { adminStyles } from './adminStyles';
 type AdminCourseTrackPickerProps = {
   value: CourseTrack | null;
   onChange: (track: CourseTrack) => void;
+  label?: string;
+  hint?: string;
 };
 
 function AdminCourseTrackPicker({
   value,
   onChange,
+  label = 'Course track *',
+  hint = 'Required. Choose whether this course is listed under For Kids or For Professionals.',
 }: AdminCourseTrackPickerProps) {
   return (
     <View style={styles.wrap}>
-      <Text style={adminStyles.fieldLabel}>Course track *</Text>
-      <Text style={adminStyles.sectionHint}>
-        Required. Choose whether this course is listed under For Kids or For
-        Professionals.
-      </Text>
+      <Text style={adminStyles.fieldLabel}>{label}</Text>
+      <Text style={adminStyles.sectionHint}>{hint}</Text>
 
       <View style={styles.optionList}>
         {COURSE_TRACK_OPTIONS.map(option => {

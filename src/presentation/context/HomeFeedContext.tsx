@@ -161,6 +161,14 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
       ),
     [isAdmin, profile?.grade, profile?.schoolId, roleLoading],
   );
+  const playlistSubscribeOptions = useMemo(
+    () => ({
+      includeUnpublished: false as const,
+      viewerTrack:
+        !roleLoading && isAdmin ? undefined : profile?.track ?? undefined,
+    }),
+    [isAdmin, profile?.track, roleLoading],
+  );
   const [focusCount, setFocusCount] = useState(0);
   const isActive = focusCount > 0;
 
@@ -234,7 +242,7 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
         setPlaylistsError(null);
         setPlaylistsLoading(false);
       },
-      { includeUnpublished: false },
+      playlistSubscribeOptions,
       err => {
         setPlaylistsError(getErrorMessage(err));
         setPlaylistsLoading(false);
@@ -330,7 +338,7 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
       unsubEvents();
       unsubNotifications();
     };
-  }, [contentSubscribeOptions, isActive, refreshNonce]);
+  }, [contentSubscribeOptions, isActive, playlistSubscribeOptions, refreshNonce]);
 
   useEffect(() => {
     if (!isActive) {

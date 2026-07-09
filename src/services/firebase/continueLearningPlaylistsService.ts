@@ -10,6 +10,8 @@ import type {
   CreateContinueLearningPlaylistInput,
   UpdateContinueLearningPlaylistInput,
 } from '../../store/content/types/continueLearningPlaylists.types';
+import { isCourseTrack } from '../../store/content/types/courses.types';
+import type { CourseTrack } from '../../store/content/types/courses.types';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { syncFirestoreAuthSession } from '../../utils/firebase/firestoreSessionSync';
 import { FIRESTORE_COLLECTIONS } from './constants';
@@ -60,6 +62,7 @@ function mapPlaylist(
         ? Math.trunc(data.videoCount)
         : 1,
     sortOrder: typeof data?.sortOrder === 'number' ? data.sortOrder : 0,
+    track: isCourseTrack(data?.track) ? data.track : null,
     isPublished: data?.isPublished === true,
     createdAt: data && isTimestamp(data.createdAt) ? data.createdAt : null,
     updatedAt: data && isTimestamp(data.updatedAt) ? data.updatedAt : null,
@@ -74,10 +77,11 @@ function sortPlaylists(
 
 export function subscribeContinueLearningPlaylists(
   listener: (playlists: ContinueLearningPlaylist[]) => void,
-  options?: { includeUnpublished?: boolean },
+  options?: { includeUnpublished?: boolean; viewerTrack?: CourseTrack },
   onError?: (error: unknown) => void,
 ): () => void {
   const includeUnpublished = options?.includeUnpublished === true;
+  const viewerTrack = options?.viewerTrack;
   const playlistsQuery = query(
     playlistsCollection(),
     orderBy('sortOrder', 'asc'),
@@ -93,9 +97,15 @@ export function subscribeContinueLearningPlaylists(
         ),
       );
 
-      const filtered = includeUnpublished
+      let filtered = includeUnpublished
         ? playlists
         : playlists.filter(item => item.isPublished);
+
+      if (viewerTrack) {
+        filtered = filtered.filter(
+          item => item.track === viewerTrack || item.track == null,
+        );
+      }
 
       listener(sortPlaylists(filtered));
     },
@@ -122,6 +132,13 @@ export async function createContinueLearningPlaylist(
 ): Promise<ContinueLearningPlaylist> {
   try {
     await syncFirestoreAuthSession();
+    if (!isCourseTrack(input.track)) {
+      throw wrapFirebaseError(
+        new Error('Playlist track is required.'),
+        'VALIDATION_ERROR',
+        'Select whether this playlist is for kids or professionals.',
+      );
+    }
     const sortOrder = Math.trunc(await getNextSortOrder());
     const ref = options?.playlistId
       ? doc(playlistsCollection(), options.playlistId)
@@ -134,6 +151,7 @@ export async function createContinueLearningPlaylist(
       playlistUrl: input.playlistUrl.trim(),
       videoCount: Math.max(1, Math.trunc(input.videoCount)),
       sortOrder,
+      track: input.track,
       isPublished: input.isPublished ?? true,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
@@ -185,6 +203,16 @@ export async function updateContinueLearningPlaylist(
     }
     if (input.isPublished !== undefined) {
       updates.isPublished = input.isPublished;
+    }
+    if (input.track !== undefined) {
+      if (!isCourseTrack(input.track)) {
+        throw wrapFirebaseError(
+          new Error('Playlist track is required.'),
+          'VALIDATION_ERROR',
+          'Select whether this playlist is for kids or professionals.',
+        );
+      }
+      updates.track = input.track;
     }
 
     await updateDoc(doc(playlistsCollection(), playlistId), updates as UpdateData<DocumentData>);

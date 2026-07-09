@@ -29,6 +29,7 @@ import {
 } from 'lucide-react-native';
 
 import AdminScreenLayout from '../../../components/Admin/AdminScreenLayout';
+import AdminCourseTrackPicker from '../../../components/Admin/AdminCourseTrackPicker';
 import AppSwitch from '../../../components/AppSwitch';
 import AppButton from '../../../components/AppButton';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
@@ -46,6 +47,10 @@ import {
 import { uploadContinueLearningThumbnail } from '../../../services/firebase/storageService';
 import { pickProfilePhotoFromGallery } from '../../../services/profilePhotoPicker';
 import type { ContinueLearningPlaylist } from '../../../store/content/types/continueLearningPlaylists.types';
+import {
+  courseTrackLabel,
+  type CourseTrack,
+} from '../../../store/content/types/courses.types';
 import { extractFirebaseErrorDetails } from '../../../utils/firebase/extractFirebaseError';
 import { getErrorMessage } from '../../../utils/firebase/errors';
 import { getCurrentUserId } from '../../../services/firebase/authService';
@@ -57,6 +62,7 @@ type PlaylistFormState = {
   imageUri: string;
   playlistUrl: string;
   videoCount: string;
+  track: CourseTrack | null;
   isPublished: boolean;
 };
 
@@ -66,6 +72,7 @@ const EMPTY_FORM: PlaylistFormState = {
   imageUri: '',
   playlistUrl: '',
   videoCount: '1',
+  track: null,
   isPublished: true,
 };
 
@@ -149,6 +156,7 @@ function ManageContinueLearningPlaylists() {
       imageUri: playlist.imageUri,
       playlistUrl: playlist.playlistUrl,
       videoCount: String(playlist.videoCount),
+      track: playlist.track,
       isPublished: playlist.isPublished,
     });
     setLocalThumbnailUri(null);
@@ -208,6 +216,14 @@ function ManageContinueLearningPlaylists() {
       return;
     }
 
+    if (current.track !== 'kids' && current.track !== 'professionals') {
+      Alert.alert(
+        'Visibility required',
+        'Select whether this playlist is visible to kids or professionals.',
+      );
+      return;
+    }
+
     const hasAdmin = await isAdmin();
     if (!hasAdmin) {
       const uid = getCurrentUserId();
@@ -241,6 +257,7 @@ function ManageContinueLearningPlaylists() {
         imageUri,
         playlistUrl,
         videoCount,
+        track: current.track,
         isPublished: current.isPublished,
       };
 
@@ -357,6 +374,8 @@ function ManageContinueLearningPlaylists() {
               </Text>
             ) : null}
             <Text style={styles.cardDetail}>
+              {courseTrackLabel(playlist.track)}
+              {' · '}
               {playlist.videoCount} video
               {playlist.videoCount === 1 ? '' : 's'}
             </Text>
@@ -487,6 +506,12 @@ function ManageContinueLearningPlaylists() {
             {thumbnailPreviewUri ? (
               <Image source={{ uri: thumbnailPreviewUri }} style={styles.preview} />
             ) : null}
+            <AdminCourseTrackPicker
+              value={form.track}
+              onChange={track => setForm(prev => ({ ...prev, track }))}
+              label="Visibility *"
+              hint="Required. Choose whether this playlist is shown to kids or professionals on Home."
+            />
             <View style={styles.switchRow}>
               <Text style={styles.switchLabel}>Published on home</Text>
               <AppSwitch
