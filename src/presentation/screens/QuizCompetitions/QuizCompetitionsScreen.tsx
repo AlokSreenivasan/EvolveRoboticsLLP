@@ -64,7 +64,7 @@ function QuizCompetitionsScreen() {
         Alert.alert(
           'Already completed',
           attempt
-            ? `You scored ${attempt.correctCount}/${attempt.totalQuestions} (${attempt.percentage}%). Earned ${attempt.xpEarned} XP. Each quiz can only be attempted once.`
+            ? `You scored ${attempt.correctCount}/${attempt.totalQuestions} (${attempt.percentage}%). Earned ${attempt.xpEarned} XP. This quiz does not allow retries.`
             : 'You have already completed this quiz.',
         );
         return;
@@ -86,30 +86,37 @@ function QuizCompetitionsScreen() {
       const attempt = attemptByQuizId.get(item.id);
       const isLocked = status === 'locked';
       const isCompleted = status === 'completed';
+      const isRetryable = status === 'retryable';
 
       return (
         <TouchableOpacity
           style={[
             styles.card,
             isLocked && styles.cardLocked,
-            isCompleted && styles.cardCompleted,
+            (isCompleted || isRetryable) && styles.cardCompleted,
           ]}
           activeOpacity={isLocked ? 1 : 0.85}
           onPress={() => handleQuizPress(item, index)}
           accessibilityRole="button"
           accessibilityLabel={`Quiz ${item.title}${
-            isLocked ? ', locked' : isCompleted ? ', completed' : ', available'
+            isLocked
+              ? ', locked'
+              : isCompleted
+                ? ', completed'
+                : isRetryable
+                  ? ', retry available'
+                  : ', available'
           }`}
           accessibilityState={{ disabled: isLocked }}>
           <View
             style={[
               styles.cardIcon,
               isLocked && styles.cardIconLocked,
-              isCompleted && styles.cardIconCompleted,
+              (isCompleted || isRetryable) && styles.cardIconCompleted,
             ]}>
             {isLocked ? (
               <Lock size={20} color={colors.textMuted} strokeWidth={2.5} />
-            ) : isCompleted ? (
+            ) : isCompleted || isRetryable ? (
               <CheckCircle2
                 size={22}
                 color={colors.accentGreen}
@@ -140,6 +147,10 @@ function QuizCompetitionsScreen() {
                 <View style={styles.statusBadgeCompleted}>
                   <Text style={styles.statusBadgeTextCompleted}>Done</Text>
                 </View>
+              ) : isRetryable ? (
+                <View style={styles.statusBadgeRetry}>
+                  <Text style={styles.statusBadgeTextRetry}>Retry</Text>
+                </View>
               ) : (
                 <View style={styles.statusBadgeAvailable}>
                   <Text style={styles.statusBadgeTextAvailable}>Start</Text>
@@ -162,7 +173,7 @@ function QuizCompetitionsScreen() {
                 isLocked && styles.cardMetaLocked,
               ]}>
               {item.questions.length} questions • {formatMinutes(item.timerSeconds)} min • {item.xpValue} XP
-              {isCompleted && attempt
+              {(isCompleted || isRetryable) && attempt
                 ? ` • Score ${attempt.correctCount}/${attempt.totalQuestions} • ${attempt.xpEarned} XP`
                 : ''}
             </Text>
@@ -395,6 +406,17 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     color: colors.accentBlue,
+  },
+  statusBadgeRetry: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+    backgroundColor: '#FFF8E1',
+  },
+  statusBadgeTextRetry: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#F57F17',
   },
 });
 

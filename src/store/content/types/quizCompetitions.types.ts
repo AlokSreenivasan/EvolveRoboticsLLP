@@ -24,6 +24,8 @@ export interface QuizCompetitionDocument
   timerSeconds: number;
   /** XP awarded when a learner completes this quiz. */
   xpValue: number;
+  /** When true, learners can retake the quiz after completing it. */
+  allowRetry: boolean;
   questions: ExamQuestion[];
   track: CourseTrack;
   sortOrder: number;
@@ -42,6 +44,7 @@ export interface QuizCompetition extends SchoolAudienceFields {
   description: string;
   timerSeconds: number;
   xpValue: number;
+  allowRetry: boolean;
   questions: ExamQuestion[];
   track: CourseTrack | null;
   sortOrder: number;
@@ -55,6 +58,7 @@ export type CreateQuizCompetitionInput = {
   description?: string;
   timerSeconds: number;
   xpValue?: number;
+  allowRetry?: boolean;
   questions: ExamQuestion[];
   track: CourseTrack;
   isPublished?: boolean;

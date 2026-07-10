@@ -38,6 +38,7 @@ type QuizFormState = {
   description: string;
   timerMinutes: string;
   xpValue: string;
+  allowRetry: boolean;
   track: CourseTrack | null;
   isPublished: boolean;
   questions: ExamQuestion[];
@@ -55,6 +56,7 @@ const EMPTY_QUIZ_FORM: QuizFormState = {
   description: '',
   timerMinutes: '0',
   xpValue: '20',
+  allowRetry: false,
   track: null,
   isPublished: true,
   questions: [],
@@ -165,6 +167,7 @@ function ManageQuizCompetitions() {
       description: quiz.description,
       timerMinutes: toTimerMinutes(quiz.timerSeconds),
       xpValue: String(quiz.xpValue),
+      allowRetry: quiz.allowRetry,
       track: quiz.track,
       isPublished: quiz.isPublished,
       questions: quiz.questions ?? [],
@@ -295,6 +298,7 @@ function ManageQuizCompetitions() {
       description: form.description,
       timerSeconds: toTimerSeconds(form.timerMinutes),
       xpValue: toXpValue(form.xpValue),
+      allowRetry: form.allowRetry,
       questions: form.questions,
       isPublished: form.isPublished,
       ...visibilityPayload,
@@ -349,7 +353,7 @@ function ManageQuizCompetitions() {
         title={quiz.title}
         subtitle={`${quiz.questions?.length ?? 0} questions • ${toTimerMinutes(
           quiz.timerSeconds,
-        )} min • ${quiz.xpValue} XP`}
+        )} min • ${quiz.xpValue} XP${quiz.allowRetry ? ' • Retry on' : ''}`}
         statusLine={`${
           quiz.questions?.length ? 'Ready to publish' : 'Add questions'
         } · ${formatContentVisibilitySummary(quiz.track, quiz, schools)}`}
@@ -500,6 +504,13 @@ function ManageQuizCompetitions() {
               onChangeText={xpValue => setForm(prev => ({ ...prev, xpValue }))}
               placeholder="20"
               keyboardType="number-pad"
+            />
+            <AdminPublishedSwitch
+              label="Allow retry after completion"
+              value={form.allowRetry}
+              onValueChange={allowRetry =>
+                setForm(prev => ({ ...prev, allowRetry }))
+              }
             />
 
             <View style={styles.questionsHeader}>

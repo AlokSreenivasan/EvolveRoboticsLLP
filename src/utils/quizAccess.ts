@@ -1,7 +1,7 @@
 import type { QuizAttempt } from '../services/firebase/quizAttemptsService';
 import type { QuizCompetition } from '../store/content/types/quizCompetitions.types';
 
-export type QuizAccessStatus = 'available' | 'locked' | 'completed';
+export type QuizAccessStatus = 'available' | 'locked' | 'completed' | 'retryable';
 
 export function getQuizAccessStatus(
   quiz: QuizCompetition,
@@ -10,7 +10,7 @@ export function getQuizAccessStatus(
   completedQuizIds: Set<string>,
 ): QuizAccessStatus {
   if (completedQuizIds.has(quiz.id)) {
-    return 'completed';
+    return quiz.allowRetry ? 'retryable' : 'completed';
   }
 
   if (index === 0) {
@@ -35,14 +35,14 @@ export function canAttemptQuiz(
     return false;
   }
 
-  return (
-    getQuizAccessStatus(
-      quizzes[index],
-      index,
-      quizzes,
-      completedQuizIds,
-    ) === 'available'
+  const status = getQuizAccessStatus(
+    quizzes[index],
+    index,
+    quizzes,
+    completedQuizIds,
   );
+
+  return status === 'available' || status === 'retryable';
 }
 
 export function getQuizAttempt(

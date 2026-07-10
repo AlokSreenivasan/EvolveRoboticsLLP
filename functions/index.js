@@ -377,3 +377,58 @@ exports.sendLiveNotification = onCall(async request => {
     recipientCount,
   };
 });
+
+const FIRESTORE_BATCH_LIMIT = 500;
+
+/**
+ * Callable: admin resets a user's quiz competition progress.
+ * Deletes all documents in users/{targetUserId}/quizAttempts.
+ * Expects { targetUserId }.
+ */
+exports.resetUserQuizProgress = onCall(async request => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'You must be signed in.');
+  }
+
+  const db = getFirestore();
+  const adminUid = request.auth.uid;
+  const adminSnap = await db.doc(`users/${adminUid}`).get();
+
+  if (!adminSnap.exists || adminSnap.data().role !== 'admin') {
+    throw new HttpsError(
+      'permission-denied',
+      'Only admins can reset quiz progress.',
+    );
+  }
+
+  const { targetUserId } = request.data ?? {};
+
+  if (typeof targetUserId !== 'string' || !targetUserId.trim()) {
+    throw new HttpsError('invalid-argument', 'targetUserId is required.');
+  }
+
+  const uid = targetUserId.trim();
+  const userSnap = await db.doc(`users/${uid}`).get();
+
+  if (!userSnap.exists) {
+    throw new HttpsError('not-found', 'User not found.');
+  }
+
+  const attemptsSnap = await db.collection(`users/${uid}/quizAttempts`).get();
+
+  if (attemptsSnap.empty) {
+    return { deletedCount: 0 };
+  }
+
+  let deletedCount = 0;
+
+  for (let i = 0; i < attemptsSnap.docs.length; i += FIRESTORE_BATCH_LIMIT) {
+    const batch = db.batch();
+    const chunk = attemptsSnap.docs.slice(i, i + FIRESTORE_BATCH_LIMIT);
+    chunk.forEach(attemptDoc => batch.delete(attemptDoc.ref));
+    await batch.commit();
+    deletedCount += chunk.length;
+  }
+
+  return { deletedCount };
+});

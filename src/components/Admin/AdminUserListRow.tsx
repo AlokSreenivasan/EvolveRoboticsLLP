@@ -1,13 +1,16 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { Mail, Phone, User } from 'lucide-react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { Mail, Phone, RotateCcw, User } from 'lucide-react-native';
 
+import AdminIconButton from './AdminIconButton';
 import { colors, cardShadow } from '../../constants/theme';
 
 type AdminUserListRowProps = {
   fullName: string;
   email: string;
   phoneNumber: string;
+  onResetQuizProgress?: () => void;
+  resettingQuizProgress?: boolean;
 };
 
 function displayName(fullName: string): string {
@@ -20,7 +23,13 @@ function displayValue(value: string, fallback: string): string {
   return trimmed.length > 0 ? trimmed : fallback;
 }
 
-function AdminUserListRow({ fullName, email, phoneNumber }: AdminUserListRowProps) {
+function AdminUserListRow({
+  fullName,
+  email,
+  phoneNumber,
+  onResetQuizProgress,
+  resettingQuizProgress,
+}: AdminUserListRowProps) {
   return (
     <View style={styles.card}>
       <View style={styles.nameRow}>
@@ -30,6 +39,13 @@ function AdminUserListRow({ fullName, email, phoneNumber }: AdminUserListRowProp
         <Text style={styles.name} numberOfLines={2}>
           {displayName(fullName)}
         </Text>
+        {onResetQuizProgress ? (
+          resettingQuizProgress ? (
+            <ActivityIndicator color={colors.primary} size="small" />
+          ) : (
+            <AdminIconButton icon={RotateCcw} onPress={onResetQuizProgress} />
+          )
+        ) : null}
       </View>
       <View style={styles.detailRow}>
         <Mail size={14} color={colors.textMuted} strokeWidth={2} />

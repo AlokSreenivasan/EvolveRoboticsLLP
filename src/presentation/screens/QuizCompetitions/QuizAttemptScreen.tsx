@@ -62,6 +62,7 @@ function QuizAttemptScreen() {
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
   const submittedRef = useRef(false);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -72,11 +73,16 @@ function QuizAttemptScreen() {
     [answers],
   );
 
+  const accessLoading = quizzesLoading || attemptsLoading;
+  const existingAttempt = attemptByQuizId.get(quizId);
+  const isAlreadyCompleted = completedQuizIds.has(quizId);
+  const canRetry = isAlreadyCompleted && quiz?.allowRetry === true;
+
   const canStartAttempt =
     !quizzesLoading &&
     !attemptsLoading &&
     quiz != null &&
-    !completedQuizIds.has(quizId) &&
+    (!isAlreadyCompleted || (canRetry && isRetrying)) &&
     canAttemptQuiz(quizId, quizzes, completedQuizIds);
 
   useEffect(() => {
@@ -243,10 +249,6 @@ function QuizAttemptScreen() {
   const timeLabel =
     remainingSeconds == null ? '' : formatTimeMMSS(remainingSeconds);
 
-  const accessLoading = quizzesLoading || attemptsLoading;
-  const existingAttempt = attemptByQuizId.get(quizId);
-  const isAlreadyCompleted = completedQuizIds.has(quizId);
-
   if (loading || accessLoading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -272,7 +274,7 @@ function QuizAttemptScreen() {
     );
   }
 
-  if (isAlreadyCompleted) {
+  if (isAlreadyCompleted && !canRetry) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
@@ -283,9 +285,34 @@ function QuizAttemptScreen() {
           <Text style={styles.messageTitle}>Already completed</Text>
           <Text style={styles.messageText}>
             {existingAttempt
-              ? `You scored ${existingAttempt.correctCount}/${existingAttempt.totalQuestions} (${existingAttempt.percentage}%). Each quiz can only be attempted once.`
+              ? `You scored ${existingAttempt.correctCount}/${existingAttempt.totalQuestions} (${existingAttempt.percentage}%). This quiz does not allow retries.`
               : 'You have already completed this quiz.'}
           </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (isAlreadyCompleted && canRetry && !isRetrying) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <BackButton withSpacingBelow />
+          <Text style={styles.title}>{quiz.title}</Text>
+        </View>
+        <View style={styles.messageCard}>
+          <Text style={styles.messageTitle}>Quiz completed</Text>
+          <Text style={styles.messageText}>
+            {existingAttempt
+              ? `Last score: ${existingAttempt.correctCount}/${existingAttempt.totalQuestions} (${existingAttempt.percentage}%). You earned ${existingAttempt.xpEarned} XP. You can retry this quiz to improve your score.`
+              : 'You can retry this quiz.'}
+          </Text>
+          <AppButton
+            title="Retry quiz"
+            onPress={() => setIsRetrying(true)}
+            buttonStyle={styles.retryButton}
+            textStyle={styles.retryText}
+          />
         </View>
       </SafeAreaView>
     );
@@ -448,6 +475,18 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
+    marginBottom: 16,
+  },
+  retryButton: {
+    marginTop: 4,
+    backgroundColor: colors.primary,
+    paddingVertical: 14,
+    borderRadius: 14,
+  },
+  retryText: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 14,
   },
   questionCard: {
     padding: 16,

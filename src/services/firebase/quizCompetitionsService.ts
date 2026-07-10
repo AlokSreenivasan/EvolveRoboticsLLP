@@ -126,6 +126,7 @@ function mapQuizCompetition(
     description: data.description?.trim() ?? '',
     timerSeconds,
     xpValue,
+    allowRetry: data.allowRetry === true,
     questions: mapQuestions(id, data),
     track: mapContentTrack(data),
     sortOrder: typeof data.sortOrder === 'number' ? data.sortOrder : 0,
@@ -269,6 +270,7 @@ export async function createQuizCompetition(
         input.xpValue != null
           ? Math.max(0, Math.trunc(input.xpValue))
           : XP_PER_QUIZ,
+      allowRetry: input.allowRetry === true,
       questions: input.questions,
       track: input.track,
       sortOrder,
@@ -314,6 +316,9 @@ export async function updateQuizCompetition(
     }
     if (input.xpValue !== undefined) {
       updates.xpValue = Math.max(0, Math.trunc(input.xpValue));
+    }
+    if (input.allowRetry !== undefined) {
+      updates.allowRetry = input.allowRetry === true;
     }
     if (input.questions !== undefined) {
       updates.questions = input.questions;

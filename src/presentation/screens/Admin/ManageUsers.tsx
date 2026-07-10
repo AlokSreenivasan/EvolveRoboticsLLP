@@ -1,6 +1,7 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   RefreshControl,
   StyleSheet,
@@ -16,10 +17,24 @@ import { adminStyles } from '../../../components/Admin/adminStyles';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import { colors } from '../../../constants/theme';
 import { useAdminUsersList } from '../../hooks/admin/useAdminUsersList';
+import { resetUserQuizProgress } from '../../../services/firebase/adminQuizProgressService';
 import type { AdminUserListItem } from '../../../store/user/types/adminUsers.types';
 import { toAdminWriteErrorMessage } from '../../../utils/admin/adminWriteErrorMessage';
 
+function displayUserLabel(user: AdminUserListItem): string {
+  const name = user.fullName.trim();
+  if (name.length > 0) {
+    return name;
+  }
+  const email = user.email.trim();
+  if (email.length > 0) {
+    return email;
+  }
+  return 'this user';
+}
+
 function ManageUsers() {
+  const [resettingUid, setResettingUid] = useState<string | null>(null);
   const {
     users,
     searchTerm,
@@ -33,15 +48,49 @@ function ManageUsers() {
     refresh,
   } = useAdminUsersList();
 
+  const confirmResetQuizProgress = useCallback((user: AdminUserListItem) => {
+    const label = displayUserLabel(user);
+    Alert.alert(
+      'Reset quiz progress',
+      `Clear all quiz competition progress for ${label}? They will need to start from the first quiz again.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset',
+          style: 'destructive',
+          onPress: async () => {
+            setResettingUid(user.uid);
+            try {
+              await resetUserQuizProgress(user.uid);
+              Alert.alert(
+                'Quiz progress reset',
+                `Quiz progress for ${label} has been cleared.`,
+              );
+            } catch (resetError) {
+              Alert.alert(
+                'Reset failed',
+                toAdminWriteErrorMessage(resetError),
+              );
+            } finally {
+              setResettingUid(null);
+            }
+          },
+        },
+      ],
+    );
+  }, []);
+
   const renderItem = useCallback(
     ({ item }: { item: AdminUserListItem }) => (
       <AdminUserListRow
         fullName={item.fullName}
         email={item.email}
         phoneNumber={item.phoneNumber}
+        onResetQuizProgress={() => confirmResetQuizProgress(item)}
+        resettingQuizProgress={resettingUid === item.uid}
       />
     ),
-    [],
+    [confirmResetQuizProgress, resettingUid],
   );
 
   const keyExtractor = useCallback((item: AdminUserListItem) => item.uid, []);
