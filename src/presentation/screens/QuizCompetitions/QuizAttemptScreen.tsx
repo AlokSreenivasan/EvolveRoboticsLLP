@@ -217,7 +217,7 @@ function QuizAttemptScreen() {
         const isPerfect = total > 0 && correct === total;
         const resultMessage = isPerfect
           ? `Score: ${correct}/${total} (${percentage}%)\n+${xpEarned} XP earned\n\nNext quiz unlocked!`
-          : `Score: ${correct}/${total} (${percentage}%)\n+${xpEarned} XP earned\n\nScore 100% to unlock the next quiz. You can retry this quiz.`;
+          : `Score: ${correct}/${total} (${percentage}%)\n\nScore 100% to earn XP, unlock the next quiz, and add to your streak progress. You can retry this quiz.`;
 
         Alert.alert(
           reason === 'timeout' ? 'Time up' : 'Submitted',
@@ -312,8 +312,8 @@ function QuizAttemptScreen() {
           <Text style={styles.messageTitle}>Quiz completed</Text>
           <Text style={styles.messageText}>
             {existingAttempt
-              ? `Last score: ${existingAttempt.correctCount}/${existingAttempt.totalQuestions} (${existingAttempt.percentage}%). You earned ${existingAttempt.xpEarned} XP. Retry to reach a perfect score.`
-              : 'You can retry this quiz to reach a perfect score.'}
+              ? `Last score: ${existingAttempt.correctCount}/${existingAttempt.totalQuestions} (${existingAttempt.percentage}%). Score 100% to earn ${quiz.xpValue} XP.`
+              : 'You can retry this quiz to reach a perfect score and earn XP.'}
           </Text>
           <AppButton
             title="Retry quiz"
@@ -357,7 +357,7 @@ function QuizAttemptScreen() {
           <Text style={styles.description}>{quiz.description.trim()}</Text>
         ) : null}
         <Text style={styles.subtitle}>
-          {questionCount} questions • {formatMinutes(quiz.timerSeconds)} min • {quiz.xpValue} XP
+          {questionCount} questions • {formatMinutes(quiz.timerSeconds)} min • {quiz.xpValue} XP on 100%
         </Text>
         <View style={styles.metaRow}>
           <Text style={styles.progress}>

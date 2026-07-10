@@ -1,11 +1,12 @@
 import type { ContinueLearningProgress } from '../../store/content/types/continueLearningProgress.types';
 import type { QuizAttempt } from '../../services/firebase/quizAttemptsService';
+import { isPerfectQuizScore } from '../quizAccess';
 
 /** Default XP reward for quizzes without an admin-set value. */
 export const XP_PER_QUIZ = 20;
 export const XP_LEVEL_SIZE = 100;
 
-/** XP earned from a quiz attempt, scaled by how many answers were correct. */
+/** XP earned from a quiz attempt — only awarded on a perfect (100%) score. */
 export function computeQuizXpEarned(
   xpValue: number,
   correctCount: number,
@@ -14,10 +15,10 @@ export function computeQuizXpEarned(
   const total = Math.max(0, Math.trunc(totalQuestions));
   const correct = Math.max(0, Math.min(Math.trunc(correctCount), total));
   const maxXp = Math.max(0, Math.trunc(xpValue));
-  if (total === 0 || maxXp === 0) {
+  if (total === 0 || maxXp === 0 || correct !== total) {
     return 0;
   }
-  return Math.round((maxXp * correct) / total);
+  return maxXp;
 }
 
 export type UserStreakStats = {
@@ -68,14 +69,15 @@ export function computeUserStreakStats(
   progressRecords: ContinueLearningProgress[],
   quizAttempts: QuizAttempt[],
 ): UserStreakStats {
-  const totalXp = quizAttempts.reduce(
-    (sum, attempt) =>
-      sum +
+  const totalXp = quizAttempts.reduce((sum, attempt) => {
+    if (!isPerfectQuizScore(attempt)) {
+      return sum;
+    }
+    return sum +
       (typeof attempt.xpEarned === 'number' && attempt.xpEarned > 0
         ? attempt.xpEarned
-        : 0),
-    0,
-  );
+        : 0);
+  }, 0);
   const level = Math.floor(totalXp / XP_LEVEL_SIZE) + 1;
   const currentXp = totalXp % XP_LEVEL_SIZE;
 

@@ -1,41 +1,13 @@
 import React, { useMemo } from 'react';
-import {
-  ActivityIndicator,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { Flame, Layers, Sparkles, Zap } from 'lucide-react-native';
 
 import { cardShadow, colors, spacing } from '../../constants/theme';
 import { useUserStreakStats } from '../../presentation/hooks/useUserStreakStats';
-import {
-  getLearnerMotivation,
-  getLearnerRank,
-} from '../../utils/gamification/learnerRank';
+import { getLearnerMotivation } from '../../utils/gamification/learnerRank';
 import { XP_LEVEL_SIZE } from '../../utils/gamification/computeUserStreakStats';
-import RoboticsTrophyIcon from './icons/RoboticsTrophyIcon';
 
 const MIN_PROGRESS_PERCENT = 4;
-const CARD_HORIZONTAL_PADDING = 14;
-const CONTENT_GAP = 10;
-
-function getAchievementLayout(screenWidth: number) {
-  const cardInnerWidth =
-    screenWidth - spacing.screenHorizontal * 2 - CARD_HORIZONTAL_PADDING * 2;
-  const isCompact = screenWidth < 360;
-  const isMedium = screenWidth < 390;
-
-  const achievementWidth = Math.min(
-    Math.max(isCompact ? 92 : isMedium ? 98 : 104, cardInnerWidth * 0.3),
-    118,
-  );
-  const trophySize = isCompact ? 44 : isMedium ? 48 : 54;
-  const rankFontSize = isCompact ? 9 : 10;
-
-  return { achievementWidth, trophySize, rankFontSize, cardInnerWidth };
-}
 
 type StatChipProps = {
   icon: React.ReactNode;
@@ -52,15 +24,9 @@ function StatChip({ icon, label }: StatChipProps) {
 }
 
 function StreakBoardPanel() {
-  const { width: screenWidth } = useWindowDimensions();
   const { stats, loading } = useUserStreakStats();
-  const layout = useMemo(
-    () => getAchievementLayout(screenWidth),
-    [screenWidth],
-  );
 
   const xpRemaining = XP_LEVEL_SIZE - stats.currentXp;
-  const learnerRank = getLearnerRank(stats.level);
   const motivation = getLearnerMotivation(
     stats.level,
     stats.currentXp,
@@ -95,102 +61,67 @@ function StreakBoardPanel() {
     <View
       style={styles.card}
       accessibilityRole="summary"
-      accessibilityLabel={`Level ${stats.level}. ${stats.currentXp} of ${XP_LEVEL_SIZE} experience points. ${learnerRank}. ${dayStreakLabel} streak.`}>
+      accessibilityLabel={`Level ${stats.level}. ${stats.currentXp} of ${XP_LEVEL_SIZE} experience points. ${dayStreakLabel} streak.`}>
       <View style={styles.glowTop} />
       <View style={styles.glowBottom} />
 
-      <View style={styles.contentRow}>
-        <View style={styles.mainColumn}>
-          <View style={styles.levelPill}>
-            <Zap size={12} color="#fff" fill="#fff" strokeWidth={2} />
-            <Text style={styles.levelPillText}>Level {stats.level}</Text>
-          </View>
-
-          <Text style={styles.motivation} numberOfLines={2}>
-            {motivation}
-          </Text>
-
-          <View
-            style={styles.progressTrack}
-            accessibilityRole="progressbar"
-            accessibilityValue={{
-              min: 0,
-              max: XP_LEVEL_SIZE,
-              now: stats.currentXp,
-            }}>
-            <View
-              style={[styles.progressFill, { width: `${progressPercent}%` }]}
-            />
-          </View>
-
-          <Text style={styles.xpLabel}>
-            {stats.currentXp} / {XP_LEVEL_SIZE} XP
-          </Text>
-
-          <Text style={styles.levelProgressText} numberOfLines={2}>
-            {levelProgressText}
-          </Text>
-
-          <View style={styles.statsRow}>
-            <StatChip
-              icon={
-                <Flame
-                  size={12}
-                  color={colors.accentOrange}
-                  fill={
-                    stats.streakDays > 0 ? colors.accentOrange : 'transparent'
-                  }
-                  strokeWidth={2.25}
-                />
-              }
-              label={dayStreakLabel}
-            />
-            <StatChip
-              icon={
-                <Sparkles size={12} color={colors.heroHighlight} strokeWidth={2.25} />
-              }
-              label={String(stats.totalXp)}
-            />
-            <StatChip
-              icon={
-                <Layers size={12} color={colors.heroHighlight} strokeWidth={2.25} />
-              }
-              label={`Lv ${stats.level}`}
-            />
-          </View>
+      <View style={styles.mainColumn}>
+        <View style={styles.levelPill}>
+          <Zap size={12} color="#fff" fill="#fff" strokeWidth={2} />
+          <Text style={styles.levelPillText}>Level {stats.level}</Text>
         </View>
 
+        <Text style={styles.motivation} numberOfLines={2}>
+          {motivation}
+        </Text>
+
         <View
-          style={[
-            styles.achievementColumn,
-            { width: layout.achievementWidth },
-          ]}>
-          <RoboticsTrophyIcon
-            size={layout.trophySize}
-            primaryColor="#F6D365"
-            accentColor={colors.accentOrange}
-            ringColor="rgba(255,255,255,0.18)"
-            ringFill="rgba(255,255,255,0.08)"
+          style={styles.progressTrack}
+          accessibilityRole="progressbar"
+          accessibilityValue={{
+            min: 0,
+            max: XP_LEVEL_SIZE,
+            now: stats.currentXp,
+          }}>
+          <View
+            style={[styles.progressFill, { width: `${progressPercent}%` }]}
           />
-          <View style={styles.rankPill}>
-            <Text
-              style={[
-                styles.rankPillText,
-                { fontSize: layout.rankFontSize },
-              ]}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.82}>
-              {learnerRank}
-            </Text>
-            <View style={styles.rankPillIconWrap}>
-              <Sparkles
-                size={layout.rankFontSize + 1}
-                color={colors.primaryDark}
-                strokeWidth={2.5}
+        </View>
+
+        <Text style={styles.xpLabel}>
+          {stats.currentXp} / {XP_LEVEL_SIZE} XP
+        </Text>
+
+        <Text style={styles.levelProgressText} numberOfLines={2}>
+          {levelProgressText}
+        </Text>
+
+        <View style={styles.statsRow}>
+          <StatChip
+            icon={
+              <Flame
+                size={12}
+                color={colors.accentOrange}
+                fill={
+                  stats.streakDays > 0 ? colors.accentOrange : 'transparent'
+                }
+                strokeWidth={2.25}
               />
-            </View>
-          </View>
+            }
+            label={dayStreakLabel}
+          />
+          <StatChip
+            icon={
+              <Sparkles size={12} color={colors.heroHighlight} strokeWidth={2.25} />
+            }
+            label={String(stats.totalXp)}
+          />
+          <StatChip
+            icon={
+              <Layers size={12} color={colors.heroHighlight} strokeWidth={2.25} />
+            }
+            label={`Lv ${stats.level}`}
+          />
         </View>
       </View>
     </View>
@@ -230,15 +161,7 @@ const styles = StyleSheet.create({
   loader: {
     marginVertical: 22,
   },
-  contentRow: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    gap: CONTENT_GAP,
-  },
   mainColumn: {
-    flex: 1,
-    minWidth: 0,
-    flexShrink: 1,
     gap: 8,
   },
   levelPill: {
@@ -310,34 +233,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
     color: '#fff',
-  },
-  achievementColumn: {
-    flexShrink: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingTop: 2,
-  },
-  rankPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    alignSelf: 'stretch',
-    backgroundColor: colors.heroHighlight,
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    borderRadius: 14,
-    minHeight: 24,
-  },
-  rankPillText: {
-    flex: 1,
-    fontWeight: '800',
-    color: colors.primaryDark,
-    textAlign: 'center',
-  },
-  rankPillIconWrap: {
-    flexShrink: 0,
   },
 });
 

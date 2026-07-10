@@ -177,9 +177,11 @@ function QuizCompetitionsScreen() {
                 styles.cardMeta,
                 isLocked && styles.cardMetaLocked,
               ]}>
-              {item.questions.length} questions • {formatMinutes(item.timerSeconds)} min • {item.xpValue} XP
+              {item.questions.length} questions • {formatMinutes(item.timerSeconds)} min • {item.xpValue} XP on 100%
               {(isCompleted || isRetryable) && attempt
-                ? ` • Score ${attempt.correctCount}/${attempt.totalQuestions} • ${attempt.xpEarned} XP`
+                ? ` • Score ${attempt.correctCount}/${attempt.totalQuestions}${
+                    isCompleted ? ` • ${attempt.xpEarned} XP` : ''
+                  }`
                 : ''}
             </Text>
             {isLocked ? (
