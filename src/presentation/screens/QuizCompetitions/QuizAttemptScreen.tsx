@@ -19,7 +19,7 @@ import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import { colors, spacing } from '../../../constants/theme';
 import { createQuizAttempt } from '../../../services/firebase/quizAttemptsService';
 import { computeQuizXpEarned } from '../../../utils/gamification/computeUserStreakStats';
-import { canAttemptQuiz } from '../../../utils/quizAccess';
+import { canAttemptQuiz, canRetryQuizAttempt } from '../../../utils/quizAccess';
 import { useQuizAttempts } from '../../hooks/useQuizAttempts';
 import { useQuizCompetition } from '../../hooks/useQuizCompetition';
 import { useQuizCompetitions } from '../../hooks/useQuizCompetitions';
@@ -50,6 +50,7 @@ function QuizAttemptScreen() {
   const navigation = useNavigation();
   const route = useRoute<QuizAttemptRoute>();
   const quizId = route.params?.quizId ?? '';
+  const startRetry = route.params?.startRetry === true;
 
   const { quiz, loading, error } = useQuizCompetition(quizId);
   const { quizzes, loading: quizzesLoading } = useQuizCompetitions();
@@ -62,7 +63,7 @@ function QuizAttemptScreen() {
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [isRetrying, setIsRetrying] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(startRetry);
   const submittedRef = useRef(false);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -76,14 +77,14 @@ function QuizAttemptScreen() {
   const accessLoading = quizzesLoading || attemptsLoading;
   const existingAttempt = attemptByQuizId.get(quizId);
   const isAlreadyCompleted = completedQuizIds.has(quizId);
-  const canRetry = isAlreadyCompleted && quiz?.allowRetry === true;
+  const canRetry = isAlreadyCompleted && canRetryQuizAttempt(existingAttempt);
 
   const canStartAttempt =
     !quizzesLoading &&
     !attemptsLoading &&
     quiz != null &&
     (!isAlreadyCompleted || (canRetry && isRetrying)) &&
-    canAttemptQuiz(quizId, quizzes, completedQuizIds);
+    canAttemptQuiz(quizId, quizzes, completedQuizIds, attemptByQuizId);
 
   useEffect(() => {
     if (!quiz || !canStartAttempt) {
@@ -285,7 +286,7 @@ function QuizAttemptScreen() {
           <Text style={styles.messageTitle}>Already completed</Text>
           <Text style={styles.messageText}>
             {existingAttempt
-              ? `You scored ${existingAttempt.correctCount}/${existingAttempt.totalQuestions} (${existingAttempt.percentage}%). This quiz does not allow retries.`
+              ? `You scored ${existingAttempt.correctCount}/${existingAttempt.totalQuestions} (${existingAttempt.percentage}%). You achieved a perfect score.`
               : 'You have already completed this quiz.'}
           </Text>
         </View>
@@ -304,8 +305,8 @@ function QuizAttemptScreen() {
           <Text style={styles.messageTitle}>Quiz completed</Text>
           <Text style={styles.messageText}>
             {existingAttempt
-              ? `Last score: ${existingAttempt.correctCount}/${existingAttempt.totalQuestions} (${existingAttempt.percentage}%). You earned ${existingAttempt.xpEarned} XP. You can retry this quiz to improve your score.`
-              : 'You can retry this quiz.'}
+              ? `Last score: ${existingAttempt.correctCount}/${existingAttempt.totalQuestions} (${existingAttempt.percentage}%). You earned ${existingAttempt.xpEarned} XP. Retry to reach a perfect score.`
+              : 'You can retry this quiz to reach a perfect score.'}
           </Text>
           <AppButton
             title="Retry quiz"

@@ -46,6 +46,7 @@ function QuizCompetitionsScreen() {
         index,
         quizzes,
         completedQuizIds,
+        attemptByQuizId,
       );
 
       if (status === 'locked') {
@@ -64,13 +65,16 @@ function QuizCompetitionsScreen() {
         Alert.alert(
           'Already completed',
           attempt
-            ? `You scored ${attempt.correctCount}/${attempt.totalQuestions} (${attempt.percentage}%). Earned ${attempt.xpEarned} XP. This quiz does not allow retries.`
+            ? `You scored ${attempt.correctCount}/${attempt.totalQuestions} (${attempt.percentage}%). Earned ${attempt.xpEarned} XP. You achieved a perfect score.`
             : 'You have already completed this quiz.',
         );
         return;
       }
 
-      navigation.navigate('QuizAttempt', { quizId: quiz.id });
+      navigation.navigate('QuizAttempt', {
+        quizId: quiz.id,
+        ...(status === 'retryable' ? { startRetry: true } : {}),
+      });
     },
     [attemptByQuizId, completedQuizIds, navigation, quizzes],
   );
@@ -82,6 +86,7 @@ function QuizCompetitionsScreen() {
         index,
         quizzes,
         completedQuizIds,
+        attemptByQuizId,
       );
       const attempt = attemptByQuizId.get(item.id);
       const isLocked = status === 'locked';
@@ -225,7 +230,7 @@ function QuizCompetitionsScreen() {
         <Text style={styles.title}>Quiz competition</Text>
         <Text style={styles.subtitle}>
           Complete quizzes in order. Each quiz unlocks after the previous one is
-          finished.
+          finished. Retry any quiz where you did not score 100%.
         </Text>
       </View>
 

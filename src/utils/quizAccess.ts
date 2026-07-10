@@ -3,14 +3,29 @@ import type { QuizCompetition } from '../store/content/types/quizCompetitions.ty
 
 export type QuizAccessStatus = 'available' | 'locked' | 'completed' | 'retryable';
 
+export function isPerfectQuizScore(attempt: QuizAttempt): boolean {
+  return (
+    attempt.totalQuestions > 0 &&
+    attempt.correctCount === attempt.totalQuestions
+  );
+}
+
+export function canRetryQuizAttempt(
+  attempt: QuizAttempt | undefined,
+): boolean {
+  return attempt != null && !isPerfectQuizScore(attempt);
+}
+
 export function getQuizAccessStatus(
   quiz: QuizCompetition,
   index: number,
   quizzes: QuizCompetition[],
   completedQuizIds: Set<string>,
+  attemptByQuizId: Map<string, QuizAttempt>,
 ): QuizAccessStatus {
   if (completedQuizIds.has(quiz.id)) {
-    return quiz.allowRetry ? 'retryable' : 'completed';
+    const attempt = attemptByQuizId.get(quiz.id);
+    return canRetryQuizAttempt(attempt) ? 'retryable' : 'completed';
   }
 
   if (index === 0) {
@@ -29,6 +44,7 @@ export function canAttemptQuiz(
   quizId: string,
   quizzes: QuizCompetition[],
   completedQuizIds: Set<string>,
+  attemptByQuizId: Map<string, QuizAttempt>,
 ): boolean {
   const index = quizzes.findIndex(quiz => quiz.id === quizId);
   if (index < 0) {
@@ -40,6 +56,7 @@ export function canAttemptQuiz(
     index,
     quizzes,
     completedQuizIds,
+    attemptByQuizId,
   );
 
   return status === 'available' || status === 'retryable';

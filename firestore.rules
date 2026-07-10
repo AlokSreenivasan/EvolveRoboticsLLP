@@ -573,13 +573,23 @@ function quizAllowsRetry(database, quizId) {
     && get(/databases/$(database)/documents/quizCompetitions/$(quizId)).data.allowRetry == true;
 }
 
+function quizAttemptAllowsScoreRetry(database, userId, quizId) {
+  let attemptPath = /databases/$(database)/documents/users/$(userId)/quizAttempts/$(quizId);
+  return exists(attemptPath)
+    && get(attemptPath).data.percentage is number
+    && get(attemptPath).data.percentage < 100;
+}
+
 function isValidQuizAttemptCreate(quizId) {
   return isValidQuizAttemptFields(quizId);
 }
 
 function isValidQuizAttemptUpdate(database, quizId) {
   return isValidQuizAttemptFields(quizId)
-    && quizAllowsRetry(database, quizId);
+    && (
+      quizAllowsRetry(database, quizId)
+      || quizAttemptAllowsScoreRetry(database, request.auth.uid, quizId)
+    );
 }
 
 function isValidContinueLearningProgress() {

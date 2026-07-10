@@ -56,7 +56,7 @@ export type RootStackParamList = {
   /** Quiz competitions from Quick Access → Quiz Competition. */
   QuizCompetitions: undefined;
   /** Single quiz attempt screen. */
-  QuizAttempt: { quizId: string };
+  QuizAttempt: { quizId: string; startRetry?: boolean };
   /** Exam attempt screen for users. */
   ExamAttempt: { examId: string };
   /** User's submitted exam attempts / results. */
