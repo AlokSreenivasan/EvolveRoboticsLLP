@@ -19,6 +19,7 @@ import HomeBottomTabBar, {
 } from '../../../components/Home/HomeBottomTabBar';
 import HomeHeader from '../../../components/Home/HomeHeader';
 import HomeSectionHeader from '../../../components/Home/HomeSectionHeader';
+import StreakBoardPanel from '../../../components/Home/StreakBoardPanel';
 import ImportantUpdatesSection from '../../../components/Home/ImportantUpdatesSection';
 import QuickAccessGrid from '../../../components/Home/QuickAccessGrid';
 import UpcomingEventsSection from '../../../components/Home/UpcomingEventsSection';
@@ -116,6 +117,8 @@ function HomeScreen() {
           styles.scrollContent,
           { paddingBottom: scrollBottomPadding },
         ]}>
+        <StreakBoardPanel />
+
         <View style={styles.section}>
           <HomeSectionHeader
             title="Continue learning"
