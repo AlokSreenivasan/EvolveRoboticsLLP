@@ -1,7 +1,6 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   SafeAreaView,
   StyleSheet,
@@ -13,6 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import { CheckCircle2, Lock } from 'lucide-react-native';
 
 import BackButton from '../../../components/BackButton';
+import QuizAlertModal from '../../../components/QuizCompetitions/QuizAlertModal';
 import QuizCompetitionIcon from '../../../components/Home/icons/QuizCompetitionIcon';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import { colors, spacing } from '../../../constants/theme';
@@ -38,6 +38,19 @@ function QuizCompetitionsScreen() {
     loading: attemptsLoading,
     error: attemptsError,
   } = useQuizAttempts();
+  const [alertModal, setAlertModal] = useState<{
+    variant: 'locked' | 'completed';
+    message: string;
+    previousQuizTitle?: string | null;
+    correctCount?: number;
+    totalQuestions?: number;
+    percentage?: number;
+    xpEarned?: number;
+  } | null>(null);
+
+  const handleAlertClose = useCallback(() => {
+    setAlertModal(null);
+  }, []);
 
   const handleQuizPress = useCallback(
     (quiz: QuizCompetition, index: number) => {
@@ -51,23 +64,28 @@ function QuizCompetitionsScreen() {
 
       if (status === 'locked') {
         const previousQuiz = index > 0 ? quizzes[index - 1] : null;
-        Alert.alert(
-          'Quiz locked',
-          previousQuiz
+        setAlertModal({
+          variant: 'locked',
+          previousQuizTitle: previousQuiz?.title ?? null,
+          message: previousQuiz
             ? `Score 100% on "${previousQuiz.title}" to unlock this quiz.`
             : 'Score 100% on the previous quiz to unlock this one.',
-        );
+        });
         return;
       }
 
       if (status === 'completed') {
         const attempt = attemptByQuizId.get(quiz.id);
-        Alert.alert(
-          'Already completed',
-          attempt
+        setAlertModal({
+          variant: 'completed',
+          message: attempt
             ? `You scored ${attempt.correctCount}/${attempt.totalQuestions} (${attempt.percentage}%). Earned ${attempt.xpEarned} XP. You achieved a perfect score.`
             : 'You have already completed this quiz.',
-        );
+          correctCount: attempt?.correctCount,
+          totalQuestions: attempt?.totalQuestions,
+          percentage: attempt?.percentage,
+          xpEarned: attempt?.xpEarned,
+        });
         return;
       }
 
@@ -245,6 +263,20 @@ function QuizCompetitionsScreen() {
         showsVerticalScrollIndicator={false}
         {...VERTICAL_LIST_PERF}
       />
+
+      {alertModal ? (
+        <QuizAlertModal
+          visible
+          variant={alertModal.variant}
+          message={alertModal.message}
+          previousQuizTitle={alertModal.previousQuizTitle}
+          correctCount={alertModal.correctCount}
+          totalQuestions={alertModal.totalQuestions}
+          percentage={alertModal.percentage}
+          xpEarned={alertModal.xpEarned}
+          onClose={handleAlertClose}
+        />
+      ) : null}
     </SafeAreaView>
   );
 }

@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   SafeAreaView,
   StyleSheet,
@@ -15,6 +14,7 @@ import { CheckCircle2, Circle } from 'lucide-react-native';
 
 import AppButton from '../../../components/AppButton';
 import BackButton from '../../../components/BackButton';
+import QuizAlertModal from '../../../components/QuizCompetitions/QuizAlertModal';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import { colors, spacing } from '../../../constants/theme';
 import { createQuizAttempt } from '../../../services/firebase/quizAttemptsService';
@@ -64,6 +64,15 @@ function QuizAttemptScreen() {
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [isRetrying, setIsRetrying] = useState(startRetry);
+  const [resultModal, setResultModal] = useState<{
+    reason: 'manual' | 'timeout';
+    correctCount: number;
+    totalQuestions: number;
+    percentage: number;
+    xpEarned: number;
+    isPerfect: boolean;
+  } | null>(null);
+  const [submitErrorModal, setSubmitErrorModal] = useState<string | null>(null);
   const submittedRef = useRef(false);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -215,27 +224,42 @@ function QuizAttemptScreen() {
         const percentage =
           total > 0 ? Math.round((correct / total) * 100) : 0;
         const isPerfect = total > 0 && correct === total;
-        const resultMessage = isPerfect
-          ? `Score: ${correct}/${total} (${percentage}%)\n+${xpEarned} XP earned\n\nNext quiz unlocked!`
-          : `Score: ${correct}/${total} (${percentage}%)\n\nScore 100% to earn XP, unlock the next quiz, and add to your streak progress. You can retry this quiz.`;
 
-        Alert.alert(
-          reason === 'timeout' ? 'Time up' : 'Submitted',
-          resultMessage,
-          [{ text: 'OK', onPress: () => navigation.goBack() }],
-        );
+        setResultModal({
+          reason,
+          correctCount: correct,
+          totalQuestions: total,
+          percentage,
+          xpEarned,
+          isPerfect,
+        });
       } catch (submitError) {
         submittedRef.current = false;
-        Alert.alert(
-          'Submit failed',
+        setSubmitErrorModal(
           String((submitError as Error)?.message ?? submitError),
         );
       } finally {
         setSubmitting(false);
       }
     },
-    [answers, navigation, questionCount, quiz, quizQuestions, submitting],
+    [answers, questionCount, quiz, quizQuestions, submitting],
   );
+
+  const handleResultClose = useCallback(() => {
+    setResultModal(null);
+    navigation.goBack();
+  }, [navigation]);
+
+  const handleResultRetry = useCallback(() => {
+    setResultModal(null);
+    submittedRef.current = false;
+    setIsRetrying(true);
+  }, []);
+
+  const handleSubmitErrorClose = useCallback(() => {
+    setSubmitErrorModal(null);
+    submittedRef.current = false;
+  }, []);
 
   const handleSubmit = useCallback(async () => {
     await finishSubmission('manual');
@@ -282,26 +306,36 @@ function QuizAttemptScreen() {
     );
   }
 
-  if (isAlreadyCompleted && !canRetry) {
+  const showCompletionGate =
+    !resultModal && !submitting && !submitErrorModal;
+
+  if (isAlreadyCompleted && !canRetry && showCompletionGate) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <BackButton withSpacingBelow />
           <Text style={styles.title}>{quiz.title}</Text>
         </View>
-        <View style={styles.messageCard}>
-          <Text style={styles.messageTitle}>Already completed</Text>
-          <Text style={styles.messageText}>
-            {existingAttempt
-              ? `You scored ${existingAttempt.correctCount}/${existingAttempt.totalQuestions} (${existingAttempt.percentage}%). You achieved a perfect score.`
-              : 'You have already completed this quiz.'}
-          </Text>
-        </View>
+
+        <QuizAlertModal
+          visible
+          variant="completed"
+          message={
+            existingAttempt
+              ? `You scored ${existingAttempt.correctCount}/${existingAttempt.totalQuestions} (${existingAttempt.percentage}%). Earned ${existingAttempt.xpEarned} XP. You achieved a perfect score.`
+              : 'You have already completed this quiz.'
+          }
+          correctCount={existingAttempt?.correctCount}
+          totalQuestions={existingAttempt?.totalQuestions}
+          percentage={existingAttempt?.percentage}
+          xpEarned={existingAttempt?.xpEarned}
+          onClose={handleResultClose}
+        />
       </SafeAreaView>
     );
   }
 
-  if (isAlreadyCompleted && canRetry && !isRetrying) {
+  if (isAlreadyCompleted && canRetry && !isRetrying && showCompletionGate) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
@@ -326,6 +360,59 @@ function QuizAttemptScreen() {
     );
   }
 
+  if (resultModal) {
+    const quizIndex = quizzes.findIndex(item => item.id === quizId);
+    const nextQuiz =
+      quizIndex >= 0 && quizIndex < quizzes.length - 1
+        ? quizzes[quizIndex + 1]
+        : null;
+
+    const resultMessage = resultModal.isPerfect
+      ? `You scored ${resultModal.correctCount}/${resultModal.totalQuestions} (${resultModal.percentage}%). Earned ${resultModal.xpEarned} XP.${
+          nextQuiz
+            ? ` "${nextQuiz.title}" is now unlocked.`
+            : ' You unlocked the next quiz in the series.'
+        }`
+      : resultModal.reason === 'timeout'
+        ? `You scored ${resultModal.correctCount}/${resultModal.totalQuestions} (${resultModal.percentage}%). Retry and score 100% to earn ${
+            quiz.xpValue
+          } XP and unlock${
+            nextQuiz ? ` "${nextQuiz.title}"` : ' the next quiz'
+          }.`
+        : `You got ${resultModal.correctCount} of ${resultModal.totalQuestions} correct (${resultModal.percentage}%). Retry and score 100% to earn ${
+            quiz.xpValue
+          } XP and unlock${
+            nextQuiz ? ` "${nextQuiz.title}"` : ' the next quiz'
+          }.`;
+
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <BackButton withSpacingBelow onPress={handleResultClose} />
+          <Text style={styles.title}>{quiz.title}</Text>
+        </View>
+
+        <QuizAlertModal
+          visible
+          variant={resultModal.isPerfect ? 'passed' : 'failed'}
+          reason={resultModal.reason}
+          quizTitle={quiz.title}
+          nextQuizTitle={nextQuiz?.title ?? null}
+          xpValue={quiz.xpValue}
+          message={resultMessage}
+          correctCount={resultModal.correctCount}
+          totalQuestions={resultModal.totalQuestions}
+          percentage={resultModal.percentage}
+          xpEarned={resultModal.xpEarned}
+          actionLabel={resultModal.isPerfect ? 'Continue' : undefined}
+          onClose={
+            resultModal.isPerfect ? handleResultClose : handleResultRetry
+          }
+        />
+      </SafeAreaView>
+    );
+  }
+
   if (!canStartAttempt) {
     const quizIndex = quizzes.findIndex(item => item.id === quizId);
     const previousQuiz = quizIndex > 0 ? quizzes[quizIndex - 1] : null;
@@ -336,14 +423,17 @@ function QuizAttemptScreen() {
           <BackButton withSpacingBelow />
           <Text style={styles.title}>{quiz.title}</Text>
         </View>
-        <View style={styles.messageCard}>
-          <Text style={styles.messageTitle}>Quiz locked</Text>
-          <Text style={styles.messageText}>
-            {previousQuiz
+        <QuizAlertModal
+          visible
+          variant="locked"
+          previousQuizTitle={previousQuiz?.title ?? null}
+          message={
+            previousQuiz
               ? `Score 100% on "${previousQuiz.title}" to unlock this quiz.`
-              : 'Score 100% on the previous quiz to unlock this one.'}
-          </Text>
-        </View>
+              : 'Score 100% on the previous quiz to unlock this one.'
+          }
+          onClose={() => navigation.goBack()}
+        />
       </SafeAreaView>
     );
   }
@@ -403,6 +493,15 @@ function QuizAttemptScreen() {
           textStyle={styles.submitText}
         />
       </View>
+
+      {submitErrorModal ? (
+        <QuizAlertModal
+          visible
+          variant="error"
+          message={submitErrorModal}
+          onClose={handleSubmitErrorClose}
+        />
+      ) : null}
     </SafeAreaView>
   );
 }
