@@ -403,6 +403,7 @@ function isValidQuizCompetitionFields(data) {
     && data.description.size() <= 1000
     && data.timerSeconds is number
     && data.timerSeconds >= 0
+    && (!('xpValue' in data) || (data.xpValue is number && data.xpValue >= 0 && data.xpValue <= 10000))
     && data.questions is list
     && data.questions.size() >= 0
     && data.questions.size() <= 500
@@ -559,6 +560,9 @@ function isValidQuizAttemptCreate(quizId) {
     && data.percentage is number
     && data.percentage >= 0
     && data.percentage <= 100
+    && data.xpEarned is number
+    && data.xpEarned >= 0
+    && data.xpEarned <= 10000
     && data.submittedAt == request.time;
 }
 

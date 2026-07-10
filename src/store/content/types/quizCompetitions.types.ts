@@ -22,6 +22,8 @@ export interface QuizCompetitionDocument
   description: string;
   /** Quiz duration in seconds. */
   timerSeconds: number;
+  /** XP awarded when a learner completes this quiz. */
+  xpValue: number;
   questions: ExamQuestion[];
   track: CourseTrack;
   sortOrder: number;
@@ -39,6 +41,7 @@ export interface QuizCompetition extends SchoolAudienceFields {
   title: string;
   description: string;
   timerSeconds: number;
+  xpValue: number;
   questions: ExamQuestion[];
   track: CourseTrack | null;
   sortOrder: number;
@@ -51,6 +54,7 @@ export type CreateQuizCompetitionInput = {
   title: string;
   description?: string;
   timerSeconds: number;
+  xpValue?: number;
   questions: ExamQuestion[];
   track: CourseTrack;
   isPublished?: boolean;

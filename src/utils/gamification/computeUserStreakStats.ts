@@ -1,9 +1,24 @@
 import type { ContinueLearningProgress } from '../../store/content/types/continueLearningProgress.types';
 import type { QuizAttempt } from '../../services/firebase/quizAttemptsService';
 
-export const XP_PER_VIDEO = 5;
+/** Default XP reward for quizzes without an admin-set value. */
 export const XP_PER_QUIZ = 20;
 export const XP_LEVEL_SIZE = 100;
+
+/** XP earned from a quiz attempt, scaled by how many answers were correct. */
+export function computeQuizXpEarned(
+  xpValue: number,
+  correctCount: number,
+  totalQuestions: number,
+): number {
+  const total = Math.max(0, Math.trunc(totalQuestions));
+  const correct = Math.max(0, Math.min(Math.trunc(correctCount), total));
+  const maxXp = Math.max(0, Math.trunc(xpValue));
+  if (total === 0 || maxXp === 0) {
+    return 0;
+  }
+  return Math.round((maxXp * correct) / total);
+}
 
 export type UserStreakStats = {
   currentXp: number;
@@ -53,11 +68,14 @@ export function computeUserStreakStats(
   progressRecords: ContinueLearningProgress[],
   quizAttempts: QuizAttempt[],
 ): UserStreakStats {
-  const totalVideos = progressRecords.reduce(
-    (sum, record) => sum + record.videosWatched,
+  const totalXp = quizAttempts.reduce(
+    (sum, attempt) =>
+      sum +
+      (typeof attempt.xpEarned === 'number' && attempt.xpEarned > 0
+        ? attempt.xpEarned
+        : 0),
     0,
   );
-  const totalXp = totalVideos * XP_PER_VIDEO + quizAttempts.length * XP_PER_QUIZ;
   const level = Math.floor(totalXp / XP_LEVEL_SIZE) + 1;
   const currentXp = totalXp % XP_LEVEL_SIZE;
 

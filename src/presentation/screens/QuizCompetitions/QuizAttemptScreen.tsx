@@ -18,6 +18,7 @@ import BackButton from '../../../components/BackButton';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import { colors, spacing } from '../../../constants/theme';
 import { createQuizAttempt } from '../../../services/firebase/quizAttemptsService';
+import { computeQuizXpEarned } from '../../../utils/gamification/computeUserStreakStats';
 import { canAttemptQuiz } from '../../../utils/quizAccess';
 import { useQuizAttempts } from '../../hooks/useQuizAttempts';
 import { useQuizCompetition } from '../../hooks/useQuizCompetition';
@@ -193,6 +194,7 @@ function QuizAttemptScreen() {
         const selected = answers[question.id];
         return selected === question.correctChoiceIndex ? count + 1 : count;
       }, 0);
+      const xpEarned = computeQuizXpEarned(quiz.xpValue, correct, total);
 
       try {
         await createQuizAttempt({
@@ -200,11 +202,12 @@ function QuizAttemptScreen() {
           answers,
           correctCount: correct,
           totalQuestions: total,
+          xpEarned,
         });
 
         Alert.alert(
           reason === 'timeout' ? 'Time up' : 'Submitted',
-          `Score: ${correct}/${total} (${total > 0 ? Math.round((correct / total) * 100) : 0}%)`,
+          `Score: ${correct}/${total} (${total > 0 ? Math.round((correct / total) * 100) : 0}%)\n+${xpEarned} XP earned`,
           [{ text: 'OK', onPress: () => navigation.goBack() }],
         );
       } catch (submitError) {
@@ -319,7 +322,7 @@ function QuizAttemptScreen() {
           <Text style={styles.description}>{quiz.description.trim()}</Text>
         ) : null}
         <Text style={styles.subtitle}>
-          {questionCount} questions • {formatMinutes(quiz.timerSeconds)} min
+          {questionCount} questions • {formatMinutes(quiz.timerSeconds)} min • {quiz.xpValue} XP
         </Text>
         <View style={styles.metaRow}>
           <Text style={styles.progress}>

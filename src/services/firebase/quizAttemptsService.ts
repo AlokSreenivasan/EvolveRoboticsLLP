@@ -24,6 +24,8 @@ export type QuizAttemptDocument = {
   correctCount: number;
   totalQuestions: number;
   percentage: number;
+  /** XP earned for completing this quiz. */
+  xpEarned: number;
   submittedAt:
     | FirebaseFirestoreTypes.Timestamp
     | FirebaseFirestoreTypes.FieldValue;
@@ -36,6 +38,7 @@ export type QuizAttempt = {
   correctCount: number;
   totalQuestions: number;
   percentage: number;
+  xpEarned: number;
   submittedAt: FirebaseFirestoreTypes.Timestamp | null;
 };
 
@@ -59,6 +62,7 @@ function mapAttempt(id: string, data: QuizAttemptDocument): QuizAttempt {
     totalQuestions:
       typeof data.totalQuestions === 'number' ? data.totalQuestions : 0,
     percentage: typeof data.percentage === 'number' ? data.percentage : 0,
+    xpEarned: typeof data.xpEarned === 'number' ? data.xpEarned : 0,
     submittedAt: isTimestamp(data.submittedAt) ? data.submittedAt : null,
   };
 }
@@ -68,6 +72,7 @@ export async function createQuizAttempt(input: {
   answers: Record<string, number>;
   correctCount: number;
   totalQuestions: number;
+  xpEarned: number;
 }): Promise<void> {
   const uid = getCurrentUserId();
   if (!uid) {
@@ -93,6 +98,7 @@ export async function createQuizAttempt(input: {
       correctCount: safeCorrect,
       totalQuestions: safeTotal,
       percentage,
+      xpEarned: Math.max(0, Math.trunc(input.xpEarned)),
       submittedAt: serverTimestamp(),
     };
 

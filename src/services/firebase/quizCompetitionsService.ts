@@ -26,6 +26,7 @@ import {
 } from './schoolAudienceFirestore';
 import { isCourseTrack } from '../../store/content/types/courses.types';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
+import { XP_PER_QUIZ } from '../../utils/gamification/computeUserStreakStats';
 import { FIRESTORE_COLLECTIONS } from './constants';
 import {
   collection,
@@ -114,12 +115,17 @@ function mapQuizCompetition(
     typeof data.timerSeconds === 'number' && Number.isFinite(data.timerSeconds)
       ? Math.max(0, Math.trunc(data.timerSeconds))
       : 0;
+  const xpValue =
+    typeof data.xpValue === 'number' && Number.isFinite(data.xpValue)
+      ? Math.max(0, Math.trunc(data.xpValue))
+      : XP_PER_QUIZ;
 
   return {
     id,
     title: data.title?.trim() ?? '',
     description: data.description?.trim() ?? '',
     timerSeconds,
+    xpValue,
     questions: mapQuestions(id, data),
     track: mapContentTrack(data),
     sortOrder: typeof data.sortOrder === 'number' ? data.sortOrder : 0,
@@ -259,6 +265,10 @@ export async function createQuizCompetition(
       title: input.title.trim(),
       description: input.description?.trim() ?? '',
       timerSeconds: Math.max(0, Math.trunc(input.timerSeconds)),
+      xpValue:
+        input.xpValue != null
+          ? Math.max(0, Math.trunc(input.xpValue))
+          : XP_PER_QUIZ,
       questions: input.questions,
       track: input.track,
       sortOrder,
@@ -301,6 +311,9 @@ export async function updateQuizCompetition(
     }
     if (input.timerSeconds !== undefined) {
       updates.timerSeconds = Math.max(0, Math.trunc(input.timerSeconds));
+    }
+    if (input.xpValue !== undefined) {
+      updates.xpValue = Math.max(0, Math.trunc(input.xpValue));
     }
     if (input.questions !== undefined) {
       updates.questions = input.questions;

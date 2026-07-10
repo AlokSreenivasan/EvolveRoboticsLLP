@@ -37,6 +37,7 @@ type QuizFormState = {
   title: string;
   description: string;
   timerMinutes: string;
+  xpValue: string;
   track: CourseTrack | null;
   isPublished: boolean;
   questions: ExamQuestion[];
@@ -53,6 +54,7 @@ const EMPTY_QUIZ_FORM: QuizFormState = {
   title: '',
   description: '',
   timerMinutes: '0',
+  xpValue: '20',
   track: null,
   isPublished: true,
   questions: [],
@@ -69,6 +71,14 @@ function newId(prefix: string) {
   return `${prefix}_${Date.now().toString(36)}_${Math.random()
     .toString(36)
     .slice(2, 8)}`;
+}
+
+function toXpValue(xpValue: string): number {
+  const parsed = Number(xpValue);
+  if (!Number.isFinite(parsed)) {
+    return 0;
+  }
+  return Math.max(0, Math.trunc(parsed));
 }
 
 function toTimerSeconds(timerMinutes: string): number {
@@ -154,6 +164,7 @@ function ManageQuizCompetitions() {
       title: quiz.title,
       description: quiz.description,
       timerMinutes: toTimerMinutes(quiz.timerSeconds),
+      xpValue: String(quiz.xpValue),
       track: quiz.track,
       isPublished: quiz.isPublished,
       questions: quiz.questions ?? [],
@@ -247,6 +258,11 @@ function ManageQuizCompetitions() {
       return 'Enter a timer (minutes) greater than 0.';
     }
 
+    const xpValue = toXpValue(form.xpValue);
+    if (xpValue <= 0) {
+      return 'Enter an XP value greater than 0.';
+    }
+
     if (form.questions.length === 0) {
       return 'Add at least 1 question.';
     }
@@ -278,6 +294,7 @@ function ManageQuizCompetitions() {
       title: form.title,
       description: form.description,
       timerSeconds: toTimerSeconds(form.timerMinutes),
+      xpValue: toXpValue(form.xpValue),
       questions: form.questions,
       isPublished: form.isPublished,
       ...visibilityPayload,
@@ -332,7 +349,7 @@ function ManageQuizCompetitions() {
         title={quiz.title}
         subtitle={`${quiz.questions?.length ?? 0} questions • ${toTimerMinutes(
           quiz.timerSeconds,
-        )} min`}
+        )} min • ${quiz.xpValue} XP`}
         statusLine={`${
           quiz.questions?.length ? 'Ready to publish' : 'Add questions'
         } · ${formatContentVisibilitySummary(quiz.track, quiz, schools)}`}
@@ -475,6 +492,13 @@ function ManageQuizCompetitions() {
                 setForm(prev => ({ ...prev, timerMinutes }))
               }
               placeholder="15"
+              keyboardType="number-pad"
+            />
+            <AdminFormField
+              label="XP reward"
+              value={form.xpValue}
+              onChangeText={xpValue => setForm(prev => ({ ...prev, xpValue }))}
+              placeholder="20"
               keyboardType="number-pad"
             />
 

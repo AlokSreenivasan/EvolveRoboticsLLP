@@ -64,7 +64,7 @@ function QuizCompetitionsScreen() {
         Alert.alert(
           'Already completed',
           attempt
-            ? `You scored ${attempt.correctCount}/${attempt.totalQuestions} (${attempt.percentage}%). Each quiz can only be attempted once.`
+            ? `You scored ${attempt.correctCount}/${attempt.totalQuestions} (${attempt.percentage}%). Earned ${attempt.xpEarned} XP. Each quiz can only be attempted once.`
             : 'You have already completed this quiz.',
         );
         return;
@@ -161,9 +161,9 @@ function QuizCompetitionsScreen() {
                 styles.cardMeta,
                 isLocked && styles.cardMetaLocked,
               ]}>
-              {item.questions.length} questions • {formatMinutes(item.timerSeconds)} min
+              {item.questions.length} questions • {formatMinutes(item.timerSeconds)} min • {item.xpValue} XP
               {isCompleted && attempt
-                ? ` • Score ${attempt.correctCount}/${attempt.totalQuestions}`
+                ? ` • Score ${attempt.correctCount}/${attempt.totalQuestions} • ${attempt.xpEarned} XP`
                 : ''}
             </Text>
             {isLocked ? (
