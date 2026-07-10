@@ -54,8 +54,8 @@ function QuizCompetitionsScreen() {
         Alert.alert(
           'Quiz locked',
           previousQuiz
-            ? `Complete "${previousQuiz.title}" first to unlock this quiz.`
-            : 'Complete the previous quiz first to unlock this one.',
+            ? `Score 100% on "${previousQuiz.title}" to unlock this quiz.`
+            : 'Score 100% on the previous quiz to unlock this one.',
         );
         return;
       }
@@ -184,7 +184,7 @@ function QuizCompetitionsScreen() {
             </Text>
             {isLocked ? (
               <Text style={styles.lockedHint}>
-                Complete quiz {index} to unlock
+                Score 100% on quiz {index} to unlock
               </Text>
             ) : null}
           </View>
@@ -229,8 +229,8 @@ function QuizCompetitionsScreen() {
         <BackButton withSpacingBelow />
         <Text style={styles.title}>Quiz competition</Text>
         <Text style={styles.subtitle}>
-          Complete quizzes in order. Each quiz unlocks after the previous one is
-          finished. Retry any quiz where you did not score 100%.
+          Complete quizzes in order. Each quiz unlocks only after you score 100%
+          on the previous one. Retry any quiz where you did not score 100%.
         </Text>
       </View>
 

@@ -212,9 +212,16 @@ function QuizAttemptScreen() {
           xpEarned,
         });
 
+        const percentage =
+          total > 0 ? Math.round((correct / total) * 100) : 0;
+        const isPerfect = total > 0 && correct === total;
+        const resultMessage = isPerfect
+          ? `Score: ${correct}/${total} (${percentage}%)\n+${xpEarned} XP earned\n\nNext quiz unlocked!`
+          : `Score: ${correct}/${total} (${percentage}%)\n+${xpEarned} XP earned\n\nScore 100% to unlock the next quiz. You can retry this quiz.`;
+
         Alert.alert(
           reason === 'timeout' ? 'Time up' : 'Submitted',
-          `Score: ${correct}/${total} (${total > 0 ? Math.round((correct / total) * 100) : 0}%)\n+${xpEarned} XP earned`,
+          resultMessage,
           [{ text: 'OK', onPress: () => navigation.goBack() }],
         );
       } catch (submitError) {
@@ -333,8 +340,8 @@ function QuizAttemptScreen() {
           <Text style={styles.messageTitle}>Quiz locked</Text>
           <Text style={styles.messageText}>
             {previousQuiz
-              ? `Complete "${previousQuiz.title}" first to unlock this quiz.`
-              : 'Complete the previous quiz first to unlock this one.'}
+              ? `Score 100% on "${previousQuiz.title}" to unlock this quiz.`
+              : 'Score 100% on the previous quiz to unlock this one.'}
           </Text>
         </View>
       </SafeAreaView>

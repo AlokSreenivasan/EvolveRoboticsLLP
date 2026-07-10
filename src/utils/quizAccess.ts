@@ -16,6 +16,14 @@ export function canRetryQuizAttempt(
   return attempt != null && !isPerfectQuizScore(attempt);
 }
 
+export function hasPassedQuiz(
+  quizId: string,
+  attemptByQuizId: Map<string, QuizAttempt>,
+): boolean {
+  const attempt = attemptByQuizId.get(quizId);
+  return attempt != null && isPerfectQuizScore(attempt);
+}
+
 export function getQuizAccessStatus(
   quiz: QuizCompetition,
   index: number,
@@ -33,7 +41,7 @@ export function getQuizAccessStatus(
   }
 
   const previousQuiz = quizzes[index - 1];
-  if (previousQuiz && completedQuizIds.has(previousQuiz.id)) {
+  if (previousQuiz && hasPassedQuiz(previousQuiz.id, attemptByQuizId)) {
     return 'available';
   }
 
