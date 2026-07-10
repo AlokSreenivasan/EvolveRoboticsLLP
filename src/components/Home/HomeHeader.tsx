@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Award, Bell } from 'lucide-react-native';
+import { Bell } from 'lucide-react-native';
 
 import { cardShadowLight, colors } from '../../constants/theme';
 import { useNotifications } from '../../presentation/hooks/useNotifications';
@@ -30,20 +30,6 @@ function HomeHeader({ displayName }: HomeHeaderProps) {
       </View>
 
       <View style={styles.actions}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Certificates"
-          accessibilityHint="View your earned certificates"
-          style={({ pressed }) => [
-            styles.certificateButton,
-            pressed && styles.certificateButtonPressed,
-          ]}>
-          <View style={styles.certificateIconWrap}>
-            <Award size={20} color={colors.primary} strokeWidth={2.25} />
-          </View>
-          <Text style={styles.certificateLabel}>Certificates</Text>
-        </Pressable>
-
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Notifications"
@@ -94,37 +80,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-  },
-  certificateButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    paddingRight: 12,
-    borderRadius: 14,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.primaryMuted,
-    ...cardShadowLight,
-  },
-  certificateButtonPressed: {
-    opacity: 0.88,
-    backgroundColor: colors.primaryLight,
-  },
-  certificateIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: colors.primaryLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 8,
-  },
-  certificateLabel: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.primary,
-    lineHeight: 16,
   },
   notificationButton: {
     width: 44,
