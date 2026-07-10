@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -14,10 +14,15 @@ import BackButton from '../../../components/BackButton';
 import CourseLessonRow from '../../../components/Courses/CourseLessonRow';
 import CourseVideoPlayer from '../../../components/Courses/CourseVideoPlayer';
 import { colors, spacing } from '../../../constants/theme';
-import { recordPlaylistVideoProgress } from '../../../services/firebase/continueLearningProgressService';
+import { recordVideoWatchSeconds } from '../../../services/firebase/continueLearningProgressService';
 import type { YouTubePlaylistVideo } from '../../../store/content/types/youtubePlaylist.types';
 import type { RootStackParamList } from '../../../types/navigation';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
+import {
+  getVideoWatchSeconds,
+  isVideoUnlocked,
+} from '../../../utils/continueLearning/formatVideoProgress';
+import { useContinueLearningProgress } from '../../hooks/useContinueLearningProgress';
 import { useYouTubePlaylistVideos } from '../../hooks/useYouTubePlaylistVideos';
 
 type CoursePlaylistRouteProp = RouteProp<RootStackParamList, 'CoursePlaylist'>;
@@ -26,26 +31,57 @@ function CoursePlaylistScreen() {
   const route = useRoute<CoursePlaylistRouteProp>();
   const { playlist } = route.params;
   const listRef = useRef<FlatList<YouTubePlaylistVideo>>(null);
+  const { progressByPlaylistId } = useContinueLearningProgress();
 
   const { videos, loading, error, reload } = useYouTubePlaylistVideos(
     playlist.playlistUrl,
   );
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [sessionWatchSeconds, setSessionWatchSeconds] = useState<
+    Record<string, number>
+  >({});
+
+  const savedWatchSeconds =
+    progressByPlaylistId[playlist.id]?.watchSecondsByVideoId ?? {};
+
+  const watchSecondsByVideoId = useMemo(() => {
+    const merged = { ...savedWatchSeconds };
+    Object.entries(sessionWatchSeconds).forEach(([videoId, seconds]) => {
+      merged[videoId] = Math.max(merged[videoId] ?? 0, seconds);
+    });
+    return merged;
+  }, [savedWatchSeconds, sessionWatchSeconds]);
 
   const activeVideo =
     activeIndex !== null ? videos[activeIndex] ?? null : null;
 
-  const handleSelectVideo = useCallback(
-    (index: number) => {
-      setActiveIndex(index);
-      listRef.current?.scrollToOffset({ offset: 0, animated: true });
-      void recordPlaylistVideoProgress(
+  const handleWatchProgress = useCallback(
+    (videoIndex: number, videoId: string, watchSeconds: number) => {
+      setSessionWatchSeconds(previous => ({
+        ...previous,
+        [videoId]: Math.max(previous[videoId] ?? 0, watchSeconds),
+      }));
+
+      void recordVideoWatchSeconds(
         playlist.id,
-        index + 1,
+        videoId,
+        watchSeconds,
+        videoIndex + 1,
         playlist.videoCount,
       ).catch(() => undefined);
     },
     [playlist.id, playlist.videoCount],
+  );
+
+  const handleSelectVideo = useCallback(
+    (index: number) => {
+      if (!isVideoUnlocked(watchSecondsByVideoId, videos, index)) {
+        return;
+      }
+      setActiveIndex(index);
+      listRef.current?.scrollToOffset({ offset: 0, animated: true });
+    },
+    [videos, watchSecondsByVideoId],
   );
 
   const renderVideo = useCallback(
@@ -54,10 +90,11 @@ function CoursePlaylistScreen() {
         lesson={item}
         index={index}
         isActive={index === activeIndex}
+        isLocked={!isVideoUnlocked(watchSecondsByVideoId, videos, index)}
         onPress={() => handleSelectVideo(index)}
       />
     ),
-    [activeIndex, handleSelectVideo],
+    [activeIndex, handleSelectVideo, videos, watchSecondsByVideoId],
   );
 
   const keyExtractor = useCallback(
@@ -73,6 +110,11 @@ function CoursePlaylistScreen() {
     ),
     [activeVideo, videos.length],
   );
+
+  const activeWatchSeconds =
+    activeVideo != null
+      ? getVideoWatchSeconds(watchSecondsByVideoId, activeVideo.videoId)
+      : 0;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -95,6 +137,10 @@ function CoursePlaylistScreen() {
           <CourseVideoPlayer
             key={activeVideo.videoId}
             videoId={activeVideo.videoId}
+            initialWatchSeconds={activeWatchSeconds}
+            onWatchProgress={seconds =>
+              handleWatchProgress(activeIndex!, activeVideo.videoId, seconds)
+            }
           />
           <View style={styles.playingMeta}>
             <Text style={styles.lessonBadge}>
@@ -126,7 +172,7 @@ function CoursePlaylistScreen() {
           contentContainerStyle={styles.listContent}
           ListHeaderComponent={listHeader}
           showsVerticalScrollIndicator={false}
-          extraData={activeIndex}
+          extraData={{ activeIndex, watchSecondsByVideoId }}
           {...VERTICAL_LIST_PERF}
         />
       )}

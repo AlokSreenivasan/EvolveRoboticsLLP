@@ -597,7 +597,14 @@ function isValidContinueLearningProgress() {
   return data.videosWatched is number
     && data.videosWatched >= 0
     && data.videosWatched <= 500
-    && (!('hasStartedWatching' in data) || data.hasStartedWatching is bool);
+    && (!('hasStartedWatching' in data) || data.hasStartedWatching is bool)
+    && (
+      !('watchSecondsByVideoId' in data)
+      || (
+        data.watchSecondsByVideoId is map
+        && data.watchSecondsByVideoId.size() <= 500
+      )
+    );
 }
 
 function hasRequiredProfileFields() {

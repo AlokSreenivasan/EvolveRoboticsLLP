@@ -1,3 +1,31 @@
+/** Minimum seconds watched on a video before the next lesson unlocks. */
+export const VIDEO_UNLOCK_WATCH_SECONDS = 60;
+
+export function getVideoWatchSeconds(
+  watchSecondsByVideoId: Record<string, number>,
+  videoId: string,
+): number {
+  return Math.max(0, Math.trunc(watchSecondsByVideoId[videoId] ?? 0));
+}
+
+export function isVideoUnlocked(
+  watchSecondsByVideoId: Record<string, number>,
+  videos: { videoId: string }[],
+  index: number,
+): boolean {
+  if (index <= 0) {
+    return true;
+  }
+  const previousVideo = videos[index - 1];
+  if (!previousVideo) {
+    return false;
+  }
+  return (
+    getVideoWatchSeconds(watchSecondsByVideoId, previousVideo.videoId) >=
+    VIDEO_UNLOCK_WATCH_SECONDS
+  );
+}
+
 export function clampVideoProgress(
   videosWatched: number,
   videoCount: number,

@@ -111,6 +111,7 @@ export {
 } from './storageService';
 export {
   recordPlaylistVideoProgress,
+  recordVideoWatchSeconds,
   subscribeContinueLearningProgress,
 } from './continueLearningProgressService';
 export {
