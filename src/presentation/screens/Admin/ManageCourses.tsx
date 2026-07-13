@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  Alert,
   Image,
   InteractionManager,
   Keyboard,
@@ -43,6 +42,7 @@ import type {
   CourseTrack,
 } from '../../../store/content/types/courses.types';
 import { toAdminWriteErrorMessage } from '../../../utils/admin/adminWriteErrorMessage';
+import { appAlert, appAlertButtons, appAlertCopy } from '../../../utils/alert/appAlert';
 import {
   buildContentVisibilityPayload,
   validateContentVisibility,
@@ -125,15 +125,15 @@ function ManageCourses() {
     const title = current.title.trim();
 
     if (!title) {
-      Alert.alert('Title required', 'Each course needs a title.');
+      appAlert(appAlertCopy.admin.titleNeeded, appAlertCopy.admin.titleRequired('course'));
       return;
     }
 
     const durationLabel = current.durationLabel.trim();
     if (!durationLabel) {
-      Alert.alert(
-        'Duration required',
-        'Each course needs a duration (e.g. 2h 30m).',
+      appAlert(
+        appAlertCopy.admin.durationRequiredTitle,
+        appAlertCopy.admin.durationRequired,
       );
       return;
     }
@@ -143,7 +143,7 @@ function ManageCourses() {
       audienceForm.validate,
     );
     if (visibilityError) {
-      Alert.alert('Visibility required', visibilityError);
+      appAlert(appAlertCopy.admin.visibilityRequiredTitle, visibilityError);
       return;
     }
 
@@ -183,7 +183,7 @@ function ManageCourses() {
       }
       closeEditor();
     } catch (error) {
-      Alert.alert('Save failed', toAdminWriteErrorMessage(error));
+      appAlert(appAlertCopy.admin.saveFailedTitle, toAdminWriteErrorMessage(error));
     } finally {
       setUploadingThumbnail(false);
       setSaving(false);
@@ -198,16 +198,16 @@ function ManageCourses() {
   };
 
   const confirmDelete = (course: Course) => {
-    Alert.alert('Delete course', `Remove "${course.title}"?`, [
-      { text: 'Cancel', style: 'cancel' },
+    appAlert(appAlertCopy.admin.deleteTitle('course'), appAlertCopy.admin.deleteConfirm('course', course.title), [
+      { text: appAlertButtons.cancel, style: 'cancel' },
       {
-        text: 'Delete',
+        text: appAlertButtons.delete,
         style: 'destructive',
         onPress: async () => {
           try {
             await deleteCourse(course.id);
           } catch (error) {
-            Alert.alert('Delete failed', toAdminWriteErrorMessage(error));
+            appAlert(appAlertCopy.admin.deleteFailedTitle, toAdminWriteErrorMessage(error));
           }
         },
       },

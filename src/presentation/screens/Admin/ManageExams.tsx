@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CheckCircle2, Circle, Pencil, Plus, Trash2 } from 'lucide-react-native';
 
 import AdminEntityForm from '../../../components/Admin/AdminEntityForm';
@@ -31,6 +31,7 @@ import { useAdminReorder } from '../../hooks/admin/useAdminReorder';
 import type { Exam, ExamQuestion } from '../../../store/content/types/exams.types';
 import type { CourseTrack } from '../../../store/content/types/courses.types';
 import { toAdminWriteErrorMessage } from '../../../utils/admin/adminWriteErrorMessage';
+import { appAlert, appAlertButtons, appAlertCopy } from '../../../utils/alert/appAlert';
 
 type ExamFormState = {
   title: string;
@@ -194,7 +195,10 @@ function ManageExams() {
 
   const upsertQuestion = () => {
     if (!questionDraft.prompt.trim()) {
-      Alert.alert('Question required', 'Enter a question prompt.');
+      appAlert(
+        appAlertCopy.admin.questionRequiredTitle,
+        appAlertCopy.admin.questionRequired,
+      );
       return;
     }
 
@@ -202,7 +206,10 @@ function ManageExams() {
       choice => !choice.trim(),
     );
     if (missingChoiceIndex >= 0) {
-      Alert.alert('All choices required', 'Enter all 4 choices.');
+      appAlert(
+        appAlertCopy.admin.choicesRequiredTitle,
+        appAlertCopy.admin.allChoicesRequired(4, 'choices'),
+      );
       return;
     }
 
@@ -221,19 +228,23 @@ function ManageExams() {
   };
 
   const confirmDeleteQuestion = (question: ExamQuestion) => {
-    Alert.alert('Delete question', 'Remove this question from the exam?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: () => {
-          setForm(prev => ({
-            ...prev,
-            questions: (prev.questions ?? []).filter(q => q.id !== question.id),
-          }));
+    appAlert(
+      appAlertCopy.admin.deleteTitle('question'),
+      appAlertCopy.admin.deleteQuestionConfirm('exam'),
+      [
+        { text: appAlertButtons.cancel, style: 'cancel' },
+        {
+          text: appAlertButtons.delete,
+          style: 'destructive',
+          onPress: () => {
+            setForm(prev => ({
+              ...prev,
+              questions: (prev.questions ?? []).filter(q => q.id !== question.id),
+            }));
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   const validateExam = (): string | null => {
@@ -256,7 +267,7 @@ function ManageExams() {
   const handleSaveExam = async () => {
     const validationError = validateExam();
     if (validationError) {
-      Alert.alert('Cannot save exam', validationError);
+      appAlert(appAlertCopy.admin.cannotSaveTitle('exam'), validationError);
       return;
     }
 
@@ -265,7 +276,7 @@ function ManageExams() {
       audienceForm.validate,
     );
     if (visibilityError) {
-      Alert.alert('Visibility required', visibilityError);
+      appAlert(appAlertCopy.admin.visibilityRequiredTitle, visibilityError);
       return;
     }
 
@@ -291,27 +302,34 @@ function ManageExams() {
       }
       closeEditor();
     } catch (error) {
-      Alert.alert('Save failed', toAdminWriteErrorMessage(error));
+      appAlert(appAlertCopy.admin.saveFailedTitle, toAdminWriteErrorMessage(error));
     } finally {
       setSaving(false);
     }
   };
 
   const confirmDeleteExam = (exam: Exam) => {
-    Alert.alert('Delete exam', `Remove "${exam.title}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await deleteExam(exam.id);
-          } catch (error) {
-            Alert.alert('Delete failed', toAdminWriteErrorMessage(error));
-          }
+    appAlert(
+      appAlertCopy.admin.deleteTitle('exam'),
+      appAlertCopy.admin.deleteConfirm('exam', exam.title),
+      [
+        { text: appAlertButtons.cancel, style: 'cancel' },
+        {
+          text: appAlertButtons.delete,
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteExam(exam.id);
+            } catch (error) {
+              appAlert(
+                appAlertCopy.admin.deleteFailedTitle,
+                toAdminWriteErrorMessage(error),
+              );
+            }
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   const listHeader = (

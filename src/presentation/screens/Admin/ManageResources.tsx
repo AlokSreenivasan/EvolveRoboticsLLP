@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Text } from 'react-native';
+import { Text } from 'react-native';
 
 import AdminEntityForm from '../../../components/Admin/AdminEntityForm';
 import AdminFormField from '../../../components/Admin/AdminFormField';
@@ -40,6 +40,7 @@ import type {
 } from '../../../store/content/types/resources.types';
 import type { CourseTrack } from '../../../store/content/types/courses.types';
 import { toAdminWriteErrorMessage } from '../../../utils/admin/adminWriteErrorMessage';
+import { appAlert, appAlertButtons, appAlertCopy } from '../../../utils/alert/appAlert';
 import { saveAdminPdfEntity } from '../../../utils/admin/saveAdminPdfEntity';
 
 type NoteFormState = {
@@ -120,16 +121,22 @@ function ManageResources() {
     };
 
     if (!payload.sectionTitle) {
-      Alert.alert('Screen title required', 'Enter a title for the Resources screen.');
+      appAlert(
+        appAlertCopy.admin.screenTitleNeeded,
+        appAlertCopy.admin.screenTitleRequired('Resources'),
+      );
       return;
     }
 
     setSavingSection(true);
     try {
       await updateResourcesSection(payload);
-      Alert.alert('Saved', 'Resources screen headings updated.');
+      appAlert(
+        appAlertCopy.admin.savedTitle,
+        appAlertCopy.admin.screenHeadingsSaved('Resources'),
+      );
     } catch (error) {
-      Alert.alert('Save failed', toAdminWriteErrorMessage(error));
+      appAlert(appAlertCopy.admin.saveFailedTitle, toAdminWriteErrorMessage(error));
     } finally {
       setSavingSection(false);
     }
@@ -137,12 +144,18 @@ function ManageResources() {
 
   const handleSaveNote = async () => {
     if (!noteForm.title.trim()) {
-      Alert.alert('Heading required', 'Each note needs a heading (title).');
+      appAlert(
+        appAlertCopy.admin.headingRequiredTitle,
+        appAlertCopy.admin.headingRequired('note'),
+      );
       return;
     }
 
     if (!pdfPicker.hasPdf) {
-      Alert.alert('PDF required', 'Attach a PDF file for this note.');
+      appAlert(
+        appAlertCopy.admin.pdfRequiredTitle,
+        appAlertCopy.admin.pdfRequired('note'),
+      );
       return;
     }
 
@@ -151,7 +164,7 @@ function ManageResources() {
       audienceForm.validate,
     );
     if (visibilityError) {
-      Alert.alert('Visibility required', visibilityError);
+      appAlert(appAlertCopy.admin.visibilityRequiredTitle, visibilityError);
       return;
     }
 
@@ -186,28 +199,35 @@ function ManageResources() {
       });
       closeEditor();
     } catch (error) {
-      Alert.alert('Save failed', toAdminWriteErrorMessage(error));
+      appAlert(appAlertCopy.admin.saveFailedTitle, toAdminWriteErrorMessage(error));
     } finally {
       setSavingNote(false);
     }
   };
 
   const confirmDeleteNote = (note: ResourceNote) => {
-    Alert.alert('Delete note', `Remove "${note.title}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await deleteResourceNotePdfByUrlSafe(note.pdfUrl);
-            await deleteResourceNote(note.id);
-          } catch (error) {
-            Alert.alert('Delete failed', toAdminWriteErrorMessage(error));
-          }
+    appAlert(
+      appAlertCopy.admin.deleteTitle('note'),
+      appAlertCopy.admin.deleteConfirm('note', note.title),
+      [
+        { text: appAlertButtons.cancel, style: 'cancel' },
+        {
+          text: appAlertButtons.delete,
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteResourceNotePdfByUrlSafe(note.pdfUrl);
+              await deleteResourceNote(note.id);
+            } catch (error) {
+              appAlert(
+                appAlertCopy.admin.deleteFailedTitle,
+                toAdminWriteErrorMessage(error),
+              );
+            }
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   const listHeader = (

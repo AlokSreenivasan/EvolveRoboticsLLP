@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react';
-import { Alert } from 'react-native';
 
-import { getErrorMessage } from '../../../utils/firebase/errors';
+import { appAlert, appAlertCopy } from '../../../utils/alert/appAlert';
 
 export function useAdminReorder<T extends { id: string }>(
   items: T[],
@@ -14,8 +13,11 @@ export function useAdminReorder<T extends { id: string }>(
       setReorderingId(id);
       try {
         await moveFn(id, direction, items);
-      } catch (error) {
-        Alert.alert('Reorder failed', getErrorMessage(error));
+      } catch {
+        appAlert(
+          appAlertCopy.admin.reorderFailedTitle,
+          appAlertCopy.admin.reorderFailed,
+        );
       } finally {
         setReorderingId(null);
       }

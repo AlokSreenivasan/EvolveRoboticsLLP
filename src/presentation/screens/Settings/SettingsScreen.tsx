@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   StyleSheet,
   Text,
   View,
@@ -30,6 +29,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useAdminNavigation } from '../../hooks/useAdminNavigation';
 import { useStoredProfileFullName } from '../../hooks/useStoredProfileFullName';
 import { useUserRole } from '../../hooks/useUserRole';
+import { appAlert, appAlertButtons, appAlertCopy } from '../../../utils/alert/appAlert';
 
 function SettingsScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
@@ -45,17 +45,24 @@ function SettingsScreen() {
     try {
       await signOut();
     } catch {
-      Alert.alert('Logout Failed', 'Could not sign out. Please try again.');
+      appAlert(
+        appAlertCopy.learner.logoutFailedTitle,
+        appAlertCopy.learner.logoutFailedMessage,
+      );
     } finally {
       setLoggingOut(false);
     }
   };
 
   const handleLogoutPress = () => {
-    Alert.alert('Log Out', 'Are you sure you want to log out?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Log Out', style: 'destructive', onPress: performLogout },
-    ]);
+    appAlert(
+      appAlertCopy.learner.logoutConfirmTitle,
+      appAlertCopy.learner.logoutConfirmMessage,
+      [
+        { text: appAlertButtons.cancel, style: 'cancel' },
+        { text: appAlertButtons.logOut, onPress: performLogout },
+      ],
+    );
   };
 
   return (

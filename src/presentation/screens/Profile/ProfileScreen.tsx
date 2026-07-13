@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   BackHandler,
   KeyboardAvoidingView,
   Platform,
@@ -34,6 +33,7 @@ import {
   showPhotoPickerError,
 } from '../../../services/profilePhotoPicker';
 import type { RootStackParamList } from '../../../types/navigation';
+import { appAlert, appAlertCopy } from '../../../utils/alert/appAlert';
 
 type ProfileScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -114,9 +114,9 @@ function ProfileScreen() {
       return;
     }
 
-    Alert.alert(
-      'Save Failed',
-      saveError ?? 'Could not save your profile. Please try again.',
+    appAlert(
+      appAlertCopy.learner.profileSaveFailedTitle,
+      saveError ?? appAlertCopy.learner.profileSaveFailedMessage,
     );
   };
 

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import AdminEntityForm from '../../../components/Admin/AdminEntityForm';
 import AdminEventDateScrollPicker from '../../../components/Admin/AdminEventDateScrollPicker';
@@ -36,6 +36,7 @@ import type {
 } from '../../../store/content/types/upcomingEvents.types';
 import type { CourseTrack } from '../../../store/content/types/courses.types';
 import { toAdminWriteErrorMessage } from '../../../utils/admin/adminWriteErrorMessage';
+import { appAlert, appAlertButtons, appAlertCopy } from '../../../utils/alert/appAlert';
 import {
   EVENT_YEAR_MAX,
   computeDaysLeftLabel,
@@ -151,16 +152,19 @@ function ManageUpcomingEvents() {
     };
 
     if (!payload.sectionTitle) {
-      Alert.alert('Section title required', 'Enter a title for this home section.');
+      appAlert(
+        appAlertCopy.admin.sectionTitleRequiredTitle,
+        appAlertCopy.admin.sectionTitleRequired,
+      );
       return;
     }
 
     setSavingSection(true);
     try {
       await updateUpcomingEventsSection(payload);
-      Alert.alert('Saved', 'Section headings updated. Changes appear on Home instantly.');
+      appAlert(appAlertCopy.admin.savedTitle, appAlertCopy.admin.sectionSaved);
     } catch (error) {
-      Alert.alert('Save failed', toAdminWriteErrorMessage(error));
+      appAlert(appAlertCopy.admin.saveFailedTitle, toAdminWriteErrorMessage(error));
     } finally {
       setSavingSection(false);
     }
@@ -168,30 +172,27 @@ function ManageUpcomingEvents() {
 
   const handleSaveEvent = async () => {
     if (!eventForm.title.trim()) {
-      Alert.alert('Title required', 'Each event needs a title.');
+      appAlert(appAlertCopy.admin.titleNeeded, appAlertCopy.admin.titleRequired('event'));
       return;
     }
     if (!eventForm.month.trim() || !eventForm.day.trim()) {
-      Alert.alert(
-        'Date required',
-        'Choose an event date for the home card.',
-      );
+      appAlert(appAlertCopy.admin.dateRequiredTitle, appAlertCopy.admin.dateRequired);
       return;
     }
 
     const year = parseStoredEventYear(eventForm.year);
     if (year == null) {
-      Alert.alert(
-        'Date required',
-        `Choose a valid year (today through ${EVENT_YEAR_MAX}).`,
+      appAlert(
+        appAlertCopy.admin.dateRequiredTitle,
+        appAlertCopy.admin.dateYearRequired(EVENT_YEAR_MAX),
       );
       return;
     }
 
     if (!resolveUpcomingEventDate(eventForm.month, eventForm.day, { year })) {
-      Alert.alert(
-        'Invalid date',
-        `That date is not valid or falls after ${EVENT_YEAR_MAX}.`,
+      appAlert(
+        appAlertCopy.admin.invalidDateTitle,
+        appAlertCopy.admin.invalidDate(EVENT_YEAR_MAX),
       );
       return;
     }
@@ -207,7 +208,7 @@ function ManageUpcomingEvents() {
       audienceForm.validate,
     );
     if (visibilityError) {
-      Alert.alert('Visibility required', visibilityError);
+      appAlert(appAlertCopy.admin.visibilityRequiredTitle, visibilityError);
       return;
     }
 
@@ -235,27 +236,34 @@ function ManageUpcomingEvents() {
       }
       closeEditor();
     } catch (error) {
-      Alert.alert('Save failed', toAdminWriteErrorMessage(error));
+      appAlert(appAlertCopy.admin.saveFailedTitle, toAdminWriteErrorMessage(error));
     } finally {
       setSavingEvent(false);
     }
   };
 
   const confirmDeleteEvent = (event: UpcomingEvent) => {
-    Alert.alert('Delete event', `Remove "${event.title}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await deleteUpcomingEvent(event.id);
-          } catch (error) {
-            Alert.alert('Delete failed', toAdminWriteErrorMessage(error));
-          }
+    appAlert(
+      appAlertCopy.admin.deleteTitle('event'),
+      appAlertCopy.admin.deleteConfirm('event', event.title),
+      [
+        { text: appAlertButtons.cancel, style: 'cancel' },
+        {
+          text: appAlertButtons.delete,
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteUpcomingEvent(event.id);
+            } catch (error) {
+              appAlert(
+                appAlertCopy.admin.deleteFailedTitle,
+                toAdminWriteErrorMessage(error),
+              );
+            }
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   const listHeader = (

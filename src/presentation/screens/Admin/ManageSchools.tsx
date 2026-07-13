@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { Alert, Text } from 'react-native';
+import { Text } from 'react-native';
 
 import AdminEntityForm from '../../../components/Admin/AdminEntityForm';
 import AdminFormField from '../../../components/Admin/AdminFormField';
@@ -17,6 +17,7 @@ import {
 } from '../../../services/firebase/schoolsService';
 import type { School } from '../../../store/content/types/schools.types';
 import { toAdminWriteErrorMessage } from '../../../utils/admin/adminWriteErrorMessage';
+import { appAlert, appAlertButtons, appAlertCopy } from '../../../utils/alert/appAlert';
 
 type SchoolFormState = {
   name: string;
@@ -45,7 +46,7 @@ function ManageSchools() {
   const handleAddSchool = async () => {
     const name = addName.trim();
     if (!name) {
-      Alert.alert('School name required', 'Enter a name for the school.');
+      appAlert(appAlertCopy.admin.schoolNameNeeded, appAlertCopy.admin.schoolNameRequired);
       return;
     }
 
@@ -55,7 +56,7 @@ function ManageSchools() {
       setAddName('');
       setAddCity('');
     } catch (error) {
-      Alert.alert('Add failed', toAdminWriteErrorMessage(error));
+      appAlert(appAlertCopy.admin.addFailedTitle, toAdminWriteErrorMessage(error));
     } finally {
       setAdding(false);
     }
@@ -78,7 +79,7 @@ function ManageSchools() {
 
   const handleSaveSchool = async () => {
     if (!schoolForm.name.trim()) {
-      Alert.alert('School name required', 'Enter a name for the school.');
+      appAlert(appAlertCopy.admin.schoolNameNeeded, appAlertCopy.admin.schoolNameRequired);
       return;
     }
 
@@ -94,27 +95,34 @@ function ManageSchools() {
       });
       closeEditor();
     } catch (error) {
-      Alert.alert('Save failed', toAdminWriteErrorMessage(error));
+      appAlert(appAlertCopy.admin.saveFailedTitle, toAdminWriteErrorMessage(error));
     } finally {
       setSavingSchool(false);
     }
   };
 
   const confirmDeleteSchool = (school: School) => {
-    Alert.alert('Delete school', `Remove "${school.name}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await deleteSchool(school.id);
-          } catch (error) {
-            Alert.alert('Delete failed', toAdminWriteErrorMessage(error));
-          }
+    appAlert(
+      appAlertCopy.admin.deleteTitle('school'),
+      appAlertCopy.admin.deleteConfirm('school', school.name),
+      [
+        { text: appAlertButtons.cancel, style: 'cancel' },
+        {
+          text: appAlertButtons.delete,
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteSchool(school.id);
+            } catch (error) {
+              appAlert(
+                appAlertCopy.admin.deleteFailedTitle,
+                toAdminWriteErrorMessage(error),
+              );
+            }
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   const listHeader = (

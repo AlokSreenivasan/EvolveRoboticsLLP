@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Image,
   InteractionManager,
   Keyboard,
@@ -59,6 +58,7 @@ import { formatSchoolAudienceSummary } from '../../../utils/content/schoolAudien
 import { getErrorMessage } from '../../../utils/firebase/errors';
 import { getCurrentUserId } from '../../../services/firebase/authService';
 import { isAdmin } from '../../../services/firebase/roleService';
+import { appAlert, appAlertButtons, appAlertCopy } from '../../../utils/alert/appAlert';
 
 type PlaylistFormState = {
   title: string;
@@ -195,7 +195,10 @@ function ManageContinueLearningPlaylists() {
       return;
     }
     if (!result.cancelled && result.message) {
-      Alert.alert('Thumbnail', result.message);
+      appAlert(
+        appAlertCopy.admin.thumbnailTitle,
+        appAlertCopy.admin.thumbnail(result.message),
+      );
     }
   };
 
@@ -211,32 +214,35 @@ function ManageContinueLearningPlaylists() {
     });
 
     if (!isValidYouTubePlaylistUrl(playlistUrl)) {
-      Alert.alert(
-        'Playlist link required',
-        'Paste a YouTube playlist URL in the Playlist URL field (must include list=).',
+      appAlert(
+        appAlertCopy.admin.playlistLinkNeeded,
+        appAlertCopy.admin.playlistLinkRequired,
       );
       return;
     }
 
     const title = current.title.trim();
     if (!title) {
-      Alert.alert('Title required', 'Enter a title for this playlist.');
+      appAlert(
+        appAlertCopy.admin.titleNeeded,
+        appAlertCopy.admin.playlistTitleRequired,
+      );
       return;
     }
 
     const videoCount = parseVideoCount(current.videoCount);
     if (videoCount == null) {
-      Alert.alert(
-        'Video count required',
-        'Enter the total number of videos in this YouTube playlist (1–500).',
+      appAlert(
+        appAlertCopy.admin.videoCountNeeded,
+        appAlertCopy.admin.videoCountRequired,
       );
       return;
     }
 
     if (current.track !== 'kids' && current.track !== 'professionals') {
-      Alert.alert(
-        'Visibility required',
-        'Select whether this playlist is visible to kids or professionals.',
+      appAlert(
+        appAlertCopy.admin.visibilityRequiredTitle,
+        appAlertCopy.admin.trackVisibilityRequired,
       );
       return;
     }
@@ -244,7 +250,10 @@ function ManageContinueLearningPlaylists() {
     if (current.track === 'kids') {
       const audienceError = audienceForm.validate();
       if (audienceError) {
-        Alert.alert('School visibility required', audienceError);
+        appAlert(
+          appAlertCopy.admin.schoolVisibilityRequiredTitle,
+          appAlertCopy.admin.schoolVisibilityRequired(audienceError),
+        );
         return;
       }
     }
@@ -252,9 +261,9 @@ function ManageContinueLearningPlaylists() {
     const hasAdmin = await isAdmin();
     if (!hasAdmin) {
       const uid = getCurrentUserId();
-      Alert.alert(
-        'Admin access required',
-        `Your account does not have admin role in Firestore.${uid ? `\n\nUID: ${uid}\n\nSet users/${uid}.role to "admin" in Firebase Console, then sign out and back in.` : ''}`,
+      appAlert(
+        appAlertCopy.admin.adminAccessRequiredTitle,
+        appAlertCopy.admin.adminAccessRequired(uid),
       );
       return;
     }
@@ -300,7 +309,7 @@ function ManageContinueLearningPlaylists() {
       if (__DEV__) {
         console.warn('[ManageContinueLearningPlaylists] save failed', details);
       }
-      Alert.alert('Save failed', toAdminWriteErrorMessage(error));
+      appAlert(appAlertCopy.admin.saveFailedTitle, toAdminWriteErrorMessage(error));
     } finally {
       setUploadingThumbnail(false);
       setSaving(false);
@@ -315,20 +324,27 @@ function ManageContinueLearningPlaylists() {
   };
 
   const confirmDelete = (playlist: ContinueLearningPlaylist) => {
-    Alert.alert('Delete playlist', `Remove "${playlist.title}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await deleteContinueLearningPlaylist(playlist.id);
-          } catch (error) {
-            Alert.alert('Delete failed', toAdminWriteErrorMessage(error));
-          }
+    appAlert(
+      appAlertCopy.admin.deleteTitle('playlist'),
+      appAlertCopy.admin.deleteConfirm('playlist', playlist.title),
+      [
+        { text: appAlertButtons.cancel, style: 'cancel' },
+        {
+          text: appAlertButtons.delete,
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteContinueLearningPlaylist(playlist.id);
+            } catch (error) {
+              appAlert(
+                appAlertCopy.admin.deleteFailedTitle,
+                toAdminWriteErrorMessage(error),
+              );
+            }
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   const handleMove = useCallback(
@@ -337,7 +353,7 @@ function ManageContinueLearningPlaylists() {
       try {
         await moveContinueLearningPlaylist(playlistId, direction, playlists);
       } catch (error) {
-        Alert.alert('Reorder failed', getErrorMessage(error));
+        appAlert(appAlertCopy.admin.reorderFailedTitle, appAlertCopy.admin.reorderFailed);
       } finally {
         setReorderingId(null);
       }

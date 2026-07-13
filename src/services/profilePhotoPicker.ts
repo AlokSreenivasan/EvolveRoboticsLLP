@@ -1,5 +1,4 @@
 import {
-  Alert,
   InteractionManager,
   NativeModules,
   Platform,
@@ -8,6 +7,7 @@ import {
   launchImageLibrary,
   type ImagePickerResponse,
 } from 'react-native-image-picker';
+import { appAlert, appAlertCopy } from '../utils/alert/appAlert';
 
 export type PickProfilePhotoResult =
   | { success: true; uri: string }
@@ -111,5 +111,5 @@ export async function pickProfilePhotoFromGallery(): Promise<PickProfilePhotoRes
 }
 
 export function showPhotoPickerError(message: string): void {
-  Alert.alert('Profile Photo', message);
+  appAlert(appAlertCopy.learner.profilePhotoTitle, message);
 }

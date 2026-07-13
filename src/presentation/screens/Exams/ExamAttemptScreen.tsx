@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   SafeAreaView,
   StyleSheet,
@@ -21,6 +20,7 @@ import { createExamAttempt } from '../../../services/firebase/examAttemptsServic
 import { useExam } from '../../hooks/useExam';
 import type { ExamQuestion } from '../../../store/content/types/exams.types';
 import type { RootStackParamList } from '../../../types/navigation';
+import { appAlert, appAlertButtons, appAlertCopy } from '../../../utils/alert/appAlert';
 
 type ExamAttemptRoute = RouteProp<RootStackParamList, 'ExamAttempt'>;
 
@@ -188,15 +188,20 @@ function ExamAttemptScreen() {
           totalQuestions: total,
         });
 
-        Alert.alert(
-          reason === 'timeout' ? 'Time up' : 'Submitted',
-          `Score: ${correct}/${total} (${total > 0 ? Math.round((correct / total) * 100) : 0}%)`,
-          [{ text: 'OK', onPress: () => navigation.goBack() }],
+        const percentage =
+          total > 0 ? Math.round((correct / total) * 100) : 0;
+
+        appAlert(
+          reason === 'timeout'
+            ? appAlertCopy.learner.examTimeUpTitle
+            : appAlertCopy.learner.examSubmittedTitle,
+          appAlertCopy.learner.examScoreMessage(correct, total, percentage),
+          [{ text: appAlertButtons.continue, onPress: () => navigation.goBack() }],
         );
       } catch (submitError) {
         submittedRef.current = false;
-        Alert.alert(
-          'Submit failed',
+        appAlert(
+          appAlertCopy.learner.examSubmitFailedTitle,
           String((submitError as Error)?.message ?? submitError),
         );
       } finally {

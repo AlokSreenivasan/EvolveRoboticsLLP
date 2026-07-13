@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
@@ -14,6 +13,7 @@ import { Eye, EyeOff } from 'lucide-react-native';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
 import AppButton from '../../../components/AppButton.tsx';
 import { isValidEmail } from '../../../domain/Auth/validation/isValidEmail.ts';
+import { appAlert, appAlertCopy } from '../../../utils/alert/appAlert';
 import {
   CONTACT_NUMBER_MAX_LENGTH,
   formatContactNumberInput,
@@ -103,11 +103,11 @@ const SignUpScreen = () => {
       establishSessionProfile(profile);
       notifyAuthSuccess();
     } catch (error) {
-      Alert.alert(
-        'Sign Up Error',
+      appAlert(
+        appAlertCopy.auth.signUpFailedTitle,
         error instanceof Error
           ? error.message
-          : 'Sign up failed. Please try again.',
+          : appAlertCopy.auth.signUpFailedMessage,
       );
     } finally {
       setLoading(false);

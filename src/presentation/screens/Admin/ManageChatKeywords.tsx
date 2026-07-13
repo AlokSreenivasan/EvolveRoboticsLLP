@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { Alert, Text } from 'react-native';
+import { Text } from 'react-native';
 
 import AdminEntityForm from '../../../components/Admin/AdminEntityForm';
 import AdminFormField from '../../../components/Admin/AdminFormField';
@@ -18,6 +18,7 @@ import {
 } from '../../../services/firebase/chatKeywordsService';
 import type { ChatKeyword } from '../../../store/content/types/chatKeywords.types';
 import { toAdminWriteErrorMessage } from '../../../utils/admin/adminWriteErrorMessage';
+import { appAlert, appAlertButtons, appAlertCopy } from '../../../utils/alert/appAlert';
 
 type KeywordFormState = {
   label: string;
@@ -49,7 +50,7 @@ function ManageChatKeywords() {
   const handleAddKeyword = async () => {
     const label = addLabel.trim();
     if (!label) {
-      Alert.alert('Keyword required', 'Enter a label for the quick reply option.');
+      appAlert(appAlertCopy.admin.keywordNeeded, appAlertCopy.admin.keywordRequired);
       return;
     }
 
@@ -64,7 +65,7 @@ function ManageChatKeywords() {
       setAddResponse('');
       setAddPublished(true);
     } catch (error) {
-      Alert.alert('Add failed', toAdminWriteErrorMessage(error));
+      appAlert(appAlertCopy.admin.addFailedTitle, toAdminWriteErrorMessage(error));
     } finally {
       setAdding(false);
     }
@@ -88,7 +89,7 @@ function ManageChatKeywords() {
 
   const handleSaveKeyword = async () => {
     if (!keywordForm.label.trim()) {
-      Alert.alert('Keyword required', 'Enter a label for the quick reply option.');
+      appAlert(appAlertCopy.admin.keywordNeeded, appAlertCopy.admin.keywordRequired);
       return;
     }
 
@@ -105,27 +106,34 @@ function ManageChatKeywords() {
       });
       closeEditor();
     } catch (error) {
-      Alert.alert('Save failed', toAdminWriteErrorMessage(error));
+      appAlert(appAlertCopy.admin.saveFailedTitle, toAdminWriteErrorMessage(error));
     } finally {
       setSavingKeyword(false);
     }
   };
 
   const confirmDeleteKeyword = (keyword: ChatKeyword) => {
-    Alert.alert('Delete keyword', `Remove "${keyword.label}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await deleteChatKeyword(keyword.id);
-          } catch (error) {
-            Alert.alert('Delete failed', toAdminWriteErrorMessage(error));
-          }
+    appAlert(
+      appAlertCopy.admin.deleteTitle('keyword'),
+      appAlertCopy.admin.deleteConfirm('keyword', keyword.label),
+      [
+        { text: appAlertButtons.cancel, style: 'cancel' },
+        {
+          text: appAlertButtons.delete,
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteChatKeyword(keyword.id);
+            } catch (error) {
+              appAlert(
+                appAlertCopy.admin.deleteFailedTitle,
+                toAdminWriteErrorMessage(error),
+              );
+            }
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   const listHeader = (

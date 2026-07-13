@@ -1,12 +1,11 @@
 import { useCallback, useState } from 'react';
-import { Alert } from 'react-native';
 
 import {
   getAdminPdfStatusLabel,
   hasAdminPdfAttachment,
 } from '../../../utils/admin/saveAdminPdfEntity';
 import { pickPdfFile } from '../../../utils/documents/pickPdfFile';
-import { getErrorMessage } from '../../../utils/firebase/errors';
+import { appAlert, appAlertCopy } from '../../../utils/alert/appAlert';
 
 export function useAdminPdfPicker() {
   const [pendingPdfUri, setPendingPdfUri] = useState<string | null>(null);
@@ -30,8 +29,11 @@ export function useAdminPdfPicker() {
       if (uri) {
         setPendingPdfUri(uri);
       }
-    } catch (error) {
-      Alert.alert('Could not open file', getErrorMessage(error));
+    } catch {
+      appAlert(
+        appAlertCopy.admin.fileOpenFailedTitle,
+        appAlertCopy.admin.fileOpenFailed,
+      );
     } finally {
       setPickingPdf(false);
     }

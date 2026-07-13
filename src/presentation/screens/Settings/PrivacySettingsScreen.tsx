@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Shield } from 'lucide-react-native';
 
 import DeleteAccountConfirmModal from '../../../components/Settings/DeleteAccountConfirmModal';
@@ -9,6 +9,7 @@ import SettingsSectionHeader from '../../../components/Settings/SettingsSectionH
 import { colors, spacing } from '../../../constants/theme';
 import { deleteAccount } from '../../../services/firebase/deleteAccountService';
 import { hasEmailPasswordProvider } from '../../../services/firebase/authService';
+import { appAlert, appAlertCopy } from '../../../utils/alert/appAlert';
 
 function PrivacySettingsScreen() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -31,16 +32,16 @@ function PrivacySettingsScreen() {
     try {
       await deleteAccount({ currentPassword });
       setShowDeleteModal(false);
-      Alert.alert(
-        'Account Deleted',
-        'Your account and associated data have been permanently removed.',
+      appAlert(
+        appAlertCopy.learner.accountDeletedTitle,
+        appAlertCopy.learner.accountDeletedMessage,
       );
     } catch (error) {
-      Alert.alert(
-        'Deletion Failed',
+      appAlert(
+        appAlertCopy.learner.accountDeletionFailedTitle,
         error instanceof Error
           ? error.message
-          : 'Could not delete your account. Please try again.',
+          : appAlertCopy.learner.accountDeletionFailedMessage,
       );
     } finally {
       setDeleting(false);

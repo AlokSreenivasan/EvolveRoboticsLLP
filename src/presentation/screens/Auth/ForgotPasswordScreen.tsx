@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -15,6 +14,7 @@ import AppButton from '../../../components/AppButton.tsx';
 import BackButton from '../../../components/BackButton';
 import { isValidEmail } from '../../../domain/Auth/validation/isValidEmail.ts';
 import { sendPasswordResetEmail } from '../../../services/firebase/authService';
+import { appAlert, appAlertCopy } from '../../../utils/alert/appAlert';
 
 type NavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -50,16 +50,16 @@ function ForgotPasswordScreen() {
 
     try {
       await sendPasswordResetEmail(email);
-      Alert.alert(
-        'Reset Email Sent',
-        'If an account exists for this email, you will receive a password reset link shortly. Check your inbox and spam folder.',
+      appAlert(
+        appAlertCopy.auth.resetEmailSentTitle,
+        appAlertCopy.auth.resetEmailSentMessage,
       );
     } catch (error) {
-      Alert.alert(
-        'Reset Failed',
+      appAlert(
+        appAlertCopy.auth.resetFailedTitle,
         error instanceof Error
           ? error.message
-          : 'Could not send reset email. Please try again.',
+          : appAlertCopy.auth.resetFailedMessage,
       );
     } finally {
       setLoading(false);

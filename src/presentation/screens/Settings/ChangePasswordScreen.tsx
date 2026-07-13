@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   StyleSheet,
   Text,
   TextInput,
@@ -18,6 +17,7 @@ import SettingsScreenLayout from '../../../components/Settings/SettingsScreenLay
 import SettingsSectionHeader from '../../../components/Settings/SettingsSectionHeader';
 import { colors, spacing } from '../../../constants/theme';
 import type { LoginScreenNavigationProp } from '../../../types/navigation';
+import { appAlert, appAlertButtons, appAlertCopy } from '../../../utils/alert/appAlert';
 import { useChangePasswordForm } from '../../hooks/useChangePasswordForm';
 
 function ChangePasswordScreen() {
@@ -42,15 +42,15 @@ function ChangePasswordScreen() {
 
     if (!result.success) {
       if (result.message) {
-        Alert.alert('Update Failed', result.message);
+        appAlert(appAlertCopy.learner.passwordUpdateFailedTitle, result.message);
       }
       return;
     }
 
-    Alert.alert(
-      'Password Updated',
-      'Your password has been changed successfully.',
-      [{ text: 'OK', onPress: () => navigation.goBack() }],
+    appAlert(
+      appAlertCopy.learner.passwordUpdatedTitle,
+      appAlertCopy.learner.passwordUpdatedMessage,
+      [{ text: appAlertButtons.continue, onPress: () => navigation.goBack() }],
     );
   };
 

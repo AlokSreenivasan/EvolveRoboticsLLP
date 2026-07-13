@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import {
   Bell,
   CalendarDays,
@@ -31,6 +31,7 @@ import {
   saveNotificationPreferences,
 } from '../../../services/notificationPreferencesStorage';
 import { useAuth } from '../../context/AuthContext';
+import { appAlert, appAlertButtons, appAlertCopy } from '../../../utils/alert/appAlert';
 
 function NotificationPreferencesScreen() {
   const { user } = useAuth();
@@ -80,9 +81,9 @@ function NotificationPreferencesScreen() {
           }
         }
       } catch {
-        Alert.alert(
-          'Save Failed',
-          'Could not save your notification preferences. Please try again.',
+        appAlert(
+          appAlertCopy.learner.notificationSaveFailedTitle,
+          appAlertCopy.learner.notificationSaveFailedMessage,
         );
       } finally {
         setSaving(false);
@@ -107,13 +108,13 @@ function NotificationPreferencesScreen() {
   };
 
   const handleReset = () => {
-    Alert.alert(
-      'Reset to Default',
-      'Restore all notification preferences to their default values?',
+    appAlert(
+      appAlertCopy.learner.resetPreferencesTitle,
+      appAlertCopy.learner.resetPreferencesMessage,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: appAlertButtons.cancel, style: 'cancel' },
         {
-          text: 'Reset',
+          text: appAlertButtons.reset,
           onPress: async () => {
             const previousPushEnabled = preferences.pushNotifications;
             setSaving(true);
@@ -131,9 +132,9 @@ function NotificationPreferencesScreen() {
                 }
               }
             } catch {
-              Alert.alert(
-                'Reset Failed',
-                'Could not reset preferences. Please try again.',
+              appAlert(
+                appAlertCopy.learner.resetPreferencesFailedTitle,
+                appAlertCopy.learner.resetPreferencesFailedMessage,
               );
             } finally {
               setSaving(false);

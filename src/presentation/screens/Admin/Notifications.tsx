@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { Alert, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import AppButton from '../../../components/AppButton';
 import AdminEntityForm from '../../../components/Admin/AdminEntityForm';
@@ -35,6 +35,7 @@ import {
 import type { AppNotification } from '../../../store/content/types/notifications.types';
 import type { CourseTrack } from '../../../store/content/types/courses.types';
 import { toAdminWriteErrorMessage } from '../../../utils/admin/adminWriteErrorMessage';
+import { appAlert, appAlertButtons, appAlertCopy } from '../../../utils/alert/appAlert';
 import { getErrorMessage } from '../../../utils/firebase/errors';
 
 type NotificationFormState = {
@@ -104,11 +105,17 @@ function AdminNotifications() {
 
   const handleSave = async () => {
     if (!form.title.trim()) {
-      Alert.alert('Title required', 'Each notification needs a title.');
+      appAlert(
+        appAlertCopy.admin.titleNeeded,
+        appAlertCopy.admin.titleRequired('notification'),
+      );
       return;
     }
     if (!form.body.trim()) {
-      Alert.alert('Message required', 'Enter the notification message for learners.');
+      appAlert(
+        appAlertCopy.admin.messageRequiredTitle,
+        appAlertCopy.admin.messageRequired,
+      );
       return;
     }
 
@@ -117,7 +124,7 @@ function AdminNotifications() {
       audienceForm.validate,
     );
     if (visibilityError) {
-      Alert.alert('Visibility required', visibilityError);
+      appAlert(appAlertCopy.admin.visibilityRequiredTitle, visibilityError);
       return;
     }
 
@@ -140,14 +147,14 @@ function AdminNotifications() {
         await createNotification(payload);
       }
       closeEditor();
-      Alert.alert(
-        'Saved',
+      appAlert(
+        appAlertCopy.admin.savedTitle,
         form.isPublished
-          ? 'Notification is live for learners in the app.'
-          : 'Notification saved as a draft.',
+          ? appAlertCopy.admin.notificationLiveSaved
+          : appAlertCopy.admin.notificationDraftSaved,
       );
     } catch (error) {
-      Alert.alert('Save failed', toAdminWriteErrorMessage(error));
+      appAlert(appAlertCopy.admin.saveFailedTitle, toAdminWriteErrorMessage(error));
     } finally {
       setSaving(false);
     }
@@ -165,14 +172,16 @@ function AdminNotifications() {
       const delivered = result.successCount;
       const failed = result.failureCount;
 
-      Alert.alert(
-        'Live notification sent',
-        failed > 0
-          ? `Delivered to ${delivered} of ${result.recipientCount} device(s). ${failed} failed.`
-          : `Delivered to ${delivered} device(s).`,
+      appAlert(
+        appAlertCopy.admin.liveSentTitle,
+        appAlertCopy.admin.liveNotificationSent(
+          delivered,
+          result.recipientCount,
+          failed,
+        ),
       );
     } catch (error) {
-      Alert.alert('Send failed', getErrorMessage(error));
+      appAlert(appAlertCopy.admin.sendFailedTitle, getErrorMessage(error));
     } finally {
       setSendingLiveId(null);
     }
@@ -180,9 +189,9 @@ function AdminNotifications() {
 
   const handleSendLiveNotification = (notification: AppNotification) => {
     if (!notification.title.trim() || !notification.body.trim()) {
-      Alert.alert(
-        'Cannot send',
-        'This notification needs a title and message before sending.',
+      appAlert(
+        appAlertCopy.admin.cannotSendTitle,
+        appAlertCopy.admin.cannotSendNotification,
       );
       return;
     }
@@ -193,13 +202,17 @@ function AdminNotifications() {
       schools,
     );
     const categoryLabel = getNotificationCategoryLabel(notification.category);
-    Alert.alert(
-      'Send live notification',
-      `Send push "${notification.title}" (${categoryLabel}) to learners at ${audienceLabel} who have notifications enabled for this category?`,
+    appAlert(
+      appAlertCopy.admin.sendLiveTitle,
+      appAlertCopy.admin.sendLiveConfirm(
+        notification.title,
+        categoryLabel,
+        audienceLabel,
+      ),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: appAlertButtons.cancel, style: 'cancel' },
         {
-          text: 'Send',
+          text: appAlertButtons.send,
           onPress: () => performSendLive(notification),
         },
       ],
@@ -207,20 +220,27 @@ function AdminNotifications() {
   };
 
   const confirmDelete = (notification: AppNotification) => {
-    Alert.alert('Delete notification', `Remove "${notification.title}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await deleteNotification(notification.id);
-          } catch (error) {
-            Alert.alert('Delete failed', toAdminWriteErrorMessage(error));
-          }
+    appAlert(
+      appAlertCopy.admin.deleteTitle('notification'),
+      appAlertCopy.admin.deleteConfirm('notification', notification.title),
+      [
+        { text: appAlertButtons.cancel, style: 'cancel' },
+        {
+          text: appAlertButtons.delete,
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteNotification(notification.id);
+            } catch (error) {
+              appAlert(
+                appAlertCopy.admin.deleteFailedTitle,
+                toAdminWriteErrorMessage(error),
+              );
+            }
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   const listHeader = (

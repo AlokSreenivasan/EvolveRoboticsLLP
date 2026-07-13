@@ -10,7 +10,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -20,6 +19,7 @@ import { LoginScreenNavigationProp } from '../../../types/navigation';
 import AppButton from '../../../components/AppButton.tsx';
 import { isValidEmail } from '../../../domain/Auth/validation/isValidEmail.ts';
 import { useAuthFlow } from '../../context/AuthFlowContext';
+import { appAlert, appAlertCopy } from '../../../utils/alert/appAlert';
 import {
   isGoogleSignInCancelled,
   signInWithGoogle,
@@ -70,7 +70,10 @@ function LoginScreen() {
     setEmailError('');
 
     if (password.trim() === '') {
-      Alert.alert('Error', 'Password cannot be empty');
+      appAlert(
+        appAlertCopy.auth.passwordEmptyTitle,
+        appAlertCopy.auth.passwordEmpty,
+      );
       return;
     }
 
@@ -79,7 +82,7 @@ function LoginScreen() {
       await signInWithEmailPassword(email, password);
       notifyAuthSuccess();
     } catch (error) {
-      Alert.alert('Login Error', getAuthErrorMessage(error as { code?: string; message?: string }));
+      appAlert(appAlertCopy.auth.signInFailedTitle, getAuthErrorMessage(error as { code?: string; message?: string }));
     } finally {
       setLoading(false);
     }
@@ -102,7 +105,10 @@ function LoginScreen() {
         return;
       }
       if (!isGoogleSignInCancelled(error)) {
-        Alert.alert('Google Sign-In Error', (error as Error)?.message ?? 'Google Sign-In failed.');
+        appAlert(
+          appAlertCopy.auth.googleSignInFailedTitle,
+          (error as Error)?.message ?? appAlertCopy.auth.googleSignInFailedMessage,
+        );
       }
     } finally {
       if (googleSignInMountedRef.current) {

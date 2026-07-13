@@ -109,6 +109,17 @@ type QuizModalActionProps = {
   style?: StyleProp<ViewStyle>;
 };
 
+type QuizModalSecondaryActionProps = {
+  label: string;
+  onPress: () => void;
+  style?: StyleProp<ViewStyle>;
+};
+
+type QuizModalActionStackProps = {
+  children: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
+};
+
 export function QuizModalShell({
   visible,
   onClose,
@@ -318,6 +329,28 @@ export function QuizModalAction({
       textStyle={styles.actionButtonText}
     />
   );
+}
+
+export function QuizModalSecondaryAction({
+  label,
+  onPress,
+  style,
+}: QuizModalSecondaryActionProps) {
+  return (
+    <AppButton
+      title={label}
+      onPress={onPress}
+      buttonStyle={[styles.actionButton, styles.actionButtonSecondary, style]}
+      textStyle={styles.actionButtonSecondaryText}
+    />
+  );
+}
+
+export function QuizModalActionStack({
+  children,
+  style,
+}: QuizModalActionStackProps) {
+  return <View style={[styles.actionStack, style]}>{children}</View>;
 }
 
 export const styles = StyleSheet.create({
@@ -573,6 +606,11 @@ export const styles = StyleSheet.create({
     letterSpacing: 0.4,
     textTransform: 'uppercase',
   },
+  actionStack: {
+    alignSelf: 'stretch',
+    width: '100%',
+    gap: 10,
+  },
   actionButton: {
     alignSelf: 'stretch',
     paddingVertical: 14,
@@ -584,8 +622,18 @@ export const styles = StyleSheet.create({
   actionButtonDanger: {
     backgroundColor: colors.danger,
   },
+  actionButtonSecondary: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.primaryMuted,
+  },
   actionButtonText: {
     color: '#fff',
+    fontWeight: '800',
+    fontSize: 15,
+  },
+  actionButtonSecondaryText: {
+    color: colors.primary,
     fontWeight: '800',
     fontSize: 15,
   },

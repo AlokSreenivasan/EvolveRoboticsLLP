@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alert, Linking, StyleSheet, View } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
 import { Headphones } from 'lucide-react-native';
 
 import SettingsCard from '../../../components/Settings/SettingsCard';
@@ -15,13 +15,14 @@ import {
   SUPPORT_PHONE,
   SUPPORT_PHONE_DIAL,
 } from '../../../config/support';
+import { appAlert, appAlertCopy } from '../../../utils/alert/appAlert';
 
 /** tel:/mailto: are opened directly — canOpenURL is unreliable on simulators and Android 11+. */
 async function openExternalUrl(url: string, failureMessage: string) {
   try {
     await Linking.openURL(url);
   } catch {
-    Alert.alert('Unavailable', failureMessage);
+    appAlert(appAlertCopy.learner.unavailableTitle, failureMessage);
   }
 }
 
@@ -29,14 +30,14 @@ function SupportScreen() {
   const handleEmailPress = () => {
     openExternalUrl(
       `mailto:${SUPPORT_EMAIL}`,
-      'Could not open your email app. You can copy the address and email us directly.',
+      appAlertCopy.learner.emailAppUnavailable,
     );
   };
 
   const handlePhonePress = () => {
     openExternalUrl(
       `tel:${SUPPORT_PHONE_DIAL}`,
-      'Could not open the phone dialer. You can call us at the number shown.',
+      appAlertCopy.learner.phoneDialerUnavailable,
     );
   };
 

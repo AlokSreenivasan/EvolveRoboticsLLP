@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Text } from 'react-native';
+import { Text } from 'react-native';
 
 import AdminContentVisibilityFields from '../../../components/Admin/AdminContentVisibilityFields';
 import AdminEntityForm from '../../../components/Admin/AdminEntityForm';
@@ -34,6 +34,7 @@ import type {
 } from '../../../store/content/types/importantUpdates.types';
 import type { CourseTrack } from '../../../store/content/types/courses.types';
 import { toAdminWriteErrorMessage } from '../../../utils/admin/adminWriteErrorMessage';
+import { appAlert, appAlertButtons, appAlertCopy } from '../../../utils/alert/appAlert';
 
 type NoticeFormState = {
   tag: string;
@@ -123,16 +124,19 @@ function ManageImportantUpdates() {
     };
 
     if (!payload.sectionTitle) {
-      Alert.alert('Section title required', 'Enter a title for this home section.');
+      appAlert(
+        appAlertCopy.admin.sectionTitleRequiredTitle,
+        appAlertCopy.admin.sectionTitleRequired,
+      );
       return;
     }
 
     setSavingSection(true);
     try {
       await updateImportantUpdatesSection(payload);
-      Alert.alert('Saved', 'Section headings updated. Changes appear on Home instantly.');
+      appAlert(appAlertCopy.admin.savedTitle, appAlertCopy.admin.sectionSaved);
     } catch (error) {
-      Alert.alert('Save failed', toAdminWriteErrorMessage(error));
+      appAlert(appAlertCopy.admin.saveFailedTitle, toAdminWriteErrorMessage(error));
     } finally {
       setSavingSection(false);
     }
@@ -140,7 +144,7 @@ function ManageImportantUpdates() {
 
   const handleSaveNotice = async () => {
     if (!noticeForm.title.trim()) {
-      Alert.alert('Title required', 'Each notice needs a title.');
+      appAlert(appAlertCopy.admin.titleNeeded, appAlertCopy.admin.titleRequired('notice'));
       return;
     }
 
@@ -149,7 +153,7 @@ function ManageImportantUpdates() {
       audienceForm.validate,
     );
     if (visibilityError) {
-      Alert.alert('Visibility required', visibilityError);
+      appAlert(appAlertCopy.admin.visibilityRequiredTitle, visibilityError);
       return;
     }
 
@@ -180,27 +184,34 @@ function ManageImportantUpdates() {
       }
       closeEditor();
     } catch (error) {
-      Alert.alert('Save failed', toAdminWriteErrorMessage(error));
+      appAlert(appAlertCopy.admin.saveFailedTitle, toAdminWriteErrorMessage(error));
     } finally {
       setSavingNotice(false);
     }
   };
 
   const confirmDeleteNotice = (notice: ImportantUpdateNotice) => {
-    Alert.alert('Delete notice', `Remove "${notice.title}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await deleteImportantUpdateNotice(notice.id);
-          } catch (error) {
-            Alert.alert('Delete failed', toAdminWriteErrorMessage(error));
-          }
+    appAlert(
+      appAlertCopy.admin.deleteTitle('notice'),
+      appAlertCopy.admin.deleteConfirm('notice', notice.title),
+      [
+        { text: appAlertButtons.cancel, style: 'cancel' },
+        {
+          text: appAlertButtons.delete,
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteImportantUpdateNotice(notice.id);
+            } catch (error) {
+              appAlert(
+                appAlertCopy.admin.deleteFailedTitle,
+                toAdminWriteErrorMessage(error),
+              );
+            }
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   const listHeader = (

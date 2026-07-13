@@ -1,7 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   RefreshControl,
   StyleSheet,
@@ -20,6 +19,7 @@ import { useAdminUsersList } from '../../hooks/admin/useAdminUsersList';
 import { resetUserQuizProgress } from '../../../services/firebase/adminQuizProgressService';
 import type { AdminUserListItem } from '../../../store/user/types/adminUsers.types';
 import { toAdminWriteErrorMessage } from '../../../utils/admin/adminWriteErrorMessage';
+import { appAlert, appAlertButtons, appAlertCopy } from '../../../utils/alert/appAlert';
 
 function displayUserLabel(user: AdminUserListItem): string {
   const name = user.fullName.trim();
@@ -50,25 +50,25 @@ function ManageUsers() {
 
   const confirmResetQuizProgress = useCallback((user: AdminUserListItem) => {
     const label = displayUserLabel(user);
-    Alert.alert(
-      'Reset quiz progress',
-      `Clear all quiz competition progress for ${label}? They will need to start from the first quiz again.`,
+    appAlert(
+      appAlertCopy.admin.resetQuizProgressConfirmTitle,
+      appAlertCopy.admin.resetQuizProgressConfirm(label),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: appAlertButtons.cancel, style: 'cancel' },
         {
-          text: 'Reset',
+          text: appAlertButtons.reset,
           style: 'destructive',
           onPress: async () => {
             setResettingUid(user.uid);
             try {
               await resetUserQuizProgress(user.uid);
-              Alert.alert(
-                'Quiz progress reset',
-                `Quiz progress for ${label} has been cleared.`,
+              appAlert(
+                appAlertCopy.admin.resetQuizProgressTitle,
+                appAlertCopy.admin.resetQuizProgressSuccess(label),
               );
             } catch (resetError) {
-              Alert.alert(
-                'Reset failed',
+              appAlert(
+                appAlertCopy.admin.resetFailedTitle,
                 toAdminWriteErrorMessage(resetError),
               );
             } finally {

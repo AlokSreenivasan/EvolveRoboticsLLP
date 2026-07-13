@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert } from 'react-native';
 
 import { pickProfilePhotoFromGallery } from '../../../services/profilePhotoPicker';
-import { getErrorMessage } from '../../../utils/firebase/errors';
+import { appAlert, appAlertCopy } from '../../../utils/alert/appAlert';
 
 /**
  * Local thumbnail pick state for course / playlist admin screens.
@@ -36,10 +35,16 @@ export function useAdminImagePicker(existingRemoteUri = '') {
         return;
       }
       if (!result.cancelled && result.message) {
-        Alert.alert('Image', result.message);
+        appAlert(
+          appAlertCopy.admin.imageTitle,
+          appAlertCopy.admin.image(result.message),
+        );
       }
-    } catch (error) {
-      Alert.alert('Could not open gallery', getErrorMessage(error));
+    } catch {
+      appAlert(
+        appAlertCopy.admin.galleryOpenFailedTitle,
+        appAlertCopy.admin.galleryOpenFailed,
+      );
     }
   }, []);
 

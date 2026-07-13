@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CheckCircle2, Circle, Pencil, Plus, Trash2 } from 'lucide-react-native';
 
 import AdminEntityForm from '../../../components/Admin/AdminEntityForm';
@@ -32,6 +32,7 @@ import type { QuizCompetition } from '../../../store/content/types/quizCompetiti
 import type { ExamQuestion } from '../../../store/content/types/exams.types';
 import type { CourseTrack } from '../../../store/content/types/courses.types';
 import { toAdminWriteErrorMessage } from '../../../utils/admin/adminWriteErrorMessage';
+import { appAlert, appAlertButtons, appAlertCopy } from '../../../utils/alert/appAlert';
 
 type QuizFormState = {
   title: string;
@@ -209,7 +210,10 @@ function ManageQuizCompetitions() {
 
   const upsertQuestion = () => {
     if (!questionDraft.prompt.trim()) {
-      Alert.alert('Question required', 'Enter a question prompt.');
+      appAlert(
+        appAlertCopy.admin.questionRequiredTitle,
+        appAlertCopy.admin.questionRequired,
+      );
       return;
     }
 
@@ -217,7 +221,10 @@ function ManageQuizCompetitions() {
       choice => !choice.trim(),
     );
     if (missingChoiceIndex >= 0) {
-      Alert.alert('All choices required', 'Enter all 4 options.');
+      appAlert(
+        appAlertCopy.admin.choicesRequiredTitle,
+        appAlertCopy.admin.allChoicesRequired(4, 'options'),
+      );
       return;
     }
 
@@ -236,19 +243,23 @@ function ManageQuizCompetitions() {
   };
 
   const confirmDeleteQuestion = (question: ExamQuestion) => {
-    Alert.alert('Delete question', 'Remove this question from the quiz?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: () => {
-          setForm(prev => ({
-            ...prev,
-            questions: (prev.questions ?? []).filter(q => q.id !== question.id),
-          }));
+    appAlert(
+      appAlertCopy.admin.deleteTitle('question'),
+      appAlertCopy.admin.deleteQuestionConfirm('quiz'),
+      [
+        { text: appAlertButtons.cancel, style: 'cancel' },
+        {
+          text: appAlertButtons.delete,
+          style: 'destructive',
+          onPress: () => {
+            setForm(prev => ({
+              ...prev,
+              questions: (prev.questions ?? []).filter(q => q.id !== question.id),
+            }));
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   const validateQuiz = (): string | null => {
@@ -276,7 +287,7 @@ function ManageQuizCompetitions() {
   const handleSaveQuiz = async () => {
     const validationError = validateQuiz();
     if (validationError) {
-      Alert.alert('Cannot save quiz', validationError);
+      appAlert(appAlertCopy.admin.cannotSaveTitle('quiz'), validationError);
       return;
     }
 
@@ -285,7 +296,7 @@ function ManageQuizCompetitions() {
       audienceForm.validate,
     );
     if (visibilityError) {
-      Alert.alert('Visibility required', visibilityError);
+      appAlert(appAlertCopy.admin.visibilityRequiredTitle, visibilityError);
       return;
     }
 
@@ -313,27 +324,34 @@ function ManageQuizCompetitions() {
       }
       closeEditor();
     } catch (error) {
-      Alert.alert('Save failed', toAdminWriteErrorMessage(error));
+      appAlert(appAlertCopy.admin.saveFailedTitle, toAdminWriteErrorMessage(error));
     } finally {
       setSaving(false);
     }
   };
 
   const confirmDeleteQuiz = (quiz: QuizCompetition) => {
-    Alert.alert('Delete quiz', `Remove "${quiz.title}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await deleteQuizCompetition(quiz.id);
-          } catch (error) {
-            Alert.alert('Delete failed', toAdminWriteErrorMessage(error));
-          }
+    appAlert(
+      appAlertCopy.admin.deleteTitle('quiz'),
+      appAlertCopy.admin.deleteConfirm('quiz', quiz.title),
+      [
+        { text: appAlertButtons.cancel, style: 'cancel' },
+        {
+          text: appAlertButtons.delete,
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteQuizCompetition(quiz.id);
+            } catch (error) {
+              appAlert(
+                appAlertCopy.admin.deleteFailedTitle,
+                toAdminWriteErrorMessage(error),
+              );
+            }
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   const listHeader = (
