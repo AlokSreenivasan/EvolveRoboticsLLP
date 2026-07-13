@@ -6,23 +6,33 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { BookOpen, FolderKanban } from 'lucide-react-native';
 
 import BackButton from '../../../components/BackButton';
 import { cardShadow, colors, spacing } from '../../../constants/theme';
+import type { LoginScreenNavigationProp } from '../../../types/navigation';
 
 type ToDoBlockProps = {
   label: string;
   icon: typeof FolderKanban;
   accentColor: string;
   accentBackground: string;
+  onPress?: () => void;
 };
 
-function ToDoBlock({ label, icon: Icon, accentColor, accentBackground }: ToDoBlockProps) {
+function ToDoBlock({
+  label,
+  icon: Icon,
+  accentColor,
+  accentBackground,
+  onPress,
+}: ToDoBlockProps) {
   return (
     <TouchableOpacity
       style={styles.block}
       activeOpacity={0.85}
+      onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={label}>
       <View style={[styles.iconCircle, { backgroundColor: accentBackground }]}>
@@ -34,6 +44,8 @@ function ToDoBlock({ label, icon: Icon, accentColor, accentBackground }: ToDoBlo
 }
 
 function ToDoScreen() {
+  const navigation = useNavigation<LoginScreenNavigationProp>();
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -47,12 +59,14 @@ function ToDoScreen() {
           icon={FolderKanban}
           accentColor={colors.accentBlue}
           accentBackground="#EEF4FC"
+          onPress={() => navigation.navigate('Projects')}
         />
         <ToDoBlock
           label="Lessons"
           icon={BookOpen}
           accentColor={colors.primary}
           accentBackground={colors.primaryLight}
+          onPress={() => navigation.navigate('ContinueLearningList')}
         />
       </View>
     </SafeAreaView>

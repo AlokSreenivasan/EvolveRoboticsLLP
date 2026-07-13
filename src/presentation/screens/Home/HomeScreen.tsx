@@ -1,12 +1,10 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   RefreshControl,
   SafeAreaView,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -33,8 +31,10 @@ import { useAuth } from '../../context/AuthContext';
 import { useHomeFeedFocus, useHomeFeedRefresh } from '../../context/HomeFeedContext';
 import { useAdminNavigation } from '../../hooks/useAdminNavigation';
 import { useContinueLearningPlaylists } from '../../hooks/useContinueLearningPlaylists';
+import { useContinueLearningProgress } from '../../hooks/useContinueLearningProgress';
 import { useStoredProfileFullName } from '../../hooks/useStoredProfileFullName';
 import { useUserRole } from '../../hooks/useUserRole';
+import { isPlaylistInProgress } from '../../../utils/continueLearning/formatVideoProgress';
 
 const TAB_BAR_HEIGHT = 64;
 
@@ -48,7 +48,26 @@ function HomeScreen() {
   const { isAdmin, roleLoading } = useUserRole();
   const { openAdmin } = useAdminNavigation();
   const { playlists, loading: playlistsLoading } = useContinueLearningPlaylists();
+  const {
+    getVideosWatched,
+    getHasStartedWatching,
+    loading: progressLoading,
+  } = useContinueLearningProgress();
   const scrollRef = useRef<ScrollView>(null);
+
+  const resumePlaylists = useMemo(
+    () =>
+      playlists.filter(playlist =>
+        isPlaylistInProgress(
+          getVideosWatched(playlist.id),
+          getHasStartedWatching(playlist.id),
+        ),
+      ),
+    [getHasStartedWatching, getVideosWatched, playlists],
+  );
+
+  const showContinueLearningSection =
+    !playlistsLoading && !progressLoading && resumePlaylists.length > 0;
 
   useEffect(() => {
     if (profileLoading || isProfileComplete(profile)) {
@@ -121,31 +140,24 @@ function HomeScreen() {
         <StreakBoardPanel />
 
         <View style={styles.section}>
-          <HomeSectionHeader
-            title="Continue learning"
-            actionLabel="View all"
-            onActionPress={() => navigation.navigate('ContinueLearningList')}
-          />
-          {playlistsLoading ? (
-            <ActivityIndicator
-              color={colors.primary}
-              style={styles.playlistsLoader}
-            />
-          ) : playlists.length === 0 ? (
-            <Text style={styles.playlistsEmpty}>
-              New courses will appear here soon.
-            </Text>
-          ) : (
-            <FlatList
-              horizontal
-              data={playlists}
-              keyExtractor={playlistKeyExtractor}
-              renderItem={renderPlaylist}
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.horizontalList}
-              {...HORIZONTAL_LIST_PERF}
-            />
-          )}
+          {showContinueLearningSection ? (
+            <>
+              <HomeSectionHeader
+                title="Continue Learning"
+                actionLabel="View all"
+                onActionPress={() => navigation.navigate('ContinueLearningList')}
+              />
+              <FlatList
+                horizontal
+                data={resumePlaylists}
+                keyExtractor={playlistKeyExtractor}
+                renderItem={renderPlaylist}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.horizontalList}
+                {...HORIZONTAL_LIST_PERF}
+              />
+            </>
+          ) : null}
           <QuizCompetitionHomePanel embedded />
         </View>
 
@@ -188,16 +200,6 @@ const styles = StyleSheet.create({
   },
   horizontalList: {
     paddingRight: 4,
-  },
-  playlistsLoader: {
-    marginVertical: 24,
-  },
-  playlistsEmpty: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    lineHeight: 20,
-    paddingHorizontal: 4,
-    marginBottom: 4,
   },
   tabBarWrap: {
     position: 'absolute',

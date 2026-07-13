@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { Mail, Phone, RotateCcw, User } from 'lucide-react-native';
+import { GraduationCap, Mail, Phone, RotateCcw, School, User } from 'lucide-react-native';
 
 import AdminIconButton from './AdminIconButton';
 import { colors, cardShadow } from '../../constants/theme';
@@ -9,6 +9,8 @@ type AdminUserListRowProps = {
   fullName: string;
   email: string;
   phoneNumber: string;
+  schoolLabel?: string | null;
+  gradeLabel?: string | null;
   onResetQuizProgress?: () => void;
   resettingQuizProgress?: boolean;
 };
@@ -27,6 +29,8 @@ function AdminUserListRow({
   fullName,
   email,
   phoneNumber,
+  schoolLabel,
+  gradeLabel,
   onResetQuizProgress,
   resettingQuizProgress,
 }: AdminUserListRowProps) {
@@ -59,6 +63,22 @@ function AdminUserListRow({
           {displayValue(phoneNumber, 'No phone')}
         </Text>
       </View>
+      {schoolLabel ? (
+        <View style={styles.detailRow}>
+          <School size={14} color={colors.textMuted} strokeWidth={2} />
+          <Text style={styles.detailText} numberOfLines={1}>
+            {schoolLabel}
+          </Text>
+        </View>
+      ) : null}
+      {gradeLabel ? (
+        <View style={styles.detailRow}>
+          <GraduationCap size={14} color={colors.textMuted} strokeWidth={2} />
+          <Text style={styles.detailText} numberOfLines={1}>
+            {gradeLabel}
+          </Text>
+        </View>
+      ) : null}
     </View>
   );
 }

@@ -12,6 +12,7 @@ export const FIRESTORE_COLLECTIONS = {
   notifications: 'notifications',
   schools: 'schools',
   chatKeywords: 'chatKeywords',
+  projects: 'projects',
 } as const;
 
 /** Document IDs inside {@link FIRESTORE_COLLECTIONS.appContent}. */
@@ -20,6 +21,7 @@ export const APP_CONTENT_DOCS = {
   upcomingEventsSection: 'upcomingEvents',
   resourcesSection: 'resources',
   assignmentsSection: 'assignments',
+  projectsSection: 'projects',
 } as const;
 
 export const STORAGE_PATHS = {
@@ -38,4 +40,6 @@ export const STORAGE_PATHS = {
     `resourceNotes/${uid}/${noteId}.pdf`,
   assignmentPdf: (uid: string, assignmentId: string) =>
     `assignments/${uid}/${assignmentId}.pdf`,
+  projectImage: (uid: string, projectId: string, extension = '.jpg') =>
+    `projectImages/${uid}/${projectId}${extension}`,
 } as const;

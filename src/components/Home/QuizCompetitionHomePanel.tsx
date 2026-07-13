@@ -48,7 +48,7 @@ function getFeaturedQuizIndex(
 }
 
 type QuizCompetitionHomePanelProps = {
-  /** Renders inside Continue learning with tighter top spacing. */
+  /** Renders inside Lessons with tighter top spacing. */
   embedded?: boolean;
 };
 

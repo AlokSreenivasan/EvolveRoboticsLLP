@@ -2,6 +2,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 
 import type { ContinueLearningPlaylist } from '../store/content/types/continueLearningPlaylists.types';
+import type { Project } from '../store/content/types/projects.types';
 
 export type AdminStackParamList = {
   AdminDashboard: undefined;
@@ -17,6 +18,7 @@ export type AdminStackParamList = {
   AdminNotifications: undefined;
   ManageSchools: undefined;
   ManageChatKeywords: undefined;
+  ManageProjects: undefined;
 };
 
 export type RootStackParamList = {
@@ -28,6 +30,10 @@ export type RootStackParamList = {
   Home: undefined;
   /** To Do hub — Projects and Lessons. */
   ToDo: undefined;
+  /** Published projects from To Do → Projects. */
+  Projects: undefined;
+  /** Full project requirements from Projects list. */
+  ProjectDetail: { project: Project };
   Settings: undefined;
   ChangePassword: undefined;
   PrivacySettings: undefined;
@@ -45,7 +51,7 @@ export type RootStackParamList = {
   };
   /** Course catalog — optional `track` filters kids vs professionals. */
   Courses: { track?: 'kids' | 'professionals' } | undefined;
-  /** Full list of continue-learning course video cards from home. */
+  /** Full list of lesson playlists from Home and To Do. */
   ContinueLearningList: undefined;
   /** Full list of in-app announcements from home. */
   NotificationsList: undefined;

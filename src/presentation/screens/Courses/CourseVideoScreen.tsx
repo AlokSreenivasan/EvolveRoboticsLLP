@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -10,14 +10,29 @@ import { RouteProp, useRoute } from '@react-navigation/native';
 import BackButton from '../../../components/BackButton';
 import CourseVideoPlayer from '../../../components/Courses/CourseVideoPlayer';
 import { colors, spacing } from '../../../constants/theme';
-import { recordPlaylistVideoProgress } from '../../../services/firebase/continueLearningProgressService';
+import {
+  recordPlaylistVideoProgress,
+  recordVideoWatchSeconds,
+} from '../../../services/firebase/continueLearningProgressService';
 import type { RootStackParamList } from '../../../types/navigation';
+import { getVideoWatchSeconds } from '../../../utils/continueLearning/formatVideoProgress';
+import { useContinueLearningProgress } from '../../hooks/useContinueLearningProgress';
 
 type CourseVideoRouteProp = RouteProp<RootStackParamList, 'CourseVideo'>;
 
 function CourseVideoScreen() {
   const route = useRoute<CourseVideoRouteProp>();
   const { playlist, videoId, videoTitle, videoIndex } = route.params;
+  const { progressByPlaylistId } = useContinueLearningProgress();
+  const [sessionWatchSeconds, setSessionWatchSeconds] = useState(0);
+
+  const savedWatchSeconds =
+    progressByPlaylistId[playlist.id]?.watchSecondsByVideoId ?? {};
+
+  const initialWatchSeconds = useMemo(() => {
+    const saved = getVideoWatchSeconds(savedWatchSeconds, videoId);
+    return Math.max(saved, sessionWatchSeconds);
+  }, [savedWatchSeconds, sessionWatchSeconds, videoId]);
 
   useEffect(() => {
     void recordPlaylistVideoProgress(
@@ -26,6 +41,21 @@ function CourseVideoScreen() {
       playlist.videoCount,
     ).catch(() => undefined);
   }, [playlist.id, playlist.videoCount, videoIndex]);
+
+  const handleWatchProgress = useCallback(
+    (watchSeconds: number) => {
+      setSessionWatchSeconds(previous => Math.max(previous, watchSeconds));
+
+      void recordVideoWatchSeconds(
+        playlist.id,
+        videoId,
+        watchSeconds,
+        videoIndex + 1,
+        playlist.videoCount,
+      ).catch(() => undefined);
+    },
+    [playlist.id, playlist.videoCount, videoId, videoIndex],
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -37,7 +67,12 @@ function CourseVideoScreen() {
       </View>
 
       <View style={styles.playerSection}>
-        <CourseVideoPlayer key={videoId} videoId={videoId} />
+        <CourseVideoPlayer
+          key={videoId}
+          videoId={videoId}
+          initialWatchSeconds={initialWatchSeconds}
+          onWatchProgress={handleWatchProgress}
+        />
         <View style={styles.playingMeta}>
           <Text style={styles.lessonBadge}>
             Lesson {videoIndex + 1} of {playlist.videoCount}

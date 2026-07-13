@@ -1,6 +1,7 @@
 import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
 import type {
+  AdminUserListFilters,
   AdminUserListItem,
   AdminUsersPageCursor,
   FetchAdminUsersPageInput,
@@ -17,7 +18,6 @@ import { FIRESTORE_COLLECTIONS } from './constants';
 import {
   collection,
   db,
-  documentId,
   getDocs,
   limit,
   orderBy,
@@ -44,7 +44,23 @@ function mapDocToListItem(
     email: (data.email ?? '').trim(),
     phoneNumber: (data.phoneNumber ?? '').trim(),
     role,
+    schoolId: data.schoolId ?? null,
+    grade: data.grade ?? null,
   };
+}
+
+function buildEqualityConstraints(filters: AdminUserListFilters) {
+  const constraints: ReturnType<typeof where>[] = [];
+
+  if (filters.schoolId) {
+    constraints.push(where('schoolId', '==', filters.schoolId));
+  }
+
+  if (filters.grade) {
+    constraints.push(where('grade', '==', filters.grade));
+  }
+
+  return constraints;
 }
 
 function buildRangedUsersQuery(
@@ -52,24 +68,27 @@ function buildRangedUsersQuery(
   term: string,
   pageSize: number,
   cursor: AdminUsersPageCursor | null,
+  filters: AdminUserListFilters,
 ) {
+  const equalityConstraints = buildEqualityConstraints(filters);
+
   if (cursor) {
     return query(
       usersCollection(),
+      ...equalityConstraints,
       orderBy(field),
       where(field, '>=', term),
       where(field, '<=', `${term}\uf8ff`),
-      orderBy(documentId()),
       startAfter(cursor as FirebaseFirestoreTypes.QueryDocumentSnapshot),
       limit(pageSize),
     );
   }
   return query(
     usersCollection(),
+    ...equalityConstraints,
     orderBy(field),
     where(field, '>=', term),
     where(field, '<=', `${term}\uf8ff`),
-    orderBy(documentId()),
     limit(pageSize),
   );
 }
@@ -78,29 +97,43 @@ function buildUsersListQuery(
   pageSize: number,
   searchTerm: string,
   cursor: AdminUsersPageCursor | null,
+  filters: AdminUserListFilters,
 ) {
   const searchMode = resolveAdminUserSearchMode(searchTerm);
+  const equalityConstraints = buildEqualityConstraints(filters);
 
   if (searchMode === 'email') {
     const emailTerm = normalizeAdminUserSearchTerm(searchTerm, 'email');
-    return buildRangedUsersQuery('email', emailTerm, pageSize, cursor);
+    return buildRangedUsersQuery(
+      'email',
+      emailTerm,
+      pageSize,
+      cursor,
+      filters,
+    );
   }
 
   if (searchMode === 'phone') {
     const phoneTerm = normalizeAdminUserSearchTerm(searchTerm, 'phone');
-    return buildRangedUsersQuery('phoneNumber', phoneTerm, pageSize, cursor);
+    return buildRangedUsersQuery(
+      'phoneNumber',
+      phoneTerm,
+      pageSize,
+      cursor,
+      filters,
+    );
   }
 
   if (searchMode === 'name') {
     const nameTerm = normalizeAdminUserSearchTerm(searchTerm, 'name');
-    return buildRangedUsersQuery('fullName', nameTerm, pageSize, cursor);
+    return buildRangedUsersQuery('fullName', nameTerm, pageSize, cursor, filters);
   }
 
   if (cursor) {
     return query(
       usersCollection(),
+      ...equalityConstraints,
       orderBy('fullName'),
-      orderBy(documentId()),
       startAfter(cursor as FirebaseFirestoreTypes.QueryDocumentSnapshot),
       limit(pageSize),
     );
@@ -108,8 +141,8 @@ function buildUsersListQuery(
 
   return query(
     usersCollection(),
+    ...equalityConstraints,
     orderBy('fullName'),
-    orderBy(documentId()),
     limit(pageSize),
   );
 }
@@ -128,6 +161,10 @@ export async function fetchAdminUsersPage(
       pageSize,
       input.searchTerm ?? '',
       input.cursor ?? null,
+      {
+        schoolId: input.schoolId ?? null,
+        grade: input.grade ?? null,
+      },
     );
     const snapshot = await getDocs(listQuery);
     const users = snapshot.docs.map(userDoc =>

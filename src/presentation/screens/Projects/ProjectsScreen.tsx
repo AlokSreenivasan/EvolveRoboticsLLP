@@ -10,34 +10,28 @@ import {
 import { useNavigation } from '@react-navigation/native';
 
 import BackButton from '../../../components/BackButton';
-import ContinueLearningCard from '../../../components/Home/ContinueLearningCard';
+import ProjectCard from '../../../components/Projects/ProjectCard';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import { colors, spacing } from '../../../constants/theme';
-import type { ContinueLearningPlaylist } from '../../../store/content/types/continueLearningPlaylists.types';
+import type { Project } from '../../../store/content/types/projects.types';
 import type { LoginScreenNavigationProp } from '../../../types/navigation';
-import { useHomeFeedFocus } from '../../context/HomeFeedContext';
-import { useContinueLearningPlaylists } from '../../hooks/useContinueLearningPlaylists';
+import { useProjects } from '../../hooks/useProjects';
 
-function ContinueLearningListScreen() {
-  useHomeFeedFocus();
+function ProjectsScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
-  const { playlists, loading, error } = useContinueLearningPlaylists();
+  const { section, projects, loading, error } = useProjects();
 
-  const renderPlaylist = useCallback(
-    ({ item }: { item: ContinueLearningPlaylist }) => (
-      <ContinueLearningCard
-        variant="list"
-        playlist={item}
-        onPress={() => navigation.navigate('CoursePlaylist', { playlist: item })}
+  const renderProject = useCallback(
+    ({ item }: { item: Project }) => (
+      <ProjectCard
+        project={item}
+        onPress={() => navigation.navigate('ProjectDetail', { project: item })}
       />
     ),
     [navigation],
   );
 
-  const keyExtractor = useCallback(
-    (item: ContinueLearningPlaylist) => item.id,
-    [],
-  );
+  const keyExtractor = useCallback((item: Project) => item.id, []);
 
   const listEmpty = useCallback(() => {
     if (loading) {
@@ -46,7 +40,7 @@ function ContinueLearningListScreen() {
     if (error) {
       return (
         <View style={styles.messageCard}>
-          <Text style={styles.messageTitle}>Could not load videos</Text>
+          <Text style={styles.messageTitle}>Could not load projects</Text>
           <Text style={styles.messageText}>
             Go back and try again in a moment.
           </Text>
@@ -55,9 +49,9 @@ function ContinueLearningListScreen() {
     }
     return (
       <View style={styles.messageCard}>
-        <Text style={styles.messageTitle}>No lessons yet</Text>
+        <Text style={styles.messageTitle}>No projects yet</Text>
         <Text style={styles.messageText}>
-          New lesson playlists will appear here once they are published.
+          New projects will appear here once they are published.
         </Text>
       </View>
     );
@@ -67,16 +61,16 @@ function ContinueLearningListScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <BackButton withSpacingBelow />
-        <Text style={styles.title}>Lessons</Text>
-        <Text style={styles.subtitle}>
-          Watch lesson videos and pick up where you left off.
-        </Text>
+        <Text style={styles.title}>{section.sectionTitle}</Text>
+        {section.sectionSubtitle?.trim() ? (
+          <Text style={styles.subtitle}>{section.sectionSubtitle.trim()}</Text>
+        ) : null}
       </View>
 
       <FlatList
-        data={loading || error ? [] : playlists}
+        data={loading || error ? [] : projects}
         keyExtractor={keyExtractor}
-        renderItem={renderPlaylist}
+        renderItem={renderProject}
         ListEmptyComponent={listEmpty}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -141,4 +135,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ContinueLearningListScreen;
+export default ProjectsScreen;

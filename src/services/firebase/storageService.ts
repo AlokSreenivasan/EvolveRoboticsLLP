@@ -64,6 +64,17 @@ function buildCourseThumbnailRef(
   );
 }
 
+function buildProjectImageRef(
+  uid: string,
+  projectId: string,
+  localUri: string,
+) {
+  const extension = resolveFileExtension(localUri);
+  return storage().ref(
+    STORAGE_PATHS.projectImage(uid, projectId, extension),
+  );
+}
+
 function buildResourceNotePdfRef(uid: string, noteId: string) {
   return storage().ref(STORAGE_PATHS.resourceNotePdf(uid, noteId));
 }
@@ -274,6 +285,58 @@ export async function uploadCourseThumbnail(
       error,
       'UPLOAD_FAILED',
       'Failed to upload course thumbnail.',
+    );
+  }
+}
+
+/** Uploads a project cover image; requires Storage rules for projectImages. */
+export async function uploadProjectImage(
+  projectId: string,
+  localFileUri: string,
+): Promise<string> {
+  try {
+    const trimmedUri = localFileUri.trim();
+    if (!trimmedUri) {
+      throw new Error('A valid local image URI is required.');
+    }
+    if (!projectId.trim()) {
+      throw new Error('A project id is required.');
+    }
+
+    const uid = await syncFirestoreAuthSession();
+
+    const reference = buildProjectImageRef(uid, projectId.trim(), trimmedUri);
+    await reference.putFile(trimmedUri, {
+      contentType: resolveContentType(trimmedUri),
+    });
+    return reference.getDownloadURL();
+  } catch (error) {
+    throw wrapFirebaseError(
+      error,
+      'UPLOAD_FAILED',
+      'Failed to upload project image.',
+    );
+  }
+}
+
+export async function deleteProjectImageByUrlSafe(
+  imageUrl: string | null | undefined,
+): Promise<void> {
+  if (!isFirebaseStorageUrl(imageUrl)) {
+    return;
+  }
+
+  try {
+    await storage().refFromURL(imageUrl!.trim()).delete();
+  } catch (error) {
+    const { code } = extractFirebaseErrorDetails(error);
+    if (isFirebaseNotFoundError(code)) {
+      return;
+    }
+    logFirebaseOperationError(
+      'deleteProjectImageByUrlSafe',
+      'deleteByUrl',
+      error,
     );
   }
 }

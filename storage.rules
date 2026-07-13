@@ -44,6 +44,18 @@ service firebase.storage {
       allow delete: if request.auth != null && request.auth.uid == uid;
     }
 
+    match /projectImages/{uid}/{imageFile} {
+      allow read: if request.auth != null;
+
+      allow write: if request.auth != null
+        && request.auth.uid == uid
+        && imageFile.matches('^[A-Za-z0-9_-]+\\.(jpg|jpeg|png|webp)$')
+        && request.resource.size < 5 * 1024 * 1024
+        && isImageUpload();
+
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+
     match /resourceNotes/{uid}/{pdfFile} {
       allow read: if request.auth != null;
 

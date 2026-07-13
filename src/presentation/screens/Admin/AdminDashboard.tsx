@@ -6,6 +6,7 @@ import {
   Calendar,
   ClipboardCheck,
   ClipboardList,
+  FolderKanban,
   FolderOpen,
   LayoutDashboard,
   Megaphone,
@@ -34,8 +35,8 @@ type AdminMenuItem = {
 const MENU_ITEMS: AdminMenuItem[] = [
   {
     key: 'ManageContinueLearningPlaylists',
-    title: 'Continue Learning',
-    description: 'Add YouTube playlists for the home carousel',
+    title: 'Lessons',
+    description: 'Add YouTube lesson playlists for Home and To Do',
     icon: PlayCircle,
   },
   {
@@ -79,6 +80,12 @@ const MENU_ITEMS: AdminMenuItem[] = [
     title: 'Manage Courses',
     description: 'Create, edit, and publish learning content',
     icon: BookOpen,
+  },
+  {
+    key: 'ManageProjects',
+    title: 'Projects',
+    description: 'Create projects with visibility for the To Do screen',
+    icon: FolderKanban,
   },
   {
     key: 'ManageUsers',

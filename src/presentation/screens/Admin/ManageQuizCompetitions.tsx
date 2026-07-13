@@ -359,7 +359,7 @@ function ManageQuizCompetitions() {
       <Text style={adminStyles.blockTitle}>Quiz competition</Text>
       <Text style={styles.hintText}>
         Create timed quizzes with multiple questions. Mark one correct option per
-        question and set visibility the same way as Continue Learning.
+        question and set visibility the same way as Lessons.
       </Text>
       <AdminListSectionHeader title="All quizzes" onAdd={openCreateEditor} />
     </>

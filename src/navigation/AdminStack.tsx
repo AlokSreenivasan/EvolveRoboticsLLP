@@ -15,6 +15,7 @@ import ManageCourses from '../presentation/screens/Admin/ManageCourses';
 import ManageUsers from '../presentation/screens/Admin/ManageUsers';
 import ManageSchools from '../presentation/screens/Admin/ManageSchools';
 import ManageChatKeywords from '../presentation/screens/Admin/ManageChatKeywords';
+import ManageProjects from '../presentation/screens/Admin/ManageProjects';
 import type { AdminStackParamList } from '../types/navigation';
 
 const Stack = createNativeStackNavigator<AdminStackParamList>();
@@ -57,6 +58,7 @@ function AdminStackNavigator() {
           name="ManageChatKeywords"
           component={ManageChatKeywords}
         />
+        <Stack.Screen name="ManageProjects" component={ManageProjects} />
         <Stack.Screen
           name="AdminNotifications"
           component={AdminNotifications}

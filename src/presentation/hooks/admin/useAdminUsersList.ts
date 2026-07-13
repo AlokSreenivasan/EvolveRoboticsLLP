@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   ADMIN_USERS_PAGE_SIZE,
@@ -12,10 +12,17 @@ import { getErrorMessage } from '../../../utils/firebase/errors';
 
 const SEARCH_DEBOUNCE_MS = 350;
 
+type LoadPageFilters = {
+  schoolId: string | null;
+  grade: string | null;
+};
+
 export function useAdminUsersList() {
   const [users, setUsers] = useState<AdminUserListItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null);
+  const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -34,7 +41,11 @@ export function useAdminUsersList() {
   }, [searchTerm]);
 
   const loadPage = useCallback(
-    async (mode: 'initial' | 'more' | 'refresh', search: string) => {
+    async (
+      mode: 'initial' | 'more' | 'refresh',
+      search: string,
+      filters: LoadPageFilters,
+    ) => {
       const requestId = ++requestIdRef.current;
       const isMore = mode === 'more';
 
@@ -51,6 +62,8 @@ export function useAdminUsersList() {
           searchTerm: search,
           pageSize: ADMIN_USERS_PAGE_SIZE,
           cursor: isMore ? cursorRef.current : null,
+          schoolId: filters.schoolId,
+          grade: filters.grade,
         });
 
         if (requestId !== requestIdRef.current) {
@@ -85,30 +98,60 @@ export function useAdminUsersList() {
     [],
   );
 
+  const activeFilters = useMemo<LoadPageFilters>(
+    () => ({
+      schoolId: selectedSchoolId,
+      grade: selectedGrade,
+    }),
+    [selectedGrade, selectedSchoolId],
+  );
+
   useEffect(() => {
     cursorRef.current = null;
-    loadPage('initial', debouncedSearch);
-  }, [debouncedSearch, loadPage]);
+    loadPage('initial', debouncedSearch, activeFilters);
+  }, [activeFilters, debouncedSearch, loadPage]);
 
   const loadMore = useCallback(() => {
     if (loading || loadingMore || refreshing || !hasMore) {
       return;
     }
-    loadPage('more', debouncedSearch);
-  }, [debouncedSearch, hasMore, loadPage, loading, loadingMore, refreshing]);
+    loadPage('more', debouncedSearch, activeFilters);
+  }, [
+    activeFilters,
+    debouncedSearch,
+    hasMore,
+    loadPage,
+    loading,
+    loadingMore,
+    refreshing,
+  ]);
 
   const refresh = useCallback(() => {
     if (loading || refreshing) {
       return;
     }
     cursorRef.current = null;
-    loadPage('refresh', debouncedSearch);
-  }, [debouncedSearch, loadPage, loading, refreshing]);
+    loadPage('refresh', debouncedSearch, activeFilters);
+  }, [activeFilters, debouncedSearch, loadPage, loading, refreshing]);
+
+  const clearFilters = useCallback(() => {
+    setSelectedSchoolId(null);
+    setSelectedGrade(null);
+  }, []);
+
+  const hasActiveFilters =
+    selectedSchoolId !== null || selectedGrade !== null;
 
   return {
     users,
     searchTerm,
     setSearchTerm,
+    selectedSchoolId,
+    setSelectedSchoolId,
+    selectedGrade,
+    setSelectedGrade,
+    clearFilters,
+    hasActiveFilters,
     loading,
     loadingMore,
     refreshing,

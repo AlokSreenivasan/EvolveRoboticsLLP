@@ -104,9 +104,22 @@ export {
   updateChatKeyword,
 } from './chatKeywordsService';
 export {
+  createProject,
+  deleteProject,
+  ensureProjectsSectionDefaults,
+  moveProject,
+  reorderProjects,
+  subscribeProjects,
+  subscribeProjectsSection,
+  updateProject,
+  updateProjectsSection,
+} from './projectsService';
+export {
   deleteAssignmentPdfByUrlSafe,
+  deleteProjectImageByUrlSafe,
   deleteResourceNotePdfByUrlSafe,
   uploadAssignmentPdf,
+  uploadProjectImage,
   uploadResourceNotePdf,
 } from './storageService';
 export {

@@ -377,8 +377,8 @@ function ManageContinueLearningPlaylists() {
         </View>
         <Text style={styles.hint}>
           Add a YouTube playlist link, title, and subtitle. Choose a thumbnail
-          from your gallery or paste an image URL. Published playlists appear on
-          Home.
+          from your gallery or paste an image URL. Published lessons appear on
+          Home and in To Do.
         </Text>
       </>
     ),
@@ -392,7 +392,7 @@ function ManageContinueLearningPlaylists() {
     if (playlists.length === 0) {
       return (
         <Text style={styles.emptyText}>
-          No playlists yet. Add a YouTube playlist to show on the home screen.
+          No lessons yet. Add a YouTube playlist to show on Home and in To Do.
         </Text>
       );
     }
@@ -470,8 +470,8 @@ function ManageContinueLearningPlaylists() {
 
   return (
     <AdminScreenLayout
-      title="Continue Learning"
-      subtitle="Add YouTube playlists shown on the home screen"
+      title="Lessons"
+      subtitle="Manage lesson playlists shown on Home and in To Do"
       scrollable={false}>
       <FlatList
         data={playlists}

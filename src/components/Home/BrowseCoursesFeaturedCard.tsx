@@ -67,7 +67,7 @@ function BrowseCoursesFeaturedCard({
     playlist.videoCount,
   );
   const hasProgress = progress > 0;
-  const ctaLabel = hasProgress ? 'Continue learning' : 'Start course';
+  const ctaLabel = hasProgress ? 'Resume lesson' : 'Start lesson';
 
   return (
     <TouchableOpacity

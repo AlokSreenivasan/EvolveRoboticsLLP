@@ -133,6 +133,13 @@ service cloud.firestore {
       allow delete: if isAdmin(database);
     }
 
+    match /projects/{projectId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin(database) && isValidProjectCreate();
+      allow update: if isAdmin(database) && isValidProjectUpdate();
+      allow delete: if isAdmin(database);
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
@@ -523,6 +530,43 @@ function isValidChatKeywordCreate() {
 
 function isValidChatKeywordUpdate() {
   return isValidChatKeywordFields(request.resource.data);
+}
+
+function isValidProjectFields(data) {
+  return isValidSchoolAudienceFields(data)
+    && (!('track' in data) || isValidCourseTrack(data))
+    && data.title is string
+    && data.title.size() > 0
+    && data.title.size() <= 200
+    && data.subtitle is string
+    && data.subtitle.size() <= 300
+    && data.description is string
+    && data.description.size() <= 600
+    && data.imageUri is string
+    && data.imageUri.size() <= 8192
+    && data.sortOrder is number
+    && data.sortOrder >= 0
+    && data.isPublished is bool;
+}
+
+function isValidProjectCreate() {
+  let data = request.resource.data;
+  return data.keys().hasAll([
+      'title',
+      'subtitle',
+      'description',
+      'imageUri',
+      'sortOrder',
+      'isPublished',
+      'createdAt',
+      'updatedAt',
+    ])
+    && isValidProjectFields(data)
+    && isValidCourseTrack(data);
+}
+
+function isValidProjectUpdate() {
+  return isValidProjectFields(request.resource.data);
 }
 
 function isValidExamAttemptCreate() {

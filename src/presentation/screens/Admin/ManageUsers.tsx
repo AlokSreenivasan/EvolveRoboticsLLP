@@ -11,11 +11,14 @@ import {
 import { Search } from 'lucide-react-native';
 
 import AdminScreenLayout from '../../../components/Admin/AdminScreenLayout';
+import AdminUserFilters from '../../../components/Admin/AdminUserFilters';
 import AdminUserListRow from '../../../components/Admin/AdminUserListRow';
 import { adminStyles } from '../../../components/Admin/adminStyles';
+import { getGradeLabel } from '../../../constants/gradeOptions';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import { colors } from '../../../constants/theme';
 import { useAdminUsersList } from '../../hooks/admin/useAdminUsersList';
+import { useSchools } from '../../hooks/useSchools';
 import { resetUserQuizProgress } from '../../../services/firebase/adminQuizProgressService';
 import type { AdminUserListItem } from '../../../store/user/types/adminUsers.types';
 import { toAdminWriteErrorMessage } from '../../../utils/admin/adminWriteErrorMessage';
@@ -35,10 +38,17 @@ function displayUserLabel(user: AdminUserListItem): string {
 
 function ManageUsers() {
   const [resettingUid, setResettingUid] = useState<string | null>(null);
+  const { schools, loading: schoolsLoading } = useSchools();
   const {
     users,
     searchTerm,
     setSearchTerm,
+    selectedSchoolId,
+    setSelectedSchoolId,
+    selectedGrade,
+    setSelectedGrade,
+    clearFilters,
+    hasActiveFilters,
     loading,
     loadingMore,
     refreshing,
@@ -47,6 +57,16 @@ function ManageUsers() {
     loadMore,
     refresh,
   } = useAdminUsersList();
+
+  const schoolNameById = useCallback(
+    (schoolId: string | null) => {
+      if (!schoolId) {
+        return null;
+      }
+      return schools.find(school => school.id === schoolId)?.name ?? null;
+    },
+    [schools],
+  );
 
   const confirmResetQuizProgress = useCallback((user: AdminUserListItem) => {
     const label = displayUserLabel(user);
@@ -86,17 +106,29 @@ function ManageUsers() {
         fullName={item.fullName}
         email={item.email}
         phoneNumber={item.phoneNumber}
+        schoolLabel={schoolNameById(item.schoolId)}
+        gradeLabel={getGradeLabel(item.grade)}
         onResetQuizProgress={() => confirmResetQuizProgress(item)}
         resettingQuizProgress={resettingUid === item.uid}
       />
     ),
-    [confirmResetQuizProgress, resettingUid],
+    [confirmResetQuizProgress, resettingUid, schoolNameById],
   );
 
   const keyExtractor = useCallback((item: AdminUserListItem) => item.uid, []);
 
   const listHeader = (
     <View style={styles.headerBlock}>
+      <AdminUserFilters
+        schools={schools}
+        schoolsLoading={schoolsLoading}
+        selectedSchoolId={selectedSchoolId}
+        onSelectSchool={setSelectedSchoolId}
+        selectedGrade={selectedGrade}
+        onSelectGrade={setSelectedGrade}
+        onClearFilters={clearFilters}
+        hasActiveFilters={hasActiveFilters}
+      />
       <View style={styles.searchWrap}>
         <Search size={18} color={colors.textMuted} strokeWidth={2} />
         <TextInput
@@ -131,20 +163,16 @@ function ManageUsers() {
       );
     }
     if (error) {
-      return (
-        <Text style={adminStyles.emptyText}>
-          {toAdminWriteErrorMessage(error)}
-        </Text>
-      );
+      return <Text style={adminStyles.emptyText}>{error}</Text>;
     }
     return (
       <Text style={adminStyles.emptyText}>
-        {searchTerm.trim().length > 0
-          ? 'No users match your search.'
+        {searchTerm.trim().length > 0 || hasActiveFilters
+          ? 'No users match your search or filters.'
           : 'No users found yet.'}
       </Text>
     );
-  }, [error, loading, searchTerm]);
+  }, [error, hasActiveFilters, loading, searchTerm]);
 
   const listFooter = useCallback(() => {
     if (loadingMore) {

@@ -39,6 +39,9 @@ function getCallableErrorMessage(error: unknown): string | null {
 }
 
 export function getErrorMessage(error: unknown): string {
+  if (typeof error === 'string' && error.trim()) {
+    return error.trim();
+  }
   if (error instanceof FirebaseServiceError) {
     return error.message;
   }
@@ -60,7 +63,9 @@ export function wrapFirebaseError(
   if (error instanceof FirebaseServiceError) {
     return error;
   }
+  const callableMessage = getCallableErrorMessage(error);
   const message =
-    error instanceof Error && error.message ? error.message : fallbackMessage;
+    callableMessage ??
+    (error instanceof Error && error.message ? error.message : fallbackMessage);
   return new FirebaseServiceError(code, message, error);
 }

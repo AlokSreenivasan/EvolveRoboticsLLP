@@ -10,13 +10,22 @@ export type AdminUserListItem = {
   email: string;
   phoneNumber: string;
   role: UserRole;
+  schoolId: string | null;
+  grade: string | null;
+};
+
+export type AdminUserListFilters = {
+  /** When set, only users at this school are returned. */
+  schoolId?: string | null;
+  /** When set, only users in this grade are returned. */
+  grade?: string | null;
 };
 
 export type FetchAdminUsersPageInput = {
   pageSize?: number;
   searchTerm?: string;
   cursor?: AdminUsersPageCursor | null;
-};
+} & AdminUserListFilters;
 
 export type FetchAdminUsersPageResult = {
   users: AdminUserListItem[];
