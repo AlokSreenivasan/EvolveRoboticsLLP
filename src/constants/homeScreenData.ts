@@ -48,7 +48,11 @@ export const HERO_SLIDES = [
 ];
 
 /** Hidden from home quick access until those flows ship. */
-export const QUICK_ACCESS_HIDDEN_IDS = new Set(['live', 'more']);
+export const QUICK_ACCESS_HIDDEN_IDS = new Set([
+  'live',
+  'more',
+  'quiz-competition',
+]);
 
 export const QUICK_ACCESS_ITEMS: QuickAccessItem[] = [
   {

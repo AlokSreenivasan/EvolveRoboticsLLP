@@ -17,7 +17,6 @@ import {
 } from '../../constants/homeScreenData';
 import { colors } from '../../constants/theme';
 import type { LoginScreenNavigationProp } from '../../types/navigation';
-import QuizCompetitionIcon from './icons/QuizCompetitionIcon';
 
 function QuickAccessIcon({
   item,
@@ -41,10 +40,6 @@ function QuickAccessIcon({
       return <FolderOpen size={size} color={color} strokeWidth={stroke} />;
     case 'grid':
       return <Grid3x3 size={size} color={color} strokeWidth={stroke} />;
-    case 'quiz-competition':
-      return (
-        <QuizCompetitionIcon size={size} color={color} strokeWidth={stroke} />
-      );
     default:
       return null;
   }
@@ -60,21 +55,20 @@ function QuickAccessGrid() {
       navigation.navigate('Assignments');
     } else if (itemId === 'exams') {
       navigation.navigate('Exams');
-    } else if (itemId === 'quiz-competition') {
-      navigation.navigate('QuizCompetitions');
     }
   };
 
   const visibleItems = QUICK_ACCESS_ITEMS.filter(
     item => !QUICK_ACCESS_HIDDEN_IDS.has(item.id),
   );
+  const itemWidth = `${100 / visibleItems.length}%`;
 
   return (
     <View style={styles.grid}>
       {visibleItems.map(item => (
         <TouchableOpacity
           key={item.id}
-          style={styles.item}
+          style={[styles.item, { width: itemWidth }]}
           activeOpacity={0.85}
           onPress={() => handlePress(item.id)}
           accessibilityRole="button"
@@ -92,13 +86,10 @@ function QuickAccessGrid() {
 const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
   },
   item: {
-    flex: 1,
     alignItems: 'center',
-    minWidth: '22%',
-    maxWidth: '25%',
   },
   iconBox: {
     width: 56,
