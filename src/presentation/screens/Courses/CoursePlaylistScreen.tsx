@@ -23,6 +23,7 @@ import {
   computeProgressPercent,
   formatVideoProgressLabel,
   isVideoUnlocked,
+  resolvePlaylistVideoCount,
 } from '../../../utils/continueLearning/formatVideoProgress';
 import { useContinueLearningProgress } from '../../hooks/useContinueLearningProgress';
 import { useYouTubePlaylistVideos } from '../../hooks/useYouTubePlaylistVideos';
@@ -43,7 +44,17 @@ function CoursePlaylistScreen() {
   const watchSecondsByVideoId =
     progressByPlaylistId[playlist.id]?.watchSecondsByVideoId ?? {};
   const videosWatched = getVideosWatched(playlist.id);
-  const videoCount = videos.length > 0 ? videos.length : playlist.videoCount;
+  const videoCount = resolvePlaylistVideoCount(
+    videos.length,
+    playlist.videoCount,
+  );
+  const playlistWithCount = useMemo(
+    () =>
+      playlist.videoCount === videoCount
+        ? playlist
+        : { ...playlist, videoCount },
+    [playlist, videoCount],
+  );
   const progressPercent = useMemo(
     () => computeProgressPercent(videosWatched, videoCount),
     [videoCount, videosWatched],
@@ -65,13 +76,13 @@ function CoursePlaylistScreen() {
       }
 
       navigation.navigate('CourseVideo', {
-        playlist,
+        playlist: playlistWithCount,
         videoId: video.videoId,
         videoTitle: video.title,
         videoIndex: index,
       });
     },
-    [navigation, playlist, videos, watchSecondsByVideoId],
+    [navigation, playlistWithCount, videos, watchSecondsByVideoId],
   );
 
   const renderVideo = useCallback(
@@ -138,6 +149,8 @@ function CoursePlaylistScreen() {
         </View>
       </View>
 
+      <View style={styles.listContent}>{listHeader()}</View>
+
       {loading ? (
         <ActivityIndicator
           color={colors.primary}
@@ -155,8 +168,7 @@ function CoursePlaylistScreen() {
           data={videos}
           keyExtractor={keyExtractor}
           renderItem={renderVideo}
-          contentContainerStyle={styles.listContent}
-          ListHeaderComponent={listHeader}
+          contentContainerStyle={styles.listBodyContent}
           showsVerticalScrollIndicator={false}
           extraData={{ watchSecondsByVideoId, videosWatched }}
           {...VERTICAL_LIST_PERF}
@@ -219,6 +231,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   listContent: {
+    paddingHorizontal: spacing.screenHorizontal,
+  },
+  listBodyContent: {
     paddingHorizontal: spacing.screenHorizontal,
     paddingBottom: 24,
   },

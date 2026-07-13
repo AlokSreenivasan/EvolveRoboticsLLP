@@ -47,6 +47,7 @@ import {
   updateContinueLearningPlaylist,
 } from '../../../services/firebase/continueLearningPlaylistsService';
 import { uploadContinueLearningThumbnail } from '../../../services/firebase/storageService';
+import { fetchYouTubePlaylistVideos } from '../../../services/youtube/youtubePlaylistService';
 import { pickProfilePhotoFromGallery } from '../../../services/profilePhotoPicker';
 import type { ContinueLearningPlaylist } from '../../../store/content/types/continueLearningPlaylists.types';
 import {
@@ -230,14 +231,7 @@ function ManageContinueLearningPlaylists() {
       return;
     }
 
-    const videoCount = parseVideoCount(current.videoCount);
-    if (videoCount == null) {
-      appAlert(
-        appAlertCopy.admin.videoCountNeeded,
-        appAlertCopy.admin.videoCountRequired,
-      );
-      return;
-    }
+    const manualVideoCount = parseVideoCount(current.videoCount);
 
     if (current.track !== 'kids' && current.track !== 'professionals') {
       appAlert(
@@ -277,6 +271,25 @@ function ManageContinueLearningPlaylists() {
 
     setSaving(true);
     try {
+      let videoCount = manualVideoCount;
+      try {
+        const videos = await fetchYouTubePlaylistVideos(playlistUrl);
+        if (videos.length > 0) {
+          videoCount = videos.length;
+          setForm(prev => ({ ...prev, videoCount: String(videos.length) }));
+        }
+      } catch {
+        // Keep the manually entered count when YouTube is unavailable.
+      }
+
+      if (videoCount == null) {
+        appAlert(
+          appAlertCopy.admin.videoCountNeeded,
+          appAlertCopy.admin.videoCountRequired,
+        );
+        return;
+      }
+
       if (pendingLocalThumbnail) {
         setUploadingThumbnail(true);
         imageUri = await uploadContinueLearningThumbnail(
@@ -521,7 +534,7 @@ function ManageContinueLearningPlaylists() {
               placeholder="Introduction to Robotics"
             />
             <FormField
-              label="Number of videos in playlist"
+              label="Number of videos (auto-detected from YouTube on save)"
               value={form.videoCount}
               onChangeText={videoCount =>
                 setForm(prev => ({ ...prev, videoCount }))

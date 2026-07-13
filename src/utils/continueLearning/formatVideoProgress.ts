@@ -86,3 +86,17 @@ export function formatPlaylistVideoCountLabel(videoCount: number): string {
   const total = Math.max(1, Math.trunc(videoCount));
   return `${total} ${total === 1 ? 'Video' : 'Videos'}`;
 }
+
+/**
+ * Prefer the live YouTube lesson count when available; otherwise the stored
+ * admin `videoCount` (always at least 1).
+ */
+export function resolvePlaylistVideoCount(
+  liveVideoCount: number,
+  storedVideoCount: number,
+): number {
+  if (Number.isFinite(liveVideoCount) && liveVideoCount > 0) {
+    return Math.trunc(liveVideoCount);
+  }
+  return Math.max(1, Math.trunc(storedVideoCount));
+}

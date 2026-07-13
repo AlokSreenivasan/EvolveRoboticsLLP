@@ -22,6 +22,7 @@ import type {
 import {
   getVideoWatchSeconds,
   isVideoUnlocked,
+  resolvePlaylistVideoCount,
 } from '../../../utils/continueLearning/formatVideoProgress';
 import { useContinueLearningProgress } from '../../hooks/useContinueLearningProgress';
 import { useYouTubePlaylistVideos } from '../../hooks/useYouTubePlaylistVideos';
@@ -45,7 +46,17 @@ function CourseVideoScreen() {
     return Math.max(saved, sessionWatchSeconds);
   }, [savedWatchSeconds, sessionWatchSeconds, videoId]);
 
-  const videoCount = videos.length > 0 ? videos.length : playlist.videoCount;
+  const videoCount = resolvePlaylistVideoCount(
+    videos.length,
+    playlist.videoCount,
+  );
+  const playlistWithCount = useMemo(
+    () =>
+      playlist.videoCount === videoCount
+        ? playlist
+        : { ...playlist, videoCount },
+    [playlist, videoCount],
+  );
   const nextVideo = videos[videoIndex + 1];
   const hasNextVideo = Boolean(nextVideo);
   const nextUnlocked =
@@ -63,9 +74,9 @@ function CourseVideoScreen() {
     void recordPlaylistVideoProgress(
       playlist.id,
       videoIndex + 1,
-      playlist.videoCount,
+      videoCount,
     ).catch(() => undefined);
-  }, [playlist.id, playlist.videoCount, videoIndex]);
+  }, [playlist.id, videoCount, videoIndex]);
 
   const handleWatchProgress = useCallback(
     (watchSeconds: number) => {
@@ -76,10 +87,10 @@ function CourseVideoScreen() {
         videoId,
         watchSeconds,
         videoIndex + 1,
-        playlist.videoCount,
+        videoCount,
       ).catch(() => undefined);
     },
-    [playlist.id, playlist.videoCount, videoId, videoIndex],
+    [playlist.id, videoCount, videoId, videoIndex],
   );
 
   const handleNearEndChange = useCallback((nearEnd: boolean) => {
@@ -92,12 +103,12 @@ function CourseVideoScreen() {
     }
 
     navigation.replace('CourseVideo', {
-      playlist,
+      playlist: playlistWithCount,
       videoId: nextVideo.videoId,
       videoTitle: nextVideo.title,
       videoIndex: videoIndex + 1,
     });
-  }, [canGoNext, navigation, nextVideo, playlist, videoIndex]);
+  }, [canGoNext, navigation, nextVideo, playlistWithCount, videoIndex]);
 
   return (
     <SafeAreaView style={styles.container}>

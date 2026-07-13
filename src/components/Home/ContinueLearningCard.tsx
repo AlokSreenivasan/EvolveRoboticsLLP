@@ -12,7 +12,6 @@ import { cardShadow, colors } from '../../constants/theme';
 import type { ContinueLearningPlaylist } from '../../store/content/types/continueLearningPlaylists.types';
 import {
   computeProgressPercent,
-  formatPlaylistVideoCountLabel,
   formatVideoProgressLabel,
 } from '../../utils/continueLearning/formatVideoProgress';
 
@@ -32,14 +31,9 @@ function ContinueLearningCard({
   videosWatched = 0,
 }: ContinueLearningCardProps) {
   const isList = variant === 'list';
-  const progressPercent = computeProgressPercent(
-    videosWatched,
-    playlist.videoCount,
-  );
-  const hasProgress = progressPercent > 0;
-  const videoCountLabel = hasProgress
-    ? formatVideoProgressLabel(videosWatched, playlist.videoCount)
-    : formatPlaylistVideoCountLabel(playlist.videoCount);
+  const videoCount = Math.max(1, Math.trunc(playlist.videoCount));
+  const progressPercent = computeProgressPercent(videosWatched, videoCount);
+  const videoCountLabel = formatVideoProgressLabel(videosWatched, videoCount);
 
   return (
     <TouchableOpacity
@@ -48,7 +42,7 @@ function ContinueLearningCard({
       onPress={onPress}
       disabled={!onPress}
       accessibilityRole="button"
-      accessibilityLabel={`Open course ${playlist.title}. ${videoCountLabel}${hasProgress ? `, ${progressPercent}% complete` : ''}`}>
+      accessibilityLabel={`Open course ${playlist.title}. ${videoCountLabel}, ${progressPercent}% complete`}>
       <View style={[styles.media, isList && styles.mediaList]}>
         {playlist.imageUri ? (
           <Image source={{ uri: playlist.imageUri }} style={styles.image} />
@@ -56,11 +50,9 @@ function ContinueLearningCard({
           <View style={[styles.image, styles.imagePlaceholder]} />
         )}
         <View style={styles.mediaOverlay} />
-        {hasProgress ? (
-          <View style={styles.progressPill}>
-            <Text style={styles.progressPillText}>{progressPercent}%</Text>
-          </View>
-        ) : null}
+        <View style={styles.progressPill}>
+          <Text style={styles.progressPillText}>{progressPercent}%</Text>
+        </View>
         <View
           style={[styles.playFab, isList && styles.playFabList]}
           accessibilityElementsHidden>
@@ -87,23 +79,23 @@ function ContinueLearningCard({
           </Text>
         ) : null}
 
-        {hasProgress ? (
+        <View
+          style={[styles.progressTrack, isList && styles.progressTrackList]}
+          accessibilityRole="progressbar"
+          accessibilityValue={{
+            min: 0,
+            max: 100,
+            now: progressPercent,
+          }}>
           <View
-            style={[styles.progressTrack, isList && styles.progressTrackList]}
-            accessibilityRole="progressbar"
-            accessibilityValue={{
-              min: 0,
-              max: 100,
-              now: progressPercent,
-            }}>
-            <View
-              style={[
-                styles.progressFill,
-                { width: `${Math.max(progressPercent, 4)}%` },
-              ]}
-            />
-          </View>
-        ) : null}
+            style={[
+              styles.progressFill,
+              {
+                width: `${progressPercent === 0 ? 0 : Math.max(progressPercent, 4)}%`,
+              },
+            ]}
+          />
+        </View>
 
         <View style={styles.footer}>
           <BookOpen
