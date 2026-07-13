@@ -107,18 +107,10 @@ function ProfileScreen() {
     const success = await persistProfile();
 
     if (success) {
-      if (requireCompletion) {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'Home' }],
-        });
-        return;
-      }
-
-      Alert.alert(
-        'Profile Updated',
-        'Your changes have been saved and synced across the app.',
-      );
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Home' }],
+      });
       return;
     }
 
