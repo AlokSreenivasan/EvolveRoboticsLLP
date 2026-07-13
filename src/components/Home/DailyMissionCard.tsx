@@ -6,7 +6,7 @@ import {
   View,
   type ViewStyle,
 } from 'react-native';
-import { Check, Zap } from 'lucide-react-native';
+import { Zap } from 'lucide-react-native';
 
 import { cardShadow, colors } from '../../constants/theme';
 
@@ -36,7 +36,7 @@ function DailyMissionCard({
   const progressPercent = isDone ? 100 : 0;
 
   return (
-    <View
+    <TouchableOpacity
       style={[
         styles.card,
         {
@@ -45,7 +45,10 @@ function DailyMissionCard({
         },
         style,
       ]}
-      accessibilityRole="summary"
+      activeOpacity={0.92}
+      onPress={onStartPress}
+      disabled={!onStartPress}
+      accessibilityRole="button"
       accessibilityLabel={`${title}. Earn ${xpReward} XP. ${isDone ? 'Completed' : 'Not started'}.`}>
       <View
         style={[styles.glow, { backgroundColor: accentBackground }]}
@@ -56,12 +59,6 @@ function DailyMissionCard({
         <View style={[styles.iconWrap, { backgroundColor: accentBackground }]}>
           {icon}
         </View>
-        {isDone ? (
-          <View style={[styles.doneBadge, { backgroundColor: accentBackground }]}>
-            <Check size={11} color={accentColor} strokeWidth={3} />
-            <Text style={[styles.doneText, { color: accentColor }]}>Done</Text>
-          </View>
-        ) : null}
       </View>
 
       <Text style={styles.title} numberOfLines={2}>
@@ -94,20 +91,16 @@ function DailyMissionCard({
         />
       </View>
 
-      {!isDone ? (
-        <TouchableOpacity
-          style={[styles.startButton, { backgroundColor: accentColor }]}
-          activeOpacity={0.88}
-          onPress={onStartPress}
-          disabled={!onStartPress}
-          accessibilityRole="button"
-          accessibilityLabel={`Start ${title}`}>
-          <Text style={styles.startButtonText}>Start</Text>
-        </TouchableOpacity>
-      ) : (
-        <View style={styles.completedSpacer} />
-      )}
-    </View>
+      <TouchableOpacity
+        style={[styles.startButton, { backgroundColor: accentColor }]}
+        activeOpacity={0.88}
+        onPress={onStartPress}
+        disabled={!onStartPress}
+        accessibilityRole="button"
+        accessibilityLabel={`Start ${title}`}>
+        <Text style={styles.startButtonText}>Start</Text>
+      </TouchableOpacity>
+    </TouchableOpacity>
   );
 }
 
@@ -143,19 +136,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  doneBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 20,
-  },
-  doneText: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.15,
   },
   title: {
     fontSize: 15,
@@ -197,9 +177,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#fff',
     letterSpacing: 0.2,
-  },
-  completedSpacer: {
-    height: 34,
   },
 });
 

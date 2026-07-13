@@ -22,14 +22,8 @@ import {
   isQuizMissionCompleteToday,
 } from '../../utils/gamification/dailyMissions';
 
-const LESSONS_THEME = {
+const MISSION_THEME = {
   accentColor: colors.primary,
-  accentBackground: colors.primaryLight,
-  accentBorder: colors.primaryMuted,
-};
-
-const QUIZ_THEME = {
-  accentColor: colors.primaryDark,
   accentBackground: colors.primaryLight,
   accentBorder: colors.primaryMuted,
 };
@@ -56,7 +50,7 @@ function DailyMissionsSection() {
   );
 
   const handleLessonsStart = useCallback(() => {
-    navigation.navigate('ContinueLearningList');
+    navigation.navigate('ToDo', { tab: 'learn' });
   }, [navigation]);
 
   const handleQuizStart = useCallback(() => {
@@ -80,13 +74,13 @@ function DailyMissionsSection() {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}>
         <DailyMissionCard
-          icon={<BookOpen size={20} color={LESSONS_THEME.accentColor} strokeWidth={2.25} />}
+          icon={<BookOpen size={20} color={MISSION_THEME.accentColor} strokeWidth={2.25} />}
           title="Lessons"
           xpReward={DAILY_MISSION_LESSONS_XP}
           isDone={lessonsDone}
-          accentColor={LESSONS_THEME.accentColor}
-          accentBackground={LESSONS_THEME.accentBackground}
-          accentBorder={LESSONS_THEME.accentBorder}
+          accentColor={MISSION_THEME.accentColor}
+          accentBackground={MISSION_THEME.accentBackground}
+          accentBorder={MISSION_THEME.accentBorder}
           onStartPress={handleLessonsStart}
           style={styles.cardSpacing}
         />
@@ -94,16 +88,16 @@ function DailyMissionsSection() {
           icon={
             <QuizCompetitionIcon
               size={20}
-              color={QUIZ_THEME.accentColor}
+              color={MISSION_THEME.accentColor}
               strokeWidth={2.25}
             />
           }
           title="Complete a Quiz"
           xpReward={DAILY_MISSION_QUIZ_XP}
           isDone={quizDone}
-          accentColor={QUIZ_THEME.accentColor}
-          accentBackground={QUIZ_THEME.accentBackground}
-          accentBorder={QUIZ_THEME.accentBorder}
+          accentColor={MISSION_THEME.accentColor}
+          accentBackground={MISSION_THEME.accentBackground}
+          accentBorder={MISSION_THEME.accentBorder}
           onStartPress={handleQuizStart}
         />
       </ScrollView>

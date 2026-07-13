@@ -148,7 +148,7 @@ function HomeScreen() {
               <HomeSectionHeader
                 title="Continue Learning"
                 actionLabel="View all"
-                onActionPress={() => navigation.navigate('ContinueLearningList')}
+                onActionPress={() => navigation.navigate('ToDo', { tab: 'learn' })}
               />
               <FlatList
                 horizontal

@@ -28,8 +28,8 @@ export type RootStackParamList = {
   SignUp: undefined;
   ForgotPassword: undefined;
   Home: undefined;
-  /** To Do hub — Projects and Lessons. */
-  ToDo: undefined;
+  /** To Do hub — Learn and Project tabs. */
+  ToDo: { tab?: 'learn' | 'project' } | undefined;
   /** Published projects from To Do → Projects. */
   Projects: undefined;
   /** Full project requirements from Projects list. */

@@ -1,6 +1,8 @@
 import type { ContinueLearningProgress } from '../../store/content/types/continueLearningProgress.types';
 import type { QuizAttempt } from '../../services/firebase/quizAttemptsService';
 import { isPerfectQuizScore } from '../quizAccess';
+import { computeTotalDailyStreakXp } from './dailyMissions';
+import { formatDateKey } from './gamificationDates';
 
 /** Default XP reward for quizzes without an admin-set value. */
 export const XP_PER_QUIZ = 20;
@@ -27,13 +29,6 @@ export type UserStreakStats = {
   totalXp: number;
   streakDays: number;
 };
-
-function formatDateKey(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
 
 function addDays(date: Date, days: number): Date {
   const next = new Date(date);
@@ -65,19 +60,30 @@ function computeStreakDays(activityDates: Set<string>): number {
   return streak;
 }
 
+function computeQuizXpTotal(quizAttempts: QuizAttempt[]): number {
+  return quizAttempts.reduce((sum, attempt) => {
+    if (!isPerfectQuizScore(attempt)) {
+      return sum;
+    }
+    return (
+      sum +
+      (typeof attempt.xpEarned === 'number' && attempt.xpEarned > 0
+        ? attempt.xpEarned
+        : 0)
+    );
+  }, 0);
+}
+
 export function computeUserStreakStats(
   progressRecords: ContinueLearningProgress[],
   quizAttempts: QuizAttempt[],
 ): UserStreakStats {
-  const totalXp = quizAttempts.reduce((sum, attempt) => {
-    if (!isPerfectQuizScore(attempt)) {
-      return sum;
-    }
-    return sum +
-      (typeof attempt.xpEarned === 'number' && attempt.xpEarned > 0
-        ? attempt.xpEarned
-        : 0);
-  }, 0);
+  const quizXp = computeQuizXpTotal(quizAttempts);
+  const dailyStreakXp = computeTotalDailyStreakXp(
+    progressRecords,
+    quizAttempts,
+  );
+  const totalXp = quizXp + dailyStreakXp;
   const level = Math.floor(totalXp / XP_LEVEL_SIZE) + 1;
   const currentXp = totalXp % XP_LEVEL_SIZE;
 
