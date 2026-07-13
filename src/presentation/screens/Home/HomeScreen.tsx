@@ -13,6 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import ContinueLearningCard from '../../../components/Home/ContinueLearningCard';
+import QuizCompetitionHomePanel from '../../../components/Home/QuizCompetitionHomePanel';
 import FloatingChatAssistant from '../../../components/Home/FloatingChatAssistant';
 import HomeBottomTabBar, {
   type HomeTabKey,
@@ -145,6 +146,7 @@ function HomeScreen() {
               {...HORIZONTAL_LIST_PERF}
             />
           )}
+          <QuizCompetitionHomePanel embedded />
         </View>
 
         <ImportantUpdatesSection />
@@ -195,6 +197,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     lineHeight: 20,
     paddingHorizontal: 4,
+    marginBottom: 4,
   },
   tabBarWrap: {
     position: 'absolute',
