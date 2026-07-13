@@ -33,6 +33,11 @@ export interface AppNotification extends SchoolAudienceFields {
   updatedAt: FirebaseFirestoreTypes.Timestamp | null;
 }
 
+/** Learner-facing notification with per-user read state. */
+export type LearnerNotification = AppNotification & {
+  isRead: boolean;
+};
+
 export type SendLiveNotificationResult = {
   successCount: number;
   failureCount: number;

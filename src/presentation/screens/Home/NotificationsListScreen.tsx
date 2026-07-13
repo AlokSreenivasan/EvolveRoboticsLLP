@@ -16,7 +16,7 @@ import BackButton from '../../../components/BackButton';
 import NotificationItemCard from '../../../components/Home/NotificationItemCard';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import { cardShadow, colors, spacing } from '../../../constants/theme';
-import type { AppNotification } from '../../../store/content/types/notifications.types';
+import type { LearnerNotification } from '../../../store/content/types/notifications.types';
 import type { LoginScreenNavigationProp } from '../../../types/navigation';
 import {
   useHomeFeedFocus,
@@ -27,17 +27,27 @@ import { useNotifications } from '../../hooks/useNotifications';
 function NotificationsListScreen() {
   useHomeFeedFocus();
   const navigation = useNavigation<LoginScreenNavigationProp>();
-  const { displayNotifications, loading, error } = useNotifications();
+  const {
+    displayNotifications,
+    unreadCount,
+    markNotificationRead,
+    loading,
+    error,
+  } = useNotifications();
   const { refresh, refreshing } = useHomeFeedRefresh();
 
   const renderItem = useCallback(
-    ({ item }: { item: AppNotification }) => (
-      <NotificationItemCard notification={item} variant="list" />
+    ({ item }: { item: LearnerNotification }) => (
+      <NotificationItemCard
+        notification={item}
+        variant="list"
+        onMarkRead={markNotificationRead}
+      />
     ),
-    [],
+    [markNotificationRead],
   );
 
-  const keyExtractor = useCallback((item: AppNotification) => item.id, []);
+  const keyExtractor = useCallback((item: LearnerNotification) => item.id, []);
 
   const listEmpty = useCallback(() => {
     if (loading) {
@@ -71,9 +81,9 @@ function NotificationsListScreen() {
 
   const countLabel =
     !loading && !error && displayNotifications.length > 0
-      ? `${displayNotifications.length} update${
-          displayNotifications.length === 1 ? '' : 's'
-        }`
+      ? unreadCount > 0
+        ? `${unreadCount} unread`
+        : 'All caught up'
       : null;
 
   return (

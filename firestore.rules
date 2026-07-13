@@ -48,6 +48,12 @@ service cloud.firestore {
         allow create, update: if isOwner(userId) && isValidNotificationPreferencesWrite();
         allow delete: if isOwner(userId);
       }
+
+      match /notificationReads/{notificationId} {
+        allow read: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidNotificationReadWrite();
+        allow delete: if isOwner(userId);
+      }
     }
 
     match /appContent/{docId} {
@@ -474,6 +480,12 @@ function isValidNotificationPreferencesWrite() {
     && data.appUpdates is bool
     && data.promotionalOffers is bool
     && data.eventsAndWorkshops is bool;
+}
+
+function isValidNotificationReadWrite() {
+  let data = request.resource.data;
+  return data.readAt == request.time
+    && data.keys().hasOnly(['readAt']);
 }
 
 function isValidFcmTokenWrite() {

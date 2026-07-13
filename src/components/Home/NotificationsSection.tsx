@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 
 import { NESTED_LIST_PERF } from '../../constants/listPerformance';
 import { useNotifications } from '../../presentation/hooks/useNotifications';
-import type { AppNotification } from '../../store/content/types/notifications.types';
+import type { LearnerNotification } from '../../store/content/types/notifications.types';
 import type { LoginScreenNavigationProp } from '../../types/navigation';
 import HomeFeedSection from './HomeFeedSection';
 import NotificationItemCard from './NotificationItemCard';
@@ -13,7 +13,8 @@ const HOME_PREVIEW_LIMIT = 3;
 
 function NotificationsSection() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
-  const { displayNotifications, loading, error } = useNotifications();
+  const { displayNotifications, markNotificationRead, loading, error } =
+    useNotifications();
   const previewNotifications = useMemo(
     () => displayNotifications.slice(0, HOME_PREVIEW_LIMIT),
     [displayNotifications],
@@ -21,13 +22,16 @@ function NotificationsSection() {
   const isEmpty = !loading && !error && displayNotifications.length === 0;
 
   const renderItem = useCallback(
-    ({ item }: { item: AppNotification }) => (
-      <NotificationItemCard notification={item} />
+    ({ item }: { item: LearnerNotification }) => (
+      <NotificationItemCard
+        notification={item}
+        onMarkRead={markNotificationRead}
+      />
     ),
-    [],
+    [markNotificationRead],
   );
 
-  const keyExtractor = useCallback((item: AppNotification) => item.id, []);
+  const keyExtractor = useCallback((item: LearnerNotification) => item.id, []);
 
   return (
     <HomeFeedSection

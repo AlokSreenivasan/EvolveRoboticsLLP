@@ -2,7 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useHomeFeedNotifications } from '../context/HomeFeedContext';
 import { subscribeNotifications } from '../../services/firebase/notificationsService';
-import type { AppNotification } from '../../store/content/types/notifications.types';
+import type {
+  AppNotification,
+  LearnerNotification,
+} from '../../store/content/types/notifications.types';
 import { getErrorMessage } from '../../utils/firebase/errors';
 
 type UseNotificationsOptions = {
@@ -38,12 +41,18 @@ export function useNotifications(options?: UseNotificationsOptions) {
     return () => unsub();
   }, [includeUnpublished]);
 
-  const displayNotifications = useMemo(() => notifications, [notifications]);
+  const displayNotifications = useMemo(
+    (): LearnerNotification[] =>
+      notifications.map(item => ({ ...item, isRead: true })),
+    [notifications],
+  );
 
   if (!includeUnpublished) {
     return {
       notifications: homeFeed.notifications,
       displayNotifications: homeFeed.displayNotifications,
+      unreadCount: homeFeed.unreadCount,
+      markNotificationRead: homeFeed.markNotificationRead,
       loading: homeFeed.loading,
       error: homeFeed.error,
     };
@@ -52,6 +61,8 @@ export function useNotifications(options?: UseNotificationsOptions) {
   return {
     notifications,
     displayNotifications,
+    unreadCount: 0,
+    markNotificationRead: async () => undefined,
     loading,
     error,
   };

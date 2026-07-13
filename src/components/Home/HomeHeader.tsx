@@ -13,10 +13,9 @@ type HomeHeaderProps = {
 
 function HomeHeader({ displayName }: HomeHeaderProps) {
   const navigation = useNavigation<LoginScreenNavigationProp>();
-  const { displayNotifications, loading, error } = useNotifications();
+  const { unreadCount, loading, error } = useNotifications();
   const firstName = displayName.trim().split(/\s+/)[0] || 'Learner';
-  const notificationCount =
-    !loading && !error ? displayNotifications.length : 0;
+  const notificationCount = !loading && !error ? unreadCount : 0;
   const badgeLabel =
     notificationCount > 9 ? '9+' : String(notificationCount);
 
@@ -32,7 +31,11 @@ function HomeHeader({ displayName }: HomeHeaderProps) {
       <View style={styles.actions}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Notifications"
+          accessibilityLabel={
+            notificationCount > 0
+              ? `Notifications, ${notificationCount} unread`
+              : 'Notifications'
+          }
           accessibilityHint="View your notifications"
           onPress={() => navigation.navigate('NotificationsList')}
           style={({ pressed }) => [

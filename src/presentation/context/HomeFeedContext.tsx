@@ -16,12 +16,20 @@ import {
   subscribeImportantUpdates,
   subscribeImportantUpdatesSection,
 } from '../../services/firebase/importantUpdatesService';
+import {
+  markNotificationAsRead,
+  subscribeNotificationReads,
+} from '../../services/firebase/notificationReadsService';
 import { subscribeNotifications } from '../../services/firebase/notificationsService';
 import {
   subscribeUpcomingEvents,
   subscribeUpcomingEventsSection,
 } from '../../services/firebase/upcomingEventsService';
-import type { AppNotification } from '../../store/content/types/notifications.types';
+import type { NotificationRead } from '../../store/content/types/notificationReads.types';
+import type {
+  AppNotification,
+  LearnerNotification,
+} from '../../store/content/types/notifications.types';
 import type { ContinueLearningPlaylist } from '../../store/content/types/continueLearningPlaylists.types';
 import type { ContinueLearningProgress } from '../../store/content/types/continueLearningProgress.types';
 import type {
@@ -68,7 +76,9 @@ export type HomeFeedUpcomingEvents = {
 
 export type HomeFeedNotifications = {
   notifications: AppNotification[];
-  displayNotifications: AppNotification[];
+  displayNotifications: LearnerNotification[];
+  unreadCount: number;
+  markNotificationRead: (notificationId: string) => Promise<void>;
   loading: boolean;
   error: string | null;
 };
@@ -122,6 +132,8 @@ const EMPTY_UPCOMING_EVENTS: HomeFeedUpcomingEvents = {
 const EMPTY_NOTIFICATIONS: HomeFeedNotifications = {
   notifications: [],
   displayNotifications: [],
+  unreadCount: 0,
+  markNotificationRead: async () => undefined,
   loading: true,
   error: null,
 };
@@ -209,6 +221,13 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
   const [notificationsError, setNotificationsError] = useState<string | null>(
     null,
   );
+  const [readByNotificationId, setReadByNotificationId] = useState<
+    Record<string, NotificationRead>
+  >({});
+  const [readsLoading, setReadsLoading] = useState(true);
+  const [optimisticReadIds, setOptimisticReadIds] = useState<
+    Record<string, true>
+  >({});
 
   const [refreshNonce, setRefreshNonce] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
@@ -353,6 +372,9 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
       setProgressByPlaylistId({});
       setProgressLoading(false);
       setProgressError(null);
+      setReadByNotificationId({});
+      setReadsLoading(false);
+      setOptimisticReadIds({});
       return;
     }
 
@@ -374,6 +396,41 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
   }, [isActive, refreshNonce, user]);
 
   useEffect(() => {
+    if (!isActive) {
+      return;
+    }
+
+    if (!user) {
+      setReadByNotificationId({});
+      setReadsLoading(false);
+      setOptimisticReadIds({});
+      return;
+    }
+
+    setReadsLoading(true);
+    const unsub = subscribeNotificationReads(
+      next => {
+        setReadByNotificationId(next);
+        setOptimisticReadIds(prev => {
+          const remaining: Record<string, true> = {};
+          Object.keys(prev).forEach(id => {
+            if (!next[id]) {
+              remaining[id] = true;
+            }
+          });
+          return remaining;
+        });
+        setReadsLoading(false);
+      },
+      () => {
+        setReadsLoading(false);
+      },
+    );
+
+    return () => unsub();
+  }, [isActive, refreshNonce, user]);
+
+  useEffect(() => {
     if (!refreshing || !isActive) {
       return;
     }
@@ -383,7 +440,8 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
       !importantLoading &&
       !eventsLoading &&
       !notificationsLoading &&
-      !progressLoading;
+      !progressLoading &&
+      !readsLoading;
 
     if (allSettled) {
       setRefreshing(false);
@@ -395,6 +453,7 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
     notificationsLoading,
     playlistsLoading,
     progressLoading,
+    readsLoading,
     refreshing,
   ]);
 
@@ -408,6 +467,53 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
       progressByPlaylistId[playlistId]?.hasStartedWatching ?? false,
     [progressByPlaylistId],
   );
+
+  const isNotificationRead = useCallback(
+    (notificationId: string) =>
+      Boolean(readByNotificationId[notificationId]) ||
+      Boolean(optimisticReadIds[notificationId]),
+    [optimisticReadIds, readByNotificationId],
+  );
+
+  const displayNotifications = useMemo<LearnerNotification[]>(
+    () =>
+      notifications.map(item => ({
+        ...item,
+        isRead: isNotificationRead(item.id),
+      })),
+    [isNotificationRead, notifications],
+  );
+
+  const unreadCount = useMemo(
+    () => displayNotifications.filter(item => !item.isRead).length,
+    [displayNotifications],
+  );
+
+  const markNotificationRead = useCallback(async (notificationId: string) => {
+    const trimmedId = notificationId.trim();
+    if (
+      !trimmedId ||
+      readByNotificationId[trimmedId] ||
+      optimisticReadIds[trimmedId]
+    ) {
+      return;
+    }
+
+    setOptimisticReadIds(prev => ({ ...prev, [trimmedId]: true }));
+
+    try {
+      await markNotificationAsRead(trimmedId);
+    } catch {
+      setOptimisticReadIds(prev => {
+        if (!prev[trimmedId]) {
+          return prev;
+        }
+        const next = { ...prev };
+        delete next[trimmedId];
+        return next;
+      });
+    }
+  }, [optimisticReadIds, readByNotificationId]);
 
   const value = useMemo<HomeFeedContextValue>(
     () => ({
@@ -439,14 +545,17 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
       },
       notifications: {
         notifications,
-        displayNotifications: notifications,
-        loading: isActive ? notificationsLoading : false,
+        displayNotifications,
+        unreadCount,
+        markNotificationRead,
+        loading: isActive ? notificationsLoading || readsLoading : false,
         error: notificationsError,
       },
       refreshing,
       refresh,
     }),
     [
+      displayNotifications,
       events,
       eventsError,
       eventsLoading,
@@ -457,6 +566,7 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
       importantLoading,
       importantSection,
       isActive,
+      markNotificationRead,
       notices,
       notifications,
       notificationsError,
@@ -467,8 +577,10 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
       progressByPlaylistId,
       progressError,
       progressLoading,
+      readsLoading,
       refresh,
       refreshing,
+      unreadCount,
     ],
   );
 
