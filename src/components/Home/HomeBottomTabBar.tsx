@@ -2,9 +2,9 @@ import React from 'react';
 import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  BookOpen,
-  Calendar,
+  GraduationCap,
   Home,
+  ListTodo,
   Settings,
   Shield,
 } from 'lucide-react-native';
@@ -13,8 +13,8 @@ import { colors } from '../../constants/theme';
 
 export type HomeTabKey =
   | 'home'
-  | 'courses'
-  | 'events'
+  | 'todo'
+  | 'learning'
   | 'settings'
   | 'admin';
 
@@ -27,8 +27,8 @@ type HomeBottomTabBarProps = {
 
 const BASE_TABS: { key: HomeTabKey; label: string; icon: typeof Home }[] = [
   { key: 'home', label: 'Home', icon: Home },
-  { key: 'courses', label: 'Learn', icon: BookOpen },
-  { key: 'events', label: 'Events', icon: Calendar },
+  { key: 'todo', label: 'To Do', icon: ListTodo },
+  { key: 'learning', label: 'Learning', icon: GraduationCap },
   { key: 'settings', label: 'Settings', icon: Settings },
 ];
 

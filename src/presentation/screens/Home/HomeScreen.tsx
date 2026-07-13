@@ -69,11 +69,11 @@ function HomeScreen() {
       case 'settings':
         navigation.navigate('Settings');
         break;
-      case 'courses':
-        navigation.navigate('Courses');
+      case 'todo':
+        navigation.navigate('ToDo');
         break;
-      case 'events':
-        scrollRef.current?.scrollToEnd({ animated: true });
+      case 'learning':
+        navigation.navigate('Courses');
         break;
       case 'home':
       default:

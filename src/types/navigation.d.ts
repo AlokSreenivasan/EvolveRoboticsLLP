@@ -26,6 +26,8 @@ export type RootStackParamList = {
   SignUp: undefined;
   ForgotPassword: undefined;
   Home: undefined;
+  /** To Do hub — Projects and Lessons. */
+  ToDo: undefined;
   Settings: undefined;
   ChangePassword: undefined;
   PrivacySettings: undefined;

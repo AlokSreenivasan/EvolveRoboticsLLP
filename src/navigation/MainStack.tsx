@@ -7,6 +7,7 @@ import CoursesScreen from '../presentation/screens/Courses/CoursesScreen';
 import ContinueLearningListScreen from '../presentation/screens/Home/ContinueLearningListScreen';
 import NotificationsListScreen from '../presentation/screens/Home/NotificationsListScreen';
 import HomeScreen from '../presentation/screens/Home/HomeScreen';
+import ToDoScreen from '../presentation/screens/ToDo/ToDoScreen';
 import ResourcePdfViewerScreen from '../presentation/screens/Resources/ResourcePdfViewerScreen';
 import AssignmentsScreen from '../presentation/screens/Assignments/AssignmentsScreen';
 import ResourcesScreen from '../presentation/screens/Resources/ResourcesScreen';
@@ -63,6 +64,7 @@ function MainStack() {
         initialState={stackInitialState}
         screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Home" component={HomeScreen} />
+      <Stack.Screen name="ToDo" component={ToDoScreen} />
       <Stack.Screen
         name="ContinueLearningList"
         component={ContinueLearningListScreen}
