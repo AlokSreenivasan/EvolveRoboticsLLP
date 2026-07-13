@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   LayoutChangeEvent,
@@ -12,7 +12,10 @@ import YoutubePlayer, {
 } from 'react-native-youtube-iframe';
 
 import { colors } from '../../constants/theme';
-import { VIDEO_UNLOCK_WATCH_SECONDS } from '../../utils/continueLearning/formatVideoProgress';
+import {
+  VIDEO_UNLOCK_WATCH_SECONDS,
+  isPlaybackNearEnd,
+} from '../../utils/continueLearning/formatVideoProgress';
 
 const WATCH_POLL_INTERVAL_MS = 1000;
 const WATCH_SAVE_INTERVAL_SECONDS = 15;
@@ -22,6 +25,8 @@ type CourseVideoPlayerProps = {
   initialWatchSeconds?: number;
   onEnded?: () => void;
   onWatchProgress?: (watchSeconds: number) => void;
+  /** Fires when playback enters/leaves the last minute of the video. */
+  onNearEndChange?: (isNearEnd: boolean) => void;
 };
 
 function CourseVideoPlayer({
@@ -29,14 +34,25 @@ function CourseVideoPlayer({
   initialWatchSeconds = 0,
   onEnded,
   onWatchProgress,
+  onNearEndChange,
 }: CourseVideoPlayerProps) {
   const playerRef = useRef<YoutubeIframeRef>(null);
-  const accumulatedSecondsRef = useRef(Math.max(0, Math.trunc(initialWatchSeconds)));
+  const accumulatedSecondsRef = useRef(
+    Math.max(0, Math.trunc(initialWatchSeconds)),
+  );
   const lastPollAtRef = useRef<number | null>(null);
   const lastSavedSecondsRef = useRef(Math.max(0, Math.trunc(initialWatchSeconds)));
+  const nearEndRef = useRef(false);
+  const onWatchProgressRef = useRef(onWatchProgress);
+  const onNearEndChangeRef = useRef(onNearEndChange);
+  const onEndedRef = useRef(onEnded);
   const [playing, setPlaying] = useState(true);
   const [ready, setReady] = useState(false);
   const [size, setSize] = useState({ width: 0, height: 0 });
+
+  onWatchProgressRef.current = onWatchProgress;
+  onNearEndChangeRef.current = onNearEndChange;
+  onEndedRef.current = onEnded;
 
   useEffect(() => {
     accumulatedSecondsRef.current = Math.max(
@@ -48,39 +64,108 @@ function CourseVideoPlayer({
       Math.trunc(initialWatchSeconds),
     );
     lastPollAtRef.current = null;
-  }, [videoId, initialWatchSeconds]);
+    nearEndRef.current = false;
+    onNearEndChangeRef.current?.(false);
+  }, [videoId]);
+
+  // Live progress updates from the parent should only raise the floor, not
+  // reset near-end / unlock state mid-playback.
+  useEffect(() => {
+    const seeded = Math.max(0, Math.trunc(initialWatchSeconds));
+    accumulatedSecondsRef.current = Math.max(
+      accumulatedSecondsRef.current,
+      seeded,
+    );
+    lastSavedSecondsRef.current = Math.max(
+      lastSavedSecondsRef.current,
+      seeded,
+    );
+  }, [initialWatchSeconds]);
+
+  const persistWatchProgress = useCallback((seconds: number) => {
+    const callback = onWatchProgressRef.current;
+    if (!callback) {
+      return;
+    }
+    // Cap below the unlock threshold until the last minute so early playtime
+    // does not unlock the next lesson or the Next Video button.
+    const reportableSeconds = nearEndRef.current
+      ? Math.max(Math.floor(seconds), VIDEO_UNLOCK_WATCH_SECONDS)
+      : Math.min(Math.floor(seconds), VIDEO_UNLOCK_WATCH_SECONDS - 1);
+    if (reportableSeconds > lastSavedSecondsRef.current) {
+      lastSavedSecondsRef.current = reportableSeconds;
+      callback(reportableSeconds);
+    }
+  }, []);
+
+  const markNearEndAndUnlock = useCallback(() => {
+    if (!nearEndRef.current) {
+      nearEndRef.current = true;
+      onNearEndChangeRef.current?.(true);
+    }
+    const unlockSeconds = Math.max(
+      Math.floor(accumulatedSecondsRef.current),
+      VIDEO_UNLOCK_WATCH_SECONDS,
+    );
+    accumulatedSecondsRef.current = Math.max(
+      accumulatedSecondsRef.current,
+      unlockSeconds,
+    );
+    persistWatchProgress(unlockSeconds);
+  }, [persistWatchProgress]);
 
   useEffect(() => {
-    if (!ready || !playing || !onWatchProgress) {
+    if (!ready) {
       lastPollAtRef.current = null;
       return;
     }
 
     const interval = setInterval(() => {
-      const now = Date.now();
-      if (lastPollAtRef.current !== null) {
-        const elapsedSeconds = (now - lastPollAtRef.current) / 1000;
-        accumulatedSecondsRef.current += elapsedSeconds;
-        const roundedSeconds = Math.floor(accumulatedSecondsRef.current);
-        const crossedUnlockThreshold =
-          roundedSeconds >= VIDEO_UNLOCK_WATCH_SECONDS &&
-          lastSavedSecondsRef.current < VIDEO_UNLOCK_WATCH_SECONDS;
-        const shouldSave =
-          roundedSeconds > lastSavedSecondsRef.current &&
-          (crossedUnlockThreshold ||
+      if (playing) {
+        const now = Date.now();
+        if (lastPollAtRef.current !== null) {
+          const elapsedSeconds = (now - lastPollAtRef.current) / 1000;
+          accumulatedSecondsRef.current += elapsedSeconds;
+          const roundedSeconds = Math.floor(accumulatedSecondsRef.current);
+          const shouldSave =
+            roundedSeconds > lastSavedSecondsRef.current &&
             roundedSeconds - lastSavedSecondsRef.current >=
-              WATCH_SAVE_INTERVAL_SECONDS);
+              WATCH_SAVE_INTERVAL_SECONDS;
 
-        if (shouldSave) {
-          lastSavedSecondsRef.current = roundedSeconds;
-          onWatchProgress(roundedSeconds);
+          if (shouldSave) {
+            persistWatchProgress(roundedSeconds);
+          }
         }
+        lastPollAtRef.current = now;
+      } else {
+        lastPollAtRef.current = null;
       }
-      lastPollAtRef.current = now;
+
+      void (async () => {
+        try {
+          const [currentTime, duration] = await Promise.all([
+            playerRef.current?.getCurrentTime(),
+            playerRef.current?.getDuration(),
+          ]);
+          if (
+            typeof currentTime !== 'number' ||
+            typeof duration !== 'number' ||
+            !Number.isFinite(currentTime) ||
+            !Number.isFinite(duration)
+          ) {
+            return;
+          }
+          if (isPlaybackNearEnd(currentTime, duration)) {
+            markNearEndAndUnlock();
+          }
+        } catch {
+          // Player bridge can fail briefly while buffering; retry next poll.
+        }
+      })();
     }, WATCH_POLL_INTERVAL_MS);
 
     return () => clearInterval(interval);
-  }, [ready, playing, onWatchProgress]);
+  }, [ready, playing, persistWatchProgress, markNearEndAndUnlock]);
 
   const handleLayout = (event: LayoutChangeEvent) => {
     const width = Math.round(event.nativeEvent.layout.width);
@@ -91,14 +176,7 @@ function CourseVideoPlayer({
   };
 
   const flushWatchProgress = () => {
-    if (!onWatchProgress) {
-      return;
-    }
-    const roundedSeconds = Math.floor(accumulatedSecondsRef.current);
-    if (roundedSeconds > lastSavedSecondsRef.current) {
-      lastSavedSecondsRef.current = roundedSeconds;
-      onWatchProgress(roundedSeconds);
-    }
+    persistWatchProgress(accumulatedSecondsRef.current);
   };
 
   return (
@@ -124,8 +202,9 @@ function CourseVideoPlayer({
           onChangeState={(state: PLAYER_STATES) => {
             if (state === PLAYER_STATES.ENDED) {
               setPlaying(false);
+              markNearEndAndUnlock();
               flushWatchProgress();
-              onEnded?.();
+              onEndedRef.current?.();
             }
             if (state === PLAYER_STATES.PAUSED) {
               setPlaying(false);

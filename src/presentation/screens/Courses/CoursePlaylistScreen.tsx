@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -19,7 +19,11 @@ import type {
   RootStackParamList,
 } from '../../../types/navigation';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
-import { isVideoUnlocked } from '../../../utils/continueLearning/formatVideoProgress';
+import {
+  computeProgressPercent,
+  formatVideoProgressLabel,
+  isVideoUnlocked,
+} from '../../../utils/continueLearning/formatVideoProgress';
 import { useContinueLearningProgress } from '../../hooks/useContinueLearningProgress';
 import { useYouTubePlaylistVideos } from '../../hooks/useYouTubePlaylistVideos';
 
@@ -29,7 +33,8 @@ function CoursePlaylistScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const route = useRoute<CoursePlaylistRouteProp>();
   const { playlist } = route.params;
-  const { progressByPlaylistId } = useContinueLearningProgress();
+  const { progressByPlaylistId, getVideosWatched } =
+    useContinueLearningProgress();
 
   const { videos, loading, error, reload } = useYouTubePlaylistVideos(
     playlist.playlistUrl,
@@ -37,6 +42,16 @@ function CoursePlaylistScreen() {
 
   const watchSecondsByVideoId =
     progressByPlaylistId[playlist.id]?.watchSecondsByVideoId ?? {};
+  const videosWatched = getVideosWatched(playlist.id);
+  const videoCount = videos.length > 0 ? videos.length : playlist.videoCount;
+  const progressPercent = useMemo(
+    () => computeProgressPercent(videosWatched, videoCount),
+    [videoCount, videosWatched],
+  );
+  const progressLabel = useMemo(
+    () => formatVideoProgressLabel(videosWatched, videoCount),
+    [videoCount, videosWatched],
+  );
 
   const handleSelectVideo = useCallback(
     (index: number) => {
@@ -79,9 +94,32 @@ function CoursePlaylistScreen() {
 
   const listHeader = useCallback(
     () => (
-      <Text style={styles.listHeading}>{videos.length} lessons</Text>
+      <View style={styles.progressHeader}>
+        <View style={styles.progressMeta}>
+          <Text style={styles.listHeading}>{progressLabel}</Text>
+          <Text style={styles.progressPercent}>{progressPercent}%</Text>
+        </View>
+        <View
+          style={styles.progressTrack}
+          accessibilityRole="progressbar"
+          accessibilityValue={{
+            min: 0,
+            max: 100,
+            now: progressPercent,
+          }}
+          accessibilityLabel={`${progressLabel} watched`}>
+          <View
+            style={[
+              styles.progressFill,
+              {
+                width: `${progressPercent === 0 ? 0 : Math.max(progressPercent, 4)}%`,
+              },
+            ]}
+          />
+        </View>
+      </View>
     ),
-    [videos.length],
+    [progressLabel, progressPercent],
   );
 
   return (
@@ -120,7 +158,7 @@ function CoursePlaylistScreen() {
           contentContainerStyle={styles.listContent}
           ListHeaderComponent={listHeader}
           showsVerticalScrollIndicator={false}
-          extraData={watchSecondsByVideoId}
+          extraData={{ watchSecondsByVideoId, videosWatched }}
           {...VERTICAL_LIST_PERF}
         />
       )}
@@ -184,11 +222,36 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.screenHorizontal,
     paddingBottom: 24,
   },
+  progressHeader: {
+    marginTop: 14,
+    marginBottom: 10,
+  },
+  progressMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
   listHeading: {
     fontSize: 14,
     fontWeight: '600',
     color: colors.textSecondary,
-    marginVertical: 14,
+  },
+  progressPercent: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.primary,
+  },
+  progressTrack: {
+    height: 6,
+    backgroundColor: colors.primaryMuted,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 3,
+    backgroundColor: colors.primary,
   },
 });
 

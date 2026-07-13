@@ -1,11 +1,28 @@
 /** Minimum seconds watched on a video before the next lesson unlocks. */
 export const VIDEO_UNLOCK_WATCH_SECONDS = 60;
 
+/** Next-video controls unlock when this many seconds (or fewer) remain. */
+export const VIDEO_NEAR_END_SECONDS = 60;
+
 export function getVideoWatchSeconds(
   watchSecondsByVideoId: Record<string, number>,
   videoId: string,
 ): number {
   return Math.max(0, Math.trunc(watchSecondsByVideoId[videoId] ?? 0));
+}
+
+/** True when playback is in the last minute (or the video has ended). */
+export function isPlaybackNearEnd(
+  currentTimeSeconds: number,
+  durationSeconds: number,
+): boolean {
+  const duration = Math.max(0, durationSeconds);
+  if (duration <= 0) {
+    return false;
+  }
+  const current = Math.max(0, currentTimeSeconds);
+  const remaining = duration - current;
+  return remaining <= VIDEO_NEAR_END_SECONDS;
 }
 
 export function isVideoUnlocked(

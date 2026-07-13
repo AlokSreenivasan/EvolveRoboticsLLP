@@ -108,10 +108,11 @@ function HomeScreen() {
     ({ item }: { item: ContinueLearningPlaylist }) => (
       <ContinueLearningCard
         playlist={item}
+        videosWatched={getVideosWatched(item.id)}
         onPress={() => navigation.navigate('CoursePlaylist', { playlist: item })}
       />
     ),
-    [navigation],
+    [getVideosWatched, navigation],
   );
 
   const playlistKeyExtractor = useCallback(

@@ -145,7 +145,7 @@ export async function recordPlaylistVideoProgress(
   }
 }
 
-/** Persists watch time for a single video and unlocks the next lesson at 60s. */
+/** Persists watch time for a single video; next lesson unlocks at 60s (last minute). */
 export async function recordVideoWatchSeconds(
   playlistId: string,
   videoId: string,

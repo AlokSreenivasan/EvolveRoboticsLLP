@@ -24,6 +24,7 @@ import type {
 } from '../../../types/navigation';
 import { useHomeFeedFocus } from '../../context/HomeFeedContext';
 import { useContinueLearningPlaylists } from '../../hooks/useContinueLearningPlaylists';
+import { useContinueLearningProgress } from '../../hooks/useContinueLearningProgress';
 import { useProjects } from '../../hooks/useProjects';
 
 type ToDoTab = 'learn' | 'project';
@@ -85,6 +86,7 @@ function ToDoScreen() {
 
   const { playlists, loading: playlistsLoading, error: playlistsError } =
     useContinueLearningPlaylists();
+  const { getVideosWatched } = useContinueLearningProgress();
   const { projects, loading: projectsLoading, error: projectsError } =
     useProjects();
 
@@ -103,10 +105,11 @@ function ToDoScreen() {
       <ContinueLearningCard
         variant="list"
         playlist={item}
+        videosWatched={getVideosWatched(item.id)}
         onPress={() => navigation.navigate('CoursePlaylist', { playlist: item })}
       />
     ),
-    [navigation],
+    [getVideosWatched, navigation],
   );
 
   const renderProjectItem = useCallback(

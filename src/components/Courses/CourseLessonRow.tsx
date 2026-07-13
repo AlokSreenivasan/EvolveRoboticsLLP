@@ -79,7 +79,7 @@ function CourseLessonRow({
             <Text style={styles.playingLabel}>Now playing</Text>
           ) : isLocked ? (
             <Text style={styles.lockedLabel}>
-              Watch the previous lesson for 1 min to unlock
+              Finish the previous lesson to unlock
             </Text>
           ) : null}
         </View>
