@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { colors } from '../../constants/theme';
+import { colors, sectionTitleStyle } from '../../constants/theme';
 
 type SettingsSectionHeaderProps = {
   title: string;
@@ -35,9 +35,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.textPrimary,
+    ...sectionTitleStyle,
   },
   action: {
     fontSize: 14,

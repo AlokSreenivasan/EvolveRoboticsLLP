@@ -2,13 +2,13 @@ import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 import QuizAlertModal from '../QuizCompetitions/QuizAlertModal';
 import HomeFeaturePanel from './HomeFeaturePanel';
+import HomeSectionHeader from './HomeSectionHeader';
 import QuizCompetitionIcon from './icons/QuizCompetitionIcon';
 import { colors } from '../../constants/theme';
 import type { QuizCompetition } from '../../store/content/types/quizCompetitions.types';
@@ -165,7 +165,7 @@ function QuizCompetitionHomePanel({
   return (
     <View style={embedded ? styles.embeddedWrap : undefined}>
       {embedded ? (
-        <Text style={styles.embeddedTitle}>Quiz competition</Text>
+        <HomeSectionHeader title="Quiz competition" />
       ) : null}
       <HomeFeaturePanel
         badgeLabel={`Quiz ${featuredIndex + 1}`}
@@ -215,14 +215,7 @@ function QuizCompetitionHomePanel({
 
 const styles = StyleSheet.create({
   embeddedWrap: {
-    marginTop: 18,
-  },
-  embeddedTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: 10,
-    paddingHorizontal: 4,
+    marginTop: 0,
   },
   loader: {
     marginVertical: 12,

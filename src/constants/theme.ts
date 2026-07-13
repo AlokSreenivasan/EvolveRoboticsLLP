@@ -32,6 +32,13 @@ export const spacing = {
   cardRadius: 16,
 };
 
+/** Shared section headings (Home, Settings). */
+export const sectionTitleStyle = {
+  fontSize: 18,
+  fontWeight: '700' as const,
+  color: colors.textPrimary,
+};
+
 export const cardShadow: ViewStyle = Platform.select({
   ios: {
     shadowColor: '#000',

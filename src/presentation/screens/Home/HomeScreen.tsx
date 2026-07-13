@@ -11,6 +11,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import ContinueLearningCard from '../../../components/Home/ContinueLearningCard';
+import DailyMissionsSection from '../../../components/Home/DailyMissionsSection';
 import QuizCompetitionHomePanel from '../../../components/Home/QuizCompetitionHomePanel';
 import FloatingChatAssistant from '../../../components/Home/FloatingChatAssistant';
 import HomeBottomTabBar, {
@@ -140,8 +141,10 @@ function HomeScreen() {
         <StreakBoardPanel />
 
         <View style={styles.section}>
+          <QuizCompetitionHomePanel embedded />
+          <DailyMissionsSection />
           {showContinueLearningSection ? (
-            <>
+            <View style={styles.continueLearningSection}>
               <HomeSectionHeader
                 title="Continue Learning"
                 actionLabel="View all"
@@ -156,9 +159,8 @@ function HomeScreen() {
                 contentContainerStyle={styles.horizontalList}
                 {...HORIZONTAL_LIST_PERF}
               />
-            </>
+            </View>
           ) : null}
-          <QuizCompetitionHomePanel embedded />
         </View>
 
         <ImportantUpdatesSection />
@@ -200,6 +202,9 @@ const styles = StyleSheet.create({
   },
   horizontalList: {
     paddingRight: 4,
+  },
+  continueLearningSection: {
+    marginTop: 20,
   },
   tabBarWrap: {
     position: 'absolute',
