@@ -1,3 +1,4 @@
+import { getFunctions, httpsCallable } from '@react-native-firebase/functions';
 import type {
   DocumentData,
   FirebaseFirestoreTypes,
@@ -9,12 +10,9 @@ import { getCurrentUserId } from './authService';
 import {
   collection,
   db,
-  doc,
   onSnapshot,
   orderBy,
   query,
-  serverTimestamp,
-  setDoc,
 } from './firestoreClient';
 
 export type ExamAttemptDocument = {
@@ -37,6 +35,14 @@ export type ExamAttempt = {
   totalQuestions: number;
   percentage: number;
   submittedAt: FirebaseFirestoreTypes.Timestamp | null;
+};
+
+export type SubmitExamAttemptResult = {
+  attemptId: string;
+  examId: string;
+  correctCount: number;
+  totalQuestions: number;
+  percentage: number;
 };
 
 function isTimestamp(
@@ -66,32 +72,38 @@ function mapAttempt(id: string, data: ExamAttemptDocument): ExamAttempt {
 export async function createExamAttempt(input: {
   examId: string;
   answers: Record<string, number>;
-  correctCount: number;
-  totalQuestions: number;
-}): Promise<void> {
+}): Promise<SubmitExamAttemptResult> {
   const uid = getCurrentUserId();
   if (!uid) {
     throw new Error('You must be signed in to submit an exam.');
   }
 
+  const examId = input.examId.trim();
+  if (!examId) {
+    throw new Error('Exam id is required.');
+  }
+
   try {
-    const attemptsCollection = collection(db, 'users', uid, 'examAttempts');
-    const ref = doc(attemptsCollection);
-    const safeTotal = Math.max(0, Math.trunc(input.totalQuestions));
-    const safeCorrect = Math.max(0, Math.trunc(input.correctCount));
-    const percentage =
-      safeTotal > 0 ? Math.round((safeCorrect / safeTotal) * 100) : 0;
+    const callable = httpsCallable<
+      { examId: string; answers: Record<string, number> },
+      SubmitExamAttemptResult
+    >(getFunctions(), 'submitExamAttempt');
 
-    const payload: ExamAttemptDocument = {
-      examId: input.examId.trim(),
+    const response = await callable({
+      examId,
       answers: input.answers,
-      correctCount: safeCorrect,
-      totalQuestions: safeTotal,
-      percentage,
-      submittedAt: serverTimestamp(),
-    };
+    });
 
-    await setDoc(ref, payload);
+    const data = response.data;
+    return {
+      attemptId: data?.attemptId ?? '',
+      examId: data?.examId ?? examId,
+      correctCount:
+        typeof data?.correctCount === 'number' ? data.correctCount : 0,
+      totalQuestions:
+        typeof data?.totalQuestions === 'number' ? data.totalQuestions : 0,
+      percentage: typeof data?.percentage === 'number' ? data.percentage : 0,
+    };
   } catch (error) {
     throw wrapFirebaseError(
       error,
@@ -128,4 +140,3 @@ export function subscribeExamAttempts(
     error => onError?.(error),
   );
 }
-

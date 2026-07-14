@@ -18,7 +18,6 @@ import QuizAlertModal from '../../../components/QuizCompetitions/QuizAlertModal'
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import { colors, spacing } from '../../../constants/theme';
 import { createQuizAttempt } from '../../../services/firebase/quizAttemptsService';
-import { computeQuizXpEarned } from '../../../utils/gamification/computeUserStreakStats';
 import { canAttemptQuiz, canRetryQuizAttempt } from '../../../utils/quizAccess';
 import { useQuizAttempts } from '../../hooks/useQuizAttempts';
 import { useQuizCompetition } from '../../hooks/useQuizCompetition';
@@ -77,7 +76,6 @@ function QuizAttemptScreen() {
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const questionCount = quiz?.questions?.length ?? 0;
-  const quizQuestions = quiz?.questions ?? [];
   const answeredCount = useMemo(
     () => Object.keys(answers).length,
     [answers],
@@ -206,23 +204,16 @@ function QuizAttemptScreen() {
       }
 
       const total = questionCount;
-      const correct = quizQuestions.reduce((count, question) => {
-        const selected = answers[question.id];
-        return selected === question.correctChoiceIndex ? count + 1 : count;
-      }, 0);
-      const xpEarned = computeQuizXpEarned(quiz.xpValue, correct, total);
 
       try {
-        await createQuizAttempt({
+        const result = await createQuizAttempt({
           quizId: quiz.id,
           answers,
-          correctCount: correct,
-          totalQuestions: total,
-          xpEarned,
         });
 
-        const percentage =
-          total > 0 ? Math.round((correct / total) * 100) : 0;
+        const correct = result.correctCount;
+        const percentage = result.percentage;
+        const xpEarned = result.xpEarned;
         const isPerfect = total > 0 && correct === total;
 
         setResultModal({
@@ -242,7 +233,7 @@ function QuizAttemptScreen() {
         setSubmitting(false);
       }
     },
-    [answers, questionCount, quiz, quizQuestions, submitting],
+    [answers, questionCount, quiz, submitting],
   );
 
   const handleResultClose = useCallback(() => {

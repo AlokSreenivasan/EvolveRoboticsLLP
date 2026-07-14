@@ -14,6 +14,14 @@ import type {
   UpdateQuizCompetitionInput,
 } from '../../store/content/types/quizCompetitions.types';
 import {
+  extractAnswerKey,
+  mapAnswerKeyDocument,
+  mergeAnswerKeyIntoQuestions,
+  normalizeCorrectChoiceIndex,
+  stripCorrectChoiceFromQuestions,
+  stripQuestionsForPublic,
+} from '../../utils/exams/answerKeys';
+import {
   isVisibleForViewer,
   shouldFilterByViewerSchool,
 } from '../../utils/content/schoolAudience';
@@ -65,11 +73,8 @@ function quizCompetitionDocRef(quizId: string) {
   return doc(db, FIRESTORE_COLLECTIONS.quizCompetitions, quizId);
 }
 
-function normalizeCorrectChoiceIndex(value: unknown): number {
-  if (typeof value !== 'number' || !Number.isFinite(value)) {
-    return 0;
-  }
-  return Math.min(3, Math.max(0, Math.trunc(value)));
+function quizAnswerKeyDocRef(quizId: string) {
+  return doc(db, FIRESTORE_COLLECTIONS.quizAnswerKeys, quizId);
 }
 
 function mapLegacyQuestion(
@@ -91,7 +96,6 @@ function mapLegacyQuestion(
       { id: choices[2]?.id ?? `${id}_c`, text: choices[2]?.text?.trim() ?? '' },
       { id: choices[3]?.id ?? `${id}_d`, text: choices[3]?.text?.trim() ?? '' },
     ],
-    correctChoiceIndex: normalizeCorrectChoiceIndex(data.correctChoiceIndex),
   };
 }
 
@@ -110,6 +114,8 @@ function mapQuestions(
 function mapQuizCompetition(
   id: string,
   data: QuizCompetitionDocument,
+  byQuestionId: Record<string, number> | null,
+  includeAnswerKeys: boolean,
 ): QuizCompetition {
   const timerSeconds =
     typeof data.timerSeconds === 'number' && Number.isFinite(data.timerSeconds)
@@ -120,6 +126,33 @@ function mapQuizCompetition(
       ? Math.max(0, Math.trunc(data.xpValue))
       : XP_PER_QUIZ;
 
+  const questions = mapQuestions(id, data);
+  let resolvedQuestions: ExamQuestion[];
+
+  if (includeAnswerKeys) {
+    const merged = mergeAnswerKeyIntoQuestions(questions, byQuestionId);
+    // Legacy docs may still carry a root correctChoiceIndex until migrated.
+    if (
+      byQuestionId == null &&
+      typeof data.correctChoiceIndex === 'number' &&
+      merged.length === 1 &&
+      merged[0].correctChoiceIndex == null
+    ) {
+      resolvedQuestions = [
+        {
+          ...merged[0],
+          correctChoiceIndex: normalizeCorrectChoiceIndex(
+            data.correctChoiceIndex,
+          ),
+        },
+      ];
+    } else {
+      resolvedQuestions = merged;
+    }
+  } else {
+    resolvedQuestions = stripCorrectChoiceFromQuestions(questions);
+  }
+
   return {
     id,
     title: data.title?.trim() ?? '',
@@ -127,7 +160,7 @@ function mapQuizCompetition(
     timerSeconds,
     xpValue,
     allowRetry: data.allowRetry === true,
-    questions: mapQuestions(id, data),
+    questions: resolvedQuestions,
     track: mapContentTrack(data),
     sortOrder: typeof data.sortOrder === 'number' ? data.sortOrder : 0,
     isPublished: data.isPublished === true,
@@ -139,6 +172,37 @@ function mapQuizCompetition(
 
 function sortQuizCompetitions(items: QuizCompetition[]): QuizCompetition[] {
   return [...items].sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+async function loadAnswerKeyMap(
+  quizId: string,
+): Promise<Record<string, number> | null> {
+  const snapshot = await getDoc(quizAnswerKeyDocRef(quizId));
+  if (!snapshot.exists()) {
+    return null;
+  }
+  return mapAnswerKeyDocument(snapshot.data());
+}
+
+async function loadAnswerKeyMaps(
+  quizIds: string[],
+): Promise<Map<string, Record<string, number> | null>> {
+  const result = new Map<string, Record<string, number> | null>();
+  await Promise.all(
+    quizIds.map(async quizId => {
+      result.set(quizId, await loadAnswerKeyMap(quizId));
+    }),
+  );
+  return result;
+}
+
+async function writeQuizAnswerKey(
+  quizId: string,
+  questions: ExamQuestion[],
+): Promise<void> {
+  await setDoc(quizAnswerKeyDocRef(quizId), {
+    byQuestionId: extractAnswerKey(questions),
+  });
 }
 
 export function subscribeQuizCompetitions(
@@ -155,16 +219,32 @@ export function subscribeQuizCompetitions(
   return onSnapshot(
     quizzesQuery,
     snapshot => {
-      const items = snapshot.docs.map(quizDoc =>
-        mapQuizCompetition(quizDoc.id, quizDoc.data() as QuizCompetitionDocument),
-      );
+      const docs = snapshot.docs.map(quizDoc => ({
+        id: quizDoc.id,
+        data: quizDoc.data() as QuizCompetitionDocument,
+      }));
 
-      let filtered = applyLearnerContentFilters(items, options);
+      const emit = (keys: Map<string, Record<string, number> | null>) => {
+        const items = docs.map(({ id, data }) =>
+          mapQuizCompetition(id, data, keys.get(id) ?? null, includeUnpublished),
+        );
+
+        let filtered = applyLearnerContentFilters(items, options);
+        if (!includeUnpublished) {
+          filtered = filtered.filter(item => item.questions.length > 0);
+        }
+
+        listener(sortQuizCompetitions(filtered));
+      };
+
       if (!includeUnpublished) {
-        filtered = filtered.filter(item => item.questions.length > 0);
+        emit(new Map());
+        return;
       }
 
-      listener(sortQuizCompetitions(filtered));
+      void loadAnswerKeyMaps(docs.map(item => item.id))
+        .then(emit)
+        .catch(error => onError?.(error));
     },
     error => onError?.(error),
   );
@@ -176,6 +256,8 @@ export function subscribeQuizCompetition(
   options?: ContentSubscribeOptions,
   onError?: (error: unknown) => void,
 ): () => void {
+  const includeUnpublished = options?.includeUnpublished === true;
+
   return onSnapshot(
     quizCompetitionDocRef(quizId),
     snapshot => {
@@ -184,31 +266,44 @@ export function subscribeQuizCompetition(
         return;
       }
 
-      const quiz = mapQuizCompetition(
-        snapshot.id,
-        snapshot.data() as QuizCompetitionDocument,
-      );
-      const includeUnpublished = options?.includeUnpublished === true;
+      const data = snapshot.data() as QuizCompetitionDocument;
 
-      if (
-        !includeUnpublished &&
-        (!quiz.isPublished ||
-          quiz.questions.length === 0 ||
-          (options?.viewerTrack &&
-            quiz.track !== options.viewerTrack &&
-            quiz.track != null) ||
-          (shouldFilterByViewerSchool(options) &&
-            !isVisibleForViewer(
-              quiz,
-              options?.viewerSchoolId,
-              options?.viewerGrade,
-            )))
-      ) {
-        listener(null);
+      const emit = (byQuestionId: Record<string, number> | null) => {
+        const quiz = mapQuizCompetition(
+          snapshot.id,
+          data,
+          byQuestionId,
+          includeUnpublished,
+        );
+        if (
+          !includeUnpublished &&
+          (!quiz.isPublished ||
+            quiz.questions.length === 0 ||
+            (options?.viewerTrack &&
+              quiz.track !== options.viewerTrack &&
+              quiz.track != null) ||
+            (shouldFilterByViewerSchool(options) &&
+              !isVisibleForViewer(
+                quiz,
+                options?.viewerSchoolId,
+                options?.viewerGrade,
+              )))
+        ) {
+          listener(null);
+          return;
+        }
+
+        listener(quiz);
+      };
+
+      if (!includeUnpublished) {
+        emit(null);
         return;
       }
 
-      listener(quiz);
+      void loadAnswerKeyMap(quizId)
+        .then(emit)
+        .catch(error => onError?.(error));
     },
     error => onError?.(error),
   );
@@ -225,6 +320,8 @@ export async function getQuizCompetition(
     return mapQuizCompetition(
       snapshot.id,
       snapshot.data() as QuizCompetitionDocument,
+      null,
+      false,
     );
   } catch (error) {
     throw wrapFirebaseError(
@@ -262,6 +359,7 @@ export async function createQuizCompetition(
 
     const sortOrder = Math.trunc(await getNextSortOrder());
     const ref = doc(quizCompetitionsCollection());
+    const publicQuestions = stripQuestionsForPublic(input.questions);
     const payload: QuizCompetitionDocument = {
       title: input.title.trim(),
       description: input.description?.trim() ?? '',
@@ -271,7 +369,7 @@ export async function createQuizCompetition(
           ? Math.max(0, Math.trunc(input.xpValue))
           : XP_PER_QUIZ,
       allowRetry: input.allowRetry === true,
-      questions: input.questions,
+      questions: publicQuestions as ExamQuestion[],
       track: input.track,
       sortOrder,
       isPublished: input.isPublished ?? true,
@@ -281,12 +379,18 @@ export async function createQuizCompetition(
     };
 
     await setDoc(ref, payload);
+    await writeQuizAnswerKey(ref.id, input.questions);
 
-    return mapQuizCompetition(ref.id, {
-      ...payload,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
-    });
+    return mapQuizCompetition(
+      ref.id,
+      {
+        ...payload,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      },
+      extractAnswerKey(input.questions),
+      true,
+    );
   } catch (error) {
     throw wrapFirebaseError(
       error,
@@ -321,7 +425,8 @@ export async function updateQuizCompetition(
       updates.allowRetry = input.allowRetry === true;
     }
     if (input.questions !== undefined) {
-      updates.questions = input.questions;
+      updates.questions = stripQuestionsForPublic(input.questions);
+      await writeQuizAnswerKey(quizId, input.questions);
     }
     if (input.sortOrder !== undefined) {
       updates.sortOrder = input.sortOrder;
@@ -367,6 +472,7 @@ export async function updateQuizCompetition(
 export async function deleteQuizCompetition(quizId: string): Promise<void> {
   try {
     await deleteDoc(doc(quizCompetitionsCollection(), quizId));
+    await deleteDoc(quizAnswerKeyDocRef(quizId));
   } catch (error) {
     throw wrapFirebaseError(
       error,

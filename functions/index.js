@@ -432,3 +432,469 @@ exports.resetUserQuizProgress = onCall(async request => {
 
   return { deletedCount };
 });
+
+const DEFAULT_QUIZ_XP = 20;
+
+function isAdminRole(role) {
+  return role === 'admin' || role === 'superadmin';
+}
+
+function normalizeChoiceIndex(value) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return null;
+  }
+  const truncated = Math.trunc(value);
+  if (truncated < 0 || truncated > 3) {
+    return null;
+  }
+  return truncated;
+}
+
+function normalizeAnswersMap(raw) {
+  if (raw == null || typeof raw !== 'object' || Array.isArray(raw)) {
+    return null;
+  }
+
+  const answers = {};
+  const entries = Object.entries(raw);
+  if (entries.length > 500) {
+    return null;
+  }
+
+  for (const [questionId, value] of entries) {
+    if (typeof questionId !== 'string' || !questionId.trim()) {
+      return null;
+    }
+    const choiceIndex = normalizeChoiceIndex(value);
+    if (choiceIndex == null) {
+      return null;
+    }
+    answers[questionId.trim()] = choiceIndex;
+  }
+
+  return answers;
+}
+
+function extractQuestions(data, docId) {
+  if (Array.isArray(data?.questions) && data.questions.length > 0) {
+    return data.questions.filter(
+      question => question && typeof question.id === 'string' && question.id.trim(),
+    );
+  }
+
+  // Legacy single-question quiz docs.
+  const prompt = typeof data?.prompt === 'string' ? data.prompt.trim() : '';
+  const choices = Array.isArray(data?.choices) ? data.choices : [];
+  if (!prompt || choices.length < 4) {
+    return [];
+  }
+
+  return [
+    {
+      id: `${docId}_legacy_q1`,
+      prompt,
+      choices,
+      correctChoiceIndex: data?.correctChoiceIndex,
+    },
+  ];
+}
+
+function resolveAnswerKey(questions, answerKeyData, contentData, docId) {
+  const byQuestionId = {};
+
+  if (
+    answerKeyData?.byQuestionId != null &&
+    typeof answerKeyData.byQuestionId === 'object' &&
+    !Array.isArray(answerKeyData.byQuestionId)
+  ) {
+    for (const [questionId, value] of Object.entries(answerKeyData.byQuestionId)) {
+      const index = normalizeChoiceIndex(value);
+      if (typeof questionId === 'string' && questionId.trim() && index != null) {
+        byQuestionId[questionId.trim()] = index;
+      }
+    }
+  }
+
+  for (const question of questions) {
+    const id = question.id.trim();
+    if (byQuestionId[id] != null) {
+      continue;
+    }
+    const fromQuestion = normalizeChoiceIndex(question.correctChoiceIndex);
+    if (fromQuestion != null) {
+      byQuestionId[id] = fromQuestion;
+    }
+  }
+
+  // Legacy root-level key on old quiz docs.
+  if (
+    Object.keys(byQuestionId).length === 0 &&
+    questions.length === 1 &&
+    contentData
+  ) {
+    const legacy = normalizeChoiceIndex(contentData.correctChoiceIndex);
+    if (legacy != null) {
+      byQuestionId[questions[0].id.trim()] = legacy;
+    }
+  }
+
+  void docId;
+  return byQuestionId;
+}
+
+function gradeAnswers(questions, answers, byQuestionId) {
+  const totalQuestions = questions.length;
+  let correctCount = 0;
+
+  for (const question of questions) {
+    const questionId = question.id.trim();
+    const expected = byQuestionId[questionId];
+    if (typeof expected !== 'number') {
+      continue;
+    }
+    if (answers[questionId] === expected) {
+      correctCount += 1;
+    }
+  }
+
+  const percentage =
+    totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
+
+  return { correctCount, totalQuestions, percentage };
+}
+
+function computeQuizXpEarned(xpValue, correctCount, totalQuestions) {
+  const total = Math.max(0, Math.trunc(totalQuestions));
+  const correct = Math.max(0, Math.min(Math.trunc(correctCount), total));
+  const maxXp = Math.max(0, Math.trunc(xpValue));
+  if (total === 0 || maxXp === 0 || correct !== total) {
+    return 0;
+  }
+  return maxXp;
+}
+
+function stripQuestionsForPublic(questions) {
+  return questions.map(question => ({
+    id: question.id,
+    prompt: question.prompt,
+    choices: question.choices,
+  }));
+}
+
+function extractAnswerKeyFromQuestions(questions, contentData, docId) {
+  const byQuestionId = {};
+  for (const question of questions) {
+    const id =
+      typeof question?.id === 'string' ? question.id.trim() : `${docId}_legacy_q1`;
+    const index = normalizeChoiceIndex(question?.correctChoiceIndex);
+    if (index != null) {
+      byQuestionId[id] = index;
+    }
+  }
+
+  if (
+    Object.keys(byQuestionId).length === 0 &&
+    questions.length <= 1 &&
+    contentData
+  ) {
+    const legacy = normalizeChoiceIndex(contentData.correctChoiceIndex);
+    const questionId =
+      questions[0]?.id?.trim?.() || `${docId}_legacy_q1`;
+    if (legacy != null) {
+      byQuestionId[questionId] = legacy;
+    }
+  }
+
+  return byQuestionId;
+}
+
+function questionHasEmbeddedKey(question) {
+  return normalizeChoiceIndex(question?.correctChoiceIndex) != null;
+}
+
+/**
+ * Callable: grade and persist an exam attempt server-side.
+ * Expects { examId, answers: { [questionId]: 0|1|2|3 } }.
+ */
+exports.submitExamAttempt = onCall(async request => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'You must be signed in.');
+  }
+
+  const examId =
+    typeof request.data?.examId === 'string' ? request.data.examId.trim() : '';
+  const answers = normalizeAnswersMap(request.data?.answers);
+
+  if (!examId || examId.length > 200) {
+    throw new HttpsError('invalid-argument', 'examId is required.');
+  }
+  if (answers == null) {
+    throw new HttpsError(
+      'invalid-argument',
+      'answers must be a map of questionId to choice index (0-3).',
+    );
+  }
+
+  const db = getFirestore();
+  const uid = request.auth.uid;
+  const examRef = db.doc(`exams/${examId}`);
+  const examSnap = await examRef.get();
+
+  if (!examSnap.exists) {
+    throw new HttpsError('not-found', 'Exam not found.');
+  }
+
+  const examData = examSnap.data() ?? {};
+  if (examData.isPublished !== true) {
+    throw new HttpsError('failed-precondition', 'This exam is not available.');
+  }
+
+  const questions = extractQuestions(examData, examId);
+  if (questions.length === 0) {
+    throw new HttpsError('failed-precondition', 'This exam has no questions.');
+  }
+
+  const keySnap = await db.doc(`examAnswerKeys/${examId}`).get();
+  const byQuestionId = resolveAnswerKey(
+    questions,
+    keySnap.exists ? keySnap.data() : null,
+    examData,
+    examId,
+  );
+
+  if (Object.keys(byQuestionId).length === 0) {
+    throw new HttpsError(
+      'failed-precondition',
+      'Exam answer key is missing. Ask an admin to re-save this exam.',
+    );
+  }
+
+  const { correctCount, totalQuestions, percentage } = gradeAnswers(
+    questions,
+    answers,
+    byQuestionId,
+  );
+
+  const attemptRef = db.collection(`users/${uid}/examAttempts`).doc();
+  await attemptRef.set({
+    examId,
+    answers,
+    correctCount,
+    totalQuestions,
+    percentage,
+    submittedAt: FieldValue.serverTimestamp(),
+  });
+
+  return {
+    attemptId: attemptRef.id,
+    examId,
+    correctCount,
+    totalQuestions,
+    percentage,
+  };
+});
+
+/**
+ * Callable: grade and persist a quiz attempt server-side.
+ * Expects { quizId, answers: { [questionId]: 0|1|2|3 } }.
+ */
+exports.submitQuizAttempt = onCall(async request => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'You must be signed in.');
+  }
+
+  const quizId =
+    typeof request.data?.quizId === 'string' ? request.data.quizId.trim() : '';
+  const answers = normalizeAnswersMap(request.data?.answers);
+
+  if (!quizId || quizId.length > 200) {
+    throw new HttpsError('invalid-argument', 'quizId is required.');
+  }
+  if (answers == null) {
+    throw new HttpsError(
+      'invalid-argument',
+      'answers must be a map of questionId to choice index (0-3).',
+    );
+  }
+
+  const db = getFirestore();
+  const uid = request.auth.uid;
+  const quizRef = db.doc(`quizCompetitions/${quizId}`);
+  const quizSnap = await quizRef.get();
+
+  if (!quizSnap.exists) {
+    throw new HttpsError('not-found', 'Quiz not found.');
+  }
+
+  const quizData = quizSnap.data() ?? {};
+  if (quizData.isPublished !== true) {
+    throw new HttpsError('failed-precondition', 'This quiz is not available.');
+  }
+
+  const questions = extractQuestions(quizData, quizId);
+  if (questions.length === 0) {
+    throw new HttpsError('failed-precondition', 'This quiz has no questions.');
+  }
+
+  const attemptRef = db.doc(`users/${uid}/quizAttempts/${quizId}`);
+  const existingSnap = await attemptRef.get();
+
+  if (existingSnap.exists) {
+    const existing = existingSnap.data() ?? {};
+    const priorPercentage =
+      typeof existing.percentage === 'number' ? existing.percentage : 0;
+    const allowRetry = quizData.allowRetry === true;
+    const canRetryImperfect = priorPercentage < 100;
+
+    if (!allowRetry && !canRetryImperfect) {
+      throw new HttpsError(
+        'failed-precondition',
+        'This quiz does not allow retries after a perfect score.',
+      );
+    }
+  }
+
+  const keySnap = await db.doc(`quizAnswerKeys/${quizId}`).get();
+  const byQuestionId = resolveAnswerKey(
+    questions,
+    keySnap.exists ? keySnap.data() : null,
+    quizData,
+    quizId,
+  );
+
+  if (Object.keys(byQuestionId).length === 0) {
+    throw new HttpsError(
+      'failed-precondition',
+      'Quiz answer key is missing. Ask an admin to re-save this quiz.',
+    );
+  }
+
+  const { correctCount, totalQuestions, percentage } = gradeAnswers(
+    questions,
+    answers,
+    byQuestionId,
+  );
+
+  const xpValue =
+    typeof quizData.xpValue === 'number' && Number.isFinite(quizData.xpValue)
+      ? Math.max(0, Math.trunc(quizData.xpValue))
+      : DEFAULT_QUIZ_XP;
+  const xpEarned = computeQuizXpEarned(xpValue, correctCount, totalQuestions);
+
+  await attemptRef.set({
+    quizId,
+    answers,
+    correctCount,
+    totalQuestions,
+    percentage,
+    xpEarned,
+    submittedAt: FieldValue.serverTimestamp(),
+  });
+
+  return {
+    attemptId: quizId,
+    quizId,
+    correctCount,
+    totalQuestions,
+    percentage,
+    xpEarned,
+  };
+});
+
+/**
+ * Callable: admin one-time migration — move embedded answer keys into
+ * examAnswerKeys / quizAnswerKeys and strip them from public docs.
+ */
+exports.migrateAnswerKeys = onCall(async request => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'You must be signed in.');
+  }
+
+  const db = getFirestore();
+  const adminSnap = await db.doc(`users/${request.auth.uid}`).get();
+
+  if (!adminSnap.exists || !isAdminRole(adminSnap.data().role)) {
+    throw new HttpsError(
+      'permission-denied',
+      'Only admins can migrate answer keys.',
+    );
+  }
+
+  let examsMigrated = 0;
+  let quizzesMigrated = 0;
+
+  const examsSnap = await db.collection('exams').get();
+  for (const examDoc of examsSnap.docs) {
+    const data = examDoc.data() ?? {};
+    const questions = extractQuestions(data, examDoc.id);
+    const needsStrip =
+      questions.some(questionHasEmbeddedKey) ||
+      normalizeChoiceIndex(data.correctChoiceIndex) != null;
+
+    const byQuestionId = extractAnswerKeyFromQuestions(
+      questions,
+      data,
+      examDoc.id,
+    );
+
+    if (Object.keys(byQuestionId).length === 0 && !needsStrip) {
+      continue;
+    }
+
+    if (Object.keys(byQuestionId).length > 0) {
+      await db.doc(`examAnswerKeys/${examDoc.id}`).set({ byQuestionId });
+    }
+
+    if (needsStrip && Array.isArray(data.questions) && data.questions.length > 0) {
+      await examDoc.ref.update({
+        questions: stripQuestionsForPublic(questions),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+      examsMigrated += 1;
+    } else if (needsStrip) {
+      examsMigrated += 1;
+    }
+  }
+
+  const quizzesSnap = await db.collection('quizCompetitions').get();
+  for (const quizDoc of quizzesSnap.docs) {
+    const data = quizDoc.data() ?? {};
+    const questions = extractQuestions(data, quizDoc.id);
+    const needsStrip =
+      questions.some(questionHasEmbeddedKey) ||
+      normalizeChoiceIndex(data.correctChoiceIndex) != null;
+
+    const byQuestionId = extractAnswerKeyFromQuestions(
+      questions,
+      data,
+      quizDoc.id,
+    );
+
+    if (Object.keys(byQuestionId).length === 0 && !needsStrip) {
+      continue;
+    }
+
+    if (Object.keys(byQuestionId).length > 0) {
+      await db.doc(`quizAnswerKeys/${quizDoc.id}`).set({ byQuestionId });
+    }
+
+    if (needsStrip) {
+      const updates = {
+        updatedAt: FieldValue.serverTimestamp(),
+      };
+
+      if (Array.isArray(data.questions) && data.questions.length > 0) {
+        updates.questions = stripQuestionsForPublic(questions);
+      }
+
+      if ('correctChoiceIndex' in data) {
+        updates.correctChoiceIndex = FieldValue.delete();
+      }
+
+      await quizDoc.ref.update(updates);
+      quizzesMigrated += 1;
+    }
+  }
+
+  return { examsMigrated, quizzesMigrated };
+});

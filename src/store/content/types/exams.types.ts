@@ -16,8 +16,10 @@ export type ExamQuestion = {
   id: string;
   prompt: string;
   choices: [ExamChoice, ExamChoice, ExamChoice, ExamChoice];
-  /** 0..3 */
-  correctChoiceIndex: number;
+  /**
+   * 0..3 — present for admins after answer-key merge; omitted for learners.
+   */
+  correctChoiceIndex?: number;
 };
 
 export interface ExamDocument extends SchoolAudienceDocument {

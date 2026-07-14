@@ -521,7 +521,9 @@ function ManageExams() {
                       </Text>
                       <Text style={styles.questionStatus}>
                         Correct:{' '}
-                        {String.fromCharCode(65 + question.correctChoiceIndex)}
+                        {String.fromCharCode(
+                          65 + (question.correctChoiceIndex ?? 0),
+                        )}
                       </Text>
                     </View>
                     <View style={styles.questionActions}>

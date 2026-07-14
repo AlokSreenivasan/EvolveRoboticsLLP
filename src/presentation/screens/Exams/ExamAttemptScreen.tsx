@@ -56,7 +56,6 @@ function ExamAttemptScreen() {
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const questionCount = exam?.questions?.length ?? 0;
-  const examQuestions = exam?.questions ?? [];
   const answeredCount = useMemo(
     () => Object.keys(answers).length,
     [answers],
@@ -175,21 +174,15 @@ function ExamAttemptScreen() {
       }
 
       const total = questionCount;
-      const correct = examQuestions.reduce((count, question) => {
-        const selected = answers[question.id];
-        return selected === question.correctChoiceIndex ? count + 1 : count;
-      }, 0);
 
       try {
-        await createExamAttempt({
+        const result = await createExamAttempt({
           examId: exam.id,
           answers,
-          correctCount: correct,
-          totalQuestions: total,
         });
 
-        const percentage =
-          total > 0 ? Math.round((correct / total) * 100) : 0;
+        const correct = result.correctCount;
+        const percentage = result.percentage;
 
         appAlert(
           reason === 'timeout'
@@ -208,7 +201,7 @@ function ExamAttemptScreen() {
         setSubmitting(false);
       }
     },
-    [answers, exam, examQuestions, navigation, questionCount, submitting],
+    [answers, exam, navigation, questionCount, submitting],
   );
 
   const handleSubmit = useCallback(async () => {

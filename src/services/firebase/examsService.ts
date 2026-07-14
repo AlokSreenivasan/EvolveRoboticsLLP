@@ -9,8 +9,16 @@ import type {
   CreateExamInput,
   Exam,
   ExamDocument,
+  ExamQuestion,
   UpdateExamInput,
 } from '../../store/content/types/exams.types';
+import {
+  extractAnswerKey,
+  mapAnswerKeyDocument,
+  mergeAnswerKeyIntoQuestions,
+  stripCorrectChoiceFromQuestions,
+  stripQuestionsForPublic,
+} from '../../utils/exams/answerKeys';
 import {
   isVisibleForViewer,
   shouldFilterByViewerSchool,
@@ -62,7 +70,28 @@ function examDocRef(examId: string) {
   return doc(db, FIRESTORE_COLLECTIONS.exams, examId);
 }
 
-function mapExam(id: string, data: ExamDocument): Exam {
+function examAnswerKeyDocRef(examId: string) {
+  return doc(db, FIRESTORE_COLLECTIONS.examAnswerKeys, examId);
+}
+
+function mapExamQuestions(
+  data: ExamDocument,
+  byQuestionId: Record<string, number> | null,
+  includeAnswerKeys: boolean,
+): ExamQuestion[] {
+  const questions = Array.isArray(data.questions) ? data.questions : [];
+  if (includeAnswerKeys) {
+    return mergeAnswerKeyIntoQuestions(questions, byQuestionId);
+  }
+  return stripCorrectChoiceFromQuestions(questions);
+}
+
+function mapExam(
+  id: string,
+  data: ExamDocument,
+  byQuestionId: Record<string, number> | null,
+  includeAnswerKeys: boolean,
+): Exam {
   const timerSeconds =
     typeof data.timerSeconds === 'number' && Number.isFinite(data.timerSeconds)
       ? Math.max(0, Math.trunc(data.timerSeconds))
@@ -73,7 +102,7 @@ function mapExam(id: string, data: ExamDocument): Exam {
     title: data.title?.trim() ?? '',
     description: data.description?.trim() ?? '',
     timerSeconds,
-    questions: Array.isArray(data.questions) ? data.questions : [],
+    questions: mapExamQuestions(data, byQuestionId, includeAnswerKeys),
     track: mapContentTrack(data),
     sortOrder: typeof data.sortOrder === 'number' ? data.sortOrder : 0,
     isPublished: data.isPublished === true,
@@ -87,6 +116,37 @@ function sortExams(items: Exam[]): Exam[] {
   return [...items].sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
+async function loadAnswerKeyMap(
+  examId: string,
+): Promise<Record<string, number> | null> {
+  const snapshot = await getDoc(examAnswerKeyDocRef(examId));
+  if (!snapshot.exists()) {
+    return null;
+  }
+  return mapAnswerKeyDocument(snapshot.data());
+}
+
+async function loadAnswerKeyMaps(
+  examIds: string[],
+): Promise<Map<string, Record<string, number> | null>> {
+  const result = new Map<string, Record<string, number> | null>();
+  await Promise.all(
+    examIds.map(async examId => {
+      result.set(examId, await loadAnswerKeyMap(examId));
+    }),
+  );
+  return result;
+}
+
+async function writeExamAnswerKey(
+  examId: string,
+  questions: ExamQuestion[],
+): Promise<void> {
+  await setDoc(examAnswerKeyDocRef(examId), {
+    byQuestionId: extractAnswerKey(questions),
+  });
+}
+
 export function subscribeExams(
   listener: (exams: Exam[]) => void,
   options?: ContentSubscribeOptions,
@@ -98,16 +158,32 @@ export function subscribeExams(
   return onSnapshot(
     examsQuery,
     snapshot => {
-      const items = snapshot.docs.map(examDoc =>
-        mapExam(examDoc.id, examDoc.data() as ExamDocument),
-      );
+      const docs = snapshot.docs.map(examDoc => ({
+        id: examDoc.id,
+        data: examDoc.data() as ExamDocument,
+      }));
 
-      let filtered = applyLearnerContentFilters(items, options);
+      const emit = (keys: Map<string, Record<string, number> | null>) => {
+        const items = docs.map(({ id, data }) =>
+          mapExam(id, data, keys.get(id) ?? null, includeUnpublished),
+        );
+
+        let filtered = applyLearnerContentFilters(items, options);
+        if (!includeUnpublished) {
+          filtered = filtered.filter(item => item.questions.length > 0);
+        }
+
+        listener(sortExams(filtered));
+      };
+
       if (!includeUnpublished) {
-        filtered = filtered.filter(item => item.questions.length > 0);
+        emit(new Map());
+        return;
       }
 
-      listener(sortExams(filtered));
+      void loadAnswerKeyMaps(docs.map(item => item.id))
+        .then(emit)
+        .catch(error => onError?.(error));
     },
     error => onError?.(error),
   );
@@ -119,6 +195,8 @@ export function subscribeExam(
   options?: ContentSubscribeOptions,
   onError?: (error: unknown) => void,
 ): () => void {
+  const includeUnpublished = options?.includeUnpublished === true;
+
   return onSnapshot(
     examDocRef(examId),
     snapshot => {
@@ -126,26 +204,44 @@ export function subscribeExam(
         listener(null);
         return;
       }
-      const exam = mapExam(snapshot.id, snapshot.data() as ExamDocument);
-      const includeUnpublished = options?.includeUnpublished === true;
-      if (
-        !includeUnpublished &&
-        (!exam.isPublished ||
-          exam.questions.length === 0 ||
-          (options?.viewerTrack &&
-            exam.track !== options.viewerTrack &&
-            exam.track != null) ||
-          (shouldFilterByViewerSchool(options) &&
-            !isVisibleForViewer(
-              exam,
-              options?.viewerSchoolId,
-              options?.viewerGrade,
-            )))
-      ) {
-        listener(null);
+
+      const data = snapshot.data() as ExamDocument;
+
+      const emit = (byQuestionId: Record<string, number> | null) => {
+        const exam = mapExam(
+          snapshot.id,
+          data,
+          byQuestionId,
+          includeUnpublished,
+        );
+        if (
+          !includeUnpublished &&
+          (!exam.isPublished ||
+            exam.questions.length === 0 ||
+            (options?.viewerTrack &&
+              exam.track !== options.viewerTrack &&
+              exam.track != null) ||
+            (shouldFilterByViewerSchool(options) &&
+              !isVisibleForViewer(
+                exam,
+                options?.viewerSchoolId,
+                options?.viewerGrade,
+              )))
+        ) {
+          listener(null);
+          return;
+        }
+        listener(exam);
+      };
+
+      if (!includeUnpublished) {
+        emit(null);
         return;
       }
-      listener(exam);
+
+      void loadAnswerKeyMap(examId)
+        .then(emit)
+        .catch(error => onError?.(error));
     },
     error => onError?.(error),
   );
@@ -157,7 +253,7 @@ export async function getExam(examId: string): Promise<Exam | null> {
     if (!snapshot.exists()) {
       return null;
     }
-    return mapExam(snapshot.id, snapshot.data() as ExamDocument);
+    return mapExam(snapshot.id, snapshot.data() as ExamDocument, null, false);
   } catch (error) {
     throw wrapFirebaseError(error, 'FIRESTORE_ERROR', 'Failed to load exam.');
   }
@@ -188,11 +284,12 @@ export async function createExam(input: CreateExamInput): Promise<Exam> {
 
     const sortOrder = Math.trunc(await getNextSortOrder());
     const ref = doc(examsCollection());
+    const publicQuestions = stripQuestionsForPublic(input.questions);
     const payload: ExamDocument = {
       title: input.title.trim(),
       description: input.description?.trim() ?? '',
       timerSeconds: Math.max(0, Math.trunc(input.timerSeconds)),
-      questions: input.questions,
+      questions: publicQuestions as ExamQuestion[],
       track: input.track,
       sortOrder,
       isPublished: input.isPublished ?? true,
@@ -202,12 +299,18 @@ export async function createExam(input: CreateExamInput): Promise<Exam> {
     };
 
     await setDoc(ref, payload);
+    await writeExamAnswerKey(ref.id, input.questions);
 
-    return mapExam(ref.id, {
-      ...payload,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
-    });
+    return mapExam(
+      ref.id,
+      {
+        ...payload,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      },
+      extractAnswerKey(input.questions),
+      true,
+    );
   } catch (error) {
     throw wrapFirebaseError(error, 'FIRESTORE_ERROR', 'Failed to create exam.');
   }
@@ -232,7 +335,8 @@ export async function updateExam(
       updates.timerSeconds = Math.max(0, Math.trunc(input.timerSeconds));
     }
     if (input.questions !== undefined) {
-      updates.questions = input.questions;
+      updates.questions = stripQuestionsForPublic(input.questions);
+      await writeExamAnswerKey(examId, input.questions);
     }
     if (input.sortOrder !== undefined) {
       updates.sortOrder = input.sortOrder;
@@ -272,6 +376,7 @@ export async function updateExam(
 export async function deleteExam(examId: string): Promise<void> {
   try {
     await deleteDoc(doc(examsCollection(), examId));
+    await deleteDoc(examAnswerKeyDocRef(examId));
   } catch (error) {
     throw wrapFirebaseError(error, 'FIRESTORE_ERROR', 'Failed to delete exam.');
   }
@@ -321,4 +426,3 @@ export async function moveExam(
 
   await reorderExams(nextIds);
 }
-

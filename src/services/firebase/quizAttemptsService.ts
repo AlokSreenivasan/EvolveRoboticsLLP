@@ -1,3 +1,4 @@
+import { getFunctions, httpsCallable } from '@react-native-firebase/functions';
 import type {
   DocumentData,
   FirebaseFirestoreTypes,
@@ -9,12 +10,9 @@ import { getCurrentUserId } from './authService';
 import {
   collection,
   db,
-  doc,
   onSnapshot,
   orderBy,
   query,
-  serverTimestamp,
-  setDoc,
 } from './firestoreClient';
 
 export type QuizAttemptDocument = {
@@ -40,6 +38,15 @@ export type QuizAttempt = {
   percentage: number;
   xpEarned: number;
   submittedAt: FirebaseFirestoreTypes.Timestamp | null;
+};
+
+export type SubmitQuizAttemptResult = {
+  attemptId: string;
+  quizId: string;
+  correctCount: number;
+  totalQuestions: number;
+  percentage: number;
+  xpEarned: number;
 };
 
 function isTimestamp(
@@ -70,10 +77,7 @@ function mapAttempt(id: string, data: QuizAttemptDocument): QuizAttempt {
 export async function createQuizAttempt(input: {
   quizId: string;
   answers: Record<string, number>;
-  correctCount: number;
-  totalQuestions: number;
-  xpEarned: number;
-}): Promise<void> {
+}): Promise<SubmitQuizAttemptResult> {
   const uid = getCurrentUserId();
   if (!uid) {
     throw new Error('You must be signed in to submit a quiz.');
@@ -85,24 +89,27 @@ export async function createQuizAttempt(input: {
   }
 
   try {
-    const attemptsCollection = collection(db, 'users', uid, 'quizAttempts');
-    const ref = doc(attemptsCollection, quizId);
-    const safeTotal = Math.max(0, Math.trunc(input.totalQuestions));
-    const safeCorrect = Math.max(0, Math.trunc(input.correctCount));
-    const percentage =
-      safeTotal > 0 ? Math.round((safeCorrect / safeTotal) * 100) : 0;
+    const callable = httpsCallable<
+      { quizId: string; answers: Record<string, number> },
+      SubmitQuizAttemptResult
+    >(getFunctions(), 'submitQuizAttempt');
 
-    const payload: QuizAttemptDocument = {
+    const response = await callable({
       quizId,
       answers: input.answers,
-      correctCount: safeCorrect,
-      totalQuestions: safeTotal,
-      percentage,
-      xpEarned: Math.max(0, Math.trunc(input.xpEarned)),
-      submittedAt: serverTimestamp(),
-    };
+    });
 
-    await setDoc(ref, payload);
+    const data = response.data;
+    return {
+      attemptId: data?.attemptId ?? quizId,
+      quizId: data?.quizId ?? quizId,
+      correctCount:
+        typeof data?.correctCount === 'number' ? data.correctCount : 0,
+      totalQuestions:
+        typeof data?.totalQuestions === 'number' ? data.totalQuestions : 0,
+      percentage: typeof data?.percentage === 'number' ? data.percentage : 0,
+      xpEarned: typeof data?.xpEarned === 'number' ? data.xpEarned : 0,
+    };
   } catch (error) {
     throw wrapFirebaseError(
       error,

@@ -36,14 +36,14 @@ service cloud.firestore {
 
       match /examAttempts/{attemptId} {
         allow read: if isOwner(userId);
-        allow create: if isOwner(userId) && isValidExamAttemptCreate();
-        allow update, delete: if false;
+        // Scores are written only by Cloud Functions (Admin SDK).
+        allow create, update, delete: if false;
       }
 
       match /quizAttempts/{quizId} {
         allow read: if isOwner(userId) || isAdmin(database);
-        allow create: if isOwner(userId) && isValidQuizAttemptCreate(quizId);
-        allow update: if isOwner(userId) && isValidQuizAttemptUpdate(database, quizId);
+        // Scores are written only by Cloud Functions (Admin SDK).
+        allow create, update: if false;
         allow delete: if isAdmin(database);
       }
 
@@ -121,11 +121,19 @@ service cloud.firestore {
       allow delete: if isAdmin(database);
     }
 
+    match /examAnswerKeys/{examId} {
+      allow read, write: if isAdmin(database);
+    }
+
     match /quizCompetitions/{quizId} {
       allow read: if isAuthenticated();
       allow create: if isAdmin(database) && isValidQuizCompetitionCreate();
       allow update: if isAdmin(database) && isValidQuizCompetitionUpdate();
       allow delete: if isAdmin(database);
+    }
+
+    match /quizAnswerKeys/{quizId} {
+      allow read, write: if isAdmin(database);
     }
 
     match /notifications/{notificationId} {
@@ -599,73 +607,6 @@ function isValidProjectCreate() {
 
 function isValidProjectUpdate() {
   return isValidProjectFields(request.resource.data);
-}
-
-function isValidExamAttemptCreate() {
-  let data = request.resource.data;
-  return data.examId is string
-    && data.examId.size() > 0
-    && data.examId.size() <= 200
-    && data.answers is map
-    && data.answers.size() >= 0
-    && data.answers.size() <= 500
-    && data.correctCount is number
-    && data.correctCount >= 0
-    && data.correctCount <= 500
-    && data.totalQuestions is number
-    && data.totalQuestions >= 0
-    && data.totalQuestions <= 500
-    && data.percentage is number
-    && data.percentage >= 0
-    && data.percentage <= 100
-    && data.submittedAt == request.time;
-}
-
-function isValidQuizAttemptFields(quizId) {
-  let data = request.resource.data;
-  return quizId.size() > 0
-    && quizId.size() <= 200
-    && data.quizId == quizId
-    && data.answers is map
-    && data.answers.size() >= 0
-    && data.answers.size() <= 500
-    && data.correctCount is number
-    && data.correctCount >= 0
-    && data.correctCount <= 500
-    && data.totalQuestions is number
-    && data.totalQuestions >= 0
-    && data.totalQuestions <= 500
-    && data.percentage is number
-    && data.percentage >= 0
-    && data.percentage <= 100
-    && data.xpEarned is number
-    && data.xpEarned >= 0
-    && data.xpEarned <= 10000
-    && data.submittedAt == request.time;
-}
-
-function quizAllowsRetry(database, quizId) {
-  return exists(/databases/$(database)/documents/quizCompetitions/$(quizId))
-    && get(/databases/$(database)/documents/quizCompetitions/$(quizId)).data.allowRetry == true;
-}
-
-function quizAttemptAllowsScoreRetry(database, userId, quizId) {
-  let attemptPath = /databases/$(database)/documents/users/$(userId)/quizAttempts/$(quizId);
-  return exists(attemptPath)
-    && get(attemptPath).data.percentage is number
-    && get(attemptPath).data.percentage < 100;
-}
-
-function isValidQuizAttemptCreate(quizId) {
-  return isValidQuizAttemptFields(quizId);
-}
-
-function isValidQuizAttemptUpdate(database, quizId) {
-  return isValidQuizAttemptFields(quizId)
-    && (
-      quizAllowsRetry(database, quizId)
-      || quizAttemptAllowsScoreRetry(database, request.auth.uid, quizId)
-    );
 }
 
 function isValidContinueLearningProgress() {
