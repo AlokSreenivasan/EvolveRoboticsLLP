@@ -30,6 +30,7 @@ import {
   APP_CONTENT_DOCS,
   FIRESTORE_COLLECTIONS,
 } from './constants';
+import { buildSortedContentListQuery } from './contentListQuery';
 import {
   collection,
   db,
@@ -131,10 +132,7 @@ export function subscribeImportantUpdates(
   options?: ContentSubscribeOptions,
   onError?: (error: unknown) => void,
 ): () => void {
-  const noticesQuery = query(
-    noticesCollection(),
-    orderBy('sortOrder', 'asc'),
-  );
+  const noticesQuery = buildSortedContentListQuery(noticesCollection(), options);
 
   return onSnapshot(
     noticesQuery,

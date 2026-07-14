@@ -25,6 +25,7 @@ import {
 import { isCourseTrack } from '../../store/content/types/courses.types';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { APP_CONTENT_DOCS, FIRESTORE_COLLECTIONS } from './constants';
+import { buildSortedContentListQuery } from './contentListQuery';
 import {
   collection,
   db,
@@ -123,7 +124,7 @@ export function subscribeResourceNotes(
   onError?: (error: unknown) => void,
 ): () => void {
   const includeUnpublished = options?.includeUnpublished === true;
-  const notesQuery = query(notesCollection(), orderBy('sortOrder', 'asc'));
+  const notesQuery = buildSortedContentListQuery(notesCollection(), options);
 
   return onSnapshot(
     notesQuery,

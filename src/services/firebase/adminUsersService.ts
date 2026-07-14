@@ -7,6 +7,7 @@ import type {
   FetchAdminUsersPageInput,
   FetchAdminUsersPageResult,
 } from '../../store/user/types/adminUsers.types';
+import type { AssignableUserRole } from '../../store/user/types/role.types';
 import type { UserProfileDocument } from '../../store/user/types/user.types';
 import {
   normalizeAdminUserSearchTerm,
@@ -18,11 +19,14 @@ import { FIRESTORE_COLLECTIONS } from './constants';
 import {
   collection,
   db,
+  doc,
   getDocs,
   limit,
   orderBy,
   query,
+  serverTimestamp,
   startAfter,
+  updateDoc,
   where,
 } from './firestoreClient';
 
@@ -186,6 +190,63 @@ export async function fetchAdminUsersPage(
       error,
       'FIRESTORE_ERROR',
       'Failed to load users.',
+    );
+  }
+}
+
+/** Superadmin-only: set another user's role to user or admin. */
+export async function setUserRole(
+  uid: string,
+  role: AssignableUserRole,
+): Promise<void> {
+  if (!uid.trim()) {
+    throw new Error('User id is required.');
+  }
+
+  if (role !== 'user' && role !== 'admin') {
+    throw new Error('Invalid role.');
+  }
+
+  try {
+    await updateDoc(doc(db, FIRESTORE_COLLECTIONS.users, uid), {
+      role,
+      updatedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    throw wrapFirebaseError(
+      error,
+      'FIRESTORE_ERROR',
+      'Failed to update user role.',
+    );
+  }
+}
+
+/** Lists admin + superadmin accounts for privileged-access audits. */
+export async function fetchPrivilegedUsers(): Promise<AdminUserListItem[]> {
+  try {
+    const snapshot = await getDocs(
+      query(
+        usersCollection(),
+        where('role', 'in', ['admin', 'superadmin']),
+        limit(200),
+      ),
+    );
+
+    return snapshot.docs
+      .map(userDoc =>
+        mapDocToListItem(userDoc.id, userDoc.data() as UserProfileDocument),
+      )
+      .sort((a, b) => {
+        if (a.role !== b.role) {
+          return a.role === 'superadmin' ? -1 : 1;
+        }
+        return a.fullName.localeCompare(b.fullName);
+      });
+  } catch (error) {
+    throw wrapFirebaseError(
+      error,
+      'FIRESTORE_ERROR',
+      'Failed to load privileged users.',
     );
   }
 }

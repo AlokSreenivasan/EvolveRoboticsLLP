@@ -19,6 +19,7 @@ import {
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { syncFirestoreAuthSession } from '../../utils/firebase/firestoreSessionSync';
 import { FIRESTORE_COLLECTIONS } from './constants';
+import { buildSortedContentListQuery } from './contentListQuery';
 import {
   collection,
   db,
@@ -79,7 +80,7 @@ export function subscribeCourses(
   options?: ContentSubscribeOptions,
   onError?: (error: unknown) => void,
 ): () => void {
-  const coursesQuery = query(coursesCollection(), orderBy('sortOrder', 'asc'));
+  const coursesQuery = buildSortedContentListQuery(coursesCollection(), options);
 
   return onSnapshot(
     coursesQuery,

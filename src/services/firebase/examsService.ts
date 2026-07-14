@@ -33,6 +33,7 @@ import {
 import { isCourseTrack } from '../../store/content/types/courses.types';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { FIRESTORE_COLLECTIONS } from './constants';
+import { buildSortedContentListQuery } from './contentListQuery';
 import {
   collection,
   db,
@@ -153,7 +154,7 @@ export function subscribeExams(
   onError?: (error: unknown) => void,
 ): () => void {
   const includeUnpublished = options?.includeUnpublished === true;
-  const examsQuery = query(examsCollection(), orderBy('sortOrder', 'asc'));
+  const examsQuery = buildSortedContentListQuery(examsCollection(), options);
 
   return onSnapshot(
     examsQuery,

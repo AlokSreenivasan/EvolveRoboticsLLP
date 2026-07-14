@@ -26,6 +26,7 @@ import { isCourseTrack } from '../../store/content/types/courses.types';
 import { parseStoredEventYear } from '../../utils/upcomingEventDate';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { APP_CONTENT_DOCS, FIRESTORE_COLLECTIONS } from './constants';
+import { buildSortedContentListQuery } from './contentListQuery';
 import {
   collection,
   db,
@@ -128,7 +129,7 @@ export function subscribeUpcomingEvents(
   options?: ContentSubscribeOptions,
   onError?: (error: unknown) => void,
 ): () => void {
-  const eventsQuery = query(eventsCollection(), orderBy('sortOrder', 'asc'));
+  const eventsQuery = buildSortedContentListQuery(eventsCollection(), options);
 
   return onSnapshot(
     eventsQuery,

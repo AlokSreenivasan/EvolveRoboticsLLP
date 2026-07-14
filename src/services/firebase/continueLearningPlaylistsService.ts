@@ -21,6 +21,7 @@ import {
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { syncFirestoreAuthSession } from '../../utils/firebase/firestoreSessionSync';
 import { FIRESTORE_COLLECTIONS } from './constants';
+import { buildSortedContentListQuery } from './contentListQuery';
 import {
   collection,
   db,
@@ -91,9 +92,9 @@ export function subscribeContinueLearningPlaylists(
   options?: ContinueLearningPlaylistSubscribeOptions,
   onError?: (error: unknown) => void,
 ): () => void {
-  const playlistsQuery = query(
+  const playlistsQuery = buildSortedContentListQuery(
     playlistsCollection(),
-    orderBy('sortOrder', 'asc'),
+    options,
   );
 
   return onSnapshot(

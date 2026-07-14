@@ -140,6 +140,8 @@ export {
 export {
   ADMIN_USERS_PAGE_SIZE,
   fetchAdminUsersPage,
+  fetchPrivilegedUsers,
+  setUserRole,
 } from './adminUsersService';
 export type { UserProfileFetchResult } from './userService';
 // updateCurrentUserProfile requires baseProfile — prefer updateUserProfileWithSync

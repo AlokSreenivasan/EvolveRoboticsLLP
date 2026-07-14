@@ -73,49 +73,49 @@ service cloud.firestore {
     }
 
     match /importantUpdates/{noticeId} {
-      allow read: if isAuthenticated();
+      allow read: if canReadPublishedContent(database);
       allow create: if isAdmin(database) && isValidImportantUpdateNoticeCreate();
       allow update: if isAdmin(database) && isValidImportantUpdateNoticeUpdate();
       allow delete: if isAdmin(database);
     }
 
     match /upcomingEvents/{eventId} {
-      allow read: if isAuthenticated();
+      allow read: if canReadPublishedContent(database);
       allow create: if isAdmin(database) && isValidUpcomingEventCreate();
       allow update: if isAdmin(database) && isValidUpcomingEventUpdate();
       allow delete: if isAdmin(database);
     }
 
     match /continueLearningPlaylists/{playlistId} {
-      allow read: if isAuthenticated();
+      allow read: if canReadPublishedContent(database);
       allow create: if isAdmin(database) && isValidContinueLearningPlaylistCreate();
       allow update: if isAdmin(database) && isValidContinueLearningPlaylistUpdate();
       allow delete: if isAdmin(database);
     }
 
     match /courses/{courseId} {
-      allow read: if isAuthenticated();
+      allow read: if canReadPublishedContent(database);
       allow create: if isAdmin(database) && isValidCourseCreate();
       allow update: if isAdmin(database) && isValidCourseUpdate();
       allow delete: if isAdmin(database);
     }
 
     match /resourceNotes/{noteId} {
-      allow read: if isAuthenticated();
+      allow read: if canReadPublishedContent(database);
       allow create: if isAdmin(database) && isValidResourceNoteCreate();
       allow update: if isAdmin(database) && isValidResourceNoteUpdate();
       allow delete: if isAdmin(database);
     }
 
     match /assignments/{assignmentId} {
-      allow read: if isAuthenticated();
+      allow read: if canReadPublishedContent(database);
       allow create: if isAdmin(database) && isValidAssignmentCreate();
       allow update: if isAdmin(database) && isValidAssignmentUpdate();
       allow delete: if isAdmin(database);
     }
 
     match /exams/{examId} {
-      allow read: if isAuthenticated();
+      allow read: if canReadPublishedContent(database);
       allow create: if isAdmin(database) && isValidExamCreate();
       allow update: if isAdmin(database) && isValidExamUpdate();
       allow delete: if isAdmin(database);
@@ -126,7 +126,7 @@ service cloud.firestore {
     }
 
     match /quizCompetitions/{quizId} {
-      allow read: if isAuthenticated();
+      allow read: if canReadPublishedContent(database);
       allow create: if isAdmin(database) && isValidQuizCompetitionCreate();
       allow update: if isAdmin(database) && isValidQuizCompetitionUpdate();
       allow delete: if isAdmin(database);
@@ -137,7 +137,7 @@ service cloud.firestore {
     }
 
     match /notifications/{notificationId} {
-      allow read: if isAuthenticated();
+      allow read: if canReadPublishedContent(database);
       allow create: if isAdmin(database) && isValidNotificationCreate();
       allow update: if isAdmin(database) && isValidNotificationUpdate();
       allow delete: if isAdmin(database);
@@ -151,14 +151,14 @@ service cloud.firestore {
     }
 
     match /chatKeywords/{keywordId} {
-      allow read: if isAuthenticated();
+      allow read: if canReadPublishedContent(database);
       allow create: if isAdmin(database) && isValidChatKeywordCreate();
       allow update: if isAdmin(database) && isValidChatKeywordUpdate();
       allow delete: if isAdmin(database);
     }
 
     match /projects/{projectId} {
-      allow read: if isAuthenticated();
+      allow read: if canReadPublishedContent(database);
       allow create: if isAdmin(database) && isValidProjectCreate();
       allow update: if isAdmin(database) && isValidProjectUpdate();
       allow delete: if isAdmin(database);
@@ -167,8 +167,6 @@ service cloud.firestore {
     match /{document=**} {
       allow read, write: if false;
     }
-  }
-}
 
 function isAuthenticated() {
   return request.auth != null;
@@ -181,6 +179,15 @@ function isAdmin(database) {
     && (
       get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin'
       || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+    );
+}
+
+/** Learners only see published CMS docs; admins see drafts too. */
+function canReadPublishedContent(database) {
+  return isAuthenticated()
+    && (
+      resource.data.isPublished == true
+      || isAdmin(database)
     );
 }
 
@@ -761,4 +768,6 @@ function isOptionalGrade(value) {
 function isOptionalUserTrack(value) {
   return value == null
     || value in ['kids', 'professionals'];
+}
+  }
 }

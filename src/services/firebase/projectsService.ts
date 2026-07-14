@@ -25,6 +25,7 @@ import {
 import { isCourseTrack } from '../../store/content/types/courses.types';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { APP_CONTENT_DOCS, FIRESTORE_COLLECTIONS } from './constants';
+import { buildSortedContentListQuery } from './contentListQuery';
 import {
   collection,
   db,
@@ -123,7 +124,7 @@ export function subscribeProjects(
   options?: ContentSubscribeOptions,
   onError?: (error: unknown) => void,
 ): () => void {
-  const projectsQuery = query(projectsCollection(), orderBy('sortOrder', 'asc'));
+  const projectsQuery = buildSortedContentListQuery(projectsCollection(), options);
 
   return onSnapshot(
     projectsQuery,

@@ -14,6 +14,7 @@ import type {
 import { filterPublishedContent } from '../../utils/content/schoolAudience';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { FIRESTORE_COLLECTIONS } from './constants';
+import { buildSortedContentListQuery } from './contentListQuery';
 import {
   collection,
   db,
@@ -68,9 +69,9 @@ export function subscribeChatKeywords(
   onError?: (error: unknown) => void,
 ): () => void {
   const includeUnpublished = options?.includeUnpublished === true;
-  const keywordsQuery = query(
+  const keywordsQuery = buildSortedContentListQuery(
     chatKeywordsCollection(),
-    orderBy('sortOrder', 'asc'),
+    options,
   );
 
   return onSnapshot(

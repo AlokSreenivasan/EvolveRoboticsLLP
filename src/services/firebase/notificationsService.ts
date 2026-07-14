@@ -25,6 +25,7 @@ import {
 import { isCourseTrack } from '../../store/content/types/courses.types';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { FIRESTORE_COLLECTIONS } from './constants';
+import { buildSortedContentListQuery } from './contentListQuery';
 import {
   collection,
   db,
@@ -85,9 +86,9 @@ export function subscribeNotifications(
   options?: ContentSubscribeOptions,
   onError?: (error: unknown) => void,
 ): () => void {
-  const notificationsQuery = query(
+  const notificationsQuery = buildSortedContentListQuery(
     notificationsCollection(),
-    orderBy('sortOrder', 'asc'),
+    options,
   );
 
   return onSnapshot(

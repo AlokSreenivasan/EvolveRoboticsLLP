@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -19,7 +19,10 @@ import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import { colors } from '../../../constants/theme';
 import { useAdminUsersList } from '../../hooks/admin/useAdminUsersList';
 import { useSchools } from '../../hooks/useSchools';
-import { setUserRole } from '../../../services/firebase/adminUsersService';
+import {
+  fetchPrivilegedUsers,
+  setUserRole,
+} from '../../../services/firebase/adminUsersService';
 import { isSuperAdmin } from '../../../services/firebase/roleService';
 import type { AdminUserListItem } from '../../../store/user/types/adminUsers.types';
 import type { AssignableUserRole } from '../../../store/user/types/role.types';
@@ -43,6 +46,11 @@ function displayUserLabel(user: AdminUserListItem): string {
 function ManageRoles() {
   const { user: authUser } = useAuth();
   const [updatingRoleUid, setUpdatingRoleUid] = useState<string | null>(null);
+  const [privilegedUsers, setPrivilegedUsers] = useState<AdminUserListItem[]>(
+    [],
+  );
+  const [privilegedLoading, setPrivilegedLoading] = useState(true);
+  const [privilegedError, setPrivilegedError] = useState<string | null>(null);
   const { schools, loading: schoolsLoading } = useSchools();
   const {
     users,
@@ -62,6 +70,27 @@ function ManageRoles() {
     loadMore,
     refresh,
   } = useAdminUsersList();
+
+  const loadPrivilegedAudit = useCallback(async () => {
+    setPrivilegedLoading(true);
+    setPrivilegedError(null);
+    try {
+      setPrivilegedUsers(await fetchPrivilegedUsers());
+    } catch (auditError) {
+      setPrivilegedUsers([]);
+      setPrivilegedError(
+        auditError instanceof Error
+          ? auditError.message
+          : 'Failed to load privileged users.',
+      );
+    } finally {
+      setPrivilegedLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadPrivilegedAudit();
+  }, [loadPrivilegedAudit]);
 
   const schoolNameById = useCallback(
     (schoolId: string | null) => {
@@ -105,7 +134,7 @@ function ManageRoles() {
               }
 
               await setUserRole(targetUser.uid, nextRole);
-              await refresh();
+              await Promise.all([refresh(), loadPrivilegedAudit()]);
               appAlert(
                 appAlertCopy.admin.roleUpdatedTitle,
                 appAlertCopy.admin.roleUpdatedSuccess(
@@ -125,7 +154,7 @@ function ManageRoles() {
         },
       ]);
     },
-    [authUser?.uid, refresh],
+    [authUser?.uid, loadPrivilegedAudit, refresh],
   );
 
   const renderItem = useCallback(
@@ -147,8 +176,32 @@ function ManageRoles() {
 
   const keyExtractor = useCallback((item: AdminUserListItem) => item.uid, []);
 
+  const privilegedSummary = privilegedUsers
+    .map(user => {
+      const label =
+        user.fullName.trim() || user.email.trim() || user.uid.slice(0, 8);
+      return `${roleDisplayLabel(user.role)}: ${label}`;
+    })
+    .join('\n');
+
   const listHeader = (
     <View style={styles.headerBlock}>
+      <View style={styles.auditBox}>
+        <Text style={styles.auditTitle}>Privileged access audit</Text>
+        {privilegedLoading ? (
+          <ActivityIndicator color={colors.primary} />
+        ) : privilegedError ? (
+          <Text style={styles.auditError}>{privilegedError}</Text>
+        ) : (
+          <Text style={styles.auditBody}>
+            {privilegedUsers.length === 0
+              ? 'No admin or superadmin accounts found.'
+              : `${privilegedUsers.length} privileged account${
+                  privilegedUsers.length === 1 ? '' : 's'
+                }:\n${privilegedSummary}`}
+          </Text>
+        )}
+      </View>
       <Text style={styles.infoText}>
         Grant admin access so a user can open the admin dashboard and manage
         Resources, Assignments, Exams, and Quiz Competition. Superadmin accounts
@@ -239,7 +292,9 @@ function ManageRoles() {
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={refresh}
+            onRefresh={() => {
+              void Promise.all([refresh(), loadPrivilegedAudit()]);
+            }}
             tintColor={colors.primary}
           />
         }
@@ -258,6 +313,30 @@ const styles = StyleSheet.create({
   headerBlock: {
     marginBottom: 12,
     gap: 8,
+  },
+  auditBox: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    backgroundColor: colors.primaryLight,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 6,
+  },
+  auditTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  auditBody: {
+    fontSize: 12,
+    lineHeight: 17,
+    color: colors.textSecondary,
+  },
+  auditError: {
+    fontSize: 12,
+    lineHeight: 17,
+    color: colors.danger,
   },
   infoText: {
     fontSize: 13,
