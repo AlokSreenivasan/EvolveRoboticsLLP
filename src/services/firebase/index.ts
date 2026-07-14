@@ -31,7 +31,7 @@ export { changePassword } from './changePasswordService';
 export type { ChangePasswordInput } from './changePasswordService';
 export { signUpWithProfile } from './signUpService';
 export type { SignUpWithProfileInput } from './signUpService';
-export { getCurrentUserRole, isAdmin } from './roleService';
+export { getCurrentUserRole, isAdmin, isSuperAdmin } from './roleService';
 export {
   createImportantUpdateNotice,
   deleteImportantUpdateNotice,

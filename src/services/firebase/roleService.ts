@@ -5,6 +5,7 @@ import {
 import {
   getRoleFromProfile,
   isAdminFromProfile,
+  isSuperAdminFromProfile,
   normalizeUserRole,
 } from '../../utils/role/normalizeUserRole';
 import { getCurrentUserId } from './authService';
@@ -28,7 +29,7 @@ export async function getCurrentUserRole(): Promise<UserRole> {
   return getRoleFromProfile(profile);
 }
 
-/** Returns true when the signed-in user's normalized role is "admin". */
+/** Returns true when the signed-in user's normalized role is admin or superadmin. */
 export async function isAdmin(): Promise<boolean> {
   const uid = getCurrentUserId();
   if (!uid) {
@@ -41,4 +42,19 @@ export async function isAdmin(): Promise<boolean> {
   }
 
   return isAdminFromProfile(profile);
+}
+
+/** Returns true when the signed-in user's normalized role is superadmin. */
+export async function isSuperAdmin(): Promise<boolean> {
+  const uid = getCurrentUserId();
+  if (!uid) {
+    return false;
+  }
+
+  const profile = await getUserProfile(uid);
+  if (!profile) {
+    return false;
+  }
+
+  return isSuperAdminFromProfile(profile);
 }

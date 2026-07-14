@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Evolve — Full Project Audit Report</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 18mm 16mm 18mm 16mm;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.45;
+      color: #1a1a1a;
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    h1 { font-size: 22pt; margin: 0 0 6px; }
+    h2 {
+      font-size: 14pt;
+      margin: 28px 0 10px;
+      padding-bottom: 4px;
+      border-bottom: 1.5px solid #222;
+      page-break-after: avoid;
+    }
+    h3 { font-size: 11.5pt; margin: 16px 0 8px; page-break-after: avoid; }
+    p, li { margin: 0 0 8px; }
+    .meta { color: #555; font-size: 9.5pt; margin-bottom: 16px; }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 8.5pt;
+      font-weight: 600;
+      margin-right: 6px;
+      margin-bottom: 4px;
+    }
+    .badge-crit { background: #fee2e2; color: #991b1b; }
+    .badge-warn { background: #fef3c7; color: #92400e; }
+    .badge-ok { background: #e5e7eb; color: #374151; }
+    .scores {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 10px;
+      margin: 16px 0 20px;
+    }
+    .score {
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      padding: 10px 12px;
+      page-break-inside: avoid;
+    }
+    .score .value { font-size: 16pt; font-weight: 700; }
+    .score .label { font-size: 8.5pt; color: #555; margin-top: 2px; }
+    .callout {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-left: 4px solid #dc2626;
+      padding: 12px 14px;
+      border-radius: 4px;
+      margin: 14px 0 20px;
+      page-break-inside: avoid;
+    }
+    .callout.info {
+      background: #eff6ff;
+      border-color: #bfdbfe;
+      border-left-color: #2563eb;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9pt;
+      margin: 8px 0 18px;
+      page-break-inside: auto;
+    }
+    thead { display: table-header-group; }
+    tr { page-break-inside: avoid; page-break-after: auto; }
+    th, td {
+      border: 1px solid #d1d5db;
+      padding: 7px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #f3f4f6; font-weight: 600; }
+    .sev { font-weight: 700; white-space:nowrap; }
+    .sev-c { color: #b91c1c; }
+    .sev-h { color: #c2410c; }
+    .sev-m { color: #a16207; }
+    .sev-l { color: #4b5563; }
+    .sev-s { color: #1d4ed8; }
+    ul.roadmap { padding-left: 18px; }
+    ul.roadmap li { margin-bottom: 10px; }
+    .footer {
+      margin-top: 28px;
+      padding-top: 12px;
+      border-top: 1px solid #d1d5db;
+      font-size: 8.5pt;
+      color: #6b7280;
+    }
+    code { font-family: ui-monospace, Menlo, monospace; font-size: 8.5pt; }
+  </style>
+</head>
+<body>
+  <h1>Evolve — Full Project Audit Report</h1>
+  <p class="meta">
+    React Native 0.80.2 CLI · Firebase Auth / Firestore / Storage / FCM / Functions<br />
+    Read-only review · July 14, 2026 · No code changes made during this audit
+  </p>
+  <div>
+    <span class="badge badge-crit">Not store-ready</span>
+    <span class="badge badge-warn">4 critical blockers</span>
+    <span class="badge badge-ok">~293 TS files · ~39k LOC</span>
+  </div>
+
+  <div class="scores">
+    <div class="score">
+      <div class="value">6.0 / 10</div>
+      <div class="label">Project health</div>
+    </div>
+    <div class="score">
+      <div class="value">3.5 / 10</div>
+      <div class="label">Production readiness</div>
+    </div>
+    <div class="score">
+      <div class="value">No</div>
+      <div class="label">Android deploy ready</div>
+    </div>
+    <div class="score">
+      <div class="value">No</div>
+      <div class="label">iOS deploy ready</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Deployment verdict.</strong> Neither Play Store nor App Store submission is viable yet.
+    Blockers: Firestore self-promotion to admin on profile create, committed YouTube API key,
+    Android release signed with the debug keystore, client-trusted exam/quiz scoring with answer
+    keys readable by learners, iOS sample bundle ID, and empty iOS App Icon assets.
+  </div>
+
+  <h2>1. Architecture snapshot</h2>
+  <p>
+    Layered <strong>presentation → services → domain</strong> with React Context auth
+    (no Redux/Zustand). Custom home tab bar; Admin nested stack gated client-side. Content lives
+    in Firestore subscriptions via <code>HomeFeedContext</code> (~8 live listeners when Main is active).
+  </p>
+  <p><strong>Strengths:</strong> typed domain models, signup Auth rollback, account deletion,
+    <code>allowBackup=false</code>, admin content writes mostly rule-gated, structured appAlert UX.</p>
+  <p><strong>Gaps:</strong> security rules holes, almost no tests, no Error Boundaries / Crashlytics,
+    docs still RN template.</p>
+
+  <h2>2. Findings by severity</h2>
+  <p>Critical: 4 · High: 10 · Medium: 12 · Low: 8 · Suggestions: 9</p>
+
+  <h2>3. Critical</h2>
+  <table>
+    <thead>
+      <tr><th>Issue</th><th>Location</th><th>Recommended fix</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Any signed-in user can create <code>users/{uid}</code> with <code>role: admin</code> and unlock CMS + admin callables</td>
+        <td><code>firestore.rules:8–13, 717–718</code></td>
+        <td>Force create <code>role == 'user'</code>; promote admins only via Admin SDK / Cloud Function; audit existing admins</td>
+      </tr>
+      <tr>
+        <td>YouTube API key committed; <code>.env</code> not in <code>.gitignore</code></td>
+        <td><code>.env:4</code> · <code>.gitignore</code> · <code>config/youtube.ts:9</code></td>
+        <td>Rotate/restrict key; gitignore <code>.env</code>; consider proxy via Cloud Functions</td>
+      </tr>
+      <tr>
+        <td>Release APK/AAB signed with debug keystore</td>
+        <td><code>android/app/build.gradle:102–105</code></td>
+        <td>Create release keystore; gitignore secrets; wire <code>signingConfigs.release</code></td>
+      </tr>
+      <tr>
+        <td>Exam/quiz answer keys readable; scores written by client without server verification</td>
+        <td><code>firestore.rules:107–118, 584–625</code> · ExamAttemptScreen ~180 · QuizAttemptScreen ~211</td>
+        <td>Hide <code>correctChoiceIndex</code> from learners; score via callable Function</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>4. High</h2>
+  <table>
+    <thead>
+      <tr><th>Issue</th><th>Location</th><th>Recommended fix</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Storage CMS paths writable by any auth user under their uid (abuse / cost)</td>
+        <td><code>storage.rules:22–81</code></td>
+        <td>Require admin for thumbnails/PDFs; keep only profileImages user-writable</td>
+      </tr>
+      <tr>
+        <td>iOS still uses sample Bundle ID; mismatch with Android <code>com.evolve</code></td>
+        <td><code>project.pbxproj:294,321</code> · <code>GoogleService-Info.plist:15–16</code></td>
+        <td>Set production Bundle ID; regenerate Firebase/Google Sign-In configs</td>
+      </tr>
+      <tr>
+        <td>iOS App Icon set has no image files — App Store reject</td>
+        <td><code>Images.xcassets/AppIcon.appiconset/</code></td>
+        <td>Add full icon set including 1024×1024</td>
+      </tr>
+      <tr>
+        <td>iOS Push incomplete: background mode only, no entitlements / APNs</td>
+        <td><code>Info.plist:49–52</code> · AppDelegate · project.pbxproj</td>
+        <td>Enable Push capability, <code>aps-environment</code>, APNs key in Firebase</td>
+      </tr>
+      <tr>
+        <td>Empty <code>NSLocationWhenInUseUsageDescription</code> (unused; review risk)</td>
+        <td><code>Info.plist:45–46</code></td>
+        <td>Remove key if unused</td>
+      </tr>
+      <tr>
+        <td>Privacy Policy / Terms rows non-functional (no onPress)</td>
+        <td><code>SettingsScreen.tsx:154–168</code></td>
+        <td>Link to hosted legal URLs via <code>Linking.openURL</code></td>
+      </tr>
+      <tr>
+        <td>Unpublished content + answer keys only filtered client-side</td>
+        <td>firestore.rules reads · examsService filter</td>
+        <td>Rules: <code>allow read if isAdmin() || isPublished == true</code>; strip answers</td>
+      </tr>
+      <tr>
+        <td>Stale admin role possible via <code>isRicherUserProfile</code> (ignores role)</td>
+        <td><code>mapUserProfile.ts:81–100</code> · AuthContext hydration</td>
+        <td>Always apply remote role; include role in richness compare</td>
+      </tr>
+      <tr>
+        <td>Google Sign-In does not provision Firestore profile</td>
+        <td><code>googleSignInService.ts:79–118</code></td>
+        <td>Mirror email signup: <code>createUserProfileIfNotExists</code> after Google auth</td>
+      </tr>
+      <tr>
+        <td>No React Error Boundary; no Crashlytics/Sentry</td>
+        <td><code>App.tsx</code> · package.json</td>
+        <td>Add root ErrorBoundary + crash reporting before release</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>5. Medium</h2>
+  <table>
+    <thead>
+      <tr><th>Issue</th><th>Location</th><th>Recommended fix</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>ProGuard/R8 disabled for release</td>
+        <td><code>android/app/build.gradle:62,106–107</code></td>
+        <td>Enable minify; add RN/Firebase keep rules</td>
+      </tr>
+      <tr>
+        <td>Version mismatch: native 1.0 vs Settings UI 2.1.1 vs package 0.0.1</td>
+        <td>build.gradle · SettingsScreen · package.json</td>
+        <td>Single source of truth for store versioning</td>
+      </tr>
+      <tr>
+        <td>PrivacyInfo.xcprivacy declares no collected data types</td>
+        <td><code>ios/Evolve/PrivacyInfo.xcprivacy</code></td>
+        <td>Declare email, name, phone, photos, user ID, etc.</td>
+      </tr>
+      <tr>
+        <td>Kids track collects PII without age gate / COPPA flow</td>
+        <td>Track kids|professionals across app + rules</td>
+        <td>Age gate, parental consent, store age rating alignment</td>
+      </tr>
+      <tr>
+        <td>HomeFeed mounts many concurrent onSnapshot listeners</td>
+        <td><code>HomeFeedContext.tsx</code></td>
+        <td>Pause off-screen; coalesce; paginate notifications</td>
+      </tr>
+      <tr>
+        <td>Password policy mismatch: UI min 8 vs Firebase msg mentions 6</td>
+        <td>SignUpScreen · <code>signUpService.ts:29–30</code></td>
+        <td>Align messages and Auth password policy</td>
+      </tr>
+      <tr>
+        <td>Admin stack omitted while roleLoading (nav race)</td>
+        <td><code>MainStack.tsx:43,106–108</code></td>
+        <td>Defer admin entry until role resolved; keep Unauthorized fallback</td>
+      </tr>
+      <tr>
+        <td>Placeholder Android icons; no adaptive icon; default splash</td>
+        <td>android res/mipmap · styles.xml · LaunchScreen</td>
+        <td>Brand adaptive icons + branded splash</td>
+      </tr>
+      <tr>
+        <td>Hardcoded Google Web Client ID + support contacts in source</td>
+        <td><code>config/googleSignIn.ts</code> · <code>config/support.ts</code></td>
+        <td>Env/flavor-driven configs for prod vs staging</td>
+      </tr>
+      <tr>
+        <td>README is mostly RN template; no architecture / deploy / secrets docs</td>
+        <td><code>README.md</code></td>
+        <td>Document env setup, Firebase deploy, signing, roles</td>
+      </tr>
+      <tr>
+        <td>Test coverage util-only (4 test files)</td>
+        <td><code>__tests__/</code> · utils tests</td>
+        <td>Auth gating, rules, scoring, critical services tests</td>
+      </tr>
+      <tr>
+        <td>App Navigation root stack untyped</td>
+        <td><code>AppNavigation.tsx:27</code></td>
+        <td>Type <code>createNativeStackNavigator</code> with RootStackParamList</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>6. Low</h2>
+  <table>
+    <thead>
+      <tr><th>Issue</th><th>Location</th><th>Recommended fix</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Deprecated ProfileDisplayProvider / useUserProfile still present</td>
+        <td>ProfileDisplayContext · hooks/useUserProfile</td>
+        <td>Remove dead aliases</td>
+      </tr>
+      <tr>
+        <td><code>store/</code> is types-only — confusing name</td>
+        <td><code>src/store/</code></td>
+        <td>Rename to types/ or models/</td>
+      </tr>
+      <tr>
+        <td>Custom tabs outside React Navigation (no deep-linkable tab state)</td>
+        <td>HomeBottomTabBar · HomeScreen</td>
+        <td>Adopt @react-navigation/bottom-tabs when deep links matter</td>
+      </tr>
+      <tr>
+        <td>Debug cleartext traffic enabled (debug flavor only)</td>
+        <td>debug AndroidManifest</td>
+        <td>Keep out of release (already OK)</td>
+      </tr>
+      <tr>
+        <td>ATS allows local networking</td>
+        <td><code>Info.plist:38–44</code></td>
+        <td>Acceptable for Metro; ensure release is HTTPS-only</td>
+      </tr>
+      <tr>
+        <td>Unguarded console.warn in some admin save paths</td>
+        <td>ManageContinueLearningPlaylists ~323</td>
+        <td>Gate with <code>__DEV__</code></td>
+      </tr>
+      <tr>
+        <td>react-native-webview PDF via Google Docs viewer</td>
+        <td>pdfViewerUrl util</td>
+        <td>Only load trusted admin URLs; consider native PDF</td>
+      </tr>
+      <tr>
+        <td>No custom App Links / universal links for content</td>
+        <td>AndroidManifest · Info.plist</td>
+        <td>Add if marketing / share flows need them</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>7. Suggestions</h2>
+  <table>
+    <thead>
+      <tr><th>Idea</th><th>Why</th><th>Priority</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Add Analytics + Crashlytics (or Sentry)</td><td>No production crash/telemetry today</td><td>P0 before soft launch</td></tr>
+      <tr><td>Offline / cache strategy for courses &amp; home feed</td><td>Many live listeners; weak offline UX</td><td>P1</td></tr>
+      <tr><td>Server-driven remote config for feature flags</td><td>Admin CMS + quiz competitions benefit</td><td>P2</td></tr>
+      <tr><td>E2E (Detox/Maestro) for auth → home → exam flow</td><td>Only unit smoke tests today</td><td>P1</td></tr>
+      <tr><td>Move YouTube playlist fetch to Cloud Functions</td><td>Keep API key off device</td><td>P0 with secrets hygiene</td></tr>
+      <tr><td>Image CDN / resizing for profile &amp; CMS uploads</td><td>5MB uploads; list performance</td><td>P2</td></tr>
+      <tr><td>Accessibility audit (labels, contrast, Dynamic Type)</td><td>Educational / kids audience</td><td>P1</td></tr>
+      <tr><td>CI: lint, typecheck, unit tests, rules tests on PR</td><td>No automated quality gate observed</td><td>P1</td></tr>
+      <tr><td>Play Integrity / App Check</td><td>Reduce spoofed clients abusing rules holes</td><td>P1 after rules fix</td></tr>
+    </tbody>
+  </table>
+
+  <h2>8. Platform &amp; store readiness</h2>
+
+  <h3>Android (Play) — Blocked</h3>
+  <p>
+    Package <code>com.evolve</code> · minSdk 24 · targetSdk 35 · versionCode 1 — SDK targets are fine.
+    Blockers: debug signing on release, committed secrets, admin privilege escalation, quiz integrity,
+    Privacy/Terms links for Data Safety / policy, brand assets.
+    Permissions (INTERNET, POST_NOTIFICATIONS, READ_MEDIA_IMAGES) align with features; CAMERA not
+    declared (gallery-only) — good. ProGuard/R8 still disabled.
+  </p>
+
+  <h3>iOS (App Store) — Blocked</h3>
+  <p>
+    Bundle ID still <code>org.reactjs.native.example.Evolve</code>. Empty App Icons. Push incomplete.
+    Empty location string. Incomplete Privacy Manifest data types. Signing team / entitlements not
+    production-ready. Plus shared blockers: Firestore role create, secrets, legal links, kids/age
+    compliance if under-13 content applies.
+  </p>
+
+  <h3>Policy compliance notes</h3>
+  <ul>
+    <li>Account deletion exists (PrivacySettingsScreen + deleteAccountService) — required for both stores.</li>
+    <li>Privacy Policy / Terms UI present but not wired — likely rejection / Data Safety failure.</li>
+    <li>Kids track + PII without age gate risks COPPA / App Store kids category scrutiny.</li>
+    <li>Declare collecting data accurately in Play Data Safety and PrivacyInfo.xcprivacy before submit.</li>
+  </ul>
+
+  <h2>9. Prioritized production roadmap</h2>
+  <ul class="roadmap">
+    <li><strong>P0 — Security rules:</strong> Lock Firestore create role to user; audit existing admins; tighten isPublished + answer-key reads; admin-only Storage CMS writes.</li>
+    <li><strong>P0 — Secrets:</strong> Rotate YouTube key; gitignore .env; move key server-side; scrub history if repo shared.</li>
+    <li><strong>P0 — Quiz integrity:</strong> Server-side exam/quiz scoring (callable); stop trusting client correctCount/xpEarned.</li>
+    <li><strong>P0 — Packaging:</strong> Android release signing; iOS production Bundle ID + Firebase/Google Sign-In rebuild; App Icons; remove empty location key.</li>
+    <li><strong>P0 — Legal / compliance:</strong> Wire Privacy Policy &amp; Terms URLs; complete PrivacyInfo + Play Data Safety; age gate if kids track includes under-13.</li>
+    <li><strong>P1 — Resilience:</strong> Fix Google profile provisioning + stale role hydration; Error Boundary + Crashlytics; iOS Push entitlements/APNs.</li>
+    <li><strong>P1 — Release polish:</strong> Enable R8; brand Android adaptive icons/splash; align version numbers; CI lint/test/rules.</li>
+    <li><strong>P2 — Quality:</strong> Expand tests (auth, guards, scoring); HomeFeed listener optimization; accessibility; App Check; product docs.</li>
+  </ul>
+
+  <div class="callout info">
+    <strong>Scores rationale.</strong> Health 6.0 reflects architecture maturity and feature depth.
+    Production readiness 3.5 reflects ship-blocker density. Fixing the P0 security and packaging
+    items would likely raise production readiness into the 7–8 range before soft launch.
+  </div>
+
+  <div class="footer">
+    Stack reviewed: RN 0.80.2 / React 19.1 / RNFB 24 / Reanimated 3 / Navigation 7 ·
+    Hermes + New Architecture enabled · Functions Node 20<br />
+    Generated from Evolve audit · July 14, 2026 · Confidential engineering review
+  </div>
+</body>
+</html>

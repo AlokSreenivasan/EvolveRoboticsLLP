@@ -6,7 +6,7 @@ import {
 } from '../../store/user/types/role.types';
 
 export function isValidUserRole(value: unknown): value is UserRole {
-  return value === 'user' || value === 'admin';
+  return value === 'user' || value === 'admin' || value === 'superadmin';
 }
 
 /**
@@ -35,8 +35,14 @@ export function normalizeUserRole(
   return { role: DEFAULT_USER_ROLE, issue: 'invalid_role' };
 }
 
+/** True when the role is superadmin (full app control). */
+export function isSuperAdminRole(role: UserRole): boolean {
+  return role === 'superadmin';
+}
+
+/** True when the role can open the admin dashboard. */
 export function isAdminRole(role: UserRole): boolean {
-  return role === 'admin';
+  return role === 'admin' || isSuperAdminRole(role);
 }
 
 export function getRoleFromProfile(
@@ -48,10 +54,26 @@ export function getRoleFromProfile(
   return normalizeUserRole(profile.role).role;
 }
 
+export function isSuperAdminFromProfile(
+  profile: { role: UserRole } | null | undefined,
+): boolean {
+  return isSuperAdminRole(getRoleFromProfile(profile));
+}
+
 export function isAdminFromProfile(
   profile: { role: UserRole } | null | undefined,
 ): boolean {
   return isAdminRole(getRoleFromProfile(profile));
+}
+
+export function roleDisplayLabel(role: UserRole): string {
+  if (role === 'superadmin') {
+    return 'Superadmin';
+  }
+  if (role === 'admin') {
+    return 'Admin';
+  }
+  return 'User';
 }
 
 export function roleIssueMessage(issue: RoleResolutionIssue | null): string | null {

@@ -6,17 +6,27 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin(database);
 
+      // New accounts always start as "user". Superadmins are promoted explicitly.
       allow create: if isOwner(userId)
         && hasRequiredProfileFields()
         && isValidProfileData()
+        && request.resource.data.role == 'user'
         && request.resource.data.createdAt == request.time
         && request.resource.data.updatedAt == request.time;
 
-      allow update: if isOwner(userId)
-        && onlyProfileFieldsChanged()
-        && isValidProfileDataAfterUpdate();
+      // Owners may edit their own profile fields (not role).
+      // Superadmins may update any user, including role (user or admin only).
+      allow update: if (isOwner(userId)
+          && onlyProfileFieldsChanged()
+          && isValidProfileDataAfterUpdate())
+        || (isSuperAdmin(database)
+          && onlyRoleFieldsChanged()
+          && isValidSuperAdminRoleAssignment())
+        || (isSuperAdmin(database)
+          && onlySuperAdminUserFieldsChanged()
+          && isValidProfileDataAfterSuperAdminUpdate());
 
-      allow delete: if isOwner(userId);
+      allow delete: if isOwner(userId) || isAdmin(database);
 
       match /continueLearningProgress/{playlistId} {
         allow read: if isOwner(userId);
@@ -156,10 +166,20 @@ function isAuthenticated() {
   return request.auth != null;
 }
 
+/** Admin dashboard access (admin or superadmin). */
 function isAdmin(database) {
   return isAuthenticated()
     && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    && (
+      get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin'
+      || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+    );
+}
+
+function isSuperAdmin(database) {
+  return isAuthenticated()
+    && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin';
 }
 
 function isOwner(userId) {
@@ -699,6 +719,33 @@ function onlyProfileFieldsChanged() {
     .hasOnly(['fullName', 'phoneNumber', 'profileImage', 'schoolId', 'grade', 'track', 'updatedAt']);
 }
 
+// Superadmin may change role with a partial update (role + updatedAt only).
+function onlyRoleFieldsChanged() {
+  return request.resource.data.diff(resource.data).affectedKeys()
+    .hasOnly(['role', 'updatedAt']);
+}
+
+function isValidSuperAdminRoleAssignment() {
+  return isValidUserRole(request.resource.data.role)
+    && hasAllowedRoleAssignment();
+}
+
+// Superadmin may also change role (and email when correcting accounts).
+function onlySuperAdminUserFieldsChanged() {
+  return request.resource.data.diff(resource.data).affectedKeys()
+    .hasOnly([
+      'fullName',
+      'phoneNumber',
+      'profileImage',
+      'schoolId',
+      'grade',
+      'track',
+      'role',
+      'email',
+      'updatedAt',
+    ]);
+}
+
 function isValidProfileDataAfterUpdate() {
   let data = request.resource.data;
   return data.fullName is string
@@ -714,12 +761,42 @@ function isValidProfileDataAfterUpdate() {
     && isOptionalUserTrack(data.track);
 }
 
+function isValidProfileDataAfterSuperAdminUpdate() {
+  let data = request.resource.data;
+  return data.fullName is string
+    && data.fullName.size() > 0
+    && data.fullName.size() <= 120
+    && data.email is string
+    && data.email.size() > 0
+    && data.email.size() <= 320
+    && data.phoneNumber is string
+    && data.phoneNumber.size() >= 10
+    && data.phoneNumber.size() <= 15
+    && isValidUserRole(data.role)
+    && hasAllowedRoleAssignment()
+    && isOptionalProfileImage(data.profileImage)
+    && isOptionalSchoolId(data.schoolId)
+    && isOptionalGrade(data.grade)
+    && isOptionalUserTrack(data.track);
+}
+
 function isValidUserRole(value) {
-  return value == 'user' || value == 'admin';
+  return value == 'user' || value == 'admin' || value == 'superadmin';
+}
+
+function hasAllowedRoleAssignment() {
+  return request.resource.data.role == resource.data.role
+    || request.resource.data.role == 'user'
+    || request.resource.data.role == 'admin';
+}
+
+/** Accepts current roles plus legacy "admin" still stored on older profiles. */
+function isStoredUserRole(value) {
+  return isValidUserRole(value) || value == 'admin';
 }
 
 function hasValidProfileRoleField(data) {
-  return !('role' in data) || data.role == null || isValidUserRole(data.role);
+  return !('role' in data) || data.role == null || isStoredUserRole(data.role);
 }
 
 function isOptionalProfileImage(value) {

@@ -19,10 +19,14 @@ import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import { colors } from '../../../constants/theme';
 import { useAdminUsersList } from '../../hooks/admin/useAdminUsersList';
 import { useSchools } from '../../hooks/useSchools';
-import { resetUserQuizProgress } from '../../../services/firebase/adminQuizProgressService';
+import { setUserRole } from '../../../services/firebase/adminUsersService';
+import { isSuperAdmin } from '../../../services/firebase/roleService';
 import type { AdminUserListItem } from '../../../store/user/types/adminUsers.types';
-import { toAdminWriteErrorMessage } from '../../../utils/admin/adminWriteErrorMessage';
+import type { AssignableUserRole } from '../../../store/user/types/role.types';
+import { toRoleWriteErrorMessage } from '../../../utils/admin/adminWriteErrorMessage';
 import { appAlert, appAlertButtons, appAlertCopy } from '../../../utils/alert/appAlert';
+import { roleDisplayLabel } from '../../../utils/role/normalizeUserRole';
+import { useAuth } from '../../context/AuthContext';
 
 function displayUserLabel(user: AdminUserListItem): string {
   const name = user.fullName.trim();
@@ -36,8 +40,9 @@ function displayUserLabel(user: AdminUserListItem): string {
   return 'this user';
 }
 
-function ManageUsers() {
-  const [resettingUid, setResettingUid] = useState<string | null>(null);
+function ManageRoles() {
+  const { user: authUser } = useAuth();
+  const [updatingRoleUid, setUpdatingRoleUid] = useState<string | null>(null);
   const { schools, loading: schoolsLoading } = useSchools();
   const {
     users,
@@ -68,37 +73,60 @@ function ManageUsers() {
     [schools],
   );
 
-  const confirmResetQuizProgress = useCallback((user: AdminUserListItem) => {
-    const label = displayUserLabel(user);
-    appAlert(
-      appAlertCopy.admin.resetQuizProgressConfirmTitle,
-      appAlertCopy.admin.resetQuizProgressConfirm(label),
-      [
+  const confirmToggleAdminRole = useCallback(
+    (targetUser: AdminUserListItem) => {
+      if (targetUser.role === 'superadmin') {
+        return;
+      }
+
+      const label = displayUserLabel(targetUser);
+      const nextRole: AssignableUserRole =
+        targetUser.role === 'admin' ? 'user' : 'admin';
+      const confirmMessage =
+        nextRole === 'admin'
+          ? appAlertCopy.admin.grantAdminConfirm(label)
+          : appAlertCopy.admin.revokeAdminConfirm(label);
+
+      appAlert(appAlertCopy.admin.changeRoleConfirmTitle, confirmMessage, [
         { text: appAlertButtons.cancel, style: 'cancel' },
         {
-          text: appAlertButtons.reset,
-          style: 'destructive',
+          text: appAlertButtons.confirm,
+          style: nextRole === 'user' ? 'destructive' : 'default',
           onPress: async () => {
-            setResettingUid(user.uid);
+            setUpdatingRoleUid(targetUser.uid);
             try {
-              await resetUserQuizProgress(user.uid);
+              const canChangeRoles = await isSuperAdmin();
+              if (!canChangeRoles) {
+                appAlert(
+                  appAlertCopy.admin.superadminAccessRequiredTitle,
+                  appAlertCopy.admin.superadminAccessRequired(authUser?.uid),
+                );
+                return;
+              }
+
+              await setUserRole(targetUser.uid, nextRole);
+              await refresh();
               appAlert(
-                appAlertCopy.admin.resetQuizProgressTitle,
-                appAlertCopy.admin.resetQuizProgressSuccess(label),
+                appAlertCopy.admin.roleUpdatedTitle,
+                appAlertCopy.admin.roleUpdatedSuccess(
+                  label,
+                  roleDisplayLabel(nextRole).toLowerCase(),
+                ),
               );
-            } catch (resetError) {
+            } catch (roleError) {
               appAlert(
-                appAlertCopy.admin.resetFailedTitle,
-                toAdminWriteErrorMessage(resetError),
+                appAlertCopy.admin.saveFailedTitle,
+                toRoleWriteErrorMessage(roleError, authUser?.uid),
               );
             } finally {
-              setResettingUid(null);
+              setUpdatingRoleUid(null);
             }
           },
         },
-      ],
-    );
-  }, []);
+      ]);
+    },
+    [authUser?.uid, refresh],
+  );
 
   const renderItem = useCallback(
     ({ item }: { item: AdminUserListItem }) => (
@@ -109,17 +137,23 @@ function ManageUsers() {
         role={item.role}
         schoolLabel={schoolNameById(item.schoolId)}
         gradeLabel={getGradeLabel(item.grade)}
-        onResetQuizProgress={() => confirmResetQuizProgress(item)}
-        resettingQuizProgress={resettingUid === item.uid}
+        roleAssignmentTarget="admin"
+        onToggleRole={() => confirmToggleAdminRole(item)}
+        updatingRole={updatingRoleUid === item.uid}
       />
     ),
-    [confirmResetQuizProgress, resettingUid, schoolNameById],
+    [confirmToggleAdminRole, schoolNameById, updatingRoleUid],
   );
 
   const keyExtractor = useCallback((item: AdminUserListItem) => item.uid, []);
 
   const listHeader = (
     <View style={styles.headerBlock}>
+      <Text style={styles.infoText}>
+        Grant admin access so a user can open the admin dashboard and manage
+        Resources, Assignments, Exams, and Quiz Competition. Superadmin accounts
+        cannot be changed from this screen.
+      </Text>
       <AdminUserFilters
         schools={schools}
         schoolsLoading={schoolsLoading}
@@ -192,8 +226,8 @@ function ManageUsers() {
 
   return (
     <AdminScreenLayout
-      title="Manage Users"
-      subtitle="Accounts registered in the app"
+      title="Roles"
+      subtitle="Assign admin access"
       scrollable={false}>
       <FlatList
         data={loading && users.length === 0 ? [] : users}
@@ -224,6 +258,12 @@ const styles = StyleSheet.create({
   headerBlock: {
     marginBottom: 12,
     gap: 8,
+  },
+  infoText: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: colors.textSecondary,
+    marginBottom: 4,
   },
   searchWrap: {
     flexDirection: 'row',
@@ -263,4 +303,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ManageUsers;
+export default ManageRoles;

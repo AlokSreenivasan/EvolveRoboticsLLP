@@ -5,6 +5,7 @@ export const appAlertButtons = {
   continue: 'Continue',
   tryAgain: 'Try again',
   cancel: 'Cancel',
+  confirm: 'Confirm',
   delete: 'Delete',
   remove: 'Remove',
   logOut: 'Log out',
@@ -68,8 +69,16 @@ export const appAlertCopy = {
       `Clear all quiz competition progress for ${label}? They will start again from the first quiz.`,
     resetQuizProgressSuccess: (label: string) =>
       `Quiz progress for ${label} has been cleared. They can begin fresh.`,
+    grantAdminConfirm: (label: string) =>
+      `Grant admin access to ${label}? They will be able to open the admin dashboard and manage Resources, Assignments, Exams, and Quiz Competition.`,
+    revokeAdminConfirm: (label: string) =>
+      `Remove admin access from ${label}? They will become a regular user.`,
+    roleUpdatedSuccess: (label: string, role: string) =>
+      `${label} is now a ${role}.`,
     adminAccessRequired: (uid?: string | null) =>
-      `Your account does not have admin access in Evolve.${uid ? `\n\nUID: ${uid}\n\nSet users/${uid}.role to "admin" in Firebase Console, then sign out and back in.` : ''}`,
+      `Your account does not have admin access in Evolve.${uid ? `\n\nUID: ${uid}\n\nSet users/${uid}.role to "admin" or "superadmin" in Firebase Console, then sign out and back in.` : ''}`,
+    superadminAccessRequired: (uid?: string | null) =>
+      `Your account does not have superadmin access in Evolve.${uid ? `\n\nUID: ${uid}\n\nSet users/${uid}.role to "superadmin" in Firebase Console, then sign out and back in.` : ''}`,
     deleteConfirm: (item: string, name: string) =>
       `Remove "${name}" from Evolve? This cannot be undone.`,
     deleteQuestionConfirm: (context: 'quiz' | 'exam') =>
@@ -90,8 +99,10 @@ export const appAlertCopy = {
     savedTitle: 'All set',
     liveSentTitle: 'Notification sent',
     resetQuizProgressTitle: 'Quiz progress reset',
+    roleUpdatedTitle: 'Role updated',
     deleteTitle: (item: string) => `Delete ${item}?`,
     resetQuizProgressConfirmTitle: 'Reset quiz progress?',
+    changeRoleConfirmTitle: 'Change role?',
     sendLiveTitle: 'Send live notification?',
     cannotSaveTitle: (item: string) => `Cannot save ${item}`,
     cannotSendTitle: 'Cannot send',
@@ -109,6 +120,7 @@ export const appAlertCopy = {
     videoCountNeeded: 'Video count needed',
     messageRequiredTitle: 'Message needed',
     adminAccessRequiredTitle: 'Admin access required',
+    superadminAccessRequiredTitle: 'Superadmin access required',
     headingRequiredTitle: 'Heading needed',
     pdfRequiredTitle: 'PDF needed',
     schoolVisibilityRequiredTitle: 'School visibility needed',

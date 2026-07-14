@@ -13,6 +13,7 @@ import {
   MessageSquare,
   PlayCircle,
   School,
+  Shield,
   Trophy,
   Users,
 } from 'lucide-react-native';
@@ -21,7 +22,9 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import AdminScreenLayout from '../../../components/Admin/AdminScreenLayout';
 import { colors, cardShadow, spacing } from '../../../constants/theme';
+import { useUserRole } from '../../hooks/useUserRole';
 import type { AdminStackParamList } from '../../../types/navigation';
+import { canAccessAdminDashboardScreen } from '../../../utils/admin/adminDashboardAccess';
 
 type AdminNav = NativeStackNavigationProp<AdminStackParamList, 'AdminDashboard'>;
 
@@ -30,6 +33,8 @@ type AdminMenuItem = {
   title: string;
   description: string;
   icon: typeof LayoutDashboard;
+  /** When true, only superadmins see this tile (also enforced via route guard). */
+  superadminOnly?: boolean;
 };
 
 const MENU_ITEMS: AdminMenuItem[] = [
@@ -88,9 +93,16 @@ const MENU_ITEMS: AdminMenuItem[] = [
     icon: FolderKanban,
   },
   {
+    key: 'ManageRoles',
+    title: 'Roles',
+    description: 'Promote users to admin or revoke admin access',
+    icon: Shield,
+    superadminOnly: true,
+  },
+  {
     key: 'ManageUsers',
     title: 'Manage Users',
-    description: 'View accounts and assign roles',
+    description: 'View accounts and reset quiz progress',
     icon: Users,
   },
   {
@@ -115,21 +127,34 @@ const MENU_ITEMS: AdminMenuItem[] = [
 
 function AdminDashboard() {
   const navigation = useNavigation<AdminNav>();
+  const { role, isSuperAdmin } = useUserRole();
+  const visibleMenuItems = MENU_ITEMS.filter(item => {
+    if (item.superadminOnly && !isSuperAdmin) {
+      return false;
+    }
+    return canAccessAdminDashboardScreen(role, item.key);
+  });
 
   return (
     <AdminScreenLayout
       title="Admin"
-      subtitle="Manage app content, users, and communications">
+      subtitle={
+        isSuperAdmin
+          ? 'Manage app content, users, and communications'
+          : 'Manage Resources, Assignments, Exams, and Quiz Competition'
+      }>
       <View style={styles.heroCard}>
         <LayoutDashboard size={28} color={colors.primary} strokeWidth={2} />
         <Text style={styles.heroTitle}>Administrator dashboard</Text>
         <Text style={styles.heroText}>
-          Choose a section below to manage the Evolve platform.
+          {isSuperAdmin
+            ? 'Choose a section below to manage the Evolve platform.'
+            : 'Choose a section below. Your admin account is limited to learning content tools.'}
         </Text>
       </View>
 
       <View style={styles.menu}>
-        {MENU_ITEMS.map(item => {
+        {visibleMenuItems.map(item => {
           const Icon = item.icon;
           return (
             <TouchableOpacity

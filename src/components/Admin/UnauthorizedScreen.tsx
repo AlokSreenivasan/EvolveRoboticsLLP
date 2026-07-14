@@ -5,19 +5,27 @@ import AccessDenied from './AccessDenied';
 import { colors } from '../../constants/theme';
 
 type UnauthorizedScreenProps = {
+  title?: string;
+  description?: string;
+  actionLabel?: string;
   onGoHome?: () => void;
 };
 
 /**
  * Full-screen unauthorized state for blocked admin navigation.
  */
-function UnauthorizedScreen({ onGoHome }: UnauthorizedScreenProps) {
+function UnauthorizedScreen({
+  title = 'Unauthorized',
+  description = 'This section is restricted to administrators. If you believe this is an error, contact support.',
+  actionLabel = 'Return to Home',
+  onGoHome,
+}: UnauthorizedScreenProps) {
   return (
     <SafeAreaView style={styles.safe}>
       <AccessDenied
-        title="Unauthorized"
-        description="This section is restricted to administrators. If you believe this is an error, contact support."
-        actionLabel="Return to Home"
+        title={title}
+        description={description}
+        actionLabel={actionLabel}
         onActionPress={onGoHome}
       />
     </SafeAreaView>

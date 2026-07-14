@@ -36,6 +36,7 @@ import { getErrorMessage } from '../../utils/firebase';
 import {
   getRoleFromProfile,
   isAdminRole,
+  isSuperAdminRole,
   roleIssueMessage,
 } from '../../utils/role/normalizeUserRole';
 import {
@@ -61,8 +62,10 @@ export interface AuthContextType {
   role: UserRole;
   /** True while the role is being loaded from cache or Firestore after sign-in. */
   roleLoading: boolean;
-  /** True when {@link role} is "admin". */
+  /** True when {@link role} is "admin" or "superadmin". */
   isAdmin: boolean;
+  /** True when {@link role} is "superadmin". */
+  isSuperAdmin: boolean;
   /** Set when role was defaulted due to missing/invalid data or a missing profile document. */
   roleIssue: RoleResolutionIssue | null;
   /** Human-readable message for {@link roleIssue}, if any. */
@@ -402,6 +405,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const isAdmin = useMemo(() => isAdminRole(role), [role]);
+  const isSuperAdmin = useMemo(() => isSuperAdminRole(role), [role]);
 
   const resolvedRoleIssueMessage = useMemo(
     () => roleIssueMessage(roleIssue),
@@ -427,6 +431,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       role,
       roleLoading: effectiveRoleLoading,
       isAdmin,
+      isSuperAdmin,
       roleIssue,
       roleIssueMessage: resolvedRoleIssueMessage,
       refreshProfile,
@@ -447,6 +452,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       role,
       effectiveRoleLoading,
       isAdmin,
+      isSuperAdmin,
       roleIssue,
       resolvedRoleIssueMessage,
       refreshProfile,
