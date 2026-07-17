@@ -4,130 +4,34 @@ const { initializeApp } = require('firebase-admin/app');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const { getMessaging } = require('firebase-admin/messaging');
 
+const {
+  normalizeAudience,
+  normalizeSchoolIds,
+  normalizeSchoolGradeIds,
+  userMatchesSchoolGradeTarget,
+  normalizeNotificationCategory,
+  resolveUserPreferences,
+  collectEligibleTokens,
+  buildMulticastMessage,
+  sendMulticastBatches,
+} = require('./notificationHelpers');
+const {
+  DEFAULT_QUIZ_XP,
+  isAdminRole,
+  normalizeChoiceIndex,
+  normalizeAnswersMap,
+  extractQuestions,
+  resolveAnswerKey,
+  gradeAnswers,
+  computeQuizXpEarned,
+  stripQuestionsForPublic,
+  extractAnswerKeyFromQuestions,
+  questionHasEmbeddedKey,
+} = require('./gradingHelpers');
+
 initializeApp();
 
 const FCM_BATCH_SIZE = 500;
-
-function normalizeAudience(data) {
-  return data?.audience === 'schools' ? 'schools' : 'all';
-}
-
-function normalizeSchoolIds(data) {
-  if (!Array.isArray(data?.schoolIds)) {
-    return [];
-  }
-
-  return [
-    ...new Set(
-      data.schoolIds
-        .filter(id => typeof id === 'string' && id.trim().length > 0)
-        .map(id => id.trim()),
-    ),
-  ];
-}
-
-function normalizeSchoolGradeIds(data, targetSchoolIds) {
-  const raw = data?.schoolGradeIds;
-  if (raw == null || typeof raw !== 'object' || Array.isArray(raw)) {
-    return {};
-  }
-
-  const allowedSchools = new Set(targetSchoolIds);
-  const result = {};
-
-  for (const [schoolId, gradeIds] of Object.entries(raw)) {
-    if (!allowedSchools.has(schoolId) || !Array.isArray(gradeIds)) {
-      continue;
-    }
-
-    const normalized = [
-      ...new Set(
-        gradeIds
-          .filter(id => typeof id === 'string' && id.trim().length > 0)
-          .map(id => id.trim()),
-      ),
-    ];
-
-    if (normalized.length > 0) {
-      result[schoolId] = normalized;
-    }
-  }
-
-  return result;
-}
-
-function userMatchesSchoolGradeTarget(userData, schoolGradeIds) {
-  const schoolId =
-    typeof userData?.schoolId === 'string' ? userData.schoolId.trim() : '';
-  if (!schoolId) {
-    return false;
-  }
-
-  const gradeIds = schoolGradeIds[schoolId];
-  if (!gradeIds || gradeIds.length === 0) {
-    return true;
-  }
-
-  const grade = typeof userData?.grade === 'string' ? userData.grade.trim() : '';
-  return grade.length > 0 && gradeIds.includes(grade);
-}
-
-const ANDROID_CHANNEL_DEFAULT = 'evolve_default';
-const ANDROID_CHANNEL_SILENT = 'evolve_silent';
-
-const DEFAULT_NOTIFICATION_PREFERENCES = {
-  pushNotifications: true,
-  soundAndVibration: true,
-  courseUpdates: true,
-  liveClassReminders: true,
-  assignmentDeadlines: true,
-  progressAchievements: true,
-  securityAlerts: true,
-  accountChanges: true,
-  appUpdates: false,
-  promotionalOffers: false,
-  eventsAndWorkshops: true,
-};
-
-const CATEGORY_PREFERENCE_KEYS = {
-  course_updates: 'courseUpdates',
-  live_class_reminders: 'liveClassReminders',
-  assignment_deadlines: 'assignmentDeadlines',
-  progress_achievements: 'progressAchievements',
-  security_alerts: 'securityAlerts',
-  account_changes: 'accountChanges',
-  app_updates: 'appUpdates',
-  events_workshops: 'eventsAndWorkshops',
-  promotional_offers: 'promotionalOffers',
-};
-
-function normalizeNotificationCategory(value) {
-  if (typeof value === 'string' && value in CATEGORY_PREFERENCE_KEYS) {
-    return value;
-  }
-
-  return 'general';
-}
-
-function resolveUserPreferences(storedPrefs) {
-  return {
-    ...DEFAULT_NOTIFICATION_PREFERENCES,
-    ...(storedPrefs ?? {}),
-  };
-}
-
-function isCategoryEnabledForUser(prefs, category) {
-  if (!category || category === 'general') {
-    return true;
-  }
-
-  const preferenceKey = CATEGORY_PREFERENCE_KEYS[category];
-  if (!preferenceKey) {
-    return true;
-  }
-
-  return prefs[preferenceKey] !== false;
-}
 
 async function loadNotificationPreferencesByUser(db) {
   const byUser = new Map();
@@ -147,100 +51,6 @@ async function loadNotificationPreferencesByUser(db) {
   });
 
   return byUser;
-}
-
-function collectEligibleTokens(
-  tokenSnap,
-  preferencesByUser,
-  category,
-  allowedUserIds,
-) {
-  const withSound = [];
-  const silent = [];
-  const seen = new Set();
-
-  tokenSnap.docs.forEach(tokenDoc => {
-    const userId = tokenDoc.ref.parent?.parent?.id;
-    if (typeof userId !== 'string') {
-      return;
-    }
-
-    const prefs = resolveUserPreferences(preferencesByUser.get(userId));
-    if (prefs.pushNotifications === false) {
-      return;
-    }
-
-    if (!isCategoryEnabledForUser(prefs, category)) {
-      return;
-    }
-
-    if (allowedUserIds != null && !allowedUserIds.has(userId)) {
-      return;
-    }
-
-    const token = tokenDoc.data().token;
-    if (typeof token !== 'string' || token.length === 0 || seen.has(token)) {
-      return;
-    }
-
-    seen.add(token);
-    if (prefs.soundAndVibration === false) {
-      silent.push(token);
-    } else {
-      withSound.push(token);
-    }
-  });
-
-  return { withSound, silent };
-}
-
-function buildMulticastMessage(title, body, notificationId, category, withSound) {
-  const message = {
-    notification: {
-      title: title.trim(),
-      body: body.trim(),
-    },
-    data: {
-      notificationId: notificationId.trim(),
-      type: 'live_notification',
-      category,
-    },
-    android: {
-      priority: 'high',
-      notification: {
-        channelId: withSound ? ANDROID_CHANNEL_DEFAULT : ANDROID_CHANNEL_SILENT,
-      },
-    },
-  };
-
-  if (withSound) {
-    message.apns = {
-      payload: {
-        aps: {
-          sound: 'default',
-        },
-      },
-    };
-  }
-
-  return message;
-}
-
-async function sendMulticastBatches(messaging, tokens, message, batchSize) {
-  let successCount = 0;
-  let failureCount = 0;
-
-  for (let i = 0; i < tokens.length; i += batchSize) {
-    const chunk = tokens.slice(i, i + batchSize);
-    const response = await messaging.sendEachForMulticast({
-      ...message,
-      tokens: chunk,
-    });
-    successCount += response.successCount;
-    failureCount += response.failureCount;
-  }
-
-  return { successCount, failureCount };
 }
 
 async function loadAllowedUserIds(db, targetSchoolIds, schoolGradeIds) {
@@ -470,185 +280,6 @@ exports.onAuthUserDeleted = functionsV1.auth.user().onDelete(async user => {
   const db = getFirestore();
   await db.recursiveDelete(db.doc(`users/${user.uid}`));
 });
-
-const DEFAULT_QUIZ_XP = 20;
-
-function isAdminRole(role) {
-  return role === 'admin' || role === 'superadmin';
-}
-
-function normalizeChoiceIndex(value) {
-  if (typeof value !== 'number' || !Number.isFinite(value)) {
-    return null;
-  }
-  const truncated = Math.trunc(value);
-  if (truncated < 0 || truncated > 3) {
-    return null;
-  }
-  return truncated;
-}
-
-function normalizeAnswersMap(raw) {
-  if (raw == null || typeof raw !== 'object' || Array.isArray(raw)) {
-    return null;
-  }
-
-  const answers = {};
-  const entries = Object.entries(raw);
-  if (entries.length > 500) {
-    return null;
-  }
-
-  for (const [questionId, value] of entries) {
-    if (typeof questionId !== 'string' || !questionId.trim()) {
-      return null;
-    }
-    const choiceIndex = normalizeChoiceIndex(value);
-    if (choiceIndex == null) {
-      return null;
-    }
-    answers[questionId.trim()] = choiceIndex;
-  }
-
-  return answers;
-}
-
-function extractQuestions(data, docId) {
-  if (Array.isArray(data?.questions) && data.questions.length > 0) {
-    return data.questions.filter(
-      question => question && typeof question.id === 'string' && question.id.trim(),
-    );
-  }
-
-  // Legacy single-question quiz docs.
-  const prompt = typeof data?.prompt === 'string' ? data.prompt.trim() : '';
-  const choices = Array.isArray(data?.choices) ? data.choices : [];
-  if (!prompt || choices.length < 4) {
-    return [];
-  }
-
-  return [
-    {
-      id: `${docId}_legacy_q1`,
-      prompt,
-      choices,
-      correctChoiceIndex: data?.correctChoiceIndex,
-    },
-  ];
-}
-
-function resolveAnswerKey(questions, answerKeyData, contentData, docId) {
-  const byQuestionId = {};
-
-  if (
-    answerKeyData?.byQuestionId != null &&
-    typeof answerKeyData.byQuestionId === 'object' &&
-    !Array.isArray(answerKeyData.byQuestionId)
-  ) {
-    for (const [questionId, value] of Object.entries(answerKeyData.byQuestionId)) {
-      const index = normalizeChoiceIndex(value);
-      if (typeof questionId === 'string' && questionId.trim() && index != null) {
-        byQuestionId[questionId.trim()] = index;
-      }
-    }
-  }
-
-  for (const question of questions) {
-    const id = question.id.trim();
-    if (byQuestionId[id] != null) {
-      continue;
-    }
-    const fromQuestion = normalizeChoiceIndex(question.correctChoiceIndex);
-    if (fromQuestion != null) {
-      byQuestionId[id] = fromQuestion;
-    }
-  }
-
-  // Legacy root-level key on old quiz docs.
-  if (
-    Object.keys(byQuestionId).length === 0 &&
-    questions.length === 1 &&
-    contentData
-  ) {
-    const legacy = normalizeChoiceIndex(contentData.correctChoiceIndex);
-    if (legacy != null) {
-      byQuestionId[questions[0].id.trim()] = legacy;
-    }
-  }
-
-  void docId;
-  return byQuestionId;
-}
-
-function gradeAnswers(questions, answers, byQuestionId) {
-  const totalQuestions = questions.length;
-  let correctCount = 0;
-
-  for (const question of questions) {
-    const questionId = question.id.trim();
-    const expected = byQuestionId[questionId];
-    if (typeof expected !== 'number') {
-      continue;
-    }
-    if (answers[questionId] === expected) {
-      correctCount += 1;
-    }
-  }
-
-  const percentage =
-    totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
-
-  return { correctCount, totalQuestions, percentage };
-}
-
-function computeQuizXpEarned(xpValue, correctCount, totalQuestions) {
-  const total = Math.max(0, Math.trunc(totalQuestions));
-  const correct = Math.max(0, Math.min(Math.trunc(correctCount), total));
-  const maxXp = Math.max(0, Math.trunc(xpValue));
-  if (total === 0 || maxXp === 0 || correct !== total) {
-    return 0;
-  }
-  return maxXp;
-}
-
-function stripQuestionsForPublic(questions) {
-  return questions.map(question => ({
-    id: question.id,
-    prompt: question.prompt,
-    choices: question.choices,
-  }));
-}
-
-function extractAnswerKeyFromQuestions(questions, contentData, docId) {
-  const byQuestionId = {};
-  for (const question of questions) {
-    const id =
-      typeof question?.id === 'string' ? question.id.trim() : `${docId}_legacy_q1`;
-    const index = normalizeChoiceIndex(question?.correctChoiceIndex);
-    if (index != null) {
-      byQuestionId[id] = index;
-    }
-  }
-
-  if (
-    Object.keys(byQuestionId).length === 0 &&
-    questions.length <= 1 &&
-    contentData
-  ) {
-    const legacy = normalizeChoiceIndex(contentData.correctChoiceIndex);
-    const questionId =
-      questions[0]?.id?.trim?.() || `${docId}_legacy_q1`;
-    if (legacy != null) {
-      byQuestionId[questionId] = legacy;
-    }
-  }
-
-  return byQuestionId;
-}
-
-function questionHasEmbeddedKey(question) {
-  return normalizeChoiceIndex(question?.correctChoiceIndex) != null;
-}
 
 /**
  * Callable: grade and persist an exam attempt server-side.
