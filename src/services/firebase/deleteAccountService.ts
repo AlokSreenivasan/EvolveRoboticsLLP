@@ -1,3 +1,5 @@
+import { getFunctions, httpsCallable } from '@react-native-firebase/functions';
+
 import {
   extractFirebaseErrorDetails,
   logFirebaseOperationError,
@@ -104,6 +106,38 @@ function mapDeleteAccountError(error: unknown, stage: string): Error {
   );
 }
 
+/**
+ * Deletes users/{uid} and every subcollection via the deleteMyAccountData
+ * Cloud Function (Admin SDK recursive delete). Security rules block the client
+ * from deleting examAttempts/quizAttempts itself, so this must run server-side.
+ * Falls back to the client-side profile-doc delete if the function is not
+ * deployed, so account deletion keeps working (subcollections excepted).
+ */
+async function deleteAllUserFirestoreData(uid: string): Promise<void> {
+  try {
+    const callable = httpsCallable<void, { ok: boolean }>(
+      getFunctions(),
+      'deleteMyAccountData',
+    );
+    await callable();
+  } catch (error) {
+    const normalized = normalizeFirebaseErrorCode(
+      extractFirebaseErrorDetails(error).code,
+    );
+
+    if (normalized !== 'not-found' && normalized !== 'unavailable') {
+      throw error;
+    }
+
+    logFirebaseOperationError(
+      'deleteAccount',
+      'deleteMyAccountDataCallable',
+      error,
+    );
+    await deleteUserProfileWithAuthRetry(uid);
+  }
+}
+
 async function deleteUserProfileWithAuthRetry(uid: string): Promise<void> {
   try {
     await deleteUserProfileWithSessionSync(uid);
@@ -161,7 +195,7 @@ export async function deleteAccount(
     });
     profileImageUrl = profile?.profileImage;
 
-    await deleteUserProfileWithAuthRetry(uid);
+    await deleteAllUserFirestoreData(uid);
     await deleteAllUserProfileImages(uid, profileImageUrl);
 
     const authUser = getCurrentUser();

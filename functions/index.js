@@ -433,6 +433,26 @@ exports.resetUserQuizProgress = onCall(async request => {
   return { deletedCount };
 });
 
+/**
+ * Callable: signed-in user permanently deletes their own Firestore data.
+ * Recursively removes users/{uid} and every subcollection
+ * (continueLearningProgress, examAttempts, quizAttempts, fcmTokens,
+ * notificationPreferences, notificationReads) — the client cannot delete
+ * some of these itself because security rules restrict them to the Admin SDK.
+ */
+// invoker: 'public' lets Cloud Run accept the request; Firebase Auth is
+// still enforced by the request.auth check below.
+exports.deleteMyAccountData = onCall({ invoker: 'public' }, async request => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'You must be signed in.');
+  }
+
+  const db = getFirestore();
+  await db.recursiveDelete(db.doc(`users/${request.auth.uid}`));
+
+  return { ok: true };
+});
+
 const DEFAULT_QUIZ_XP = 20;
 
 function isAdminRole(role) {
