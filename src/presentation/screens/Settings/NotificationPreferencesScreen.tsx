@@ -104,7 +104,7 @@ function NotificationPreferencesScreen() {
       next.pushNotifications = true;
     }
 
-    void persistPreferences(next, previous);
+    persistPreferences(next, previous).catch(() => undefined);
   };
 
   const handleReset = () => {

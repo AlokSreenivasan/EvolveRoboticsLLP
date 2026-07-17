@@ -127,6 +127,7 @@ function ManageContinueLearningPlaylists() {
   });
   const { schools, loading: schoolsLoading, error: schoolsError } = useSchools();
   const audienceForm = useAdminSchoolAudienceForm();
+  const { resetAudience } = audienceForm;
 
   const [editorVisible, setEditorVisible] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -148,37 +149,40 @@ function ManageContinueLearningPlaylists() {
     localThumbnailRef.current = localThumbnailUri;
   }, [localThumbnailUri]);
 
-  const openCreateEditor = () => {
+  const openCreateEditor = useCallback(() => {
     setEditingId(null);
     setForm(EMPTY_FORM);
     setLocalThumbnailUri(null);
-    audienceForm.resetAudience();
+    resetAudience();
     setEditorVisible(true);
-  };
+  }, [resetAudience]);
 
-  const openEditEditor = (playlist: ContinueLearningPlaylist) => {
-    setEditingId(playlist.id);
-    setForm({
-      title: playlist.title,
-      subtitle: playlist.subtitle,
-      imageUri: playlist.imageUri,
-      playlistUrl: playlist.playlistUrl,
-      videoCount: String(playlist.videoCount),
-      track: playlist.track,
-      isPublished: playlist.isPublished,
-    });
-    if (playlist.track === 'kids') {
-      audienceForm.resetAudience({
-        audience: playlist.audience,
-        schoolIds: playlist.schoolIds,
-        schoolGradeIds: playlist.schoolGradeIds,
+  const openEditEditor = useCallback(
+    (playlist: ContinueLearningPlaylist) => {
+      setEditingId(playlist.id);
+      setForm({
+        title: playlist.title,
+        subtitle: playlist.subtitle,
+        imageUri: playlist.imageUri,
+        playlistUrl: playlist.playlistUrl,
+        videoCount: String(playlist.videoCount),
+        track: playlist.track,
+        isPublished: playlist.isPublished,
       });
-    } else {
-      audienceForm.resetAudience();
-    }
-    setLocalThumbnailUri(null);
-    setEditorVisible(true);
-  };
+      if (playlist.track === 'kids') {
+        resetAudience({
+          audience: playlist.audience,
+          schoolIds: playlist.schoolIds,
+          schoolGradeIds: playlist.schoolGradeIds,
+        });
+      } else {
+        resetAudience();
+      }
+      setLocalThumbnailUri(null);
+      setEditorVisible(true);
+    },
+    [resetAudience],
+  );
 
   const closeEditor = () => {
     setEditorVisible(false);
@@ -332,11 +336,11 @@ function ManageContinueLearningPlaylists() {
   const handleSave = () => {
     Keyboard.dismiss();
     InteractionManager.runAfterInteractions(() => {
-      void performSave();
+      performSave().catch(() => undefined);
     });
   };
 
-  const confirmDelete = (playlist: ContinueLearningPlaylist) => {
+  const confirmDelete = useCallback((playlist: ContinueLearningPlaylist) => {
     appAlert(
       appAlertCopy.admin.deleteTitle('playlist'),
       appAlertCopy.admin.deleteConfirm('playlist', playlist.title),
@@ -358,7 +362,7 @@ function ManageContinueLearningPlaylists() {
         },
       ],
     );
-  };
+  }, []);
 
   const handleMove = useCallback(
     async (playlistId: string, direction: 'up' | 'down') => {
@@ -638,6 +642,7 @@ type FormFieldProps = {
   onChangeText: (value: string) => void;
   placeholder?: string;
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  autoCorrect?: boolean;
   keyboardType?: 'default' | 'url' | 'number-pad';
 };
 
@@ -647,6 +652,7 @@ function FormField({
   onChangeText,
   placeholder,
   autoCapitalize,
+  autoCorrect,
   keyboardType,
 }: FormFieldProps) {
   return (
@@ -659,6 +665,7 @@ function FormField({
         placeholder={placeholder}
         placeholderTextColor={colors.textMuted}
         autoCapitalize={autoCapitalize}
+        autoCorrect={autoCorrect}
         keyboardType={keyboardType}
       />
     </View>

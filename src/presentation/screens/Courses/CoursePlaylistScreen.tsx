@@ -41,8 +41,10 @@ function CoursePlaylistScreen() {
     playlist.playlistUrl,
   );
 
-  const watchSecondsByVideoId =
-    progressByPlaylistId[playlist.id]?.watchSecondsByVideoId ?? {};
+  const watchSecondsByVideoId = useMemo(
+    () => progressByPlaylistId[playlist.id]?.watchSecondsByVideoId ?? {},
+    [playlist.id, progressByPlaylistId],
+  );
   const videosWatched = getVideosWatched(playlist.id);
   const videoCount = resolvePlaylistVideoCount(
     videos.length,

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import CoursePlaylistScreen from '../presentation/screens/Courses/CoursePlaylistScreen';
@@ -43,27 +43,10 @@ function MainStack() {
   const showAdminStack = !roleLoading && isAdmin;
   const needsProfileCompletion = !isProfileComplete(profile);
 
-  const stackInitialState = useMemo(() => {
-    if (!needsProfileCompletion) {
-      return undefined;
-    }
-
-    return {
-      index: 0,
-      routes: [
-        {
-          name: 'Profile' as const,
-          params: { requireCompletion: true },
-        },
-      ],
-    };
-  }, [needsProfileCompletion]);
-
   return (
     <HomeFeedProvider>
       <Stack.Navigator
         initialRouteName={needsProfileCompletion ? 'Profile' : 'Home'}
-        initialState={stackInitialState}
         screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="ToDo" component={ToDoScreen} />
@@ -99,7 +82,13 @@ function MainStack() {
         component={NotificationPreferencesScreen}
       />
       <Stack.Screen name="Support" component={SupportScreen} />
-      <Stack.Screen name="Profile" component={ProfileScreen} />
+      <Stack.Screen
+        name="Profile"
+        component={ProfileScreen}
+        initialParams={
+          needsProfileCompletion ? { requireCompletion: true } : undefined
+        }
+      />
       <Stack.Screen name="About" component={AboutScreen} />
       <Stack.Screen name="ChatbotScreen" component={ChatbotScreen} />
       <Stack.Screen name="Unauthorized" component={UnauthorizedRoute} />

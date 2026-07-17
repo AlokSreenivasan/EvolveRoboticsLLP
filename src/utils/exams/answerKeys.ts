@@ -40,7 +40,8 @@ export function stripCorrectChoiceFromQuestions(
   questions: ExamQuestion[],
 ): ExamQuestion[] {
   return questions.map(question => {
-    const { correctChoiceIndex: _removed, ...rest } = question;
+    const rest = { ...question };
+    delete rest.correctChoiceIndex;
     return rest;
   });
 }
@@ -67,7 +68,8 @@ export function mergeAnswerKeyIntoQuestions(
       };
     }
 
-    const { correctChoiceIndex: _removed, ...rest } = question;
+    const rest = { ...question };
+    delete rest.correctChoiceIndex;
     return rest;
   });
 }

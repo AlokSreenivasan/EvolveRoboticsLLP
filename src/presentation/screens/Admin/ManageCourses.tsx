@@ -3,10 +3,8 @@ import {
   Image,
   InteractionManager,
   Keyboard,
-  FlatList,
   Text,
   TouchableOpacity,
-  View,
 } from 'react-native';
 import {
   collection,
@@ -78,6 +76,8 @@ function ManageCourses() {
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
   const formRef = useRef(form);
   const imagePicker = useAdminImagePicker();
+  const { resetAudience } = audienceForm;
+  const { loadExistingImage } = imagePicker;
 
   const { reorderingId, handleMove } = useAdminReorder(courses, moveCourse);
 
@@ -93,24 +93,27 @@ function ManageCourses() {
     setEditorVisible(true);
   };
 
-  const openEditEditor = (course: Course) => {
-    setEditingId(course.id);
-    setForm({
-      title: course.title,
-      subtitle: course.subtitle,
-      durationLabel: course.durationLabel,
-      description: course.description,
-      track: course.track,
-      isPublished: course.isPublished,
-    });
-    imagePicker.loadExistingImage(course.imageUri);
-    audienceForm.resetAudience({
-      audience: course.audience,
-      schoolIds: course.schoolIds,
-      schoolGradeIds: course.schoolGradeIds,
-    });
-    setEditorVisible(true);
-  };
+  const openEditEditor = useCallback(
+    (course: Course) => {
+      setEditingId(course.id);
+      setForm({
+        title: course.title,
+        subtitle: course.subtitle,
+        durationLabel: course.durationLabel,
+        description: course.description,
+        track: course.track,
+        isPublished: course.isPublished,
+      });
+      loadExistingImage(course.imageUri);
+      resetAudience({
+        audience: course.audience,
+        schoolIds: course.schoolIds,
+        schoolGradeIds: course.schoolGradeIds,
+      });
+      setEditorVisible(true);
+    },
+    [loadExistingImage, resetAudience],
+  );
 
   const closeEditor = () => {
     setEditorVisible(false);
@@ -193,7 +196,7 @@ function ManageCourses() {
   const handleSave = () => {
     Keyboard.dismiss();
     InteractionManager.runAfterInteractions(() => {
-      void performSave();
+      performSave().catch(() => undefined);
     });
   };
 
@@ -233,7 +236,7 @@ function ManageCourses() {
         onDelete={() => confirmDelete(course)}
       />
     ),
-    [courses.length, handleMove, reorderingId, schools],
+    [courses.length, handleMove, openEditEditor, reorderingId, schools],
   );
 
   const keyExtractor = useCallback((item: Course) => item.id, []);

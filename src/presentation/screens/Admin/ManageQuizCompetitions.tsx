@@ -137,6 +137,7 @@ function ManageQuizCompetitions() {
   const { quizzes, loading } = useQuizCompetitions({ includeUnpublished: true });
   const { schools, loading: schoolsLoading, error: schoolsError } = useSchools();
   const audienceForm = useAdminSchoolAudienceForm();
+  const { resetAudience } = audienceForm;
   const { reorderingId, handleMove } = useAdminReorder(quizzes, moveQuizCompetition);
 
   const [editorVisible, setEditorVisible] = useState(false);
@@ -161,25 +162,28 @@ function ManageQuizCompetitions() {
     setEditorVisible(true);
   };
 
-  const openEditEditor = (quiz: QuizCompetition) => {
-    setEditingId(quiz.id);
-    setForm({
-      title: quiz.title,
-      description: quiz.description,
-      timerMinutes: toTimerMinutes(quiz.timerSeconds),
-      xpValue: String(quiz.xpValue),
-      allowRetry: quiz.allowRetry,
-      track: quiz.track,
-      isPublished: quiz.isPublished,
-      questions: quiz.questions ?? [],
-    });
-    audienceForm.resetAudience({
-      audience: quiz.audience,
-      schoolIds: quiz.schoolIds,
-      schoolGradeIds: quiz.schoolGradeIds,
-    });
-    setEditorVisible(true);
-  };
+  const openEditEditor = useCallback(
+    (quiz: QuizCompetition) => {
+      setEditingId(quiz.id);
+      setForm({
+        title: quiz.title,
+        description: quiz.description,
+        timerMinutes: toTimerMinutes(quiz.timerSeconds),
+        xpValue: String(quiz.xpValue),
+        allowRetry: quiz.allowRetry,
+        track: quiz.track,
+        isPublished: quiz.isPublished,
+        questions: quiz.questions ?? [],
+      });
+      resetAudience({
+        audience: quiz.audience,
+        schoolIds: quiz.schoolIds,
+        schoolGradeIds: quiz.schoolGradeIds,
+      });
+      setEditorVisible(true);
+    },
+    [resetAudience],
+  );
 
   const closeEditor = () => {
     setEditorVisible(false);
@@ -385,7 +389,7 @@ function ManageQuizCompetitions() {
         onDelete={() => confirmDeleteQuiz(quiz)}
       />
     ),
-    [handleMove, quizzes.length, reorderingId, schools],
+    [handleMove, openEditEditor, quizzes.length, reorderingId, schools],
   );
 
   const keyExtractor = useCallback((item: QuizCompetition) => item.id, []);

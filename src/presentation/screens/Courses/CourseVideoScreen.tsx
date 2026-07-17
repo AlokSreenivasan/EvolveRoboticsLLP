@@ -38,8 +38,10 @@ function CourseVideoScreen() {
   const [sessionWatchSeconds, setSessionWatchSeconds] = useState(0);
   const [isNearEnd, setIsNearEnd] = useState(false);
 
-  const savedWatchSeconds =
-    progressByPlaylistId[playlist.id]?.watchSecondsByVideoId ?? {};
+  const savedWatchSeconds = useMemo(
+    () => progressByPlaylistId[playlist.id]?.watchSecondsByVideoId ?? {},
+    [playlist.id, progressByPlaylistId],
+  );
 
   const initialWatchSeconds = useMemo(() => {
     const saved = getVideoWatchSeconds(savedWatchSeconds, videoId);
@@ -71,7 +73,7 @@ function CourseVideoScreen() {
   }, [videoId]);
 
   useEffect(() => {
-    void recordPlaylistVideoProgress(
+    recordPlaylistVideoProgress(
       playlist.id,
       videoIndex + 1,
       videoCount,
@@ -82,7 +84,7 @@ function CourseVideoScreen() {
     (watchSeconds: number) => {
       setSessionWatchSeconds(previous => Math.max(previous, watchSeconds));
 
-      void recordVideoWatchSeconds(
+      recordVideoWatchSeconds(
         playlist.id,
         videoId,
         watchSeconds,

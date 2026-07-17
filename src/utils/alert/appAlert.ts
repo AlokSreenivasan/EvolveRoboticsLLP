@@ -48,7 +48,7 @@ export function appAlertConfirm(
       text: options?.confirmLabel ?? appAlertButtons.delete,
       style: options?.destructive ? 'destructive' : 'default',
       onPress: () => {
-        void onConfirm();
+        Promise.resolve(onConfirm()).catch(() => undefined);
       },
     },
   ]);

@@ -89,7 +89,7 @@ function ManageRoles() {
   }, []);
 
   useEffect(() => {
-    void loadPrivilegedAudit();
+    loadPrivilegedAudit().catch(() => undefined);
   }, [loadPrivilegedAudit]);
 
   const schoolNameById = useCallback(
@@ -293,7 +293,9 @@ function ManageRoles() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={() => {
-              void Promise.all([refresh(), loadPrivilegedAudit()]);
+              Promise.all([refresh(), loadPrivilegedAudit()]).catch(
+                () => undefined,
+              );
             }}
             tintColor={colors.primary}
           />

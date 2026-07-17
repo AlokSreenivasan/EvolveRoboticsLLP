@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Text } from 'react-native';
 
 import AppButton from '../../../components/AppButton';
 import AdminEntityForm from '../../../components/Admin/AdminEntityForm';
@@ -60,6 +60,7 @@ function AdminNotifications() {
   });
   const { schools, loading: schoolsLoading, error: schoolsError } = useSchools();
   const audienceForm = useAdminSchoolAudienceForm();
+  const { resetAudience } = audienceForm;
 
   const [editorVisible, setEditorVisible] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -79,22 +80,25 @@ function AdminNotifications() {
     setEditorVisible(true);
   };
 
-  const openEditEditor = (notification: AppNotification) => {
-    setEditingId(notification.id);
-    setForm({
-      title: notification.title,
-      body: notification.body,
-      category: notification.category,
-      track: notification.track,
-      isPublished: notification.isPublished,
-    });
-    audienceForm.resetAudience({
-      audience: notification.audience,
-      schoolIds: notification.schoolIds,
-      schoolGradeIds: notification.schoolGradeIds,
-    });
-    setEditorVisible(true);
-  };
+  const openEditEditor = useCallback(
+    (notification: AppNotification) => {
+      setEditingId(notification.id);
+      setForm({
+        title: notification.title,
+        body: notification.body,
+        category: notification.category,
+        track: notification.track,
+        isPublished: notification.isPublished,
+      });
+      resetAudience({
+        audience: notification.audience,
+        schoolIds: notification.schoolIds,
+        schoolGradeIds: notification.schoolGradeIds,
+      });
+      setEditorVisible(true);
+    },
+    [resetAudience],
+  );
 
   const closeEditor = () => {
     setEditorVisible(false);
@@ -160,7 +164,7 @@ function AdminNotifications() {
     }
   };
 
-  const performSendLive = async (notification: AppNotification) => {
+  const performSendLive = useCallback(async (notification: AppNotification) => {
     setSendingLiveId(notification.id);
     try {
       const result = await sendLiveNotificationToUsers({
@@ -185,39 +189,42 @@ function AdminNotifications() {
     } finally {
       setSendingLiveId(null);
     }
-  };
+  }, []);
 
-  const handleSendLiveNotification = (notification: AppNotification) => {
-    if (!notification.title.trim() || !notification.body.trim()) {
-      appAlert(
-        appAlertCopy.admin.cannotSendTitle,
-        appAlertCopy.admin.cannotSendNotification,
+  const handleSendLiveNotification = useCallback(
+    (notification: AppNotification) => {
+      if (!notification.title.trim() || !notification.body.trim()) {
+        appAlert(
+          appAlertCopy.admin.cannotSendTitle,
+          appAlertCopy.admin.cannotSendNotification,
+        );
+        return;
+      }
+
+      const audienceLabel = formatContentVisibilitySummary(
+        notification.track,
+        notification,
+        schools,
       );
-      return;
-    }
-
-    const audienceLabel = formatContentVisibilitySummary(
-      notification.track,
-      notification,
-      schools,
-    );
-    const categoryLabel = getNotificationCategoryLabel(notification.category);
-    appAlert(
-      appAlertCopy.admin.sendLiveTitle,
-      appAlertCopy.admin.sendLiveConfirm(
-        notification.title,
-        categoryLabel,
-        audienceLabel,
-      ),
-      [
-        { text: appAlertButtons.cancel, style: 'cancel' },
-        {
-          text: appAlertButtons.send,
-          onPress: () => performSendLive(notification),
-        },
-      ],
-    );
-  };
+      const categoryLabel = getNotificationCategoryLabel(notification.category);
+      appAlert(
+        appAlertCopy.admin.sendLiveTitle,
+        appAlertCopy.admin.sendLiveConfirm(
+          notification.title,
+          categoryLabel,
+          audienceLabel,
+        ),
+        [
+          { text: appAlertButtons.cancel, style: 'cancel' },
+          {
+            text: appAlertButtons.send,
+            onPress: () => performSendLive(notification),
+          },
+        ],
+      );
+    },
+    [performSendLive, schools],
+  );
 
   const confirmDelete = (notification: AppNotification) => {
     appAlert(
@@ -290,7 +297,15 @@ function AdminNotifications() {
         />
       );
     },
-    [handleMove, notifications.length, reorderingId, schools, sendingLiveId],
+    [
+      handleMove,
+      handleSendLiveNotification,
+      notifications.length,
+      openEditEditor,
+      reorderingId,
+      schools,
+      sendingLiveId,
+    ],
   );
 
   const keyExtractor = useCallback((item: AppNotification) => item.id, []);

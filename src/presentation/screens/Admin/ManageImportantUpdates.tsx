@@ -71,6 +71,7 @@ function ManageImportantUpdates() {
 
   const { schools, loading: schoolsLoading, error: schoolsError } = useSchools();
   const audienceForm = useAdminSchoolAudienceForm();
+  const { resetAudience } = audienceForm;
   const { reorderingId, handleMove } = useAdminReorder(
     notices,
     moveImportantUpdateNotice,
@@ -91,23 +92,26 @@ function ManageImportantUpdates() {
     setEditorVisible(true);
   };
 
-  const openEditEditor = (notice: ImportantUpdateNotice) => {
-    setEditingNoticeId(notice.id);
-    setNoticeForm({
-      tag: notice.tag,
-      title: notice.title,
-      subtitle: notice.subtitle,
-      description: notice.description,
-      track: notice.track,
-      isPublished: notice.isPublished,
-    });
-    audienceForm.resetAudience({
-      audience: notice.audience,
-      schoolIds: notice.schoolIds,
-      schoolGradeIds: notice.schoolGradeIds,
-    });
-    setEditorVisible(true);
-  };
+  const openEditEditor = useCallback(
+    (notice: ImportantUpdateNotice) => {
+      setEditingNoticeId(notice.id);
+      setNoticeForm({
+        tag: notice.tag,
+        title: notice.title,
+        subtitle: notice.subtitle,
+        description: notice.description,
+        track: notice.track,
+        isPublished: notice.isPublished,
+      });
+      resetAudience({
+        audience: notice.audience,
+        schoolIds: notice.schoolIds,
+        schoolGradeIds: notice.schoolGradeIds,
+      });
+      setEditorVisible(true);
+    },
+    [resetAudience],
+  );
 
   const closeEditor = () => {
     setEditorVisible(false);
@@ -264,7 +268,7 @@ function ManageImportantUpdates() {
         onDelete={() => confirmDeleteNotice(notice)}
       />
     ),
-    [handleMove, notices.length, reorderingId, schools],
+    [handleMove, notices.length, openEditEditor, reorderingId, schools],
   );
 
   const keyExtractor = useCallback(

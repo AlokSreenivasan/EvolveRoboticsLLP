@@ -87,6 +87,7 @@ function ManageUpcomingEvents() {
 
   const { schools, loading: schoolsLoading, error: schoolsError } = useSchools();
   const audienceForm = useAdminSchoolAudienceForm();
+  const { resetAudience } = audienceForm;
   const { reorderingId, handleMove } = useAdminReorder(events, moveUpcomingEvent);
 
   useAdminSectionDefaults(ensureUpcomingEventsSectionDefaults);
@@ -112,30 +113,33 @@ function ManageUpcomingEvents() {
     setEditorVisible(true);
   };
 
-  const openEditEditor = (event: UpcomingEvent) => {
-    const resolvedYear =
-      event.year ??
-      resolveUpcomingEventDate(event.month, event.day)?.getFullYear() ??
-      new Date().getFullYear();
-    setEditingEventId(event.id);
-    setEventForm({
-      month: event.month,
-      day: event.day,
-      year: resolvedYear,
-      title: event.title,
-      dateRange: event.dateRange,
-      timeRange: event.timeRange,
-      daysLeftLabel: event.daysLeftLabel,
-      track: event.track,
-      isPublished: event.isPublished,
-    });
-    audienceForm.resetAudience({
-      audience: event.audience,
-      schoolIds: event.schoolIds,
-      schoolGradeIds: event.schoolGradeIds,
-    });
-    setEditorVisible(true);
-  };
+  const openEditEditor = useCallback(
+    (event: UpcomingEvent) => {
+      const resolvedYear =
+        event.year ??
+        resolveUpcomingEventDate(event.month, event.day)?.getFullYear() ??
+        new Date().getFullYear();
+      setEditingEventId(event.id);
+      setEventForm({
+        month: event.month,
+        day: event.day,
+        year: resolvedYear,
+        title: event.title,
+        dateRange: event.dateRange,
+        timeRange: event.timeRange,
+        daysLeftLabel: event.daysLeftLabel,
+        track: event.track,
+        isPublished: event.isPublished,
+      });
+      resetAudience({
+        audience: event.audience,
+        schoolIds: event.schoolIds,
+        schoolGradeIds: event.schoolGradeIds,
+      });
+      setEditorVisible(true);
+    },
+    [resetAudience],
+  );
 
   const closeEditor = () => {
     setEditorVisible(false);
@@ -348,7 +352,7 @@ function ManageUpcomingEvents() {
         </View>
       </View>
     ),
-    [events.length, handleMove, reorderingId, schools],
+    [events.length, handleMove, openEditEditor, reorderingId, schools],
   );
 
   const keyExtractor = useCallback((item: UpcomingEvent) => item.id, []);

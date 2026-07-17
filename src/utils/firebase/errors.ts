@@ -6,6 +6,9 @@ export type FirebaseServiceErrorCode =
   | 'STORAGE_ERROR'
   | 'LIVE_NOTIFICATION_ERROR'
   | 'PUSH_REGISTRATION_ERROR'
+  | 'PUSH_UNREGISTRATION_ERROR'
+  | 'NOTIFICATION_PREFERENCES_SYNC_ERROR'
+  | 'VALIDATION_ERROR'
   | 'UNKNOWN';
 
 export class FirebaseServiceError extends Error {

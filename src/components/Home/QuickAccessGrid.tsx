@@ -1,5 +1,11 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  type DimensionValue,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import {
   ClipboardList,
@@ -61,7 +67,7 @@ function QuickAccessGrid() {
   const visibleItems = QUICK_ACCESS_ITEMS.filter(
     item => !QUICK_ACCESS_HIDDEN_IDS.has(item.id),
   );
-  const itemWidth = `${100 / visibleItems.length}%`;
+  const itemWidth: DimensionValue = `${100 / visibleItems.length}%`;
 
   return (
     <View style={styles.grid}>

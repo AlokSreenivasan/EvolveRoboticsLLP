@@ -182,7 +182,7 @@ export function subscribeExams(
         return;
       }
 
-      void loadAnswerKeyMaps(docs.map(item => item.id))
+      loadAnswerKeyMaps(docs.map(item => item.id))
         .then(emit)
         .catch(error => onError?.(error));
     },
@@ -240,7 +240,7 @@ export function subscribeExam(
         return;
       }
 
-      void loadAnswerKeyMap(examId)
+      loadAnswerKeyMap(examId)
         .then(emit)
         .catch(error => onError?.(error));
     },

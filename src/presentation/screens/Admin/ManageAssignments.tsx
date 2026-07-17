@@ -76,6 +76,8 @@ function ManageAssignments() {
   const { schools, loading: schoolsLoading, error: schoolsError } = useSchools();
   const audienceForm = useAdminSchoolAudienceForm();
   const pdfPicker = useAdminPdfPicker();
+  const { resetAudience } = audienceForm;
+  const { loadExistingPdf } = pdfPicker;
   const { reorderingId, handleMove } = useAdminReorder(
     assignments,
     moveAssignment,
@@ -96,23 +98,26 @@ function ManageAssignments() {
     setEditorVisible(true);
   };
 
-  const openEditEditor = (assignment: Assignment) => {
-    setEditingId(assignment.id);
-    setForm({
-      title: assignment.title,
-      subtitle: assignment.subtitle,
-      dueDateLabel: assignment.dueDateLabel,
-      track: assignment.track,
-      isPublished: assignment.isPublished,
-    });
-    audienceForm.resetAudience({
-      audience: assignment.audience,
-      schoolIds: assignment.schoolIds,
-      schoolGradeIds: assignment.schoolGradeIds,
-    });
-    pdfPicker.loadExistingPdf(assignment.pdfUrl);
-    setEditorVisible(true);
-  };
+  const openEditEditor = useCallback(
+    (assignment: Assignment) => {
+      setEditingId(assignment.id);
+      setForm({
+        title: assignment.title,
+        subtitle: assignment.subtitle,
+        dueDateLabel: assignment.dueDateLabel,
+        track: assignment.track,
+        isPublished: assignment.isPublished,
+      });
+      resetAudience({
+        audience: assignment.audience,
+        schoolIds: assignment.schoolIds,
+        schoolGradeIds: assignment.schoolGradeIds,
+      });
+      loadExistingPdf(assignment.pdfUrl);
+      setEditorVisible(true);
+    },
+    [loadExistingPdf, resetAudience],
+  );
 
   const closeEditor = () => {
     setEditorVisible(false);
@@ -277,7 +282,7 @@ function ManageAssignments() {
         onDelete={() => confirmDelete(assignment)}
       />
     ),
-    [assignments.length, handleMove, reorderingId, schools],
+    [assignments.length, handleMove, openEditEditor, reorderingId, schools],
   );
 
   const keyExtractor = useCallback((item: Assignment) => item.id, []);

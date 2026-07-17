@@ -61,17 +61,22 @@ function ExamAttemptScreen() {
     [answers],
   );
 
+  const loadedExamId = exam?.id ?? null;
+  const examTimerSecondsRef = useRef<number | null>(null);
+  examTimerSecondsRef.current = exam?.timerSeconds ?? null;
+
+  // Reset attempt state only when a different exam loads; the timer value is
+  // read through a ref so later edits to the exam doc don't restart the attempt.
   useEffect(() => {
-    if (!exam) {
+    if (loadedExamId == null || examTimerSecondsRef.current == null) {
       return;
     }
 
-    // Reset attempt state when exam changes.
     setAnswers({});
     setSubmitting(false);
     submittedRef.current = false;
 
-    setRemainingSeconds(exam.timerSeconds);
+    setRemainingSeconds(examTimerSecondsRef.current);
 
     if (tickRef.current) {
       clearInterval(tickRef.current);
@@ -96,7 +101,7 @@ function ExamAttemptScreen() {
         tickRef.current = null;
       }
     };
-  }, [exam?.id]);
+  }, [loadedExamId]);
 
   const handleSelect = useCallback(
     (questionId: string, choiceIndex: number) => {

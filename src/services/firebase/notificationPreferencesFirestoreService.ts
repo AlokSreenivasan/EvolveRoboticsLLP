@@ -29,8 +29,9 @@ function parseFirestorePreferences(
   for (const key of Object.keys(
     DEFAULT_NOTIFICATION_PREFERENCES,
   ) as (keyof NotificationPreferences)[]) {
-    if (typeof data[key] === 'boolean') {
-      merged[key] = data[key];
+    const value = data[key];
+    if (typeof value === 'boolean') {
+      merged[key] = value;
     }
   }
   return merged;

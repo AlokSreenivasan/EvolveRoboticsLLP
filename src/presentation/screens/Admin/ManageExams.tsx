@@ -124,6 +124,7 @@ function ManageExams() {
   const { exams, loading } = useExams({ includeUnpublished: true });
   const { schools, loading: schoolsLoading, error: schoolsError } = useSchools();
   const audienceForm = useAdminSchoolAudienceForm();
+  const { resetAudience } = audienceForm;
   const { reorderingId, handleMove } = useAdminReorder(exams, moveExam);
 
   const [editorVisible, setEditorVisible] = useState(false);
@@ -148,23 +149,26 @@ function ManageExams() {
     setEditorVisible(true);
   };
 
-  const openEditEditor = (exam: Exam) => {
-    setEditingId(exam.id);
-    setForm({
-      title: exam.title,
-      description: exam.description,
-      timerMinutes: toTimerMinutes(exam.timerSeconds),
-      track: exam.track,
-      isPublished: exam.isPublished,
-      questions: exam.questions ?? [],
-    });
-    audienceForm.resetAudience({
-      audience: exam.audience,
-      schoolIds: exam.schoolIds,
-      schoolGradeIds: exam.schoolGradeIds,
-    });
-    setEditorVisible(true);
-  };
+  const openEditEditor = useCallback(
+    (exam: Exam) => {
+      setEditingId(exam.id);
+      setForm({
+        title: exam.title,
+        description: exam.description,
+        timerMinutes: toTimerMinutes(exam.timerSeconds),
+        track: exam.track,
+        isPublished: exam.isPublished,
+        questions: exam.questions ?? [],
+      });
+      resetAudience({
+        audience: exam.audience,
+        schoolIds: exam.schoolIds,
+        schoolGradeIds: exam.schoolGradeIds,
+      });
+      setEditorVisible(true);
+    },
+    [resetAudience],
+  );
 
   const closeEditor = () => {
     setEditorVisible(false);
@@ -363,7 +367,7 @@ function ManageExams() {
         onDelete={() => confirmDeleteExam(exam)}
       />
     ),
-    [exams.length, handleMove, reorderingId, schools],
+    [exams.length, handleMove, openEditEditor, reorderingId, schools],
   );
 
   const keyExtractor = useCallback((item: Exam) => item.id, []);

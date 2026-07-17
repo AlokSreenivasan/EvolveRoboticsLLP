@@ -1,5 +1,7 @@
-import type { ContinueLearningProgress } from '../../store/content/types/continueLearningProgress.types';
-import type { QuizAttempt } from '../../services/firebase/quizAttemptsService';
+import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+
+import type { ContinueLearningProgress } from '../../../store/content/types/continueLearningProgress.types';
+import type { QuizAttempt } from '../../../services/firebase/quizAttemptsService';
 import { computeUserStreakStats } from '../computeUserStreakStats';
 import {
   DAILY_MISSION_LESSONS_XP,
@@ -10,11 +12,15 @@ import {
 } from '../dailyMissions';
 import { formatDateKey } from '../gamificationDates';
 
-function timestampForDate(year: number, month: number, day: number) {
-  const date = new Date(year, month, day, 12, 0, 0, 0);
+// The code under test only calls toDate(), so a minimal fake is enough.
+function fakeTimestamp(date: Date): FirebaseFirestoreTypes.Timestamp {
   return {
     toDate: () => date,
-  };
+  } as FirebaseFirestoreTypes.Timestamp;
+}
+
+function timestampForDate(year: number, month: number, day: number) {
+  return fakeTimestamp(new Date(year, month, day, 12, 0, 0, 0));
 }
 
 function makeProgress(
@@ -32,6 +38,7 @@ function makeProgress(
 
 function makeQuizAttempt(overrides: Partial<QuizAttempt> = {}): QuizAttempt {
   return {
+    id: 'attempt-1',
     quizId: 'quiz-1',
     answers: {},
     correctCount: 0,
@@ -100,9 +107,7 @@ describe('daily streak XP', () => {
       makeProgress({
         hasStartedWatching: true,
         videosWatched: 1,
-        updatedAt: {
-          toDate: () => today,
-        },
+        updatedAt: fakeTimestamp(today),
       }),
     ];
     const attempts = [
@@ -111,9 +116,7 @@ describe('daily streak XP', () => {
         totalQuestions: 5,
         percentage: 100,
         xpEarned: 20,
-        submittedAt: {
-          toDate: () => today,
-        },
+        submittedAt: fakeTimestamp(today),
       }),
     ];
 

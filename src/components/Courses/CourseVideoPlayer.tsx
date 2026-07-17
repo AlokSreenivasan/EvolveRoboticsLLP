@@ -46,6 +46,7 @@ function CourseVideoPlayer({
   const onWatchProgressRef = useRef(onWatchProgress);
   const onNearEndChangeRef = useRef(onNearEndChange);
   const onEndedRef = useRef(onEnded);
+  const initialWatchSecondsRef = useRef(initialWatchSeconds);
   const [playing, setPlaying] = useState(true);
   const [ready, setReady] = useState(false);
   const [size, setSize] = useState({ width: 0, height: 0 });
@@ -53,16 +54,14 @@ function CourseVideoPlayer({
   onWatchProgressRef.current = onWatchProgress;
   onNearEndChangeRef.current = onNearEndChange;
   onEndedRef.current = onEnded;
+  initialWatchSecondsRef.current = initialWatchSeconds;
 
+  // Reset must fire only when the video changes; the seed is read through a
+  // ref so live progress updates cannot retrigger it.
   useEffect(() => {
-    accumulatedSecondsRef.current = Math.max(
-      0,
-      Math.trunc(initialWatchSeconds),
-    );
-    lastSavedSecondsRef.current = Math.max(
-      0,
-      Math.trunc(initialWatchSeconds),
-    );
+    const seeded = Math.max(0, Math.trunc(initialWatchSecondsRef.current));
+    accumulatedSecondsRef.current = seeded;
+    lastSavedSecondsRef.current = seeded;
     lastPollAtRef.current = null;
     nearEndRef.current = false;
     onNearEndChangeRef.current?.(false);
@@ -141,7 +140,7 @@ function CourseVideoPlayer({
         lastPollAtRef.current = null;
       }
 
-      void (async () => {
+      (async () => {
         try {
           const [currentTime, duration] = await Promise.all([
             playerRef.current?.getCurrentTime(),

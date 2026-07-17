@@ -243,7 +243,7 @@ export function subscribeQuizCompetitions(
         return;
       }
 
-      void loadAnswerKeyMaps(docs.map(item => item.id))
+      loadAnswerKeyMaps(docs.map(item => item.id))
         .then(emit)
         .catch(error => onError?.(error));
     },
@@ -302,7 +302,7 @@ export function subscribeQuizCompetition(
         return;
       }
 
-      void loadAnswerKeyMap(quizId)
+      loadAnswerKeyMap(quizId)
         .then(emit)
         .catch(error => onError?.(error));
     },

@@ -23,7 +23,7 @@ function ProfilePhotoSection({
           <Image source={{ uri: photoUri! }} style={styles.photo} />
         ) : (
           <View style={styles.placeholder}>
-            <Text style={styles.placeholderIcon}></Text>
+            <Text style={styles.placeholderIcon} />
           </View>
         )}
       </TouchableOpacity>

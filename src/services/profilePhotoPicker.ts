@@ -94,7 +94,7 @@ export async function pickProfilePhotoFromGallery(): Promise<PickProfilePhotoRes
     const response = await launchImageLibrary({
       mediaType: 'photo',
       selectionLimit: 1,
-      quality: 0.85,
+      quality: 0.8,
       includeBase64: false,
       ...(Platform.OS === 'ios'
         ? { presentationStyle: 'fullScreen' as const }

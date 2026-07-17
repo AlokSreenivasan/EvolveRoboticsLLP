@@ -84,6 +84,8 @@ function ManageProjects() {
   const { schools, loading: schoolsLoading, error: schoolsError } = useSchools();
   const audienceForm = useAdminSchoolAudienceForm();
   const imagePicker = useAdminImagePicker();
+  const { resetAudience } = audienceForm;
+  const { loadExistingImage } = imagePicker;
   const { reorderingId, handleMove } = useAdminReorder(projects, moveProject);
 
   useAdminSectionDefaults(ensureProjectsSectionDefaults);
@@ -101,23 +103,26 @@ function ManageProjects() {
     setEditorVisible(true);
   };
 
-  const openEditEditor = (project: Project) => {
-    setEditingProjectId(project.id);
-    setProjectForm({
-      title: project.title,
-      subtitle: project.subtitle,
-      description: project.description,
-      track: project.track,
-      isPublished: project.isPublished,
-    });
-    audienceForm.resetAudience({
-      audience: project.audience,
-      schoolIds: project.schoolIds,
-      schoolGradeIds: project.schoolGradeIds,
-    });
-    imagePicker.loadExistingImage(project.imageUri);
-    setEditorVisible(true);
-  };
+  const openEditEditor = useCallback(
+    (project: Project) => {
+      setEditingProjectId(project.id);
+      setProjectForm({
+        title: project.title,
+        subtitle: project.subtitle,
+        description: project.description,
+        track: project.track,
+        isPublished: project.isPublished,
+      });
+      resetAudience({
+        audience: project.audience,
+        schoolIds: project.schoolIds,
+        schoolGradeIds: project.schoolGradeIds,
+      });
+      loadExistingImage(project.imageUri);
+      setEditorVisible(true);
+    },
+    [loadExistingImage, resetAudience],
+  );
 
   const closeEditor = () => {
     setEditorVisible(false);
@@ -217,7 +222,7 @@ function ManageProjects() {
   const handleSaveProject = () => {
     Keyboard.dismiss();
     InteractionManager.runAfterInteractions(() => {
-      void performSaveProject();
+      performSaveProject().catch(() => undefined);
     });
   };
 
@@ -289,7 +294,7 @@ function ManageProjects() {
         onDelete={() => confirmDeleteProject(project)}
       />
     ),
-    [handleMove, projects.length, reorderingId, schools],
+    [handleMove, openEditEditor, projects.length, reorderingId, schools],
   );
 
   const keyExtractor = useCallback((item: Project) => item.id, []);

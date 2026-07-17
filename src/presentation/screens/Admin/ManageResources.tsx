@@ -72,6 +72,8 @@ function ManageResources() {
   const { schools, loading: schoolsLoading, error: schoolsError } = useSchools();
   const audienceForm = useAdminSchoolAudienceForm();
   const pdfPicker = useAdminPdfPicker();
+  const { resetAudience } = audienceForm;
+  const { loadExistingPdf } = pdfPicker;
   const { reorderingId, handleMove } = useAdminReorder(notes, moveResourceNote);
 
   useAdminSectionDefaults(ensureResourcesSectionDefaults);
@@ -89,22 +91,25 @@ function ManageResources() {
     setEditorVisible(true);
   };
 
-  const openEditEditor = (note: ResourceNote) => {
-    setEditingNoteId(note.id);
-    setNoteForm({
-      title: note.title,
-      subtitle: note.subtitle,
-      track: note.track,
-      isPublished: note.isPublished,
-    });
-    audienceForm.resetAudience({
-      audience: note.audience,
-      schoolIds: note.schoolIds,
-      schoolGradeIds: note.schoolGradeIds,
-    });
-    pdfPicker.loadExistingPdf(note.pdfUrl);
-    setEditorVisible(true);
-  };
+  const openEditEditor = useCallback(
+    (note: ResourceNote) => {
+      setEditingNoteId(note.id);
+      setNoteForm({
+        title: note.title,
+        subtitle: note.subtitle,
+        track: note.track,
+        isPublished: note.isPublished,
+      });
+      resetAudience({
+        audience: note.audience,
+        schoolIds: note.schoolIds,
+        schoolGradeIds: note.schoolGradeIds,
+      });
+      loadExistingPdf(note.pdfUrl);
+      setEditorVisible(true);
+    },
+    [loadExistingPdf, resetAudience],
+  );
 
   const closeEditor = () => {
     setEditorVisible(false);
@@ -267,7 +272,7 @@ function ManageResources() {
         onDelete={() => confirmDeleteNote(note)}
       />
     ),
-    [handleMove, notes.length, reorderingId, schools],
+    [handleMove, notes.length, openEditEditor, reorderingId, schools],
   );
 
   const keyExtractor = useCallback((item: ResourceNote) => item.id, []);
