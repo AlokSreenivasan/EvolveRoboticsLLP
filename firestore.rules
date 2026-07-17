@@ -4,7 +4,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /users/{userId} {
-      allow read: if isOwner(userId) || isAdmin(database);
+      allow read: if isOwner(userId) || isSuperAdmin(database);
 
       // New accounts always start as "user". Superadmins are promoted explicitly.
       allow create: if isOwner(userId)
@@ -26,7 +26,7 @@ service cloud.firestore {
           && onlySuperAdminUserFieldsChanged()
           && isValidProfileDataAfterSuperAdminUpdate());
 
-      allow delete: if isOwner(userId) || isAdmin(database);
+      allow delete: if isOwner(userId) || isSuperAdmin(database);
 
       match /continueLearningProgress/{playlistId} {
         allow read: if isOwner(userId);
@@ -41,10 +41,10 @@ service cloud.firestore {
       }
 
       match /quizAttempts/{quizId} {
-        allow read: if isOwner(userId) || isAdmin(database);
+        allow read: if isOwner(userId) || isSuperAdmin(database);
         // Scores are written only by Cloud Functions (Admin SDK).
         allow create, update: if false;
-        allow delete: if isAdmin(database);
+        allow delete: if isSuperAdmin(database);
       }
 
       match /fcmTokens/{tokenId} {
@@ -66,39 +66,49 @@ service cloud.firestore {
       }
     }
 
+    // ---------------------------------------------------------------
+    // Superadmin-only CMS collections.
+    // Role "admin" is limited to resources/assignments/exams/quizzes,
+    // matching the admin-dashboard screens they can open.
+    // ---------------------------------------------------------------
+
     match /appContent/{docId} {
       allow read: if isAuthenticated();
-      allow create, update: if isAdmin(database) && isValidAppContentSection();
-      allow delete: if isAdmin(database);
+      allow create, update: if isSuperAdmin(database) && isValidAppContentSection();
+      allow delete: if isSuperAdmin(database);
     }
 
     match /importantUpdates/{noticeId} {
       allow read: if canReadPublishedContent(database);
-      allow create: if isAdmin(database) && isValidImportantUpdateNoticeCreate();
-      allow update: if isAdmin(database) && isValidImportantUpdateNoticeUpdate();
-      allow delete: if isAdmin(database);
+      allow create: if isSuperAdmin(database) && isValidImportantUpdateNoticeCreate();
+      allow update: if isSuperAdmin(database) && isValidImportantUpdateNoticeUpdate();
+      allow delete: if isSuperAdmin(database);
     }
 
     match /upcomingEvents/{eventId} {
       allow read: if canReadPublishedContent(database);
-      allow create: if isAdmin(database) && isValidUpcomingEventCreate();
-      allow update: if isAdmin(database) && isValidUpcomingEventUpdate();
-      allow delete: if isAdmin(database);
+      allow create: if isSuperAdmin(database) && isValidUpcomingEventCreate();
+      allow update: if isSuperAdmin(database) && isValidUpcomingEventUpdate();
+      allow delete: if isSuperAdmin(database);
     }
 
     match /continueLearningPlaylists/{playlistId} {
       allow read: if canReadPublishedContent(database);
-      allow create: if isAdmin(database) && isValidContinueLearningPlaylistCreate();
-      allow update: if isAdmin(database) && isValidContinueLearningPlaylistUpdate();
-      allow delete: if isAdmin(database);
+      allow create: if isSuperAdmin(database) && isValidContinueLearningPlaylistCreate();
+      allow update: if isSuperAdmin(database) && isValidContinueLearningPlaylistUpdate();
+      allow delete: if isSuperAdmin(database);
     }
 
     match /courses/{courseId} {
       allow read: if canReadPublishedContent(database);
-      allow create: if isAdmin(database) && isValidCourseCreate();
-      allow update: if isAdmin(database) && isValidCourseUpdate();
-      allow delete: if isAdmin(database);
+      allow create: if isSuperAdmin(database) && isValidCourseCreate();
+      allow update: if isSuperAdmin(database) && isValidCourseUpdate();
+      allow delete: if isSuperAdmin(database);
     }
+
+    // ---------------------------------------------------------------
+    // Collections writable by role "admin" (and superadmin).
+    // ---------------------------------------------------------------
 
     match /resourceNotes/{noteId} {
       allow read: if canReadPublishedContent(database);
@@ -136,32 +146,34 @@ service cloud.firestore {
       allow read, write: if isAdmin(database);
     }
 
+    // Superadmin-only: notifications, schools, chat keywords, projects.
+
     match /notifications/{notificationId} {
       allow read: if canReadPublishedContent(database);
-      allow create: if isAdmin(database) && isValidNotificationCreate();
-      allow update: if isAdmin(database) && isValidNotificationUpdate();
-      allow delete: if isAdmin(database);
+      allow create: if isSuperAdmin(database) && isValidNotificationCreate();
+      allow update: if isSuperAdmin(database) && isValidNotificationUpdate();
+      allow delete: if isSuperAdmin(database);
     }
 
     match /schools/{schoolId} {
       allow read: if isAuthenticated();
-      allow create: if isAdmin(database) && isValidSchoolCreate();
-      allow update: if isAdmin(database) && isValidSchoolUpdate();
-      allow delete: if isAdmin(database);
+      allow create: if isSuperAdmin(database) && isValidSchoolCreate();
+      allow update: if isSuperAdmin(database) && isValidSchoolUpdate();
+      allow delete: if isSuperAdmin(database);
     }
 
     match /chatKeywords/{keywordId} {
       allow read: if canReadPublishedContent(database);
-      allow create: if isAdmin(database) && isValidChatKeywordCreate();
-      allow update: if isAdmin(database) && isValidChatKeywordUpdate();
-      allow delete: if isAdmin(database);
+      allow create: if isSuperAdmin(database) && isValidChatKeywordCreate();
+      allow update: if isSuperAdmin(database) && isValidChatKeywordUpdate();
+      allow delete: if isSuperAdmin(database);
     }
 
     match /projects/{projectId} {
       allow read: if canReadPublishedContent(database);
-      allow create: if isAdmin(database) && isValidProjectCreate();
-      allow update: if isAdmin(database) && isValidProjectUpdate();
-      allow delete: if isAdmin(database);
+      allow create: if isSuperAdmin(database) && isValidProjectCreate();
+      allow update: if isSuperAdmin(database) && isValidProjectUpdate();
+      allow delete: if isSuperAdmin(database);
     }
 
     match /{document=**} {

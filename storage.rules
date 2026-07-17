@@ -17,6 +17,13 @@ service firebase.storage {
         );
     }
 
+    /** Matches Firestore isSuperAdmin: role superadmin only. */
+    function isSuperAdmin() {
+      return isAuthenticated()
+        && firestore.exists(/databases/(default)/documents/users/$(request.auth.uid))
+        && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'superadmin';
+    }
+
     match /profileImages/{imageFile} {
       allow read: if isAuthenticated();
 
@@ -33,43 +40,46 @@ service firebase.storage {
         );
     }
 
-    // CMS media: any signed-in user may read; only admins may write/delete.
+    // CMS media for superadmin-only screens (Lessons, Courses, Projects):
+    // any signed-in user may read; only superadmins may write/delete.
     match /continueLearningThumbnails/{uid}/{imageFile} {
       allow read: if isAuthenticated();
 
-      allow write: if isAdmin()
+      allow write: if isSuperAdmin()
         && request.auth.uid == uid
         && imageFile.matches('^[A-Za-z0-9_-]+\\.(jpg|jpeg|png|webp)$')
         && request.resource.size < 5 * 1024 * 1024
         && isImageUpload();
 
-      allow delete: if isAdmin() && request.auth.uid == uid;
+      allow delete: if isSuperAdmin() && request.auth.uid == uid;
     }
 
     match /courseThumbnails/{uid}/{imageFile} {
       allow read: if isAuthenticated();
 
-      allow write: if isAdmin()
+      allow write: if isSuperAdmin()
         && request.auth.uid == uid
         && imageFile.matches('^[A-Za-z0-9_-]+\\.(jpg|jpeg|png|webp)$')
         && request.resource.size < 5 * 1024 * 1024
         && isImageUpload();
 
-      allow delete: if isAdmin() && request.auth.uid == uid;
+      allow delete: if isSuperAdmin() && request.auth.uid == uid;
     }
 
     match /projectImages/{uid}/{imageFile} {
       allow read: if isAuthenticated();
 
-      allow write: if isAdmin()
+      allow write: if isSuperAdmin()
         && request.auth.uid == uid
         && imageFile.matches('^[A-Za-z0-9_-]+\\.(jpg|jpeg|png|webp)$')
         && request.resource.size < 5 * 1024 * 1024
         && isImageUpload();
 
-      allow delete: if isAdmin() && request.auth.uid == uid;
+      allow delete: if isSuperAdmin() && request.auth.uid == uid;
     }
 
+    // CMS media for admin-accessible screens (Resources, Assignments):
+    // role "admin" and superadmin may write/delete.
     match /resourceNotes/{uid}/{pdfFile} {
       allow read: if isAuthenticated();
 
