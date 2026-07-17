@@ -1,4 +1,5 @@
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
+const functionsV1 = require('firebase-functions/v1');
 const { initializeApp } = require('firebase-admin/app');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const { getMessaging } = require('firebase-admin/messaging');
@@ -454,6 +455,20 @@ exports.deleteMyAccountData = onCall({ invoker: 'public' }, async request => {
   await db.recursiveDelete(db.doc(`users/${request.auth.uid}`));
 
   return { ok: true };
+});
+
+/**
+ * Auth trigger: whenever a Firebase Auth user is deleted (in-app deletion,
+ * Firebase console, or Admin SDK), recursively remove users/{uid} and every
+ * subcollection (continueLearningProgress, examAttempts, quizAttempts,
+ * fcmTokens, notificationPreferences, notificationReads). This is the safety
+ * net that guarantees no orphaned Firestore data survives account deletion,
+ * even if the deleteMyAccountData callable was skipped or failed.
+ * Uses the v1 API because auth.user().onDelete has no v2 equivalent yet.
+ */
+exports.onAuthUserDeleted = functionsV1.auth.user().onDelete(async user => {
+  const db = getFirestore();
+  await db.recursiveDelete(db.doc(`users/${user.uid}`));
 });
 
 const DEFAULT_QUIZ_XP = 20;

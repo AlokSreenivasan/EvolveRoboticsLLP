@@ -111,7 +111,9 @@ function mapDeleteAccountError(error: unknown, stage: string): Error {
  * Cloud Function (Admin SDK recursive delete). Security rules block the client
  * from deleting examAttempts/quizAttempts itself, so this must run server-side.
  * Falls back to the client-side profile-doc delete if the function is not
- * deployed, so account deletion keeps working (subcollections excepted).
+ * deployed, so account deletion keeps working. In that fallback case the
+ * onAuthUserDeleted trigger still recursively removes any remaining
+ * subcollections once the Auth user is deleted.
  */
 async function deleteAllUserFirestoreData(uid: string): Promise<void> {
   try {
