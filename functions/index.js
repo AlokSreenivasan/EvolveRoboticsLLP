@@ -276,10 +276,10 @@ exports.sendLiveNotification = onCall(async request => {
   const adminUid = request.auth.uid;
   const adminSnap = await db.doc(`users/${adminUid}`).get();
 
-  if (!adminSnap.exists || adminSnap.data().role !== 'superadmin') {
+  if (!adminSnap.exists || !isAdminRole(adminSnap.data().role)) {
     throw new HttpsError(
       'permission-denied',
-      'Only superadmins can send live notifications.',
+      'Only admins can send live notifications.',
     );
   }
 
@@ -397,10 +397,10 @@ exports.resetUserQuizProgress = onCall(async request => {
   const adminUid = request.auth.uid;
   const adminSnap = await db.doc(`users/${adminUid}`).get();
 
-  if (!adminSnap.exists || adminSnap.data().role !== 'superadmin') {
+  if (!adminSnap.exists || !isAdminRole(adminSnap.data().role)) {
     throw new HttpsError(
       'permission-denied',
-      'Only superadmins can reset quiz progress.',
+      'Only admins can reset quiz progress.',
     );
   }
 
