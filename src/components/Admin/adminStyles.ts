@@ -254,6 +254,42 @@ export const adminStyles = StyleSheet.create({
     marginBottom: 14,
     backgroundColor: colors.primaryMuted,
   },
+  galleryScroll: {
+    marginBottom: 14,
+  },
+  galleryScrollContent: {
+    gap: 10,
+    paddingVertical: 2,
+  },
+  galleryThumbWrap: {
+    width: 88,
+    height: 88,
+    borderRadius: 10,
+    overflow: 'hidden',
+    backgroundColor: colors.primaryMuted,
+  },
+  galleryThumb: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  galleryRemoveButton: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.55)',
+  },
+  galleryClearText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.danger,
+    marginBottom: 14,
+  },
   switchRow: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -3,10 +3,12 @@ import {
   Image,
   InteractionManager,
   Keyboard,
+  ScrollView,
   Text,
   TouchableOpacity,
+  View,
 } from 'react-native';
-import { ImagePlus } from 'lucide-react-native';
+import { FileUp, ImagePlus, X } from 'lucide-react-native';
 import {
   collection,
   db,
@@ -25,7 +27,8 @@ import { adminStyles } from '../../../components/Admin/adminStyles';
 import { colors } from '../../../constants/theme';
 import { useProjects } from '../../hooks/useProjects';
 import { useSchools } from '../../hooks/useSchools';
-import { useAdminImagePicker } from '../../hooks/admin/useAdminImagePicker';
+import { useAdminMarkdownPicker } from '../../hooks/admin/useAdminMarkdownPicker';
+import { useAdminProjectGalleryPicker } from '../../hooks/admin/useAdminProjectGalleryPicker';
 import { useAdminReorder } from '../../hooks/admin/useAdminReorder';
 import { useAdminSchoolAudienceForm } from '../../hooks/admin/useAdminSchoolAudienceForm';
 import {
@@ -45,9 +48,13 @@ import {
 } from '../../../services/firebase/projectsService';
 import {
   deleteProjectImageByUrlSafe,
+  deleteProjectImagesByUrlsSafe,
+  deleteProjectMarkdownByUrlSafe,
   uploadProjectImage,
+  uploadProjectMarkdown,
 } from '../../../services/firebase/storageService';
 import type { Project } from '../../../store/content/types/projects.types';
+import { PROJECT_MAX_IMAGES } from '../../../store/content/types/projects.types';
 import type { CourseTrack } from '../../../store/content/types/courses.types';
 import { toAdminWriteErrorMessage } from '../../../utils/admin/adminWriteErrorMessage';
 import { appAlert, appAlertButtons, appAlertCopy } from '../../../utils/alert/appAlert';
@@ -79,13 +86,16 @@ function ManageProjects() {
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [projectForm, setProjectForm] = useState<ProjectFormState>(EMPTY_PROJECT_FORM);
   const [savingProject, setSavingProject] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingMedia, setUploadingMedia] = useState(false);
+  const [initialMarkdownUrl, setInitialMarkdownUrl] = useState('');
 
   const { schools, loading: schoolsLoading, error: schoolsError } = useSchools();
   const audienceForm = useAdminSchoolAudienceForm();
-  const imagePicker = useAdminImagePicker();
+  const gallery = useAdminProjectGalleryPicker();
+  const markdownPicker = useAdminMarkdownPicker();
   const { resetAudience } = audienceForm;
-  const { loadExistingImage } = imagePicker;
+  const { loadExistingImages, resetGallery } = gallery;
+  const { loadExistingMarkdown, resetMarkdownState } = markdownPicker;
   const { reorderingId, handleMove } = useAdminReorder(projects, moveProject);
 
   useAdminSectionDefaults(ensureProjectsSectionDefaults);
@@ -99,7 +109,9 @@ function ManageProjects() {
     setEditingProjectId(null);
     setProjectForm(EMPTY_PROJECT_FORM);
     audienceForm.resetAudience();
-    imagePicker.resetImageState();
+    resetGallery();
+    resetMarkdownState();
+    setInitialMarkdownUrl('');
     setEditorVisible(true);
   };
 
@@ -118,10 +130,12 @@ function ManageProjects() {
         schoolIds: project.schoolIds,
         schoolGradeIds: project.schoolGradeIds,
       });
-      loadExistingImage(project.imageUri);
+      loadExistingImages(project.imageUris);
+      loadExistingMarkdown(project.markdownUrl);
+      setInitialMarkdownUrl(project.markdownUrl.trim());
       setEditorVisible(true);
     },
-    [loadExistingImage, resetAudience],
+    [loadExistingImages, loadExistingMarkdown, resetAudience],
   );
 
   const closeEditor = () => {
@@ -129,7 +143,9 @@ function ManageProjects() {
     setEditingProjectId(null);
     setProjectForm(EMPTY_PROJECT_FORM);
     audienceForm.resetAudience();
-    imagePicker.resetImageState();
+    resetGallery();
+    resetMarkdownState();
+    setInitialMarkdownUrl('');
   };
 
   const handleSaveSection = async () => {
@@ -182,14 +198,38 @@ function ManageProjects() {
       editingProjectId ??
       doc(collection(db, FIRESTORE_COLLECTIONS.projects)).id;
 
-    let imageUri = imagePicker.remoteUri.trim();
-    const pendingLocalImage = imagePicker.pendingLocalUri();
-
     setSavingProject(true);
     try {
-      if (pendingLocalImage) {
-        setUploadingImage(true);
-        imageUri = await uploadProjectImage(projectId, pendingLocalImage);
+      const needsUpload =
+        gallery.items.some(item => item.kind === 'local') ||
+        Boolean(markdownPicker.pendingMarkdownUri);
+      if (needsUpload) {
+        setUploadingMedia(true);
+      }
+
+      const imageUris: string[] = [];
+      for (let index = 0; index < gallery.items.length; index += 1) {
+        const item = gallery.items[index];
+        if (item.kind === 'remote') {
+          imageUris.push(item.url);
+        } else {
+          imageUris.push(await uploadProjectImage(projectId, item.uri, index));
+        }
+      }
+
+      let markdownUrl = markdownPicker.existingMarkdownUrl.trim();
+      if (markdownPicker.pendingMarkdownUri) {
+        markdownUrl = await uploadProjectMarkdown(
+          projectId,
+          markdownPicker.pendingMarkdownUri,
+        );
+      }
+
+      if (
+        initialMarkdownUrl &&
+        initialMarkdownUrl !== markdownUrl
+      ) {
+        await deleteProjectMarkdownByUrlSafe(initialMarkdownUrl);
       }
 
       const visibilityPayload = buildContentVisibilityPayload(
@@ -200,7 +240,8 @@ function ManageProjects() {
         title: projectForm.title,
         subtitle: projectForm.subtitle,
         description: projectForm.description,
-        imageUri,
+        imageUris,
+        markdownUrl,
         isPublished: projectForm.isPublished,
         ...visibilityPayload,
       };
@@ -210,11 +251,13 @@ function ManageProjects() {
       } else {
         await createProject(payload, { projectId });
       }
+
+      await deleteProjectImagesByUrlsSafe(gallery.removedRemoteUrls);
       closeEditor();
     } catch (error) {
       appAlert(appAlertCopy.admin.saveFailedTitle, toAdminWriteErrorMessage(error));
     } finally {
-      setUploadingImage(false);
+      setUploadingMedia(false);
       setSavingProject(false);
     }
   };
@@ -237,7 +280,11 @@ function ManageProjects() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await deleteProjectImageByUrlSafe(project.imageUri);
+              await deleteProjectImagesByUrlsSafe(project.imageUris);
+              if (project.imageUri && !project.imageUris.includes(project.imageUri)) {
+                await deleteProjectImageByUrlSafe(project.imageUri);
+              }
+              await deleteProjectMarkdownByUrlSafe(project.markdownUrl);
               await deleteProject(project.id);
             } catch (error) {
               appAlert(
@@ -251,8 +298,8 @@ function ManageProjects() {
     );
   };
 
-  const formBusy = savingProject || uploadingImage;
-  const savingLabel = uploadingImage ? 'Uploading image…' : 'Save project';
+  const formBusy = savingProject || uploadingMedia;
+  const savingLabel = uploadingMedia ? 'Uploading media…' : 'Save project';
 
   const listHeader = (
     <>
@@ -276,24 +323,34 @@ function ManageProjects() {
   );
 
   const renderProject = useCallback(
-    ({ item: project, index }: { item: Project; index: number }) => (
-      <AdminListRow
-        title={project.title}
-        subtitle={
-          project.subtitle
-            ? `${project.subtitle} · ${project.imageUri.trim() ? 'Image attached' : 'No image'} · ${formatContentVisibilitySummary(project.track, project, schools)}`
-            : `${project.imageUri.trim() ? 'Image attached' : 'No image'} · ${formatContentVisibilitySummary(project.track, project, schools)}`
-        }
-        isPublished={project.isPublished}
-        index={index}
-        itemCount={projects.length}
-        reordering={reorderingId === project.id}
-        onMoveUp={() => handleMove(project.id, 'up')}
-        onMoveDown={() => handleMove(project.id, 'down')}
-        onEdit={() => openEditEditor(project)}
-        onDelete={() => confirmDeleteProject(project)}
-      />
-    ),
+    ({ item: project, index }: { item: Project; index: number }) => {
+      const imageCount = project.imageUris.length;
+      const imageLabel =
+        imageCount === 0
+          ? 'No images'
+          : `${imageCount} image${imageCount === 1 ? '' : 's'}`;
+      const markdownLabel = project.markdownUrl.trim()
+        ? 'Markdown page'
+        : 'No markdown';
+      return (
+        <AdminListRow
+          title={project.title}
+          subtitle={
+            project.subtitle
+              ? `${project.subtitle} · ${imageLabel} · ${markdownLabel} · ${formatContentVisibilitySummary(project.track, project, schools)}`
+              : `${imageLabel} · ${markdownLabel} · ${formatContentVisibilitySummary(project.track, project, schools)}`
+          }
+          isPublished={project.isPublished}
+          index={index}
+          itemCount={projects.length}
+          reordering={reorderingId === project.id}
+          onMoveUp={() => handleMove(project.id, 'up')}
+          onMoveDown={() => handleMove(project.id, 'down')}
+          onEdit={() => openEditEditor(project)}
+          onDelete={() => confirmDeleteProject(project)}
+        />
+      );
+    },
     [handleMove, openEditEditor, projects.length, reorderingId, schools],
   );
 
@@ -340,32 +397,81 @@ function ManageProjects() {
           onChangeText={description =>
             setProjectForm(prev => ({ ...prev, description }))
           }
-          placeholder="Additional details (optional)"
+          placeholder="Short summary (optional)"
           multiline
         />
-        <Text style={adminStyles.fieldLabel}>Cover image (optional)</Text>
+
+        <Text style={adminStyles.fieldLabel}>
+          Project images (up to {PROJECT_MAX_IMAGES})
+        </Text>
         <TouchableOpacity
           style={adminStyles.pickImageButton}
-          onPress={imagePicker.handlePickImage}
-          disabled={formBusy}
+          onPress={gallery.handlePickImages}
+          disabled={formBusy || !gallery.canAddMore}
           accessibilityRole="button"
-          accessibilityLabel="Choose project image from gallery">
+          accessibilityLabel="Choose project images from gallery">
           <ImagePlus size={18} color={colors.primary} strokeWidth={2} />
-          <Text style={adminStyles.pickImageText}>Choose from gallery</Text>
+          <Text style={adminStyles.pickImageText}>
+            {gallery.canAddMore
+              ? 'Add from gallery'
+              : `Maximum ${PROJECT_MAX_IMAGES} images`}
+          </Text>
         </TouchableOpacity>
-        <AdminFormField
-          label="Image URL (optional)"
-          value={imagePicker.remoteUri}
-          onChangeText={uri => imagePicker.setRemoteUri(uri)}
-          placeholder="https://..."
-          autoCapitalize="none"
-        />
-        {imagePicker.previewUri ? (
-          <Image
-            source={{ uri: imagePicker.previewUri }}
-            style={adminStyles.thumbnailPreview}
-          />
+        <Text style={adminStyles.pdfHint}>{gallery.statusLabel}</Text>
+        {gallery.items.length > 0 ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={adminStyles.galleryScroll}
+            contentContainerStyle={adminStyles.galleryScrollContent}>
+            {gallery.items.map(item => {
+              const uri = item.kind === 'remote' ? item.url : item.uri;
+              return (
+                <View key={item.id} style={adminStyles.galleryThumbWrap}>
+                  <Image
+                    source={{ uri }}
+                    style={adminStyles.galleryThumb}
+                  />
+                  <TouchableOpacity
+                    style={adminStyles.galleryRemoveButton}
+                    onPress={() => gallery.removeImage(item.id)}
+                    disabled={formBusy}
+                    accessibilityRole="button"
+                    accessibilityLabel="Remove image">
+                    <X size={14} color="#fff" strokeWidth={2.5} />
+                  </TouchableOpacity>
+                </View>
+              );
+            })}
+          </ScrollView>
         ) : null}
+
+        <Text style={adminStyles.fieldLabel}>Markdown page (optional)</Text>
+        <TouchableOpacity
+          style={adminStyles.pdfPicker}
+          onPress={markdownPicker.handlePickMarkdown}
+          disabled={formBusy || markdownPicker.pickingMarkdown}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel="Choose Markdown file">
+          <FileUp size={20} color={colors.primary} strokeWidth={2} />
+          <Text style={adminStyles.pdfPickerText}>
+            {markdownPicker.pickingMarkdown
+              ? 'Opening files…'
+              : 'Attach .md file'}
+          </Text>
+        </TouchableOpacity>
+        <Text style={adminStyles.pdfHint}>{markdownPicker.markdownStatusLabel}</Text>
+        {markdownPicker.hasMarkdown ? (
+          <TouchableOpacity
+            onPress={markdownPicker.clearMarkdown}
+            disabled={formBusy}
+            accessibilityRole="button"
+            accessibilityLabel="Remove Markdown file">
+            <Text style={adminStyles.galleryClearText}>Remove Markdown</Text>
+          </TouchableOpacity>
+        ) : null}
+
         <AdminPublishedSwitch
           label="Published for students"
           value={projectForm.isPublished}

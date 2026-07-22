@@ -15,6 +15,7 @@ import type {
   UpdateProjectInput,
   UpdateProjectsSectionInput,
 } from '../../store/content/types/projects.types';
+import { PROJECT_MAX_IMAGES } from '../../store/content/types/projects.types';
 import {
   applyLearnerContentFilters,
   buildTrackAwareSchoolAudienceWriteFields,
@@ -55,6 +56,22 @@ function isTimestamp(
   );
 }
 
+function normalizeImageUris(data: ProjectDocument): string[] {
+  const fromList = Array.isArray(data.imageUris)
+    ? data.imageUris
+        .filter((uri): uri is string => typeof uri === 'string')
+        .map(uri => uri.trim())
+        .filter(Boolean)
+    : [];
+
+  if (fromList.length > 0) {
+    return fromList.slice(0, PROJECT_MAX_IMAGES);
+  }
+
+  const legacy = data.imageUri?.trim();
+  return legacy ? [legacy] : [];
+}
+
 function sectionDocRef() {
   return doc(
     db,
@@ -86,12 +103,15 @@ function mapSection(
 }
 
 function mapProject(id: string, data: ProjectDocument): Project {
+  const imageUris = normalizeImageUris(data);
   return {
     id,
     title: data.title?.trim() ?? '',
     subtitle: data.subtitle?.trim() ?? '',
     description: data.description?.trim() ?? '',
-    imageUri: data.imageUri?.trim() ?? '',
+    imageUris,
+    imageUri: imageUris[0] ?? '',
+    markdownUrl: data.markdownUrl?.trim() ?? '',
     track: mapContentTrack(data),
     sortOrder: typeof data.sortOrder === 'number' ? data.sortOrder : 0,
     isPublished: data.isPublished === true,
@@ -218,11 +238,17 @@ export async function createProject(
     const ref = options?.projectId
       ? doc(projectsCollection(), options.projectId)
       : doc(projectsCollection());
+    const imageUris = (input.imageUris ?? [])
+      .map(uri => uri.trim())
+      .filter(Boolean)
+      .slice(0, PROJECT_MAX_IMAGES);
     const payload: ProjectDocument = {
       title: input.title.trim(),
       subtitle: input.subtitle?.trim() ?? '',
       description: input.description?.trim() ?? '',
-      imageUri: input.imageUri?.trim() ?? '',
+      imageUris,
+      imageUri: imageUris[0] ?? '',
+      markdownUrl: input.markdownUrl?.trim() ?? '',
       track: input.track,
       sortOrder,
       isPublished: input.isPublished ?? true,
@@ -265,8 +291,16 @@ export async function updateProject(
     if (input.description !== undefined) {
       updates.description = input.description.trim();
     }
-    if (input.imageUri !== undefined) {
-      updates.imageUri = input.imageUri.trim();
+    if (input.imageUris !== undefined) {
+      const imageUris = input.imageUris
+        .map(uri => uri.trim())
+        .filter(Boolean)
+        .slice(0, PROJECT_MAX_IMAGES);
+      updates.imageUris = imageUris;
+      updates.imageUri = imageUris[0] ?? '';
+    }
+    if (input.markdownUrl !== undefined) {
+      updates.markdownUrl = input.markdownUrl.trim();
     }
     if (input.sortOrder !== undefined) {
       updates.sortOrder = input.sortOrder;

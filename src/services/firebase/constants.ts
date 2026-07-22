@@ -42,6 +42,10 @@ export const STORAGE_PATHS = {
     `resourceNotes/${uid}/${noteId}.pdf`,
   assignmentPdf: (uid: string, assignmentId: string) =>
     `assignments/${uid}/${assignmentId}.pdf`,
-  projectImage: (uid: string, projectId: string, extension = '.jpg') =>
-    `projectImages/${uid}/${projectId}${extension}`,
+  /** projectImages/{uid}/{fileStem}.jpg — fileStem includes projectId + slot/unique id */
+  projectImage: (uid: string, fileStem: string, extension = '.jpg') =>
+    `projectImages/${uid}/${fileStem}${extension}`,
+  /** projectMarkdown/{uid}/{projectId}.md */
+  projectMarkdown: (uid: string, projectId: string) =>
+    `projectMarkdown/${uid}/${projectId}.md`,
 } as const;

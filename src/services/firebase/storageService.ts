@@ -1,4 +1,11 @@
-import storage from '@react-native-firebase/storage';
+import {
+  deleteObject,
+  getDownloadURL,
+  getStorage,
+  putFile,
+  ref,
+  refFromURL,
+} from '@react-native-firebase/storage';
 
 import { assertAuthenticatedUserId } from '../../utils/firebase/assertAuthenticated';
 import { syncFirestoreAuthSession } from '../../utils/firebase/firestoreSessionSync';
@@ -10,6 +17,8 @@ import {
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { isFirebaseStorageUrl } from '../../utils/profile/isFirebaseStorageUrl';
 import { STORAGE_PATHS } from './constants';
+
+const firebaseStorage = getStorage();
 
 function resolveFileExtension(localUri: string): string {
   const match = localUri.match(/\.([a-zA-Z0-9]+)(?:\?|$)/);
@@ -39,7 +48,7 @@ function resolveContentType(localUri: string): string {
 
 function buildProfileImageRef(uid: string, localUri: string) {
   const extension = resolveFileExtension(localUri);
-  return storage().ref(STORAGE_PATHS.userProfileImage(uid, extension));
+  return ref(firebaseStorage, STORAGE_PATHS.userProfileImage(uid, extension));
 }
 
 function buildContinueLearningThumbnailRef(
@@ -48,7 +57,8 @@ function buildContinueLearningThumbnailRef(
   localUri: string,
 ) {
   const extension = resolveFileExtension(localUri);
-  return storage().ref(
+  return ref(
+    firebaseStorage,
     STORAGE_PATHS.continueLearningThumbnail(uid, playlistId, extension),
   );
 }
@@ -59,7 +69,8 @@ function buildCourseThumbnailRef(
   localUri: string,
 ) {
   const extension = resolveFileExtension(localUri);
-  return storage().ref(
+  return ref(
+    firebaseStorage,
     STORAGE_PATHS.courseThumbnail(uid, courseId, extension),
   );
 }
@@ -67,20 +78,27 @@ function buildCourseThumbnailRef(
 function buildProjectImageRef(
   uid: string,
   projectId: string,
+  imageIndex: number,
   localUri: string,
 ) {
   const extension = resolveFileExtension(localUri);
-  return storage().ref(
-    STORAGE_PATHS.projectImage(uid, projectId, extension),
+  const fileStem = `${projectId}_${imageIndex}_${Date.now()}`;
+  return ref(
+    firebaseStorage,
+    STORAGE_PATHS.projectImage(uid, fileStem, extension),
   );
 }
 
+function buildProjectMarkdownRef(uid: string, projectId: string) {
+  return ref(firebaseStorage, STORAGE_PATHS.projectMarkdown(uid, projectId));
+}
+
 function buildResourceNotePdfRef(uid: string, noteId: string) {
-  return storage().ref(STORAGE_PATHS.resourceNotePdf(uid, noteId));
+  return ref(firebaseStorage, STORAGE_PATHS.resourceNotePdf(uid, noteId));
 }
 
 function buildAssignmentPdfRef(uid: string, assignmentId: string) {
-  return storage().ref(STORAGE_PATHS.assignmentPdf(uid, assignmentId));
+  return ref(firebaseStorage, STORAGE_PATHS.assignmentPdf(uid, assignmentId));
 }
 
 /**
@@ -98,10 +116,10 @@ export async function uploadProfileImage(
     }
 
     const reference = buildProfileImageRef(uid, trimmedUri);
-    await reference.putFile(trimmedUri, {
+    await putFile(reference, trimmedUri, {
       contentType: resolveContentType(trimmedUri),
     });
-    return reference.getDownloadURL();
+    return getDownloadURL(reference);
   } catch (error) {
     throw wrapFirebaseError(
       error,
@@ -142,10 +160,10 @@ export async function uploadContinueLearningThumbnail(
       playlistId.trim(),
       trimmedUri,
     );
-    await reference.putFile(trimmedUri, {
+    await putFile(reference, trimmedUri, {
       contentType: resolveContentType(trimmedUri),
     });
-    return reference.getDownloadURL();
+    return getDownloadURL(reference);
   } catch (error) {
     throw wrapFirebaseError(
       error,
@@ -172,10 +190,10 @@ export async function uploadResourceNotePdf(
     const uid = await syncFirestoreAuthSession();
 
     const reference = buildResourceNotePdfRef(uid, noteId.trim());
-    await reference.putFile(trimmedUri, {
+    await putFile(reference, trimmedUri, {
       contentType: 'application/pdf',
     });
-    return reference.getDownloadURL();
+    return getDownloadURL(reference);
   } catch (error) {
     throw wrapFirebaseError(
       error,
@@ -202,10 +220,10 @@ export async function uploadAssignmentPdf(
     const uid = await syncFirestoreAuthSession();
 
     const reference = buildAssignmentPdfRef(uid, assignmentId.trim());
-    await reference.putFile(trimmedUri, {
+    await putFile(reference, trimmedUri, {
       contentType: 'application/pdf',
     });
-    return reference.getDownloadURL();
+    return getDownloadURL(reference);
   } catch (error) {
     throw wrapFirebaseError(
       error,
@@ -223,7 +241,7 @@ export async function deleteAssignmentPdfByUrlSafe(
   }
 
   try {
-    await storage().refFromURL(pdfUrl!.trim()).delete();
+    await deleteObject(refFromURL(firebaseStorage, pdfUrl!.trim()));
   } catch (error) {
     const { code } = extractFirebaseErrorDetails(error);
     if (isFirebaseNotFoundError(code)) {
@@ -245,7 +263,7 @@ export async function deleteResourceNotePdfByUrlSafe(
   }
 
   try {
-    await storage().refFromURL(pdfUrl!.trim()).delete();
+    await deleteObject(refFromURL(firebaseStorage, pdfUrl!.trim()));
   } catch (error) {
     const { code } = extractFirebaseErrorDetails(error);
     if (isFirebaseNotFoundError(code)) {
@@ -276,10 +294,10 @@ export async function uploadCourseThumbnail(
     const uid = await syncFirestoreAuthSession();
 
     const reference = buildCourseThumbnailRef(uid, courseId.trim(), trimmedUri);
-    await reference.putFile(trimmedUri, {
+    await putFile(reference, trimmedUri, {
       contentType: resolveContentType(trimmedUri),
     });
-    return reference.getDownloadURL();
+    return getDownloadURL(reference);
   } catch (error) {
     throw wrapFirebaseError(
       error,
@@ -289,10 +307,11 @@ export async function uploadCourseThumbnail(
   }
 }
 
-/** Uploads a project cover image; requires Storage rules for projectImages. */
+/** Uploads a project gallery image at slot 0–4; requires Storage rules for projectImages. */
 export async function uploadProjectImage(
   projectId: string,
   localFileUri: string,
+  imageIndex = 0,
 ): Promise<string> {
   try {
     const trimmedUri = localFileUri.trim();
@@ -302,14 +321,22 @@ export async function uploadProjectImage(
     if (!projectId.trim()) {
       throw new Error('A project id is required.');
     }
+    if (!Number.isInteger(imageIndex) || imageIndex < 0 || imageIndex > 4) {
+      throw new Error('Project image index must be an integer from 0 to 4.');
+    }
 
     const uid = await syncFirestoreAuthSession();
 
-    const reference = buildProjectImageRef(uid, projectId.trim(), trimmedUri);
-    await reference.putFile(trimmedUri, {
+    const reference = buildProjectImageRef(
+      uid,
+      projectId.trim(),
+      imageIndex,
+      trimmedUri,
+    );
+    await putFile(reference, trimmedUri, {
       contentType: resolveContentType(trimmedUri),
     });
-    return reference.getDownloadURL();
+    return getDownloadURL(reference);
   } catch (error) {
     throw wrapFirebaseError(
       error,
@@ -327,7 +354,7 @@ export async function deleteProjectImageByUrlSafe(
   }
 
   try {
-    await storage().refFromURL(imageUrl!.trim()).delete();
+    await deleteObject(refFromURL(firebaseStorage, imageUrl!.trim()));
   } catch (error) {
     const { code } = extractFirebaseErrorDetails(error);
     if (isFirebaseNotFoundError(code)) {
@@ -341,12 +368,73 @@ export async function deleteProjectImageByUrlSafe(
   }
 }
 
+/** Best-effort delete of every gallery URL for a project. */
+export async function deleteProjectImagesByUrlsSafe(
+  imageUrls: Array<string | null | undefined>,
+): Promise<void> {
+  await Promise.all(imageUrls.map(url => deleteProjectImageByUrlSafe(url)));
+}
+
+/** Uploads a project markdown brief; requires Storage rules for projectMarkdown. */
+export async function uploadProjectMarkdown(
+  projectId: string,
+  localFileUri: string,
+): Promise<string> {
+  try {
+    const trimmedUri = localFileUri.trim();
+    if (!trimmedUri) {
+      throw new Error('A valid local markdown URI is required.');
+    }
+    if (!projectId.trim()) {
+      throw new Error('A project id is required.');
+    }
+
+    const uid = await syncFirestoreAuthSession();
+
+    const reference = buildProjectMarkdownRef(uid, projectId.trim());
+    await putFile(reference, trimmedUri, {
+      contentType: 'text/markdown',
+    });
+    return getDownloadURL(reference);
+  } catch (error) {
+    throw wrapFirebaseError(
+      error,
+      'UPLOAD_FAILED',
+      'Failed to upload project markdown.',
+    );
+  }
+}
+
+export async function deleteProjectMarkdownByUrlSafe(
+  markdownUrl: string | null | undefined,
+): Promise<void> {
+  if (!isFirebaseStorageUrl(markdownUrl)) {
+    return;
+  }
+
+  try {
+    await deleteObject(refFromURL(firebaseStorage, markdownUrl!.trim()));
+  } catch (error) {
+    const { code } = extractFirebaseErrorDetails(error);
+    if (isFirebaseNotFoundError(code)) {
+      return;
+    }
+    logFirebaseOperationError(
+      'deleteProjectMarkdownByUrlSafe',
+      'deleteByUrl',
+      error,
+    );
+  }
+}
+
 /**
  * Deletes the default profile image object for a user (best-effort).
  */
 export async function deleteProfileImage(uid: string): Promise<void> {
   try {
-    await storage().ref(STORAGE_PATHS.userProfileImage(uid)).delete();
+    await deleteObject(
+      ref(firebaseStorage, STORAGE_PATHS.userProfileImage(uid)),
+    );
   } catch (error) {
     throw wrapFirebaseError(
       error,
@@ -367,7 +455,7 @@ export async function deleteProfileImageByUrlSafe(
   }
 
   try {
-    await storage().refFromURL(imageUrl!.trim()).delete();
+    await deleteObject(refFromURL(firebaseStorage, imageUrl!.trim()));
   } catch (error) {
     const { code } = extractFirebaseErrorDetails(error);
     if (isFirebaseNotFoundError(code)) {
@@ -388,9 +476,9 @@ async function deleteProfileImageRefSafe(
   extension: string,
 ): Promise<void> {
   try {
-    await storage()
-      .ref(STORAGE_PATHS.userProfileImage(uid, extension))
-      .delete();
+    await deleteObject(
+      ref(firebaseStorage, STORAGE_PATHS.userProfileImage(uid, extension)),
+    );
   } catch (error) {
     const { code } = extractFirebaseErrorDetails(error);
     if (isFirebaseNotFoundError(code)) {

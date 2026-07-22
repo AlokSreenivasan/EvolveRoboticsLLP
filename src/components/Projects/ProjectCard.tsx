@@ -17,7 +17,10 @@ type ProjectCardProps = {
 };
 
 function ProjectCard({ project, onPress }: ProjectCardProps) {
-  const imageUri = project.imageUri?.trim();
+  const imageUri =
+    project.imageUris?.find(uri => uri.trim())?.trim() ||
+    project.imageUri?.trim() ||
+    '';
 
   return (
     <TouchableOpacity

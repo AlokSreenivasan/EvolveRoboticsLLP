@@ -66,6 +66,7 @@ service firebase.storage {
       allow delete: if isSuperAdmin() && request.auth.uid == uid;
     }
 
+    // Gallery images: {projectId}_{slot}_{unique}.ext (also legacy {projectId}.ext)
     match /projectImages/{uid}/{imageFile} {
       allow read: if isAuthenticated();
 
@@ -74,6 +75,18 @@ service firebase.storage {
         && imageFile.matches('^[A-Za-z0-9_-]+\\.(jpg|jpeg|png|webp)$')
         && request.resource.size < 5 * 1024 * 1024
         && isImageUpload();
+
+      allow delete: if isSuperAdmin() && request.auth.uid == uid;
+    }
+
+    match /projectMarkdown/{uid}/{markdownFile} {
+      allow read: if isAuthenticated();
+
+      allow write: if isSuperAdmin()
+        && request.auth.uid == uid
+        && markdownFile.matches('^[A-Za-z0-9_-]+\\.md$')
+        && request.resource.size < 2 * 1024 * 1024
+        && isMarkdownUpload();
 
       allow delete: if isSuperAdmin() && request.auth.uid == uid;
     }
@@ -124,5 +137,16 @@ function isPdfUpload() {
   return !('contentType' in request.resource)
     || request.resource.contentType == 'application/pdf'
     || request.resource.contentType == 'application/x-pdf'
+    || request.resource.contentType == 'application/octet-stream';
+}
+
+/**
+ * Markdown uploads often report text/plain or octet-stream depending on OS.
+ */
+function isMarkdownUpload() {
+  return !('contentType' in request.resource)
+    || request.resource.contentType == 'text/markdown'
+    || request.resource.contentType == 'text/x-markdown'
+    || request.resource.contentType == 'text/plain'
     || request.resource.contentType == 'application/octet-stream';
 }

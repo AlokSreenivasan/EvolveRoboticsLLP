@@ -594,6 +594,35 @@ function isValidChatKeywordUpdate() {
   return isValidChatKeywordFields(request.resource.data);
 }
 
+function isValidProjectImageUriAt(list, index) {
+  return list.size() <= index
+    || (list[index] is string && list[index].size() <= 8192);
+}
+
+function isValidProjectImageUris(data) {
+  return data.imageUris is list
+    && data.imageUris.size() <= 5
+    && isValidProjectImageUriAt(data.imageUris, 0)
+    && isValidProjectImageUriAt(data.imageUris, 1)
+    && isValidProjectImageUriAt(data.imageUris, 2)
+    && isValidProjectImageUriAt(data.imageUris, 3)
+    && isValidProjectImageUriAt(data.imageUris, 4);
+}
+
+/** New gallery list, or legacy single imageUri for docs not yet migrated. */
+function hasValidProjectImages(data) {
+  return isValidProjectImageUris(data)
+    || (
+      data.imageUri is string
+      && data.imageUri.size() <= 8192
+    );
+}
+
+function hasValidProjectMarkdownUrl(data) {
+  return !('markdownUrl' in data)
+    || (data.markdownUrl is string && data.markdownUrl.size() <= 8192);
+}
+
 function isValidProjectFields(data) {
   return isValidSchoolAudienceFields(data)
     && (!('track' in data) || isValidCourseTrack(data))
@@ -604,8 +633,10 @@ function isValidProjectFields(data) {
     && data.subtitle.size() <= 300
     && data.description is string
     && data.description.size() <= 600
-    && data.imageUri is string
-    && data.imageUri.size() <= 8192
+    && hasValidProjectImages(data)
+    && hasValidProjectMarkdownUrl(data)
+    && (!('imageUri' in data)
+      || (data.imageUri is string && data.imageUri.size() <= 8192))
     && data.sortOrder is number
     && data.sortOrder >= 0
     && data.isPublished is bool;
@@ -617,7 +648,8 @@ function isValidProjectCreate() {
       'title',
       'subtitle',
       'description',
-      'imageUri',
+      'imageUris',
+      'markdownUrl',
       'sortOrder',
       'isPublished',
       'createdAt',

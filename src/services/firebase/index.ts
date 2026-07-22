@@ -117,9 +117,12 @@ export {
 export {
   deleteAssignmentPdfByUrlSafe,
   deleteProjectImageByUrlSafe,
+  deleteProjectImagesByUrlsSafe,
+  deleteProjectMarkdownByUrlSafe,
   deleteResourceNotePdfByUrlSafe,
   uploadAssignmentPdf,
   uploadProjectImage,
+  uploadProjectMarkdown,
   uploadResourceNotePdf,
 } from './storageService';
 export {
