@@ -409,6 +409,48 @@ describe('admin-writable content (resourceNotes)', () => {
   });
 });
 
+describe('admin-writable content (assignments)', () => {
+  const validAssignment = {
+    title: 'Lab report',
+    subtitle: '',
+    dueDateLabel: 'Due Friday',
+    pdfUrl: '',
+    sortOrder: 0,
+    isPublished: true,
+    track: 'professionals',
+    audience: 'all',
+    schoolIds: [],
+    schoolGradeIds: {},
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  };
+
+  test('superadmins can create an assignment stub then set pdfUrl', async () => {
+    const database = db(SUPERADMIN_UID);
+    await assertSucceeds(
+      setDoc(doc(database, 'assignments', 'a1'), validAssignment),
+    );
+    await assertSucceeds(
+      updateDoc(doc(database, 'assignments', 'a1'), {
+        pdfUrl: 'https://example.com/a1.pdf',
+        updatedAt: serverTimestamp(),
+      }),
+    );
+  });
+
+  test('admins can create a valid assignment', async () => {
+    await assertSucceeds(
+      setDoc(doc(db(ADMIN_UID), 'assignments', 'a2'), validAssignment),
+    );
+  });
+
+  test('regular users cannot create assignments', async () => {
+    await assertFails(
+      setDoc(doc(db(OWNER_UID), 'assignments', 'a3'), validAssignment),
+    );
+  });
+});
+
 describe('answer keys', () => {
   test('regular users cannot read answer keys', async () => {
     await assertFails(getDoc(doc(db(OWNER_UID), 'examAnswerKeys', 'exam1')));

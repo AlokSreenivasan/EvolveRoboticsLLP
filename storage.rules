@@ -115,7 +115,14 @@ function isImageUpload() {
     || request.resource.contentType.matches('image/.*');
 }
 
+/**
+ * Object name is already constrained to *.pdf by the match rules.
+ * Accept common MIME variants: iOS putFile often overrides metadata and
+ * document pickers frequently report application/octet-stream.
+ */
 function isPdfUpload() {
   return !('contentType' in request.resource)
-    || request.resource.contentType == 'application/pdf';
+    || request.resource.contentType == 'application/pdf'
+    || request.resource.contentType == 'application/x-pdf'
+    || request.resource.contentType == 'application/octet-stream';
 }

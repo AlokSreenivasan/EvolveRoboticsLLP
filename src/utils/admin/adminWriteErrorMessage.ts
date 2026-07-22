@@ -1,12 +1,52 @@
-import { getErrorMessage } from '../firebase/errors';
+import { FirebaseServiceError, getErrorMessage } from '../firebase/errors';
+import {
+  extractFirebaseErrorDetails,
+  normalizeFirebaseErrorCode,
+} from '../firebase/extractFirebaseError';
 
 function isPermissionDenied(error: unknown): boolean {
-  const code = (error as { code?: string } | null)?.code;
-  if (typeof code === 'string' && code.includes('permission-denied')) {
+  const details = extractFirebaseErrorDetails(error);
+  const normalized = normalizeFirebaseErrorCode(details.code);
+  if (
+    normalized === 'permission-denied' ||
+    normalized === 'unauthorized'
+  ) {
     return true;
   }
-  const message = (error as { message?: string } | null)?.message;
+
+  if (error instanceof FirebaseServiceError) {
+    const causeDetails = extractFirebaseErrorDetails(error.cause);
+    const causeNormalized = normalizeFirebaseErrorCode(causeDetails.code);
+    if (
+      causeNormalized === 'permission-denied' ||
+      causeNormalized === 'unauthorized'
+    ) {
+      return true;
+    }
+  }
+
+  const message = details.message ?? (error as { message?: string } | null)?.message;
   return typeof message === 'string' && message.toLowerCase().includes('permission');
+}
+
+function resolveDeniedService(error: unknown): 'Storage' | 'Firestore' {
+  const details = extractFirebaseErrorDetails(error);
+  const code = details.code ?? '';
+  if (code.includes('storage') || code.startsWith('storage/')) {
+    return 'Storage';
+  }
+
+  if (error instanceof FirebaseServiceError) {
+    if (error.code === 'UPLOAD_FAILED' || error.code === 'STORAGE_ERROR') {
+      return 'Storage';
+    }
+    const causeCode = extractFirebaseErrorDetails(error.cause).code ?? '';
+    if (causeCode.includes('storage')) {
+      return 'Storage';
+    }
+  }
+
+  return 'Firestore';
 }
 
 export function toAdminWriteErrorMessage(error: unknown): string {
@@ -14,9 +54,12 @@ export function toAdminWriteErrorMessage(error: unknown): string {
   if (!isPermissionDenied(error)) {
     return base;
   }
-  const code = (error as { code?: string } | null)?.code;
-  const service = code?.includes('storage') ? 'Storage' : 'Firestore';
-  return `${base}\n\nFix checklist:\n1) Your Firestore users/{your-uid}.role must be exactly "superadmin" (not "admin")\n2) Deploy rules: cd Evolve && firebase deploy --only firestore:rules\n3) Sign out and sign back in after changing your role\n4) ${service} permission denied`;
+  const service = resolveDeniedService(error);
+  const deployTarget =
+    service === 'Storage'
+      ? 'firebase deploy --only storage,firestore:rules'
+      : 'firebase deploy --only firestore:rules,storage';
+  return `${base}\n\nFix checklist:\n1) users/{your-uid}.role must be exactly "admin" or "superadmin"\n2) Deploy rules: cd Evolve && ${deployTarget}\n3) Sign out and sign back in after changing your role\n4) ${service} permission denied`;
 }
 
 export function toRoleWriteErrorMessage(
