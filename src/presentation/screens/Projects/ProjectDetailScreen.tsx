@@ -33,6 +33,10 @@ function ProjectDetailScreen() {
   const [markdownBody, setMarkdownBody] = useState<string | null>(null);
   const [markdownLoading, setMarkdownLoading] = useState(Boolean(markdownUrl));
   const [markdownError, setMarkdownError] = useState<string | null>(null);
+  /** Natural width/height so any aspect ratio shows fully (no 16:9 crop). */
+  const [imageAspectRatios, setImageAspectRatios] = useState<
+    Record<string, number>
+  >({});
 
   useEffect(() => {
     if (!markdownUrl) {
@@ -132,7 +136,23 @@ function ProjectDetailScreen() {
                   <Image
                     key={`${index}-${uri.slice(-24)}`}
                     source={{ uri }}
-                    style={styles.stackedImage}
+                    style={[
+                      styles.stackedImage,
+                      {
+                        aspectRatio: imageAspectRatios[uri] ?? 16 / 9,
+                      },
+                    ]}
+                    resizeMode="contain"
+                    onLoad={event => {
+                      const { width, height } = event.nativeEvent.source;
+                      if (width > 0 && height > 0) {
+                        setImageAspectRatios(prev =>
+                          prev[uri] === width / height
+                            ? prev
+                            : { ...prev, [uri]: width / height },
+                        );
+                      }
+                    }}
                     accessibilityLabel={`Project image ${index + 1}`}
                   />
                 ))}
@@ -259,10 +279,8 @@ const styles = StyleSheet.create({
   },
   stackedImage: {
     width: '100%',
-    aspectRatio: 16 / 9,
     borderRadius: spacing.cardRadius,
     backgroundColor: colors.primaryLight,
-    resizeMode: 'cover',
   },
   sectionHeading: {
     fontSize: 17,
