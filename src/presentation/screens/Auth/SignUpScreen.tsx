@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  SafeAreaView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Eye, EyeOff } from 'lucide-react-native';
@@ -115,136 +116,139 @@ const SignUpScreen = () => {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Sign Up</Text>
+    <SafeAreaView style={styles.safe}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.title}>Sign Up</Text>
 
-      <View style={styles.card}>
-        <Text style={styles.heading}>Create Your Account</Text>
+        <View style={styles.card}>
+          <Text style={styles.heading}>Create Your Account</Text>
 
-        <Text style={styles.label}>Full Name</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter your full name"
-          value={fullName}
-          onChangeText={handleFullNameChange}
-        />
-        {errors.fullName && <Text style={styles.error}>{errors.fullName}</Text>}
-
-        <Text style={styles.label}>Contact Number</Text>
-        <TextInput
-          style={[
-            styles.input,
-            errors.contactNumber ? styles.inputError : null,
-          ]}
-          placeholder="Enter 10-digit contact number"
-          placeholderTextColor="#999"
-          value={contactNumber}
-          onChangeText={handleContactNumberChange}
-          keyboardType="number-pad"
-          maxLength={CONTACT_NUMBER_MAX_LENGTH}
-          inputMode="numeric"
-        />
-        {errors.contactNumber && (
-          <Text style={styles.error}>{errors.contactNumber}</Text>
-        )}
-
-        <Text style={styles.label}>Email</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="your.email@example.com"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-        />
-        {errors.email && <Text style={styles.error}>{errors.email}</Text>}
-
-        <Text style={styles.label}>Password</Text>
-        <View style={styles.passwordRow}>
+          <Text style={styles.label}>Full Name</Text>
           <TextInput
-            style={[styles.input, styles.passwordInput]}
-            placeholder="Minimum 8 characters"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={!isPasswordVisible}
-            autoCapitalize="none"
-            autoCorrect={false}
+            style={styles.input}
+            placeholder="Enter your full name"
+            value={fullName}
+            onChangeText={handleFullNameChange}
           />
-          <TouchableOpacity
-            onPress={() => setIsPasswordVisible(v => !v)}
-            style={styles.passwordToggle}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            accessibilityRole="button"
-            accessibilityLabel={isPasswordVisible ? 'Hide password' : 'Show password'}
-          >
-            {isPasswordVisible ? (
-              <EyeOff size={20} color="#a42a8b" />
-            ) : (
-              <Eye size={20} color="#a42a8b" />
-            )}
-          </TouchableOpacity>
-        </View>
-        {errors.password && <Text style={styles.error}>{errors.password}</Text>}
+          {errors.fullName && <Text style={styles.error}>{errors.fullName}</Text>}
 
-        <Text style={styles.label}>Confirm Password</Text>
-        <View style={styles.passwordRow}>
+          <Text style={styles.label}>Contact Number</Text>
           <TextInput
-            style={[styles.input, styles.passwordInput]}
-            placeholder="Re-enter password"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            secureTextEntry={!isConfirmPasswordVisible}
-            autoCapitalize="none"
-            autoCorrect={false}
+            style={[
+              styles.input,
+              errors.contactNumber ? styles.inputError : null,
+            ]}
+            placeholder="Enter 10-digit contact number"
+            placeholderTextColor="#999"
+            value={contactNumber}
+            onChangeText={handleContactNumberChange}
+            keyboardType="number-pad"
+            maxLength={CONTACT_NUMBER_MAX_LENGTH}
+            inputMode="numeric"
           />
-          <TouchableOpacity
-            onPress={() => setIsConfirmPasswordVisible(v => !v)}
-            style={styles.passwordToggle}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            accessibilityRole="button"
-            accessibilityLabel={
-              isConfirmPasswordVisible ? 'Hide password' : 'Show password'
-            }
-          >
-            {isConfirmPasswordVisible ? (
-              <EyeOff size={20} color="#a42a8b" />
-            ) : (
-              <Eye size={20} color="#a42a8b" />
-            )}
-          </TouchableOpacity>
-        </View>
-        {errors.confirmPassword && (
-          <Text style={styles.error}>{errors.confirmPassword}</Text>
-        )}
+          {errors.contactNumber && (
+            <Text style={styles.error}>{errors.contactNumber}</Text>
+          )}
 
-        <AppButton
-          title={loading ? 'Creating account...' : 'Sign Up'}
-          onPress={handleSignUp}
-          buttonStyle={styles.button}
-          textStyle={styles.buttonText}
-          disabled={loading}
-        />
-        {loading ? (
-          <ActivityIndicator color="#a42a8b" style={styles.loader} />
-        ) : null}
+          <Text style={styles.label}>Email</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="your.email@example.com"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+          />
+          {errors.email && <Text style={styles.error}>{errors.email}</Text>}
 
-        <View style={styles.signupline}>
-          <Text>Already have an account?</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-            <Text style={styles.signinLink}>Sign In</Text>
-          </TouchableOpacity>
+          <Text style={styles.label}>Password</Text>
+          <View style={styles.passwordRow}>
+            <TextInput
+              style={[styles.input, styles.passwordInput]}
+              placeholder="Minimum 8 characters"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!isPasswordVisible}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <TouchableOpacity
+              onPress={() => setIsPasswordVisible(v => !v)}
+              style={styles.passwordToggle}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityRole="button"
+              accessibilityLabel={isPasswordVisible ? 'Hide password' : 'Show password'}
+            >
+              {isPasswordVisible ? (
+                <EyeOff size={20} color="#a42a8b" />
+              ) : (
+                <Eye size={20} color="#a42a8b" />
+              )}
+            </TouchableOpacity>
+          </View>
+          {errors.password && <Text style={styles.error}>{errors.password}</Text>}
+
+          <Text style={styles.label}>Confirm Password</Text>
+          <View style={styles.passwordRow}>
+            <TextInput
+              style={[styles.input, styles.passwordInput]}
+              placeholder="Re-enter password"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry={!isConfirmPasswordVisible}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <TouchableOpacity
+              onPress={() => setIsConfirmPasswordVisible(v => !v)}
+              style={styles.passwordToggle}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityRole="button"
+              accessibilityLabel={
+                isConfirmPasswordVisible ? 'Hide password' : 'Show password'
+              }
+            >
+              {isConfirmPasswordVisible ? (
+                <EyeOff size={20} color="#a42a8b" />
+              ) : (
+                <Eye size={20} color="#a42a8b" />
+              )}
+            </TouchableOpacity>
+          </View>
+          {errors.confirmPassword && (
+            <Text style={styles.error}>{errors.confirmPassword}</Text>
+          )}
+
+          <AppButton
+            title={loading ? 'Creating account...' : 'Sign Up'}
+            onPress={handleSignUp}
+            buttonStyle={styles.button}
+            textStyle={styles.buttonText}
+            disabled={loading}
+          />
+          {loading ? (
+            <ActivityIndicator color="#a42a8b" style={styles.loader} />
+          ) : null}
+
+          <View style={styles.signupline}>
+            <Text>Already have an account?</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+              <Text style={styles.signinLink}>Sign In</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: '#fff' },
   container: { padding: 20, backgroundColor: '#fff', flexGrow: 1 },
   title: {
     fontSize: 20,
     fontWeight: '600',
     alignSelf: 'center',
-    marginVertical: 46,
+    marginVertical: 24,
     color: '#a42a8b',
   },
   card: {

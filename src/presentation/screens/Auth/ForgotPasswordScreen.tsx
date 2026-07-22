@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
+  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -69,6 +70,7 @@ function ForgotPasswordScreen() {
 
 
   return (
+    <SafeAreaView style={styles.safe}>
       <ScrollView style={styles.container}>
         <View style={styles.firstBox}>
           <BackButton onPress={() => navigation.navigate('Login')} />
@@ -108,16 +110,18 @@ function ForgotPasswordScreen() {
           ) : null}
         </View>
       </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: '#fff' },
   container: { flex: 1, backgroundColor: '#fff', padding: 20 },
   firstBox: {
     flexDirection: 'row',
     alignItems: 'center',
     alignContent: 'center',
-    height: 100,
+    height: 56,
   },
   title: {
     fontSize: 18,

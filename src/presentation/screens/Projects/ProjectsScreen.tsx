@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, SafeAreaView, StyleSheet } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 import { colors } from '../../../constants/theme';
@@ -16,9 +16,9 @@ function ProjectsScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <ActivityIndicator color={colors.primary} size="large" />
-    </View>
+    </SafeAreaView>
   );
 }
 

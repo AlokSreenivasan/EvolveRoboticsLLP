@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, ActivityIndicator, Image, StyleSheet } from 'react-native';
+import { ActivityIndicator, Image, SafeAreaView, StyleSheet } from 'react-native';
 
 const SplashScreen = () => {
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* App Logo */}
       <Image
         source={require('../../../assets/LOGO__.png')}
@@ -12,7 +12,7 @@ const SplashScreen = () => {
       />
       {/* Loading Indicator */}
       <ActivityIndicator size="large" color="#a42a8b" style={styles.loader} />
-    </View>
+    </SafeAreaView>
   );
 };
 
