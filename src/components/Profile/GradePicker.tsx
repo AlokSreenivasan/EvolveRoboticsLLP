@@ -61,7 +61,11 @@ function GradePicker({
         activeOpacity={0.7}
         disabled={disabled}
         accessibilityRole="button"
-        accessibilityLabel={`Grade, ${displayLabel}. Tap to change.`}>
+        accessibilityLabel={
+          disabled
+            ? `Grade, ${displayLabel}. Cannot be changed.`
+            : `Grade, ${displayLabel}. Tap to change.`
+        }>
         <GraduationCap size={18} color="#a42a8b" strokeWidth={2} />
         <Text
           style={[
@@ -71,7 +75,9 @@ function GradePicker({
           numberOfLines={1}>
           {displayLabel}
         </Text>
-        <ChevronDown size={18} color="#888" strokeWidth={2} />
+        {disabled ? null : (
+          <ChevronDown size={18} color="#888" strokeWidth={2} />
+        )}
       </TouchableOpacity>
 
       <Modal

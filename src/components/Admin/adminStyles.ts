@@ -199,6 +199,12 @@ export const adminStyles = StyleSheet.create({
     color: colors.textPrimary,
     marginBottom: 16,
   },
+  formError: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: colors.danger,
+    marginBottom: 12,
+  },
   modalScroll: {
     paddingBottom: 16,
   },

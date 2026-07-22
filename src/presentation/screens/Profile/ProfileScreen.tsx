@@ -52,6 +52,8 @@ function ProfileScreen() {
     isLoading,
     isSaving,
     saveError,
+    isSchoolLocked,
+    isGradeLocked,
     setFullName,
     setContactNumber,
     setTrack,
@@ -69,6 +71,7 @@ function ProfileScreen() {
 
   const isFormDisabled = isLoading || isSaving;
   const showSchoolAndGrade = profile.track === 'kids';
+  const schoolAndGradeLocked = isSchoolLocked || isGradeLocked;
 
   useEffect(() => {
     if (!requireCompletion || profileLoading) {
@@ -236,7 +239,7 @@ function ProfileScreen() {
                   onSelectSchool={setSchoolId}
                   loading={schoolsLoading}
                   error={schoolsError}
-                  disabled={isFormDisabled}
+                  disabled={isFormDisabled || isSchoolLocked}
                   hasError={Boolean(errors.schoolId)}
                 />
                 {errors.schoolId ? (
@@ -247,11 +250,16 @@ function ProfileScreen() {
                 <GradePicker
                   selectedGrade={profile.grade}
                   onSelectGrade={setGrade}
-                  disabled={isFormDisabled}
+                  disabled={isFormDisabled || isGradeLocked}
                   hasError={Boolean(errors.grade)}
                 />
                 {errors.grade ? (
                   <Text style={styles.errorText}>{errors.grade}</Text>
+                ) : null}
+                {schoolAndGradeLocked ? (
+                  <Text style={styles.helperText}>
+                    School and grade cannot be changed once saved.
+                  </Text>
                 ) : null}
               </>
             ) : null}
@@ -400,6 +408,12 @@ const styles = StyleSheet.create({
   errorText: {
     color: 'red',
     fontSize: 13,
+    marginBottom: 8,
+  },
+  helperText: {
+    color: '#666',
+    fontSize: 13,
+    marginTop: 4,
     marginBottom: 8,
   },
   saveButton: {

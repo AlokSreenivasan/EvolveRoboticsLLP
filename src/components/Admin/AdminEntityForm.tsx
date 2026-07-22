@@ -10,6 +10,8 @@ type AdminEntityFormProps = {
   saveLabel: string;
   savingLabel?: string;
   saving: boolean;
+  /** Prefer over appAlert while this Modal is open (nested Modals break touches on iOS). */
+  error?: string | null;
   onClose: () => void;
   onSave: () => void;
   children: React.ReactNode;
@@ -21,6 +23,7 @@ function AdminEntityForm({
   saveLabel,
   savingLabel = 'Saving…',
   saving,
+  error,
   onClose,
   onSave,
   children,
@@ -33,6 +36,7 @@ function AdminEntityForm({
       onRequestClose={onClose}>
       <View style={adminStyles.modalContainer}>
         <Text style={adminStyles.modalTitle}>{title}</Text>
+        {error ? <Text style={adminStyles.formError}>{error}</Text> : null}
         <ScrollView contentContainerStyle={adminStyles.modalScroll}>
           {children}
         </ScrollView>

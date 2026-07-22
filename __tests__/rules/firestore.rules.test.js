@@ -176,6 +176,63 @@ describe('users collection', () => {
     );
   });
 
+  test('owners can set school and grade once', async () => {
+    await assertSucceeds(
+      updateDoc(doc(db(OWNER_UID), 'users', OWNER_UID), {
+        schoolId: 'school-1',
+        grade: '8',
+        updatedAt: serverTimestamp(),
+      }),
+    );
+  });
+
+  test('owners cannot change school or grade after they are set', async () => {
+    await testEnv.withSecurityRulesDisabled(async context => {
+      await updateDoc(doc(context.firestore(), 'users', OWNER_UID), {
+        schoolId: 'school-1',
+        grade: '8',
+      });
+    });
+
+    await assertFails(
+      updateDoc(doc(db(OWNER_UID), 'users', OWNER_UID), {
+        schoolId: 'school-2',
+        updatedAt: serverTimestamp(),
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(db(OWNER_UID), 'users', OWNER_UID), {
+        grade: '9',
+        updatedAt: serverTimestamp(),
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(db(OWNER_UID), 'users', OWNER_UID), {
+        schoolId: null,
+        grade: null,
+        updatedAt: serverTimestamp(),
+      }),
+    );
+  });
+
+  test('owners can keep the same school and grade on later updates', async () => {
+    await testEnv.withSecurityRulesDisabled(async context => {
+      await updateDoc(doc(context.firestore(), 'users', OWNER_UID), {
+        schoolId: 'school-1',
+        grade: '8',
+      });
+    });
+
+    await assertSucceeds(
+      updateDoc(doc(db(OWNER_UID), 'users', OWNER_UID), {
+        fullName: 'Still Same School',
+        schoolId: 'school-1',
+        grade: '8',
+        updatedAt: serverTimestamp(),
+      }),
+    );
+  });
+
   test('owners cannot change their own role', async () => {
     await assertFails(
       updateDoc(doc(db(OWNER_UID), 'users', OWNER_UID), {

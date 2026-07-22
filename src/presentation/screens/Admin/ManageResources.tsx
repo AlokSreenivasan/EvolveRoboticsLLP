@@ -67,6 +67,7 @@ function ManageResources() {
   const [editorVisible, setEditorVisible] = useState(false);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [noteForm, setNoteForm] = useState<NoteFormState>(EMPTY_NOTE_FORM);
+  const [formError, setFormError] = useState<string | null>(null);
   const [savingNote, setSavingNote] = useState(false);
 
   const { schools, loading: schoolsLoading, error: schoolsError } = useSchools();
@@ -86,6 +87,7 @@ function ManageResources() {
   const openCreateEditor = () => {
     setEditingNoteId(null);
     setNoteForm(EMPTY_NOTE_FORM);
+    setFormError(null);
     audienceForm.resetAudience();
     pdfPicker.resetPdfState();
     setEditorVisible(true);
@@ -100,6 +102,7 @@ function ManageResources() {
         track: note.track,
         isPublished: note.isPublished,
       });
+      setFormError(null);
       resetAudience({
         audience: note.audience,
         schoolIds: note.schoolIds,
@@ -115,6 +118,7 @@ function ManageResources() {
     setEditorVisible(false);
     setEditingNoteId(null);
     setNoteForm(EMPTY_NOTE_FORM);
+    setFormError(null);
     audienceForm.resetAudience();
     pdfPicker.resetPdfState();
   };
@@ -148,19 +152,14 @@ function ManageResources() {
   };
 
   const handleSaveNote = async () => {
+    // Avoid appAlert here: nesting it over this form's Modal blocks touches after dismiss.
     if (!noteForm.title.trim()) {
-      appAlert(
-        appAlertCopy.admin.headingRequiredTitle,
-        appAlertCopy.admin.headingRequired('note'),
-      );
+      setFormError(appAlertCopy.admin.headingRequired('note'));
       return;
     }
 
     if (!pdfPicker.hasPdf) {
-      appAlert(
-        appAlertCopy.admin.pdfRequiredTitle,
-        appAlertCopy.admin.pdfRequired('note'),
-      );
+      setFormError(appAlertCopy.admin.pdfRequired('note'));
       return;
     }
 
@@ -169,7 +168,7 @@ function ManageResources() {
       audienceForm.validate,
     );
     if (visibilityError) {
-      appAlert(appAlertCopy.admin.visibilityRequiredTitle, visibilityError);
+      setFormError(visibilityError);
       return;
     }
 
@@ -177,6 +176,7 @@ function ManageResources() {
       noteForm.track!,
       audienceForm.toPayload(),
     );
+    setFormError(null);
     setSavingNote(true);
     try {
       await saveAdminPdfEntity({
@@ -204,7 +204,7 @@ function ManageResources() {
       });
       closeEditor();
     } catch (error) {
-      appAlert(appAlertCopy.admin.saveFailedTitle, toAdminWriteErrorMessage(error));
+      setFormError(toAdminWriteErrorMessage(error));
     } finally {
       setSavingNote(false);
     }
@@ -296,12 +296,16 @@ function ManageResources() {
         title={editingNoteId ? 'Edit note' : 'New note'}
         saveLabel="Save note"
         saving={savingNote}
+        error={formError}
         onClose={closeEditor}
         onSave={handleSaveNote}>
         <AdminFormField
           label="Heading"
           value={noteForm.title}
-          onChangeText={title => setNoteForm(prev => ({ ...prev, title }))}
+          onChangeText={title => {
+            setFormError(null);
+            setNoteForm(prev => ({ ...prev, title }));
+          }}
           placeholder="Chapter 3 — Kinematics"
         />
         <AdminFormField
@@ -315,7 +319,10 @@ function ManageResources() {
         <AdminPdfPicker
           statusLabel={pdfPicker.pdfStatusLabel}
           picking={pdfPicker.pickingPdf}
-          onPick={pdfPicker.handlePickPdf}
+          onPick={() => {
+            setFormError(null);
+            void pdfPicker.handlePickPdf();
+          }}
         />
         <AdminPublishedSwitch
           label="Published for students"
@@ -326,7 +333,10 @@ function ManageResources() {
         />
         <AdminContentVisibilityFields
           track={noteForm.track}
-          onTrackChange={track => setNoteForm(prev => ({ ...prev, track }))}
+          onTrackChange={track => {
+            setFormError(null);
+            setNoteForm(prev => ({ ...prev, track }));
+          }}
           onProfessionalsTrackSelected={() => audienceForm.resetAudience()}
           audience={audienceForm.audience}
           selectedSchoolIds={audienceForm.schoolIds}

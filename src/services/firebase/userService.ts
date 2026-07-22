@@ -35,6 +35,10 @@ import {
   FirebaseServiceError,
   wrapFirebaseError,
 } from '../../utils/firebase/errors';
+import {
+  resolveWritableGrade,
+  resolveWritableSchoolId,
+} from '../../utils/profile/schoolGradeLock';
 import { FIRESTORE_COLLECTIONS } from './constants';
 import {
   collection,
@@ -121,6 +125,7 @@ function buildProfileCreateInput(
 
 function buildProfileUpdatePayload(
   input: UpdateUserProfileInput,
+  baseProfile: UserProfile,
 ): Record<string, unknown> {
   const updates: Record<string, unknown> = {
     updatedAt: serverTimestamp(),
@@ -135,11 +140,15 @@ function buildProfileUpdatePayload(
   if (input.profileImage !== undefined) {
     updates.profileImage = normalizeOptionalString(input.profileImage);
   }
+  // schoolId / grade are write-once once saved on the profile.
   if (input.schoolId !== undefined) {
-    updates.schoolId = normalizeOptionalString(input.schoolId);
+    updates.schoolId = resolveWritableSchoolId(
+      baseProfile.schoolId,
+      input.schoolId,
+    );
   }
   if (input.grade !== undefined) {
-    updates.grade = normalizeOptionalString(input.grade);
+    updates.grade = resolveWritableGrade(baseProfile.grade, input.grade);
   }
   if (input.track !== undefined) {
     updates.track = input.track;
@@ -310,7 +319,7 @@ export async function updateUserProfile(
       return createUserProfile(uid, buildProfileCreateInput(baseProfile, input));
     }
 
-    const updates = buildProfileUpdatePayload(input);
+    const updates = buildProfileUpdatePayload(input, baseProfile);
     await updateDoc(userDocRef(uid), updates as UpdateData<DocumentData>);
 
     return mergeUserProfile(baseProfile, input);
@@ -337,11 +346,11 @@ function mergeUserProfile(
         : base.profileImage,
     schoolId:
       input.schoolId !== undefined
-        ? normalizeOptionalString(input.schoolId)
+        ? resolveWritableSchoolId(base.schoolId, input.schoolId)
         : base.schoolId,
     grade:
       input.grade !== undefined
-        ? normalizeOptionalString(input.grade)
+        ? resolveWritableGrade(base.grade, input.grade)
         : base.grade,
     track: input.track !== undefined ? input.track : base.track,
   };

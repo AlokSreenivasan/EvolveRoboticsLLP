@@ -75,7 +75,11 @@ function SchoolPicker({
         activeOpacity={0.7}
         disabled={disabled || loading}
         accessibilityRole="button"
-        accessibilityLabel={`School, ${displayLabel}. Tap to change.`}>
+        accessibilityLabel={
+          disabled
+            ? `School, ${displayLabel}. Cannot be changed.`
+            : `School, ${displayLabel}. Tap to change.`
+        }>
         <School size={18} color="#a42a8b" strokeWidth={2} />
         <Text
           style={[
@@ -89,7 +93,7 @@ function SchoolPicker({
         </Text>
         {loading ? (
           <ActivityIndicator size="small" color="#a42a8b" />
-        ) : (
+        ) : disabled ? null : (
           <ChevronDown size={18} color="#888" strokeWidth={2} />
         )}
       </TouchableOpacity>

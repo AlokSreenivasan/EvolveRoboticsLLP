@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { emptyProfile, Profile } from '../../domain/Profile/models/Profile';
 import { formatContactNumberInput } from '../../domain/Profile/validation/formatContactNumber';
@@ -11,6 +11,11 @@ import {
 import type { CourseTrack } from '../../store/content/types/courses.types';
 import { useAuth } from '../context/AuthContext';
 import { userProfileToFormProfile } from '../../utils/profile/mapUserProfile';
+import {
+  isSchoolOrGradeLocked,
+  resolveWritableGrade,
+  resolveWritableSchoolId,
+} from '../../utils/profile/schoolGradeLock';
 
 export function useProfileForm() {
   const {
@@ -26,6 +31,15 @@ export function useProfileForm() {
   const [errors, setErrors] = useState<ProfileFormErrors>({});
   const isDirtyRef = useRef(false);
 
+  const isSchoolLocked = useMemo(
+    () => isSchoolOrGradeLocked(sessionProfile?.schoolId),
+    [sessionProfile?.schoolId],
+  );
+  const isGradeLocked = useMemo(
+    () => isSchoolOrGradeLocked(sessionProfile?.grade),
+    [sessionProfile?.grade],
+  );
+
   useEffect(() => {
     if (!sessionProfile) {
       return;
@@ -39,13 +53,18 @@ export function useProfileForm() {
     }
 
     // Sign-up hydration can complete after Profile mounts — sync empty fields only.
+    // Locked school/grade always win from the saved profile.
     setProfileForm(prev => ({
       fullName: prev.fullName || nextForm.fullName,
       contactNumber: prev.contactNumber || nextForm.contactNumber,
       track: prev.track ?? nextForm.track,
       photoUri: prev.photoUri ?? nextForm.photoUri,
-      schoolId: prev.schoolId ?? nextForm.schoolId,
-      grade: prev.grade ?? nextForm.grade,
+      schoolId: isSchoolOrGradeLocked(nextForm.schoolId)
+        ? nextForm.schoolId
+        : prev.schoolId ?? nextForm.schoolId,
+      grade: isSchoolOrGradeLocked(nextForm.grade)
+        ? nextForm.grade
+        : prev.grade ?? nextForm.grade,
     }));
   }, [sessionProfile]);
 
@@ -73,16 +92,11 @@ export function useProfileForm() {
     setProfileForm(prev => ({
       ...prev,
       track,
-      ...(track === 'professionals'
-        ? { schoolId: null, grade: null }
-        : {}),
+      // Do not clear school/grade when switching tracks — once saved they are immutable.
     }));
     setErrors(prev => ({
       ...prev,
       track: undefined,
-      ...(track === 'professionals'
-        ? { schoolId: undefined, grade: undefined }
-        : {}),
     }));
   }, [markDirty]);
 
@@ -91,17 +105,29 @@ export function useProfileForm() {
     setProfileForm(prev => ({ ...prev, photoUri: uri }));
   }, [markDirty]);
 
-  const setSchoolId = useCallback((schoolId: string | null) => {
-    markDirty();
-    setProfileForm(prev => ({ ...prev, schoolId }));
-    setErrors(prev => ({ ...prev, schoolId: undefined }));
-  }, [markDirty]);
+  const setSchoolId = useCallback(
+    (schoolId: string | null) => {
+      if (isSchoolLocked) {
+        return;
+      }
+      markDirty();
+      setProfileForm(prev => ({ ...prev, schoolId }));
+      setErrors(prev => ({ ...prev, schoolId: undefined }));
+    },
+    [isSchoolLocked, markDirty],
+  );
 
-  const setGrade = useCallback((grade: string | null) => {
-    markDirty();
-    setProfileForm(prev => ({ ...prev, grade }));
-    setErrors(prev => ({ ...prev, grade: undefined }));
-  }, [markDirty]);
+  const setGrade = useCallback(
+    (grade: string | null) => {
+      if (isGradeLocked) {
+        return;
+      }
+      markDirty();
+      setProfileForm(prev => ({ ...prev, grade }));
+      setErrors(prev => ({ ...prev, grade: undefined }));
+    },
+    [isGradeLocked, markDirty],
+  );
 
   const validate = useCallback((): boolean => {
     const nextErrors = validateProfileForm(
@@ -133,8 +159,14 @@ export function useProfileForm() {
       phoneNumber: profileForm.contactNumber,
       track: profileForm.track,
       photoUri: profileForm.photoUri,
-      schoolId: isKidsTrack ? profileForm.schoolId : null,
-      grade: isKidsTrack ? profileForm.grade : null,
+      schoolId: resolveWritableSchoolId(
+        sessionProfile?.schoolId,
+        isKidsTrack ? profileForm.schoolId : null,
+      ),
+      grade: resolveWritableGrade(
+        sessionProfile?.grade,
+        isKidsTrack ? profileForm.grade : null,
+      ),
     });
 
     if (success) {
@@ -142,7 +174,12 @@ export function useProfileForm() {
     }
 
     return success;
-  }, [profileForm, updateSessionProfile]);
+  }, [
+    profileForm,
+    sessionProfile?.grade,
+    sessionProfile?.schoolId,
+    updateSessionProfile,
+  ]);
 
   return {
     profile: profileForm,
@@ -150,6 +187,8 @@ export function useProfileForm() {
     isLoading: profileLoading,
     isSaving: profileSaving,
     saveError: profileError,
+    isSchoolLocked,
+    isGradeLocked,
     setFullName,
     setContactNumber,
     setTrack,
