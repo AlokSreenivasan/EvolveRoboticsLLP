@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Evolve — Deployment Readiness Report</title>
+<title>Evolve — Deployment Readiness Report (Re-audit)</title>
 <style>
   @page { size: A4; margin: 18mm 16mm 20mm 16mm; }
   * { box-sizing: border-box; }
@@ -34,7 +34,7 @@
   .cover { text-align: left; padding-top: 10mm; }
   .cover .verdict {
     display: inline-block; margin: 14px 0; padding: 8px 16px;
-    background: #b91c1c; color: #fff; font-weight: 700; font-size: 13pt; border-radius: 4px;
+    background: #b45309; color: #fff; font-weight: 700; font-size: 13pt; border-radius: 4px;
   }
   .meta { color: #5b6069; font-size: 9.5pt; }
   .kpis { display: flex; gap: 10px; margin: 16px 0; }
@@ -43,6 +43,7 @@
   }
   .kpi .v { font-size: 17pt; font-weight: 700; }
   .kpi .l { font-size: 8.5pt; color: #5b6069; text-transform: uppercase; letter-spacing: 0.4px; }
+  .kpi .d { font-size: 8pt; color: #8a8f99; }
   .red { color: #b91c1c; } .amber { color: #b45309; } .blue { color: #1d4ed8; } .green { color: #15803d; }
   .finding {
     border: 1px solid #d5d8dd; border-left-width: 4px; border-radius: 4px;
@@ -52,17 +53,19 @@
   .finding.high { border-left-color: #d97706; }
   .finding.medium { border-left-color: #2563eb; }
   .finding.low { border-left-color: #6b7280; }
+  .finding.fixed { border-left-color: #15803d; background: #f6faf7; }
   .fhead { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
   .fid { font-family: Menlo, monospace; font-size: 8.5pt; color: #5b6069; }
   .ftitle { font-weight: 700; font-size: 10.8pt; }
   .badge {
     font-size: 7.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
-    padding: 2px 7px; border-radius: 9px; color: #fff;
+    padding: 2px 7px; border-radius: 9px; color: #fff; white-space: nowrap;
   }
   .badge.blocker { background: #b91c1c; }
   .badge.high { background: #d97706; }
   .badge.medium { background: #2563eb; }
   .badge.low { background: #6b7280; }
+  .badge.fixed { background: #15803d; }
   .evidence { font-size: 8.6pt; color: #5b6069; margin: 4px 0; }
   .evidence code { font-size: 8.2pt; }
   .fixlabel {
@@ -72,8 +75,10 @@
   .pagebreak { page-break-before: always; }
   ul, ol { margin: 6px 0; padding-left: 22px; }
   li { margin: 3px 0; }
-  .toc td { border: none; border-bottom: 1px solid #eceef1; padding: 4px 8px; }
   .footer-note { margin-top: 30px; font-size: 8.5pt; color: #8a8f99; border-top: 1px solid #d5d8dd; padding-top: 8px; }
+  .status-fixed { color: #15803d; font-weight: 700; }
+  .status-open { color: #b91c1c; font-weight: 700; }
+  .status-partial { color: #b45309; font-weight: 700; }
 </style>
 </head>
 <body>
@@ -81,141 +86,106 @@
 <!-- ============ COVER / EXECUTIVE SUMMARY ============ -->
 <div class="cover">
   <h1>Evolve — Deployment Readiness Report</h1>
-  <p class="meta">React Native 0.80.2 + Firebase (Auth, Firestore, Storage, FCM, Cloud Functions) · Android <code>com.evolve</code> · iOS (unset)<br>
-  Audit date: 17 July 2026 · Method: static code review + local quality gates (tsc, ESLint, Jest, npm audit) · Scope: full repository incl. rules &amp; Functions</p>
-  <div class="verdict">VERDICT: NOT READY FOR PRODUCTION DEPLOYMENT — 34 / 100</div>
+  <p class="meta">Re-audit · React Native 0.80.2 + Firebase (Auth, Firestore, Storage, FCM, Cloud Functions) · Android <code>com.evolve</code> · iOS (bundle ID unset)<br>
+  Audit date: 17 July 2026 (supersedes the report of the same date, pre-remediation) · Method: static code review + locally executed quality gates (tsc, ESLint, Jest ×3 projects, Firestore-emulator rules tests, npm audit) · Baseline commit: <code>cd3353e</code></p>
+  <div class="verdict">VERDICT: NOT READY — CONDITIONAL · 62 / 100 (was 34)</div>
 
   <div class="kpis">
-    <div class="kpi"><div class="v red">7</div><div class="l">Release blockers</div></div>
-    <div class="kpi"><div class="v amber">5</div><div class="l">High severity</div></div>
-    <div class="kpi"><div class="v blue">9</div><div class="l">Medium severity</div></div>
-    <div class="kpi"><div class="v">7</div><div class="l">Low severity</div></div>
+    <div class="kpi"><div class="v amber">2</div><div class="l">Release blockers</div><div class="d">was 7</div></div>
+    <div class="kpi"><div class="v amber">3</div><div class="l">High severity</div><div class="d">was 5</div></div>
+    <div class="kpi"><div class="v blue">10</div><div class="l">Medium severity</div><div class="d">was 9</div></div>
+    <div class="kpi"><div class="v">8</div><div class="l">Low severity</div><div class="d">was 7</div></div>
   </div>
   <div class="kpis">
-    <div class="kpi"><div class="v red">12</div><div class="l">TypeScript errors</div></div>
-    <div class="kpi"><div class="v red">24</div><div class="l">ESLint errors</div></div>
-    <div class="kpi"><div class="v red">6</div><div class="l">Critical npm CVEs (24 total)</div></div>
-    <div class="kpi"><div class="v red">0</div><div class="l">CI/CD pipelines</div></div>
+    <div class="kpi"><div class="v green">0</div><div class="l">TypeScript errors</div><div class="d">was 12</div></div>
+    <div class="kpi"><div class="v green">0</div><div class="l">ESLint errors</div><div class="d">was 24 · 5 warnings remain</div></div>
+    <div class="kpi"><div class="v green">136</div><div class="l">Tests passing</div><div class="d">55 app + 49 Functions + 32 rules</div></div>
+    <div class="kpi"><div class="v red">0</div><div class="l">CI/CD pipelines</div><div class="d">unchanged</div></div>
   </div>
 
   <h2>Executive summary</h2>
-  <p>Evolve is a feature-complete robotics/learning app: courses and YouTube playlists, assignments, exams, quiz competitions, projects, events, push notifications, streak/XP gamification, a keyword chatbot, and a full in-app CMS across ~301 TypeScript files and 46 screens. The architecture has genuinely good bones — server-authoritative exam/quiz scoring via Cloud Functions, answer keys isolated in admin-only collections, and a 773-line Firestore ruleset with role helpers and audience targeting.</p>
-  <p>However, the app <strong>cannot be shipped in its current state</strong>. The admin authorization model is contradictory (UI restrictions are not enforced by rules, and two callable Functions reject superadmins outright, making Notifications and Manage&nbsp;Users features effectively broken). Account deletion violates its own promise to users by orphaning six Firestore subcollections. The codebase fails its own quality gates — TypeScript does not compile, ESLint reports 24 errors, and one Jest suite is broken. There is no CI/CD, no staging environment, no crash reporting, no App Check, and the iOS project still carries the React Native example bundle identifier, which the App Store will not accept.</p>
-  <p>Every issue below includes a concrete fix. The blocking set is estimated at <strong>1–2 focused weeks</strong>; hardening (Phase 1) at a further 2–3 weeks.</p>
+  <p>Since the previous audit earlier today, the team has landed a substantial remediation series (10 commits, <code>5e8c8fc…cd3353e</code>). <strong>Five of the seven original release blockers are fixed and verified</strong>: the Firestore rules now enforce the admin/superadmin permission matrix (confirmed by 32 passing emulator tests), the two broken admin Cloud Functions accept both admin roles, account deletion now recursively removes all six user subcollections via a callable plus an Auth-trigger safety net, and both compile gates are clean — <code>tsc --noEmit</code> and ESLint report zero errors. Release signing was also fixed: an Android release build now refuses to build without a real keystore instead of silently signing with the debug key. Test count went from 5 thin suites (1 broken) to 11 suites / 136 passing tests, including Firestore rules tests against the emulator and Cloud Functions unit tests.</p>
+  <p>Two blockers remain, both operational rather than code-level: <strong>there is still no CI/CD</strong> (the newly green gates can silently regress again), and <strong>the iOS app still carries the React Native example bundle identifier</strong> with no signing team, which blocks any App Store submission and ripples into Firebase/OAuth configuration. Android is materially closer to shippable than iOS. The hardening backlog (App Check, fail-open storage contentType, npm advisories, crash reporting, staging environment, privacy store labels) is unchanged and should be treated as the next phase.</p>
+  <p>Estimated remaining effort: <strong>2–4 days</strong> to clear the two blockers; a further <strong>1–2 weeks</strong> for the high-severity hardening set.</p>
 
   <h2>Quality scorecard</h2>
   <table>
-    <tr><th>Dimension</th><th>Score</th><th>Ship bar</th><th>Assessment</th></tr>
-    <tr><td>Feature completeness</td><td class="green">78</td><td>70</td><td>Full learner + CMS loop implemented</td></tr>
-    <tr><td>Architecture</td><td class="blue">62</td><td>70</td><td>Sound patterns; scalability gaps in notification fan-out</td></tr>
-    <tr><td>Security model</td><td class="red">38</td><td>70</td><td>Contradictory admin authz; no App Check; fail-open storage rule</td></tr>
-    <tr><td>Privacy / compliance</td><td class="red">32</td><td>70</td><td>Incomplete deletion; under-declared privacy manifest; PII in plain storage</td></tr>
-    <tr><td>Code quality gates</td><td class="red">28</td><td>70</td><td>tsc, ESLint failing; hook-dependency errors are runtime risks</td></tr>
-    <tr><td>Test coverage</td><td class="red">22</td><td>70</td><td>5 suites, 1 broken; no rules/Functions/E2E tests</td></tr>
-    <tr><td>Release readiness</td><td class="red">18</td><td>70</td><td>Example iOS bundle ID; no signing team; minify off; dual lockfiles</td></tr>
-    <tr><td>Ops / observability</td><td class="red">15</td><td>70</td><td>No crash reporting, monitoring, alerting, or staging split</td></tr>
-    <tr><td>Documentation</td><td class="red">25</td><td>70</td><td>Boilerplate README; unfinished About screen; no runbooks</td></tr>
+    <tr><th>Dimension</th><th>Score</th><th>Prev</th><th>Ship bar</th><th>Assessment</th></tr>
+    <tr><td>Feature completeness</td><td class="green">78</td><td>78</td><td>70</td><td>Full learner + CMS loop implemented</td></tr>
+    <tr><td>Architecture</td><td class="blue">64</td><td>62</td><td>70</td><td>Notification helpers extracted &amp; tested; fan-out scan remains</td></tr>
+    <tr><td>Security model</td><td class="blue">58</td><td class="red">38</td><td>70</td><td>Rules now match UI matrix (tested); App Check &amp; storage fail-open pending</td></tr>
+    <tr><td>Privacy / compliance</td><td class="blue">60</td><td class="red">32</td><td>70</td><td>Recursive deletion + declared privacy manifest; PII cache &amp; PDF leak remain</td></tr>
+    <tr><td>Code quality gates</td><td class="green">85</td><td class="red">28</td><td>70</td><td>tsc and ESLint clean; 5 benign warnings</td></tr>
+    <tr><td>Test coverage</td><td class="blue">68</td><td class="red">22</td><td>70</td><td>136 tests incl. rules + Functions; no coverage thresholds or E2E</td></tr>
+    <tr><td>Release readiness</td><td class="amber">40</td><td class="red">18</td><td>70</td><td>Android release signing enforced; iOS identity still example; minify off</td></tr>
+    <tr><td>Ops / observability</td><td class="red">18</td><td class="red">15</td><td>70</td><td>Still no CI, crash reporting, monitoring, or staging split</td></tr>
+    <tr><td>Documentation</td><td class="red">28</td><td class="red">25</td><td>70</td><td>README still boilerplate; About screen still a stub</td></tr>
   </table>
 </div>
 
-<!-- ============ SECTION 1: BLOCKERS ============ -->
+<!-- ============ SECTION 1: WHAT WAS FIXED ============ -->
 <div class="pagebreak"></div>
-<h2>1. Release blockers (fix before any store build)</h2>
+<h2>1. Verified fixes since the previous audit</h2>
+<p>Each item below was re-verified against the current working tree, not just the commit messages.</p>
 
-<div class="finding blocker">
-  <div class="fhead"><span class="badge blocker">Blocker</span><span class="fid">SEC-01</span><span class="ftitle">Admin UI restrictions are not enforced by Firestore/Storage rules</span></div>
-  <p>The UI restricts plain <code>admin</code> users to four screens (ManageResources, ManageAssignments, ManageExams, ManageQuizCompetitions) via <code>adminDashboardAccess.ts</code> and <code>AdminFeatureRouteGuard.tsx</code>. But the Firestore <code>isAdmin()</code> helper treats <code>admin</code> and <code>superadmin</code> identically for nearly every CMS collection. Any plain admin can bypass the UI with a direct Firebase SDK call and mutate courses, notifications, projects, schools, playlists, and more. UI guards are never an authorization boundary.</p>
-  <p class="evidence">Evidence: <code>src/utils/admin/adminDashboardAccess.ts</code> · <code>firestore.rules</code> lines 176–197 (<code>isAdmin</code>/<code>isSuperAdmin</code>)</p>
-  <div class="fixlabel">Fix</div>
-  <p>Mirror the UI permission matrix in the rules. Keep <code>isSuperAdmin()</code> for full CMS access and restrict <code>isAdmin()</code> to the four content types plain admins may manage:</p>
-<pre><code>// firestore.rules — replace broad isAdmin() usage per-collection
-function isContentAdmin(database) {          // admin OR superadmin
-  return isAdmin(database);
-}
-// Collections plain admins may write:
-match /resources/{id}       { allow write: if isContentAdmin(database); }
-match /assignments/{id}     { allow write: if isContentAdmin(database); }
-match /exams/{id}           { allow write: if isContentAdmin(database); }
-match /quizCompetitions/{id}{ allow write: if isContentAdmin(database); }
-// Everything else in the CMS: superadmin only
-match /courses/{id}         { allow write: if isSuperAdmin(database); }
-match /notifications/{id}   { allow write: if isSuperAdmin(database); }
-match /projects/{id}        { allow write: if isSuperAdmin(database); }
-match /schools/{id}         { allow write: if isSuperAdmin(database); }</code></pre>
-  <p>Apply the same split in <code>storage.rules</code> for image/PDF upload paths. Add Firestore rules unit tests (see QG-03) asserting a plain admin <em>cannot</em> write to <code>courses</code>.</p>
+<div class="finding fixed">
+  <div class="fhead"><span class="badge fixed">Fixed</span><span class="fid">SEC-01</span><span class="ftitle">Firestore rules now enforce the admin/superadmin permission matrix</span></div>
+  <p>The rules split cleanly: plain admins can write only the four delegated content types (<code>resourceNotes</code>, <code>assignments</code>, <code>exams</code>, <code>quizCompetitions</code> + their answer keys); <code>courses</code>, <code>notifications</code>, <code>schools</code>, playlists, app content, and events are superadmin-only. <strong>Verified by 32 passing emulator tests</strong>, including "admins cannot create courses (superadmin-only collection)", role self-escalation denials, and a default-deny test for unmatched paths.</p>
+  <p class="evidence">Evidence: <code>firestore.rules</code> · <code>__tests__/rules/firestore.rules.test.js</code> — 32/32 pass against Firestore emulator, 17 Jul 2026</p>
 </div>
 
-<div class="finding blocker">
-  <div class="fhead"><span class="badge blocker">Blocker</span><span class="fid">SEC-02</span><span class="ftitle">Superadmins are rejected by admin-only Cloud Functions — two features broken</span></div>
-  <p><code>sendLiveNotification</code> (line 279) and <code>resetUserQuizProgress</code> (line 397) check <code>role !== 'admin'</code> exactly. The screens that call them (Admin Notifications, Manage Users) are superadmin-only in the UI. Result: superadmins open the screens but every server call fails with <code>permission-denied</code>; plain admins would pass the server check but cannot reach the screens. Both features are unusable through any supported path. Ironically the file already contains the correct helper — <code>isAdminRole()</code> (line 438) accepts both roles but is only used by <code>migrateAnswerKeys</code>.</p>
-  <p class="evidence">Evidence: <code>functions/index.js:279, 397, 438</code> · <code>src/presentation/screens/Admin/Notifications.tsx</code> · <code>ManageUsers.tsx</code></p>
-  <div class="fixlabel">Fix</div>
-<pre><code>// functions/index.js — hoist isAdminRole above the callables and use it
-// (decide per-function whether plain admins should also qualify;
-//  for superadmin-only features, add:)
-function isSuperAdminRole(role) { return role === 'superadmin'; }
-
-// sendLiveNotification (matches the superadmin-only UI):
-if (!adminSnap.exists || !isSuperAdminRole(adminSnap.data().role)) {
-  throw new HttpsError('permission-denied', 'Only superadmins can send live notifications.');
-}
-// resetUserQuizProgress: same replacement.</code></pre>
-  <p>Then redeploy: <code>firebase deploy --only functions</code>. Add a Functions unit test that calls each callable as <code>admin</code>, <code>superadmin</code>, and <code>user</code> and asserts the expected allow/deny.</p>
+<div class="finding fixed">
+  <div class="fhead"><span class="badge fixed">Fixed</span><span class="fid">SEC-02</span><span class="ftitle">Admin callables no longer reject superadmins</span></div>
+  <p><code>sendLiveNotification</code> and <code>resetUserQuizProgress</code> now use the shared <code>isAdminRole()</code> helper (accepts <code>admin</code> and <code>superadmin</code>), which is exported from <code>gradingHelpers.js</code> and unit-tested for all role values. Both features are usable again. One residual inconsistency is noted as SEC-07 below.</p>
+  <p class="evidence">Evidence: <code>functions/index.js:90, 211</code> · <code>functions/gradingHelpers.js:8</code> · <code>functions/__tests__/gradingHelpers.test.js</code></p>
 </div>
 
-<div class="finding blocker">
-  <div class="fhead"><span class="badge blocker">Blocker</span><span class="fid">PRI-01</span><span class="ftitle">Account deletion orphans six Firestore subcollections</span></div>
-  <p><code>deleteAccountService.ts</code> deletes the <code>users/{uid}</code> document, profile images, and the Auth account — but Firestore never cascades deletes. These subcollections survive forever: <code>continueLearningProgress</code>, <code>examAttempts</code>, <code>quizAttempts</code>, <code>fcmTokens</code>, <code>notificationPreferences</code>, <code>notificationReads</code>. The UI tells users their associated data is removed; that claim is currently false. This is a GDPR/DPDP right-to-erasure exposure and also leaves live FCM tokens that can still receive pushes.</p>
-  <p class="evidence">Evidence: <code>src/services/firebase/deleteAccountService.ts</code> (deletes only the parent doc)</p>
-  <div class="fixlabel">Fix</div>
-  <p>Move deletion server-side where the Admin SDK can delete recursively. Two robust options:</p>
-<pre><code>// Option A (recommended): Auth-triggered cleanup — also covers console deletions
-const functions = require('firebase-functions/v1');
-exports.onUserDeleted = functions.auth.user().onDelete(async (user) => {
-  const db = getFirestore();
-  await db.recursiveDelete(db.doc(`users/${user.uid}`)); // removes all subcollections
-});
-
-// Option B: callable invoked before authUser.delete() in deleteAccountService.ts
-exports.deleteMyAccountData = onCall(async (request) => {
-  if (!request.auth) throw new HttpsError('unauthenticated', 'Sign in first.');
-  const db = getFirestore();
-  await db.recursiveDelete(db.doc(`users/${request.auth.uid}`));
-  return { ok: true };
-});</code></pre>
-  <p>Keep the client-side Storage image cleanup, then call the function, then delete the Auth user. Add a test that seeds subcollection docs and asserts none remain after deletion.</p>
+<div class="finding fixed">
+  <div class="fhead"><span class="badge fixed">Fixed</span><span class="fid">PRI-01</span><span class="ftitle">Account deletion now removes all Firestore subcollections</span></div>
+  <p>Two server-side mechanisms exist, exactly as recommended: a <code>deleteMyAccountData</code> callable (auth-checked, <code>recursiveDelete</code> on <code>users/{uid}</code>) invoked by <code>deleteAccountService.ts</code> before the Auth account is deleted, plus an <code>onAuthUserDeleted</code> v1 Auth trigger as a safety net covering console/Admin-SDK deletions. All six subcollections (<code>continueLearningProgress</code>, <code>examAttempts</code>, <code>quizAttempts</code>, <code>fcmTokens</code>, <code>notificationPreferences</code>, <code>notificationReads</code>) are covered by the recursive delete.</p>
+  <p class="evidence">Evidence: <code>functions/index.js:259–283</code> · <code>src/services/firebase/deleteAccountService.ts:110–136</code></p>
 </div>
 
-<div class="finding blocker">
-  <div class="fhead"><span class="badge blocker">Blocker</span><span class="fid">QG-01</span><span class="ftitle">TypeScript does not compile — 12 errors</span></div>
-  <p><code>npx tsc --noEmit</code> fails. Several errors are real behavior bugs, not annotations:</p>
-  <ul>
-    <li><code>MainStack.tsx:66</code> — <code>initialState</code> is not a valid prop on <code>Stack.Navigator</code> in React Navigation 7; it is silently ignored, so the "require profile completion" redirect never works via this prop.</li>
-    <li><code>QuickAccessGrid.tsx:71</code> — string <code>width</code> not assignable to <code>DimensionValue</code>.</li>
-    <li><code>ManageContinueLearningPlaylists.tsx:525, 564</code> — <code>autoCorrect</code> passed to a <code>FormField</code> that doesn't accept it.</li>
-    <li><code>continueLearningPlaylistsService.ts</code>, <code>fcmTokenService.ts</code>, <code>notificationPreferencesFirestoreService.ts</code> — error codes <code>VALIDATION_ERROR</code>, <code>PUSH_UNREGISTRATION_ERROR</code>, <code>NOTIFICATION_PREFERENCES_SYNC_ERROR</code> missing from the <code>FirebaseServiceErrorCode</code> union; plus an <code>unknown</code>-to-<code>boolean</code> assignment.</li>
-    <li><code>profilePhotoPicker.ts:97</code> — <code>0.85</code> is not a valid <code>PhotoQuality</code> (must be one of the allowed literals, e.g. <code>0.8</code>).</li>
-    <li><code>dailyStreakXp.test.ts:1–2</code> — import paths off by one directory level.</li>
-  </ul>
-  <p class="evidence">Evidence: <code>npx tsc --noEmit</code> output, 17 Jul 2026</p>
-  <div class="fixlabel">Fix</div>
-  <p>Point fixes in order: (1) pass <code>initialState</code> to <code>NavigationContainer</code> or use a conditional <code>initialRouteName</code>/imperative <code>navigation.reset()</code> for the profile-completion redirect; (2) type the width as <code>DimensionValue</code> (e.g. <code>'48%' as DimensionValue</code> or compute a number); (3) add <code>autoCorrect?: boolean</code> to <code>FormFieldProps</code> and forward it to <code>TextInput</code>; (4) extend the <code>FirebaseServiceErrorCode</code> union with the three missing codes and cast the Firestore read before assigning to <code>boolean</code>; (5) change quality to <code>0.8</code>; (6) fix the two test import paths. Then add <code>"typecheck": "tsc --noEmit"</code> to package.json scripts and gate CI on it.</p>
+<div class="finding fixed">
+  <div class="fhead"><span class="badge fixed">Fixed</span><span class="fid">QG-01</span><span class="ftitle">TypeScript compiles cleanly</span></div>
+  <p><code>npx tsc --noEmit</code> exits 0. The 12 previous errors — including the ignored <code>initialState</code> navigation prop, the invalid <code>PhotoQuality</code>, and the missing <code>FirebaseServiceErrorCode</code> union members — are resolved.</p>
+  <p class="evidence">Evidence: <code>npx tsc --noEmit</code>, exit 0, 17 Jul 2026</p>
 </div>
 
-<div class="finding blocker">
-  <div class="fhead"><span class="badge blocker">Blocker</span><span class="fid">QG-02</span><span class="ftitle">ESLint fails with 24 errors (44 problems) — several are runtime hazards</span></div>
-  <p>The <code>react-hooks/exhaustive-deps</code> errors are not cosmetic: <code>Notifications.tsx:293</code> omits <code>handleSendLiveNotification</code> from a <code>useCallback</code> dependency array (stale closure over send logic); <code>CoursePlaylistScreen.tsx:44</code> and <code>CourseVideoScreen.tsx:41</code> compute objects with <code>||</code> expressions that change identity every render, defeating memoization for watch-progress tracking; <code>ExamAttemptScreen.tsx:99</code> omits <code>exam</code> from a <code>useEffect</code>. Plus unused imports (<code>View</code>, <code>TouchableOpacity</code>, <code>_removed</code> ×2) and 20 warnings.</p>
-  <p class="evidence">Evidence: <code>npm run lint</code> output, 17 Jul 2026</p>
-  <div class="fixlabel">Fix</div>
-  <p>For each hook error: wrap derived objects in <code>useMemo</code> (e.g. <code>const watchSecondsByVideoId = useMemo(() =&gt; progress?.byVideo ?? {}, [progress])</code>), add the missing dependencies, and verify the affected flows (send notification, exam timer, resume playback) manually afterwards. Delete unused imports. Decide a policy for the <code>no-void</code> warnings (either allow <code>void promise</code> in <code>.eslintrc</code> with <code>{"allowAsStatement": true}</code> or replace with explicit <code>.catch()</code>). Gate CI on <code>eslint . --max-warnings 0</code>.</p>
+<div class="finding fixed">
+  <div class="fhead"><span class="badge fixed">Fixed</span><span class="fid">QG-02</span><span class="ftitle">ESLint reports zero errors</span></div>
+  <p><code>npx eslint .</code> exits 0 with 0 errors. The hook-dependency runtime hazards (stale notification-send closure, identity-unstable memo inputs, missing exam effect dependency) are gone. Five warnings remain: four are <code>eslint-disable</code> comments inside generated <code>coverage/</code> artifacts (the folder should be ESLint-ignored) and one <code>no-void</code> in <code>functions/gradingHelpers.js:111</code>.</p>
+  <p class="evidence">Evidence: <code>npx eslint .</code> — 0 errors / 5 warnings, 17 Jul 2026</p>
 </div>
 
+<div class="finding fixed">
+  <div class="fhead"><span class="badge fixed">Fixed</span><span class="fid">QG-03</span><span class="ftitle">Test suite rebuilt: 136 passing tests across app, Functions, and rules</span></div>
+  <p>The previously broken <code>App.test.tsx</code> now passes via a proper <code>jest.setup.js</code> and hand-written mocks for every <code>@react-native-firebase/*</code> module and Google Sign-In. Current state: <strong>8 app suites / 55 tests</strong> (auth service, FCM token service, Google Sign-In, gamification, admin access matrix), <strong>2 Functions suites / 49 tests</strong> (grading + notification helpers, extracted into pure modules for testability), and <strong>32 Firestore rules tests</strong> run against the emulator via <code>npm run test:rules</code>. Remaining gaps are tracked as QG-04 (medium) below.</p>
+  <p class="evidence">Evidence: Jest runs 17 Jul 2026 — app 55/55, functions 49/49, rules 32/32 (emulator)</p>
+</div>
+
+<div class="finding fixed">
+  <div class="fhead"><span class="badge fixed">Fixed</span><span class="fid">REL-01</span><span class="ftitle">Android release builds can no longer ship with the debug keystore</span></div>
+  <p>The release <code>signingConfig</code> now reads from <code>android/keystore.properties</code> and throws a hard Gradle error with instructions if the file is missing — a release APK/AAB signed with the debug key is no longer possible.</p>
+  <p class="evidence">Evidence: <code>android/app/build.gradle:96–115</code></p>
+</div>
+
+<div class="finding fixed">
+  <div class="fhead"><span class="badge fixed">Fixed</span><span class="fid">PRI-02a</span><span class="ftitle">iOS privacy manifest now declares collected data types</span></div>
+  <p><code>PrivacyInfo.xcprivacy</code> declares nine <code>NSPrivacyCollectedDataTypes</code> entries (previously: none), covering the identity, contact, photo, device-token, and product-interaction data the app actually collects. The remaining store-side work (App Store Connect labels, Play Data Safety form, privacy policy URL) is tracked as PRI-02b.</p>
+  <p class="evidence">Evidence: <code>ios/Evolve/PrivacyInfo.xcprivacy</code> (9 collected-data entries)</p>
+</div>
+
+<!-- ============ SECTION 2: REMAINING BLOCKERS ============ -->
+<div class="pagebreak"></div>
+<h2>2. Remaining release blockers</h2>
+
 <div class="finding blocker">
-  <div class="fhead"><span class="badge blocker">Blocker</span><span class="fid">OPS-01</span><span class="ftitle">No CI/CD — nothing prevents broken code from shipping</span></div>
-  <p>There are no GitHub Actions, no Fastlane, no automated checks of any kind. Given that the repo currently fails tsc, ESLint, and Jest simultaneously, this is not hypothetical — unverified code is already on the main branch. Firestore rules and Functions are deployed by hand with no verification step.</p>
-  <p class="evidence">Evidence: no <code>.github/workflows</code>, no Fastlane, no pipeline config anywhere in the repo</p>
+  <div class="fhead"><span class="badge blocker">Blocker</span><span class="fid">OPS-01</span><span class="ftitle">Still no CI/CD — the newly green gates are unprotected</span></div>
+  <p>Unchanged from the previous audit: no GitHub Actions, no Fastlane, no automated checks. The repo just demonstrated how quickly gates drift when nothing enforces them (12 tsc errors and 24 ESLint errors accumulated unnoticed). All four gate categories now pass locally — this is the cheapest possible moment to lock them in.</p>
+  <p class="evidence">Evidence: no <code>.github/workflows/</code>, no Fastlane, no pipeline config, 17 Jul 2026</p>
   <div class="fixlabel">Fix</div>
-<pre><code># .github/workflows/ci.yml — minimum viable gate
+<pre><code># .github/workflows/ci.yml — minimum viable gate (everything below passes today)
 name: CI
 on: [push, pull_request]
 jobs:
@@ -225,280 +195,234 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 20, cache: npm }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21 }   # Firestore emulator
       - run: npm ci
       - run: npx tsc --noEmit
       - run: npx eslint . --max-warnings 0
       - run: npm test -- --ci
-      - run: cd functions && npm ci && npm run lint --if-present</code></pre>
-  <p>Phase 2: add an Android release-build job (<code>./gradlew bundleRelease</code> with a debug keystore), Firestore rules tests via the emulator, and Fastlane lanes for store delivery.</p>
+      - run: npm ci --prefix functions && npm test --prefix functions -- --ci
+      - run: npm run test:rules</code></pre>
+  <p>Note: <code>--max-warnings 0</code> requires first ignoring <code>coverage/</code> in ESLint config and resolving the one <code>no-void</code> warning (see LOW-08).</p>
 </div>
 
 <div class="finding blocker">
   <div class="fhead"><span class="badge blocker">Blocker</span><span class="fid">OPS-02</span><span class="ftitle">iOS release identity is still the React Native example template</span></div>
-  <p>The bundle identifier is <code>org.reactjs.native.example.Evolve</code> and no <code>DEVELOPMENT_TEAM</code> is set. Apple rejects <code>example</code> bundle IDs, and the ID is baked into the committed <code>GoogleService-Info.plist</code> and Google Sign-In configuration, so changing it late means re-issuing Firebase iOS app config and OAuth clients. Version is 1.0 (build 1) with no versioning scheme.</p>
-  <p class="evidence">Evidence: <code>ios/Evolve.xcodeproj/project.pbxproj:294, 321</code> · <code>ios/GoogleService-Info.plist</code></p>
+  <p>Unchanged: <code>PRODUCT_BUNDLE_IDENTIFIER</code> is still <code>org.reactjs.native.example.Evolve</code> in both build configurations, and no <code>DEVELOPMENT_TEAM</code> is set. Apple rejects <code>example</code> bundle IDs, and the ID is baked into <code>GoogleService-Info.plist</code> and the Google Sign-In URL scheme — changing it late means re-issuing the Firebase iOS app and OAuth clients. This blocks iOS only; Android identity (<code>com.evolve</code>) is fine.</p>
+  <p class="evidence">Evidence: <code>ios/Evolve.xcodeproj/project.pbxproj:294, 321</code>, 17 Jul 2026</p>
   <div class="fixlabel">Fix</div>
   <ol>
     <li>Register <code>com.evolve</code> (matching Android) in the Apple Developer portal; set <code>PRODUCT_BUNDLE_IDENTIFIER</code> and <code>DEVELOPMENT_TEAM</code> in both Debug/Release configs.</li>
-    <li>Add a new iOS app with that bundle ID in the Firebase console; replace <code>GoogleService-Info.plist</code>; update the reversed client ID in the URL scheme for Google Sign-In.</li>
-    <li>Create an iOS OAuth client for the new bundle ID; verify sign-in end to end.</li>
-    <li>Adopt a version scheme (e.g. marketing 1.0.0, build = CI run number) shared with Android <code>versionCode</code>/<code>versionName</code>.</li>
+    <li>Add an iOS app with that bundle ID in the Firebase console; replace <code>GoogleService-Info.plist</code>; update the reversed client ID URL scheme.</li>
+    <li>Create an iOS OAuth client for the new bundle ID; verify Google Sign-In end to end on a device.</li>
+    <li>Adopt a shared versioning scheme (marketing 1.0.0, build = CI run number) with Android <code>versionCode</code>/<code>versionName</code> (both still at initial values).</li>
   </ol>
 </div>
 
-<!-- ============ SECTION 2: HIGH ============ -->
-<div class="pagebreak"></div>
-<h2>2. High severity</h2>
+<!-- ============ SECTION 3: HIGH ============ -->
+<h2>3. High severity</h2>
 
 <div class="finding high">
-  <div class="fhead"><span class="badge high">High</span><span class="fid">DEP-01</span><span class="ftitle">24 npm vulnerabilities in the production dependency graph — 6 critical</span></div>
-  <p><code>npm audit --omit=dev</code> (670 prod packages): critical — <code>@react-native-community/cli</code> arbitrary OS command injection, <code>protobufjs</code> code execution ×2, <code>fast-xml-parser</code> entity-expansion DoS/bypass, <code>shell-quote</code> newline escape, <code>websocket-driver</code> ×2; high — <code>@grpc/grpc-js</code> crash vectors, <code>ws</code> memory-exhaustion DoS, <code>minimatch</code> and <code>picomatch</code> ReDoS; plus 13 moderate, 1 low.</p>
-  <p class="evidence">Evidence: <code>npm audit --omit=dev --json</code>, 17 Jul 2026</p>
+  <div class="fhead"><span class="badge high">High</span><span class="fid">SEC-03</span><span class="ftitle">No App Check, rate limiting, or abuse controls on callable Functions <span class="status-open">(unchanged)</span></span></div>
+  <p>Any device with a valid Firebase Auth token can still invoke <code>submitExamAttempt</code>, <code>submitQuizAttempt</code>, and the admin callables at unlimited rate from outside the app. No <code>enforceAppCheck</code> on any callable, no per-user throttle.</p>
+  <p class="evidence">Evidence: <code>functions/index.js</code> — no <code>enforceAppCheck</code> option on any of the 6 exported callables</p>
   <div class="fixlabel">Fix</div>
-  <p>Run <code>npm audit fix</code> first — the majority (websocket-driver, ws, yaml, and others) resolve within semver ranges. For the rest: the CLI advisories are dev-tooling reachable via transitive prod graph — upgrade <code>@react-native-community/cli</code> to ≥20 alongside the React Native upgrade, or accept with a documented exception since they don't ship in the app binary; <code>protobufjs</code>/<code>grpc-js</code> come via Firebase Admin in <code>functions/</code> — run <code>npm audit fix</code> there and bump <code>firebase-admin</code> to the latest 13.x. Re-run audit in CI (<code>npm audit --omit=dev --audit-level=high</code>) so regressions fail the build. Do <em>not</em> use <code>npm audit fix --force</code> blindly — it will jump React Native majors.</p>
+  <p>Add <code>@react-native-firebase/app-check</code> (Play Integrity / App Attest) on the client; set <code>{ enforceAppCheck: true }</code> on callables; add a simple Firestore-count throttle inside the two submit callables (e.g. max 3 attempts/minute). Roll out in monitor-only mode first, then enforce; also enable App Check for Firestore and Storage in the console.</p>
 </div>
 
 <div class="finding high">
-  <div class="fhead"><span class="badge high">High</span><span class="fid">SEC-03</span><span class="ftitle">No App Check, rate limiting, or abuse controls on callable Functions</span></div>
-  <p>Any device with a valid Firebase Auth token can invoke <code>submitExamAttempt</code>, <code>submitQuizAttempt</code>, and the admin callables at unlimited rate from outside the app (the Firebase config in the binary is extractable). There is no App Check attestation, no per-user throttle, and no abuse monitoring — exam submissions can be scripted.</p>
-  <p class="evidence">Evidence: <code>functions/index.js</code> — no <code>enforceAppCheck</code>; no App Check SDK in <code>package.json</code></p>
+  <div class="fhead"><span class="badge high">High</span><span class="fid">DEP-01</span><span class="ftitle">npm advisories reduced but still present: app 20 (4 critical) · functions 11 (1 critical) <span class="status-partial">(improved)</span></span></div>
+  <p>App (<code>npm audit --omit=dev</code>): 4 critical / 3 high / 12 moderate / 1 low — all in the React Native CLI/Metro dev-tooling graph (<code>@react-native-community/cli</code> command injection, <code>fast-xml-parser</code> ×6, <code>shell-quote</code>, <code>ws</code>, <code>minimatch</code>, <code>picomatch</code>); none ship in the app binary, but they run on developer machines and CI. Functions: 1 critical (<code>websocket-driver</code>), 1 high (<code>form-data</code> CRLF injection), 9 moderate (mostly <code>uuid</code>/<code>protobufjs</code> via <code>firebase-admin</code>) — these <em>do</em> run in production.</p>
+  <p class="evidence">Evidence: <code>npm audit --omit=dev</code> in both packages, 17 Jul 2026</p>
   <div class="fixlabel">Fix</div>
-<pre><code>// 1. Client: add @react-native-firebase/app-check (Play Integrity / App Attest)
-// 2. Functions: enforce attestation
-exports.submitExamAttempt = onCall({ enforceAppCheck: true }, async (request) =&gt; { ... });
-// 3. Simple per-user throttle inside submit callables:
-const recent = await db.collection(`users/${uid}/examAttempts`)
-  .where('submittedAt', '&gt;', Timestamp.fromMillis(Date.now() - 60_000)).count().get();
-if (recent.data().count &gt;= 3) throw new HttpsError('resource-exhausted', 'Too many attempts.');</code></pre>
-  <p>Roll out in monitor-only mode first, then enforce. Also enable App Check for Firestore and Storage in the Firebase console.</p>
+  <p>Run <code>npm audit fix</code> (no <code>--force</code>) in both packages — it resolves <code>websocket-driver</code>, <code>form-data</code>, <code>shell-quote</code>, <code>ws</code>, <code>minimatch</code>, <code>picomatch</code>, and most moderates within semver. The remaining CLI/fast-xml-parser advisories clear with the next React Native / CLI upgrade; document them as accepted dev-tooling exceptions until then. Add <code>npm audit --omit=dev --audit-level=high</code> for <code>functions/</code> to CI.</p>
 </div>
 
 <div class="finding high">
-  <div class="fhead"><span class="badge high">High</span><span class="fid">PRI-02</span><span class="ftitle">iOS privacy manifest declares no data collection — the app collects plenty</span></div>
-  <p><code>PrivacyInfo.xcprivacy</code> claims nothing is collected, while the app stores name, email, phone, school, grade, track, profile photos, FCM tokens, learning progress, and exam/quiz answers. App Store privacy labels must match; a mismatch risks rejection or post-launch enforcement. Android's Play Data Safety form will need the same truthful disclosure.</p>
-  <p class="evidence">Evidence: <code>ios/Evolve/PrivacyInfo.xcprivacy</code> vs. <code>users/{uid}</code> schema and <code>fcmTokens</code> subcollection</p>
-  <div class="fixlabel">Fix</div>
-  <p>Rewrite the manifest with <code>NSPrivacyCollectedDataTypes</code> entries for: Name, Email Address, Phone Number, Photos/Videos (profile image), User ID, Device ID (FCM token), Product Interaction (progress/attempts) — each marked linked-to-identity, not used for tracking. Mirror this in App Store Connect privacy labels and the Play Data Safety form. Since this is an education app plausibly used by minors ("kids track"), have counsel review COPPA/GDPR-K obligations before launch. Publish a privacy policy URL (required by both stores) covering the deletion behavior fixed in PRI-01.</p>
-</div>
-
-<div class="finding high">
-  <div class="fhead"><span class="badge high">High</span><span class="fid">QG-03</span><span class="ftitle">Test suite is thin and partially broken; no tests where the risk actually lives</span></div>
-  <p>Five Jest suites exist; <code>App.test.tsx</code> fails because Jest can't transform the ESM build of <code>@react-native-firebase/messaging</code> (<code>jest.config.js</code> is only <code>preset: 'react-native'</code> — no <code>transformIgnorePatterns</code> or mocks). Coverage has no <code>collectCoverageFrom</code> or thresholds. There are zero tests for Firestore rules, Storage rules, Cloud Functions, auth flows, or account deletion — precisely the areas where this audit found blockers.</p>
-  <p class="evidence">Evidence: <code>jest.config.js</code> · <code>__tests__/App.test.tsx</code> failure · absence of <code>@firebase/rules-unit-testing</code></p>
-  <div class="fixlabel">Fix</div>
-<pre><code>// jest.config.js
-module.exports = {
-  preset: 'react-native',
-  transformIgnorePatterns: [
-    'node_modules/(?!(react-native|@react-native|@react-native-firebase|@react-navigation)/)',
-  ],
-  setupFiles: ['./jest.setup.js'],   // mock @react-native-firebase/* modules here
-  collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/__tests__/**'],
-};</code></pre>
-  <p>Then add, in priority order: (1) Firestore rules tests with <code>@firebase/rules-unit-testing</code> + emulator, covering the SEC-01 permission matrix; (2) Functions tests for role checks (SEC-02) and recursive deletion (PRI-01); (3) unit tests for gamification/attempt scoring. E2E (Detox/Maestro) can follow post-launch.</p>
-</div>
-
-<div class="finding high">
-  <div class="fhead"><span class="badge high">High</span><span class="fid">OPS-03</span><span class="ftitle">Single Firebase environment, no crash reporting, no monitoring</span></div>
-  <p>One Firebase project serves development and (future) production — rules experiments and test data hit real users. There is no Crashlytics, no analytics, no performance monitoring, and no alerting. Post-launch, crashes and Function failures would be invisible.</p>
+  <div class="fhead"><span class="badge high">High</span><span class="fid">OPS-03</span><span class="ftitle">Single Firebase environment, no crash reporting, no monitoring <span class="status-open">(unchanged)</span></span></div>
+  <p>One Firebase project still serves development and future production; no Crashlytics, analytics, performance monitoring, or alerting. Post-launch crashes and Function failures would be invisible.</p>
   <p class="evidence">Evidence: <code>.firebaserc</code> (single project) · no crash/monitoring SDK in <code>package.json</code></p>
   <div class="fixlabel">Fix</div>
-  <p>(1) Create a separate <code>evolve-staging</code> Firebase project; add project aliases in <code>.firebaserc</code> and use build flavors (Android <code>productFlavors</code>, iOS schemes) to select the matching <code>google-services.json</code> / plist per environment. (2) Add <code>@react-native-firebase/crashlytics</code> and, optionally, <code>perf</code> — one install step given the existing RNFirebase setup. (3) In Google Cloud Monitoring, alert on Function error rate and p95 latency for the submit callables. (4) Deploy rules/Functions to staging first in CI, production on tagged release.</p>
+  <p>Create an <code>evolve-staging</code> Firebase project with aliases in <code>.firebaserc</code> and per-environment <code>google-services.json</code>/plist via build flavors; add <code>@react-native-firebase/crashlytics</code>; alert on Function error rate and p95 latency for the submit callables in Cloud Monitoring; deploy rules/Functions to staging first in CI.</p>
 </div>
 
-<!-- ============ SECTION 3: MEDIUM ============ -->
+<!-- ============ SECTION 4: MEDIUM ============ -->
 <div class="pagebreak"></div>
-<h2>3. Medium severity</h2>
+<h2>4. Medium severity</h2>
 
 <div class="finding medium">
-  <div class="fhead"><span class="badge medium">Medium</span><span class="fid">ARC-01</span><span class="ftitle">Notification fan-out scans every user and never cleans up dead tokens</span></div>
-  <p><code>sendLiveNotification</code> loads <em>all</em> notification preferences and runs a <code>collectionGroup('fcmTokens')</code> scan of every token in the database per send, then ignores FCM per-token failures — invalid/rotated tokens accumulate forever, inflating both read costs and failure counts. Fine at 100 users; expensive and slow at 10,000.</p>
-  <p class="evidence">Evidence: <code>functions/index.js</code> lines 325–367 (<code>loadNotificationPreferencesByUser</code>, <code>collectionGroup('fcmTokens')</code>)</p>
+  <div class="fhead"><span class="badge medium">Medium</span><span class="fid">SEC-07</span><span class="ftitle">New: <code>sendLiveNotification</code> accepts plain admins while UI and rules say superadmin-only</span></div>
+  <p>The SEC-02 fix used <code>isAdminRole()</code> (admin <em>or</em> superadmin) for both repaired callables. For <code>resetUserQuizProgress</code> that may be intended, but live notifications are superadmin-only everywhere else: the Admin Notifications screen is superadmin-gated and the <code>notifications</code> collection rules allow superadmin writes only. A plain admin can bypass the UI and invoke the callable directly to push notifications to every user.</p>
+  <p class="evidence">Evidence: <code>functions/index.js:90</code> (<code>isAdminRole</code>) vs. <code>firestore.rules:153–155</code> (superadmin-only) and the superadmin-only UI gate</p>
   <div class="fixlabel">Fix</div>
-  <p>Short term: inspect <code>sendEachForMulticast</code> responses and delete token docs whose error is <code>messaging/registration-token-not-registered</code> or <code>invalid-argument</code>. Medium term: switch to <strong>FCM topics</strong> — subscribe devices to <code>school_{id}</code>/<code>category_{name}</code> topics client-side on token registration, and publish to topics instead of enumerating tokens. This removes both full-collection scans entirely.</p>
+<pre><code>// functions/index.js — align with the UI/rules matrix:
+function isSuperAdminRole(role) { return role === 'superadmin'; }
+// in sendLiveNotification:
+if (!adminSnap.exists || !isSuperAdminRole(adminSnap.data().role)) {
+  throw new HttpsError('permission-denied', 'Only superadmins can send live notifications.');
+}</code></pre>
+  <p>Decide explicitly per callable which roles qualify, and add a Functions test asserting a plain admin is denied.</p>
 </div>
 
 <div class="finding medium">
-  <div class="fhead"><span class="badge medium">Medium</span><span class="fid">SEC-04</span><span class="ftitle">Storage rules accept uploads with missing contentType (fail-open)</span></div>
-  <p><code>storage.rules</code> validates file type with <code>!('contentType' in request.resource) || request.resource.contentType.matches(...)</code> — an upload that omits contentType passes. A crafted client could store arbitrary payloads under image/PDF paths.</p>
-  <p class="evidence">Evidence: <code>storage.rules</code> contentType conditions</p>
+  <div class="fhead"><span class="badge medium">Medium</span><span class="fid">SEC-04</span><span class="ftitle">Storage rules still accept uploads with missing contentType (fail-open) <span class="status-open">(unchanged)</span></span></div>
+  <p><code>storage.rules</code> still validates with <code>!('contentType' in request.resource) || request.resource.contentType.matches(...)</code> — an upload that omits contentType passes both the image and PDF checks.</p>
+  <p class="evidence">Evidence: <code>storage.rules:114–120</code></p>
   <div class="fixlabel">Fix</div>
-<pre><code>// Fail closed — require the header and match it:
-allow write: if request.resource.contentType != null
+<pre><code>allow write: if request.resource.contentType != null
           &amp;&amp; request.resource.contentType.matches('image/(jpeg|png|webp)')
           &amp;&amp; request.resource.size &lt; 5 * 1024 * 1024;</code></pre>
 </div>
 
 <div class="finding medium">
-  <div class="fhead"><span class="badge medium">Medium</span><span class="fid">SEC-05</span><span class="ftitle">One-time migration function <code>migrateAnswerKeys</code> remains deployed <em>(not in earlier summary)</em></span></div>
-  <p>The callable scans entire exam/quiz collections and rewrites answer-key documents. It is admin-callable (<code>isAdminRole</code>, line 816), has served its purpose, and is a standing full-collection write primitive — pure attack/mistake surface.</p>
-  <p class="evidence">Evidence: <code>functions/index.js:816</code></p>
+  <div class="fhead"><span class="badge medium">Medium</span><span class="fid">SEC-05</span><span class="ftitle">One-time migration function <code>migrateAnswerKeys</code> remains deployed <span class="status-open">(unchanged)</span></span></div>
+  <p>Still exported at <code>functions/index.js:477</code>; a standing admin-callable full-collection write primitive with no remaining purpose.</p>
+  <p class="evidence">Evidence: <code>functions/index.js:477</code></p>
   <div class="fixlabel">Fix</div>
-  <p>Delete the export and redeploy (<code>firebase deploy --only functions</code> removes unlisted functions after confirmation). If migrations may recur, keep the code in a <code>scripts/</code> folder run locally with a service account, never as a deployed callable.</p>
+  <p>Delete the export and redeploy (<code>firebase deploy --only functions</code> removes unlisted functions after confirmation). Keep the code in <code>scripts/</code> run locally with a service account if migrations may recur.</p>
 </div>
 
 <div class="finding medium">
-  <div class="fhead"><span class="badge medium">Medium</span><span class="fid">SEC-06</span><span class="ftitle">Any authenticated user can read any user's profile image <em>(not in earlier summary)</em></span></div>
-  <p>Storage rules gate profile-image reads on authentication only, not ownership or a legitimate social feature — every signed-in user can enumerate and fetch other users' photos, including minors on the kids track.</p>
-  <p class="evidence">Evidence: <code>storage.rules</code> profile-images path (read: authenticated)</p>
+  <div class="fhead"><span class="badge medium">Medium</span><span class="fid">SEC-06</span><span class="ftitle">Any authenticated user can read any user's profile image <span class="status-open">(unchanged)</span></span></div>
+  <p><code>profileImages/</code> reads still require authentication only. Writes/deletes are correctly owner-scoped by filename, but reads are not.</p>
+  <p class="evidence">Evidence: <code>storage.rules:27–28</code> (<code>allow read: if isAuthenticated()</code>)</p>
   <div class="fixlabel">Fix</div>
-  <p>If profile photos are only shown to the owner, restrict reads to <code>request.auth.uid == userId</code> in the path match. If they're shown in shared surfaces (leaderboards), keep authenticated read but document it as intentional in the privacy policy, and ensure image paths are unguessable UIDs (they are — verify no listing rule exists).</p>
+  <p>If photos are owner-only, add <code>imageFile.matches('^' + request.auth.uid + '\\.…')</code> to the read rule. If they appear on shared surfaces, keep authenticated read but document it in the privacy policy.</p>
 </div>
 
 <div class="finding medium">
-  <div class="fhead"><span class="badge medium">Medium</span><span class="fid">PRI-03</span><span class="ftitle">PII and role cached unencrypted in AsyncStorage</span></div>
-  <p><code>profileCache.ts</code> stores name, email, phone, school, grade, track, and role in plain AsyncStorage for 10 minutes. AsyncStorage is unencrypted (SharedPreferences / plist-adjacent files); on a compromised or shared device this is readable. The cached <em>role</em> also drives UI gating, so a demoted admin keeps admin UI for up to 10 minutes (rules still block server-side).</p>
-  <p class="evidence">Evidence: <code>src/services/profileCache.ts</code></p>
+  <div class="fhead"><span class="badge medium">Medium</span><span class="fid">PRI-03</span><span class="ftitle">PII and role cached unencrypted in AsyncStorage <span class="status-open">(unchanged)</span></span></div>
+  <p><code>profileCache.ts</code> still stores name, email, phone, school, grade, track, and role in plain AsyncStorage.</p>
+  <p class="evidence">Evidence: <code>src/services/profileCache.ts:78–107</code></p>
   <div class="fixlabel">Fix</div>
-  <p>Move the cache to <code>react-native-keychain</code> or <code>react-native-mmkv</code> with encryption enabled, or reduce cached fields to non-PII (uid, displayName, track). For role freshness, re-read the profile document on app foreground and on admin-screen entry rather than trusting the cache.</p>
+  <p>Move to <code>react-native-keychain</code>/encrypted MMKV, or trim cached fields to non-PII; re-read the profile on app foreground and admin-screen entry for role freshness.</p>
 </div>
 
 <div class="finding medium">
-  <div class="fhead"><span class="badge medium">Medium</span><span class="fid">PRI-04</span><span class="ftitle">PDFs leak to Google Docs Viewer; WebView has no origin allowlist</span></div>
-  <p><code>pdfViewerUrl.ts</code> wraps Firebase Storage download URLs (which embed access tokens) in <code>docs.google.com/viewer?url=...</code>, disclosing tokenized URLs to a third party. <code>ResourcePdfViewerScreen.tsx</code> sets no <code>originWhitelist</code> or navigation interception, and content URLs are admin-controlled.</p>
-  <p class="evidence">Evidence: <code>src/utils/resources/pdfViewerUrl.ts</code> · <code>ResourcePdfViewerScreen.tsx</code></p>
+  <div class="fhead"><span class="badge medium">Medium</span><span class="fid">PRI-04</span><span class="ftitle">PDFs still leak tokenized URLs to Google Docs Viewer <span class="status-open">(unchanged)</span></span></div>
+  <p><code>pdfViewerUrl.ts</code> still wraps Firebase Storage download URLs (embedding access tokens) in <code>docs.google.com/gview</code>; the WebView has no origin allowlist.</p>
+  <p class="evidence">Evidence: <code>src/utils/resources/pdfViewerUrl.ts:4</code></p>
   <div class="fixlabel">Fix</div>
-  <p>Render PDFs natively with <code>react-native-pdf</code> (or <code>react-native-blob-util</code> download + native viewer), removing the third-party hop entirely. If the WebView stays for other content, add <code>originWhitelist={['https://firebasestorage.googleapis.com']}</code> and an <code>onShouldStartLoadWithRequest</code> handler rejecting other hosts.</p>
+  <p>Render natively with <code>react-native-pdf</code>, or at minimum add <code>originWhitelist</code> + <code>onShouldStartLoadWithRequest</code> restricted to <code>firebasestorage.googleapis.com</code>.</p>
 </div>
 
 <div class="finding medium">
-  <div class="fhead"><span class="badge medium">Medium</span><span class="fid">OPS-04</span><span class="ftitle">Build hygiene: dual lockfiles, floating native dependency, minification off</span></div>
-  <p>Both <code>package-lock.json</code> and <code>yarn.lock</code> are committed — two installers produce different graphs. Android depends on <code>androidx.activity:activity:1.9.+</code> (a floating version that changes under you at build time) and release minification/shrinking is disabled, shipping a larger, unobfuscated APK.</p>
-  <p class="evidence">Evidence: repo root lockfiles · <code>android/app/build.gradle</code> (<code>1.9.+</code>, <code>minifyEnabled false</code>)</p>
+  <div class="fhead"><span class="badge medium">Medium</span><span class="fid">ARC-01</span><span class="ftitle">Notification fan-out still scans every user; dead tokens never cleaned up <span class="status-partial">(partially improved)</span></span></div>
+  <p>The fan-out logic was extracted into <code>notificationHelpers.js</code> with 49 unit tests and batched multicast sends — a real improvement in correctness and testability. But each send still runs full <code>collectionGroup</code> scans of <code>notificationPreferences</code> and <code>fcmTokens</code>, and <code>sendMulticastBatches</code> counts failures without deleting tokens that return <code>registration-token-not-registered</code>.</p>
+  <p class="evidence">Evidence: <code>functions/index.js:38, 140</code> · <code>functions/notificationHelpers.js:205–220</code></p>
   <div class="fixlabel">Fix</div>
-  <p>Pick npm (CI example above uses <code>npm ci</code>), delete <code>yarn.lock</code>, and add it to <code>.gitignore</code>. Pin <code>androidx.activity:activity:1.9.3</code>. Enable <code>minifyEnabled true</code> + <code>shrinkResources true</code> for release with RNFirebase/Reanimated Proguard keep rules, and verify a release build on-device before shipping.</p>
+  <p>Short term: inspect per-token responses in <code>sendMulticastBatches</code> and delete dead token docs. Medium term: switch to FCM topics (<code>school_{id}</code>, <code>category_{name}</code>) to eliminate the scans.</p>
 </div>
 
 <div class="finding medium">
-  <div class="fhead"><span class="badge medium">Medium</span><span class="fid">DOC-01</span><span class="ftitle">Documentation is boilerplate; About screen unfinished</span></div>
-  <p><code>README.md</code> is the stock React Native template plus brief auth notes. Missing: Firebase project setup, role model and first-superadmin provisioning, rules/Functions deployment, signing, YouTube key restrictions, staging/prod, data-retention behavior, rollback. <code>AboutScreen.tsx</code> renders only the word "About" — a visible-to-users unfinished screen.</p>
-  <p class="evidence">Evidence: <code>README.md</code> · <code>src/presentation/screens/About/AboutScreen.tsx</code></p>
+  <div class="fhead"><span class="badge medium">Medium</span><span class="fid">OPS-04</span><span class="ftitle">Build hygiene: dual lockfiles, floating androidx version, minification off <span class="status-partial">(signing fixed; rest unchanged)</span></span></div>
+  <p>Release signing is fixed (REL-01), but <code>package-lock.json</code> and <code>yarn.lock</code> are both still committed, <code>androidx.activity:activity:1.9.+</code> still floats, and <code>enableProguardInReleaseBuilds</code> is still <code>false</code> — release builds ship unminified.</p>
+  <p class="evidence">Evidence: repo root lockfiles · <code>android/app/build.gradle:62, 132</code></p>
   <div class="fixlabel">Fix</div>
-  <p>Write a real README (setup, environments, deploy commands, role bootstrap via a documented one-time script) plus a short <code>OPERATIONS.md</code> (release checklist, rollback, incident contacts). Either finish the About screen (version, licenses, privacy policy link — App Store reviewers look here) or remove it from navigation until done.</p>
+  <p>Pick npm, delete <code>yarn.lock</code>, gitignore it. Pin <code>androidx.activity:activity:1.9.3</code>. Enable <code>minifyEnabled true</code> + <code>shrinkResources true</code> with RNFirebase/Reanimated keep rules and verify a release build on-device.</p>
 </div>
 
 <div class="finding medium">
-  <div class="fhead"><span class="badge medium">Medium</span><span class="fid">ARC-03</span><span class="ftitle">Committed generated iOS artifacts (<code>ios/.tmp/</code>) <em>(promoted from low)</em></span></div>
-  <p>Generated React Native codegen output is committed under <code>ios/.tmp/</code>. Stale generated code can silently diverge from the installed RN version and confuse Xcode builds after upgrades.</p>
-  <p class="evidence">Evidence: <code>ios/.tmp/</code> in version control</p>
+  <div class="fhead"><span class="badge medium">Medium</span><span class="fid">DOC-01</span><span class="ftitle">Documentation still boilerplate; About screen still a stub <span class="status-open">(unchanged)</span></span></div>
+  <p><code>README.md</code> remains template content plus auth notes; <code>AboutScreen.tsx</code> is still 12 lines rendering the word "About".</p>
+  <p class="evidence">Evidence: <code>README.md</code> · <code>src/presentation/screens/About/AboutScreen.tsx</code> (12 lines)</p>
   <div class="fixlabel">Fix</div>
-  <p><code>git rm -r --cached ios/.tmp</code>, add <code>ios/.tmp/</code> to <code>.gitignore</code>, and rely on <code>pod install</code>/codegen to regenerate.</p>
+  <p>Write a real README (setup, environments, role bootstrap, deploy commands) and a short operations runbook. Finish the About screen (version, licenses, privacy policy link) or remove it from navigation before store review.</p>
 </div>
 
-<!-- ============ SECTION 4: LOW ============ -->
+<div class="finding medium">
+  <div class="fhead"><span class="badge medium">Medium</span><span class="fid">QG-04</span><span class="ftitle">Remaining test gaps: no coverage thresholds, no Functions integration tests, no E2E</span></div>
+  <p>The rebuilt suite is unit-level. There are no coverage thresholds (<code>collectCoverageFrom</code> exists but nothing fails on regression), the exported callables themselves (role checks, throttles once added) have no integration tests — only their extracted helpers do — and there is no E2E smoke coverage. Also note: <code>npm run test:rules</code> requires JDK 21+ with the globally installed firebase-tools 15 (this machine has JDK 17; the audit ran the suite via <code>npx firebase-tools@13</code>).</p>
+  <p class="evidence">Evidence: <code>jest.config.js</code> (no <code>coverageThreshold</code>) · rules run required firebase-tools@13 fallback, 17 Jul 2026</p>
+  <div class="fixlabel">Fix</div>
+  <p>Add a <code>coverageThreshold</code> baseline; add callable-level tests with <code>firebase-functions-test</code> (assert role denials incl. SEC-07); pin a JDK 21 requirement in the README/CI so <code>test:rules</code> is reproducible; schedule Maestro/Detox smoke tests post-launch.</p>
+</div>
+
+<!-- ============ SECTION 5: LOW ============ -->
 <div class="pagebreak"></div>
-<h2>4. Low severity &amp; hygiene <span style="font-weight:400;font-size:10pt;">(includes items not listed in the earlier summary)</span></h2>
+<h2>5. Low severity &amp; hygiene</h2>
 
 <div class="finding low">
-  <div class="fhead"><span class="badge low">Low</span><span class="fid">ARC-02</span><span class="ftitle">YouTube API key embedded in the client binary</span></div>
-  <p><code>YOUTUBE_API_KEY</code> via <code>react-native-config</code> compiles into the app and is extractable. There is a graceful RSS fallback, so abuse mainly burns quota.</p>
-  <p class="evidence">Evidence: <code>.env.example</code> · <code>src/services/youtube/youtubePlaylistService.ts</code></p>
-  <div class="fixlabel">Fix</div>
-  <p>In Google Cloud Console, restrict the key to the YouTube Data API only, bind it to the Android package name + SHA-1 and the iOS bundle ID, and set a daily quota cap. Treat it as public and rotate if quota anomalies appear.</p>
+  <div class="fhead"><span class="badge low">Low</span><span class="fid">ARC-02</span><span class="ftitle">YouTube API key embedded in the client binary <span class="status-open">(unchanged)</span></span></div>
+  <p>Restrict the key in Google Cloud Console (YouTube Data API only, bound to Android package + SHA-1 and iOS bundle ID) and set a daily quota cap.</p>
 </div>
 
 <div class="finding low">
-  <div class="fhead"><span class="badge low">Low</span><span class="fid">MISC-01</span><span class="ftitle">Placeholder remote assets in production UI <em>(not in earlier summary)</em></span></div>
-  <p>Default/placeholder image URLs remain in <code>profileDefaults.ts</code>, <code>Header.tsx</code>, and <code>CourseCard.tsx</code>. If those third-party hosts throttle or die, avatars and course cards break.</p>
-  <p class="evidence">Evidence: <code>src/constants/profileDefaults.ts</code> · <code>src/components/Header.tsx</code> · <code>src/components/Home/CourseCard.tsx</code></p>
-  <div class="fixlabel">Fix</div>
-  <p>Bundle default images as local assets (<code>require('./assets/...')</code>) or host them in your own Firebase Storage bucket with public-read rules scoped to that folder.</p>
+  <div class="fhead"><span class="badge low">Low</span><span class="fid">ARC-03</span><span class="ftitle">Committed generated iOS artifacts (<code>ios/.tmp/</code>) <span class="status-open">(unchanged, downgraded)</span></span></div>
+  <p><code>git rm -r --cached ios/.tmp</code>, gitignore it, and let codegen regenerate.</p>
 </div>
 
 <div class="finding low">
-  <div class="fhead"><span class="badge low">Low</span><span class="fid">MISC-02</span><span class="ftitle">Hardcoded support contact and OAuth client ID <em>(not in earlier summary)</em></span></div>
-  <p>Support email/phone live in <code>src/config/support.ts</code> and the Google web OAuth client ID in <code>src/config/googleSignIn.ts</code>. Changing either requires an app release.</p>
-  <p class="evidence">Evidence: <code>src/config/support.ts</code> · <code>src/config/googleSignIn.ts</code></p>
-  <div class="fixlabel">Fix</div>
-  <p>Acceptable at launch. Post-launch, move support contact into Firebase Remote Config so it's updatable without a release. The OAuth client ID is public by design — just confirm it matches the production Firebase project after OPS-02.</p>
+  <div class="fhead"><span class="badge low">Low</span><span class="fid">PRI-02b</span><span class="ftitle">Store-side privacy work still pending (manifest itself is fixed)</span></div>
+  <p>Mirror the new <code>PrivacyInfo.xcprivacy</code> declarations in App Store Connect privacy labels and the Play Data Safety form; publish a privacy policy URL (required by both stores) documenting the now-correct deletion behavior. Given the kids track, have counsel review COPPA/GDPR-K obligations.</p>
 </div>
 
 <div class="finding low">
-  <div class="fhead"><span class="badge low">Low</span><span class="fid">MISC-03</span><span class="ftitle">Missing package scripts for routine gates <em>(not in earlier summary)</em></span></div>
-  <p>No <code>typecheck</code>, <code>test:coverage</code>, release-build, or rules-deploy scripts — every gate is invoked ad hoc, which is why they drifted into failure unnoticed.</p>
-  <p class="evidence">Evidence: <code>package.json</code> scripts block (5 scripts total)</p>
-  <div class="fixlabel">Fix</div>
-<pre><code>"scripts": {
-  "typecheck": "tsc --noEmit",
-  "lint": "eslint . --max-warnings 0",
-  "test": "jest",
-  "test:coverage": "jest --coverage",
-  "verify": "npm run typecheck &amp;&amp; npm run lint &amp;&amp; npm test",
-  "android:release": "cd android &amp;&amp; ./gradlew bundleRelease",
-  "deploy:rules": "firebase deploy --only firestore:rules,storage"
-}</code></pre>
+  <div class="fhead"><span class="badge low">Low</span><span class="fid">MISC-01</span><span class="ftitle">Placeholder remote assets in production UI <span class="status-open">(unchanged)</span></span></div>
+  <p><code>randomuser.me</code> default avatar still referenced in <code>profileDefaults.ts</code>. Bundle defaults locally.</p>
 </div>
 
 <div class="finding low">
-  <div class="fhead"><span class="badge low">Low</span><span class="fid">MISC-04</span><span class="ftitle">No startup validation of required configuration <em>(not in earlier summary)</em></span></div>
-  <p>A build with a missing/blank <code>YOUTUBE_API_KEY</code> or mismatched Firebase config fails silently at feature-use time rather than loudly at startup or build time.</p>
-  <p class="evidence">Evidence: no config assertion in <code>src/App.tsx</code> or build scripts</p>
-  <div class="fixlabel">Fix</div>
-  <p>Add a small <code>assertConfig()</code> called at app bootstrap in dev builds that warns on missing env values, and a CI step that checks <code>.env</code> keys against <code>.env.example</code>.</p>
+  <div class="fhead"><span class="badge low">Low</span><span class="fid">MISC-03</span><span class="ftitle">Package scripts improved but no <code>typecheck</code>/<code>verify</code> gate <span class="status-partial">(partially improved)</span></span></div>
+  <p><code>test:functions</code> and <code>test:rules</code> scripts were added. Still missing: <code>"typecheck": "tsc --noEmit"</code> and a combined <code>"verify"</code> script for local pre-push use.</p>
 </div>
 
 <div class="finding low">
-  <div class="fhead"><span class="badge low">Low</span><span class="fid">MISC-05</span><span class="ftitle">Committed Firebase client config — verify key restrictions <em>(not in earlier summary)</em></span></div>
-  <p><code>google-services.json</code> and <code>GoogleService-Info.plist</code> are committed. Firebase client keys are not secrets, but unrestricted keys allow quota abuse against your project.</p>
-  <p class="evidence">Evidence: <code>android/app/google-services.json</code> · <code>ios/GoogleService-Info.plist</code></p>
-  <div class="fixlabel">Fix</div>
-  <p>In Google Cloud Console → Credentials, restrict each auto-created API key by application (Android package + SHA-1, iOS bundle ID) and by API. Combined with App Check (SEC-03) this closes the abuse vector. No need to purge from git.</p>
+  <div class="fhead"><span class="badge low">Low</span><span class="fid">MISC-04</span><span class="ftitle">No startup validation of required configuration <span class="status-open">(unchanged)</span></span></div>
+  <p>Add a dev-build <code>assertConfig()</code> at bootstrap and a CI check of <code>.env</code> keys against <code>.env.example</code>.</p>
 </div>
 
 <div class="finding low">
-  <div class="fhead"><span class="badge low">Low</span><span class="fid">MISC-06</span><span class="ftitle">Unrestricted device orientations on iOS <em>(not in earlier summary)</em></span></div>
-  <p>iOS supports portrait plus both landscapes while the layouts are designed portrait-first; several screens (forms, admin CMS) will render awkwardly rotated.</p>
-  <p class="evidence">Evidence: <code>ios/Evolve/Info.plist</code> supported orientations</p>
-  <div class="fixlabel">Fix</div>
-  <p>Lock to portrait (remove landscape entries) unless video playback needs landscape — in that case allow rotation only on the video screen via a per-screen orientation lock.</p>
+  <div class="fhead"><span class="badge low">Low</span><span class="fid">MISC-05/06</span><span class="ftitle">Firebase key restrictions unverified · iOS still allows landscape <span class="status-open">(unchanged)</span></span></div>
+  <p>Restrict the auto-created API keys by app + API in Google Cloud Console. <code>Info.plist</code> still lists portrait + both landscapes; lock to portrait except video playback.</p>
 </div>
 
-<!-- ============ SECTION 5: ROADMAP ============ -->
+<div class="finding low">
+  <div class="fhead"><span class="badge low">Low</span><span class="fid">LOW-08</span><span class="ftitle">New: 5 residual ESLint warnings block a <code>--max-warnings 0</code> CI gate</span></div>
+  <p>Four come from linting the generated <code>coverage/</code> folder; one is <code>no-void</code> in <code>functions/gradingHelpers.js:111</code>. Add <code>coverage/</code> to <code>.eslintignore</code> (or <code>ignorePatterns</code>) and replace the <code>void</code> expression, then CI can enforce zero warnings.</p>
+</div>
+
+<!-- ============ SECTION 6: ROADMAP ============ -->
 <div class="pagebreak"></div>
-<h2>5. Remediation roadmap</h2>
+<h2>6. Remediation roadmap</h2>
 
-<h3>Phase 0 — Unblock (1–2 weeks) · items: SEC-01, SEC-02, PRI-01, QG-01, QG-02, OPS-01, OPS-02</h3>
+<h3>Phase 0 — Unblock (2–4 days) · OPS-01, OPS-02, SEC-07, LOW-08</h3>
 <ol>
-  <li>Fix the two Functions role checks (SEC-02) — smallest change, restores two broken features. Redeploy Functions.</li>
-  <li>Align Firestore/Storage rules with the UI permission matrix (SEC-01). Deploy rules.</li>
-  <li>Add the recursive-deletion trigger/callable (PRI-01). Deploy and test with seeded data.</li>
-  <li>Clear all 12 TypeScript errors and 24 ESLint errors (QG-01/02); manually verify notification send, exam timer, and resume-playback flows touched by hook fixes.</li>
-  <li>Land the CI workflow (OPS-01) so the gates can never silently regress again.</li>
-  <li>Set the production iOS bundle ID, team, and Firebase iOS app (OPS-02).</li>
+  <li>Land the CI workflow while every gate is green (OPS-01). Fix the 5 ESLint warnings first (LOW-08) so <code>--max-warnings 0</code> passes.</li>
+  <li>Tighten <code>sendLiveNotification</code> to superadmin-only to match UI and rules (SEC-07); add the role-denial test; redeploy Functions.</li>
+  <li>Set the production iOS bundle ID, team, Firebase iOS app, and OAuth client (OPS-02) — required for iOS only.</li>
 </ol>
 
-<h3>Phase 1 — Harden (2–3 weeks) · items: DEP-01, SEC-03…06, PRI-02…04, QG-03, OPS-03/04, DOC-01</h3>
+<h3>Phase 1 — Harden (1–2 weeks) · SEC-03/04/05/06, DEP-01, PRI-02b/03/04, OPS-03/04, QG-04, DOC-01</h3>
 <ol>
-  <li><code>npm audit fix</code> both packages; pin remaining advisories with documented exceptions; add audit to CI.</li>
-  <li>App Check in monitor mode → enforce; per-user throttles on submit callables.</li>
+  <li><code>npm audit fix</code> in both packages; add audit gate for <code>functions/</code> to CI; document accepted dev-tooling exceptions.</li>
+  <li>App Check in monitor mode → enforce; per-user throttles on the submit callables.</li>
   <li>Fail-closed Storage contentType; scope profile-image reads; remove <code>migrateAnswerKeys</code>.</li>
-  <li>Rewrite privacy manifest + store data-safety forms; publish privacy policy; native PDF rendering.</li>
-  <li>Jest config fix + rules/Functions test suites; coverage thresholds.</li>
-  <li>Staging Firebase project, Crashlytics, Function alerting; single lockfile, pinned androidx, minified release build.</li>
-  <li>Real README + operations runbook; finish or hide the About screen.</li>
+  <li>Store privacy labels + privacy policy URL; encrypted profile cache; native PDF rendering.</li>
+  <li>Staging Firebase project + Crashlytics + Function alerting; single lockfile, pinned androidx, minified release build verified on-device.</li>
+  <li>Coverage thresholds + callable-level Functions tests; real README + runbook; finish or hide the About screen.</li>
 </ol>
 
 <h3>Phase 2 — Operate (post-launch)</h3>
 <ol>
   <li>FCM topic-based fan-out and dead-token cleanup (ARC-01).</li>
-  <li>Encrypted local cache / reduced PII footprint (PRI-03).</li>
-  <li>E2E smoke tests (Maestro/Detox) on physical devices; Fastlane store delivery.</li>
-  <li>Remote Config for support contact and feature toggles; planned React Native 0.8x→latest upgrade window.</li>
+  <li>E2E smoke tests (Maestro/Detox); Fastlane store delivery.</li>
+  <li>Remote Config for support contact and feature toggles; planned React Native upgrade window (also clears remaining CLI advisories).</li>
 </ol>
 
-<h2>6. Ship gate checklist</h2>
+<h2>7. Ship gate checklist</h2>
 <table>
-  <tr><th>Gate</th><th>Criterion</th></tr>
-  <tr><td>Compile</td><td><code>tsc --noEmit</code> and <code>eslint . --max-warnings 0</code> pass in CI</td></tr>
-  <tr><td>Tests</td><td>All Jest suites green; Firestore rules tests cover the admin permission matrix</td></tr>
-  <tr><td>Authorization</td><td>Plain admin cannot write non-delegated collections (rules test); superadmin can use Notifications &amp; Manage Users end-to-end</td></tr>
-  <tr><td>Privacy</td><td>Account deletion leaves zero user documents (verified with seeded data); manifest &amp; store labels match collected data; privacy policy live</td></tr>
-  <tr><td>Dependencies</td><td>No unresolved critical/high advisories in <code>npm audit --omit=dev</code></td></tr>
-  <tr><td>Identity</td><td>Production bundle IDs on both platforms; release signing verified; versioning scheme in place</td></tr>
-  <tr><td>Ops</td><td>Crashlytics reporting from a release build; staging project receives deploys before production</td></tr>
+  <tr><th>Gate</th><th>Criterion</th><th>Status today</th></tr>
+  <tr><td>Compile</td><td><code>tsc --noEmit</code> and <code>eslint . --max-warnings 0</code> pass in CI</td><td class="amber">Passes locally (5 warnings); no CI</td></tr>
+  <tr><td>Tests</td><td>All Jest suites green; rules tests cover the admin permission matrix</td><td class="green">136/136 pass incl. 32 rules tests</td></tr>
+  <tr><td>Authorization</td><td>Plain admin cannot write non-delegated collections; role checks consistent across UI, rules, and Functions</td><td class="amber">Rules verified; SEC-07 callable mismatch open</td></tr>
+  <tr><td>Privacy</td><td>Deletion leaves zero user documents; manifest &amp; store labels match; privacy policy live</td><td class="amber">Deletion + manifest done; store labels/policy pending</td></tr>
+  <tr><td>Dependencies</td><td>No unresolved critical/high advisories in <code>npm audit --omit=dev</code></td><td class="red">App 4 crit (dev-tooling) · Functions 1 crit/1 high</td></tr>
+  <tr><td>Identity</td><td>Production bundle IDs on both platforms; release signing verified</td><td class="amber">Android done; iOS bundle ID still example</td></tr>
+  <tr><td>Ops</td><td>Crashlytics from a release build; staging receives deploys before production</td><td class="red">Not started</td></tr>
 </table>
 
-<p class="footer-note">Evolve deployment readiness report · generated 17 July 2026 · based on static analysis and locally executed quality gates (tsc, ESLint, Jest, npm audit) at commit state as of audit time · this is not a penetration test and no live production Firebase project was probed.</p>
+<p class="footer-note">Evolve deployment readiness re-audit · generated 17 July 2026 at commit <code>cd3353e</code> (+ uncommitted test/mock additions) · gates executed locally: tsc, ESLint, Jest (app 55, functions 49), Firestore rules tests via emulator (32, run with firebase-tools 13 due to local JDK 17), npm audit (app + functions) · supersedes the pre-remediation report of the same date · this is not a penetration test and no live production Firebase project was probed.</p>
 
 </body>
 </html>

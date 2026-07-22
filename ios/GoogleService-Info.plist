@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>232814396673-um63h57to7jqkn4u247e2s0802jk2ok7.apps.googleusercontent.com</string>
+	<string>232814396673-n9naa6hquc2tc9f4q6b0o5dpk3ssd1kq.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.232814396673-um63h57to7jqkn4u247e2s0802jk2ok7</string>
+	<string>com.googleusercontent.apps.232814396673-n9naa6hquc2tc9f4q6b0o5dpk3ssd1kq</string>
 	<key>API_KEY</key>
 	<string>AIzaSyDTa7TBw2VPLBxRAWs5VmdWBpmNPaWYAwE</string>
 	<key>GCM_SENDER_ID</key>
@@ -13,7 +13,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>org.reactjs.native.example.Evolve</string>
+	<string>com.evolve</string>
 	<key>PROJECT_ID</key>
 	<string>evolve-robotics-llp</string>
 	<key>STORAGE_BUCKET</key>
@@ -29,6 +29,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:232814396673:ios:fe9afcfaf623ba9922c700</string>
+	<string>1:232814396673:ios:746ae324cb25988c22c700</string>
 </dict>
 </plist>

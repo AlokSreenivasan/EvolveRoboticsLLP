@@ -31,10 +31,10 @@
               "client_type": 3
             },
             {
-              "client_id": "232814396673-um63h57to7jqkn4u247e2s0802jk2ok7.apps.googleusercontent.com",
+              "client_id": "232814396673-n9naa6hquc2tc9f4q6b0o5dpk3ssd1kq.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "org.reactjs.native.example.Evolve"
+                "bundle_id": "com.evolve"
               }
             }
           ]
