@@ -1,20 +1,14 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Dimensions,
-  FlatList,
   Image,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   View,
-  type ListRenderItem,
 } from 'react-native';
 import { RouteProp, useRoute } from '@react-navigation/native';
-import { FolderKanban } from 'lucide-react-native';
 import Markdown from 'react-native-markdown-display';
 
 import BackButton from '../../../components/BackButton';
@@ -22,9 +16,6 @@ import { colors, spacing } from '../../../constants/theme';
 import type { RootStackParamList } from '../../../types/navigation';
 
 type ProjectDetailRouteProp = RouteProp<RootStackParamList, 'ProjectDetail'>;
-
-const SCREEN_WIDTH = Dimensions.get('window').width;
-const MEDIA_HEIGHT = (SCREEN_WIDTH * 9) / 16;
 
 function ProjectDetailScreen() {
   const route = useRoute<ProjectDetailRouteProp>();
@@ -39,7 +30,6 @@ function ProjectDetailScreen() {
   const description = project.description?.trim();
   const markdownUrl = project.markdownUrl?.trim();
 
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [markdownBody, setMarkdownBody] = useState<string | null>(null);
   const [markdownLoading, setMarkdownLoading] = useState(Boolean(markdownUrl));
   const [markdownError, setMarkdownError] = useState<string | null>(null);
@@ -81,31 +71,6 @@ function ProjectDetailScreen() {
     };
   }, [markdownUrl]);
 
-  const onGalleryScrollEnd = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const offsetX = event.nativeEvent.contentOffset.x;
-      const index = Math.round(offsetX / SCREEN_WIDTH);
-      setActiveImageIndex(
-        Math.max(0, Math.min(imageUris.length - 1, index)),
-      );
-    },
-    [imageUris.length],
-  );
-
-  const renderGalleryItem = useCallback<ListRenderItem<string>>(
-    ({ item }) => (
-      <View style={styles.slide}>
-        <Image source={{ uri: item }} style={styles.image} />
-      </View>
-    ),
-    [],
-  );
-
-  const galleryKeyExtractor = useCallback(
-    (item: string, index: number) => `${index}-${item.slice(-24)}`,
-    [],
-  );
-
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -115,41 +80,6 @@ function ProjectDetailScreen() {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
-        <View style={[styles.media, { height: MEDIA_HEIGHT }]}>
-          {imageUris.length > 0 ? (
-            <>
-              <FlatList
-                data={imageUris}
-                keyExtractor={galleryKeyExtractor}
-                renderItem={renderGalleryItem}
-                horizontal
-                pagingEnabled
-                showsHorizontalScrollIndicator={false}
-                onMomentumScrollEnd={onGalleryScrollEnd}
-                bounces={false}
-                style={{ height: MEDIA_HEIGHT }}
-              />
-              {imageUris.length > 1 ? (
-                <View style={styles.dots}>
-                  {imageUris.map((uri, index) => (
-                    <View
-                      key={`${uri}-${index}`}
-                      style={[
-                        styles.dot,
-                        index === activeImageIndex && styles.dotActive,
-                      ]}
-                    />
-                  ))}
-                </View>
-              ) : null}
-            </>
-          ) : (
-            <View style={[styles.image, styles.imagePlaceholder]}>
-              <FolderKanban size={40} color={colors.primary} strokeWidth={2} />
-            </View>
-          )}
-        </View>
-
         <View style={styles.body}>
           <Text style={styles.title}>{project.title}</Text>
           {project.subtitle ? (
@@ -191,6 +121,22 @@ function ProjectDetailScreen() {
               <Text style={styles.emptyRequirements}>
                 Requirements for this project will be shared soon.
               </Text>
+            </View>
+          ) : null}
+
+          {imageUris.length > 0 ? (
+            <View style={styles.imagesSection}>
+              <Text style={styles.sectionHeading}>Images</Text>
+              <View style={styles.imagesStack}>
+                {imageUris.map((uri, index) => (
+                  <Image
+                    key={`${index}-${uri.slice(-24)}`}
+                    source={{ uri }}
+                    style={styles.stackedImage}
+                    accessibilityLabel={`Project image ${index + 1}`}
+                  />
+                ))}
+              </View>
             </View>
           ) : null}
         </View>
@@ -272,46 +218,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 32,
   },
-  media: {
-    width: '100%',
-    backgroundColor: colors.primaryLight,
-    overflow: 'hidden',
-  },
-  slide: {
-    width: SCREEN_WIDTH,
-    height: MEDIA_HEIGHT,
-  },
-  image: {
-    width: SCREEN_WIDTH,
-    height: MEDIA_HEIGHT,
-    resizeMode: 'cover',
-  },
-  imagePlaceholder: {
-    width: '100%',
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primaryLight,
-  },
-  dots: {
-    position: 'absolute',
-    bottom: 10,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 6,
-  },
-  dot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.45)',
-  },
-  dotActive: {
-    backgroundColor: '#fff',
-    width: 16,
-  },
   body: {
     paddingHorizontal: spacing.screenHorizontal,
     paddingTop: 20,
@@ -344,6 +250,19 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
+  },
+  imagesSection: {
+    marginTop: 16,
+  },
+  imagesStack: {
+    gap: 12,
+  },
+  stackedImage: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    borderRadius: spacing.cardRadius,
+    backgroundColor: colors.primaryLight,
+    resizeMode: 'cover',
   },
   sectionHeading: {
     fontSize: 17,
