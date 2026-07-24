@@ -29,7 +29,11 @@ jest.mock('@react-native-documents/picker', () => ({
   keepLocalCopy: jest.fn(() =>
     Promise.resolve([{ status: 'success', sourceUri: 'file://src', localUri: 'file://local.pdf' }]),
   ),
-  types: { pdf: 'application/pdf' },
+  types: {
+    pdf: 'application/pdf',
+    plainText: 'text/plain',
+    allFiles: '*/*',
+  },
   errorCodes: { OPERATION_CANCELED: 'OPERATION_CANCELED' },
   isErrorWithCode: jest.fn(error => typeof error?.code === 'string'),
 }));

@@ -142,11 +142,14 @@ function isPdfUpload() {
 
 /**
  * Markdown uploads often report text/plain or octet-stream depending on OS.
+ * Use prefix matches so charset parameters (e.g. text/markdown; charset=utf-8)
+ * are still accepted.
  */
 function isMarkdownUpload() {
   return !('contentType' in request.resource)
-    || request.resource.contentType == 'text/markdown'
-    || request.resource.contentType == 'text/x-markdown'
-    || request.resource.contentType == 'text/plain'
+    || request.resource.contentType.matches('text/markdown.*')
+    || request.resource.contentType.matches('text/x-markdown.*')
+    || request.resource.contentType.matches('text/x-web-markdown.*')
+    || request.resource.contentType.matches('text/plain.*')
     || request.resource.contentType == 'application/octet-stream';
 }
