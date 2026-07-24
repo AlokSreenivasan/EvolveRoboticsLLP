@@ -690,6 +690,13 @@ function hasRequiredProfileFields() {
   ]);
 }
 
+// Empty phone is allowed (Google Sign-In); otherwise 10–15 digits.
+function isValidPhoneNumber(value) {
+  return value is string
+    && (value.size() == 0
+      || (value.size() >= 10 && value.size() <= 15));
+}
+
 function isValidProfileData() {
   let data = request.resource.data;
   return data.fullName is string
@@ -698,9 +705,7 @@ function isValidProfileData() {
     && data.email is string
     && data.email.size() > 0
     && data.email.size() <= 320
-    && data.phoneNumber is string
-    && data.phoneNumber.size() >= 10
-    && data.phoneNumber.size() <= 15
+    && isValidPhoneNumber(data.phoneNumber)
     && isValidUserRole(data.role)
     && isOptionalProfileImage(data.profileImage)
     && isOptionalSchoolId(data.schoolId)
@@ -746,9 +751,7 @@ function isValidProfileDataAfterUpdate() {
   return data.fullName is string
     && data.fullName.size() > 0
     && data.fullName.size() <= 120
-    && data.phoneNumber is string
-    && data.phoneNumber.size() >= 10
-    && data.phoneNumber.size() <= 15
+    && isValidPhoneNumber(data.phoneNumber)
     && hasValidProfileRoleField(data)
     && isOptionalProfileImage(data.profileImage)
     && isOptionalSchoolId(data.schoolId)
@@ -764,9 +767,7 @@ function isValidProfileDataAfterSuperAdminUpdate() {
     && data.email is string
     && data.email.size() > 0
     && data.email.size() <= 320
-    && data.phoneNumber is string
-    && data.phoneNumber.size() >= 10
-    && data.phoneNumber.size() <= 15
+    && isValidPhoneNumber(data.phoneNumber)
     && isValidUserRole(data.role)
     && hasAllowedRoleAssignment()
     && isOptionalProfileImage(data.profileImage)

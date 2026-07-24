@@ -7,15 +7,44 @@ import {
 
 import * as authModule from '@react-native-firebase/auth';
 import * as googleModule from '@react-native-google-signin/google-signin';
+import * as userService from '../../firebase/userService';
+
+jest.mock('../../firebase/userService', () => ({
+  createUserProfileIfNotExists: jest.fn(() =>
+    Promise.resolve({
+      uid: 'test-uid',
+      fullName: 'Test User',
+      email: 'test@example.com',
+      phoneNumber: '',
+      profileImage: null,
+      schoolId: null,
+      grade: null,
+      track: null,
+      role: 'student',
+      createdAt: null,
+      updatedAt: null,
+    }),
+  ),
+}));
 
 // Plain imports resolve to the manual mocks in __mocks__/ and share the
 // instance the service module sees (jest.requireMock would create a copy).
 const authMock = authModule as any;
 const googleMock = googleModule as any;
+const createUserProfileIfNotExists =
+  userService.createUserProfileIfNotExists as jest.Mock;
 
 beforeEach(() => {
   jest.clearAllMocks();
   authMock.__authInstance.currentUser = null;
+  authMock.signInWithCredential.mockImplementation(() =>
+    Promise.resolve({
+      user: authMock.__createMockUser({
+        providerData: [{ providerId: 'google.com' }],
+        photoURL: 'https://example.com/photo.jpg',
+      }),
+    }),
+  );
 });
 
 describe('isGoogleAccountProvider', () => {
@@ -46,6 +75,21 @@ describe('signInWithGoogle', () => {
       'mock-google-id-token',
     );
     expect(authMock.signInWithCredential).toHaveBeenCalled();
+    expect(createUserProfileIfNotExists).toHaveBeenCalledWith('test-uid', {
+      fullName: 'Test User',
+      email: 'test@example.com',
+      phoneNumber: '',
+      profileImage: 'https://example.com/photo.jpg',
+    });
+  });
+
+  it('still completes sign-in if Firestore profile creation fails', async () => {
+    createUserProfileIfNotExists.mockRejectedValueOnce(
+      new Error('permission-denied'),
+    );
+
+    await expect(signInWithGoogle()).resolves.toBeUndefined();
+    expect(authMock.signInWithCredential).toHaveBeenCalled();
   });
 
   it('throws a cancellation error when the user dismisses the dialog', async () => {
@@ -61,6 +105,7 @@ describe('signInWithGoogle', () => {
     expect(thrown).toBeDefined();
     expect(isGoogleSignInCancelled(thrown)).toBe(true);
     expect(authMock.signInWithCredential).not.toHaveBeenCalled();
+    expect(createUserProfileIfNotExists).not.toHaveBeenCalled();
   });
 
   it('falls back to getTokens when the sign-in response has no idToken', async () => {

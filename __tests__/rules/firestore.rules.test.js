@@ -159,6 +159,24 @@ describe('users collection', () => {
     );
   });
 
+  test('a new user can create a profile with an empty phone (Google Sign-In)', async () => {
+    await assertSucceeds(
+      setDoc(
+        doc(db('google-user'), 'users', 'google-user'),
+        validProfile({ phoneNumber: '' }),
+      ),
+    );
+  });
+
+  test('profile create rejects phone numbers that are too short (non-empty)', async () => {
+    await assertFails(
+      setDoc(
+        doc(db('new-user'), 'users', 'new-user'),
+        validProfile({ phoneNumber: '12345' }),
+      ),
+    );
+  });
+
   test('profile create requires all mandatory fields', async () => {
     const incomplete = validProfile();
     delete incomplete.phoneNumber;

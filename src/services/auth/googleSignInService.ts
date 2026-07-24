@@ -13,6 +13,7 @@ import {
 } from '@react-native-google-signin/google-signin';
 
 import { GOOGLE_WEB_CLIENT_ID } from '../../config/googleSignIn';
+import { createUserProfileIfNotExists } from '../firebase/userService';
 
 const firebaseAuth = getAuth();
 
@@ -112,7 +113,25 @@ export async function signInWithGoogle(): Promise<void> {
     }
 
     const credential = GoogleAuthProvider.credential(idToken);
-    await signInWithCredential(firebaseAuth, credential);
+    const { user } = await signInWithCredential(firebaseAuth, credential);
+
+    // Ensure users/{uid} exists for first-time Google sign-in (email signup already does this).
+    // Non-fatal: Auth session is already established; AuthContext can hydrate a fallback.
+    try {
+      await createUserProfileIfNotExists(user.uid, {
+        fullName: user.displayName?.trim() || user.email?.split('@')[0] || 'User',
+        email: user.email?.trim() || '',
+        phoneNumber: user.phoneNumber?.trim() || '',
+        profileImage: user.photoURL?.trim() || null,
+      });
+    } catch (profileError) {
+      if (__DEV__) {
+        console.warn(
+          'Google Sign-In: could not create Firestore profile',
+          profileError,
+        );
+      }
+    }
   } finally {
     signInInProgress = false;
   }
