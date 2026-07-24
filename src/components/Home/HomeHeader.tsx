@@ -16,8 +16,6 @@ function HomeHeader({ displayName }: HomeHeaderProps) {
   const { unreadCount, loading, error } = useNotifications();
   const firstName = displayName.trim().split(/\s+/)[0] || 'Learner';
   const notificationCount = !loading && !error ? unreadCount : 0;
-  const badgeLabel =
-    notificationCount > 9 ? '9+' : String(notificationCount);
 
   return (
     <View style={styles.container}>
@@ -44,9 +42,7 @@ function HomeHeader({ displayName }: HomeHeaderProps) {
           ]}>
           <Bell size={22} color={colors.primary} strokeWidth={2.25} />
           {notificationCount > 0 ? (
-            <View style={styles.notificationBadge}>
-              <Text style={styles.notificationBadgeText}>{badgeLabel}</Text>
-            </View>
+            <View style={styles.notificationDot} />
           ) : null}
         </Pressable>
       </View>
@@ -89,8 +85,6 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 14,
     backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.primaryMuted,
     alignItems: 'center',
     justifyContent: 'center',
     ...cardShadowLight,
@@ -99,25 +93,16 @@ const styles = StyleSheet.create({
     opacity: 0.88,
     backgroundColor: colors.primaryLight,
   },
-  notificationBadge: {
+  notificationDot: {
     position: 'absolute',
-    top: -4,
-    right: -4,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
+    top: 8,
+    right: 9,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: colors.primary,
-    borderWidth: 2,
-    borderColor: colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-  },
-  notificationBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: colors.surface,
-    lineHeight: 12,
+    borderWidth: 1.5,
+    borderColor: colors.surface,
   },
 });
 

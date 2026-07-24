@@ -10,6 +10,7 @@ import QuizAlertModal from '../QuizCompetitions/QuizAlertModal';
 import HomeFeaturePanel from './HomeFeaturePanel';
 import HomeSectionHeader from './HomeSectionHeader';
 import QuizCompetitionIcon from './icons/QuizCompetitionIcon';
+import QuizRobotIllustration from './icons/QuizRobotIllustration';
 import { colors } from '../../constants/theme';
 import type { QuizCompetition } from '../../store/content/types/quizCompetitions.types';
 import type { LoginScreenNavigationProp } from '../../types/navigation';
@@ -186,12 +187,13 @@ function QuizCompetitionHomePanel({
         imageFallback={
           <View style={styles.iconWrap}>
             <QuizCompetitionIcon
-              size={28}
+              size={26}
               color={colors.primary}
               strokeWidth={2.25}
             />
           </View>
         }
+        illustration={<QuizRobotIllustration size={92} />}
         onPress={handlePanelPress}
         onCtaPress={handleCtaPress}
         ctaDisabled={status === 'locked'}

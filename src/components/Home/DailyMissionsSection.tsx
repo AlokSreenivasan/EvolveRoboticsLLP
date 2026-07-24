@@ -1,17 +1,17 @@
 import React, { useCallback, useMemo } from 'react';
 import {
   ActivityIndicator,
-  ScrollView,
+  Dimensions,
   StyleSheet,
+  Text,
   View,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { BookOpen } from 'lucide-react-native';
+import { BookOpen, Sparkles, Target } from 'lucide-react-native';
 
 import DailyMissionCard from './DailyMissionCard';
-import HomeSectionHeader from './HomeSectionHeader';
 import QuizCompetitionIcon from './icons/QuizCompetitionIcon';
-import { colors } from '../../constants/theme';
+import { colors, sectionTitleStyle, spacing } from '../../constants/theme';
 import type { LoginScreenNavigationProp } from '../../types/navigation';
 import { useContinueLearningProgress } from '../../presentation/hooks/useContinueLearningProgress';
 import { useQuizAttempts } from '../../presentation/hooks/useQuizAttempts';
@@ -27,6 +27,32 @@ const MISSION_THEME = {
   accentBackground: colors.primaryLight,
   accentBorder: colors.primaryMuted,
 };
+
+const MISSION_GAP = 10;
+const MISSION_CARD_WIDTH =
+  (Dimensions.get('window').width -
+    spacing.screenHorizontal * 2 -
+    MISSION_GAP) /
+  2;
+
+function DailyMissionsHeader() {
+  return (
+    <View style={styles.header}>
+      <View style={styles.headerTitleRow}>
+        <View style={styles.headerIconWrap}>
+          <Target size={15} color="#fff" strokeWidth={2.5} />
+        </View>
+        <Text style={styles.headerTitle}>Daily Missions</Text>
+        <View style={styles.sparkles}>
+          <Sparkles size={14} color={colors.primarySoft} strokeWidth={2.4} />
+          <View style={styles.sparkleOffset}>
+            <Sparkles size={10} color={colors.primaryMuted} strokeWidth={2.4} />
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}
 
 function DailyMissionsSection() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
@@ -67,14 +93,17 @@ function DailyMissionsSection() {
 
   return (
     <View style={styles.section}>
-      <HomeSectionHeader title="Daily Missions" />
+      <DailyMissionsHeader />
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}>
+      <View style={styles.cardsRow}>
         <DailyMissionCard
-          icon={<BookOpen size={20} color={MISSION_THEME.accentColor} strokeWidth={2.25} />}
+          icon={
+            <BookOpen
+              size={20}
+              color={MISSION_THEME.accentColor}
+              strokeWidth={2.25}
+            />
+          }
           title="Lessons"
           xpReward={DAILY_MISSION_LESSONS_XP}
           isDone={lessonsDone}
@@ -82,7 +111,7 @@ function DailyMissionsSection() {
           accentBackground={MISSION_THEME.accentBackground}
           accentBorder={MISSION_THEME.accentBorder}
           onStartPress={handleLessonsStart}
-          style={styles.cardSpacing}
+          style={styles.card}
         />
         <DailyMissionCard
           icon={
@@ -99,8 +128,9 @@ function DailyMissionsSection() {
           accentBackground={MISSION_THEME.accentBackground}
           accentBorder={MISSION_THEME.accentBorder}
           onStartPress={handleQuizStart}
+          style={styles.card}
         />
-      </ScrollView>
+      </View>
     </View>
   );
 }
@@ -109,11 +139,42 @@ const styles = StyleSheet.create({
   section: {
     marginTop: 18,
   },
-  scrollContent: {
-    paddingRight: 4,
+  header: {
+    marginBottom: 14,
+    paddingHorizontal: 4,
   },
-  cardSpacing: {
-    marginRight: 12,
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerIconWrap: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  headerTitle: {
+    ...sectionTitleStyle,
+    fontWeight: '800',
+  },
+  sparkles: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginLeft: 8,
+    gap: 2,
+  },
+  sparkleOffset: {
+    marginTop: -4,
+  },
+  cardsRow: {
+    flexDirection: 'row',
+    gap: MISSION_GAP,
+  },
+  card: {
+    width: MISSION_CARD_WIDTH,
   },
   loaderWrap: {
     marginTop: 18,

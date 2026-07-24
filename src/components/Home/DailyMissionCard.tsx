@@ -29,7 +29,6 @@ function DailyMissionCard({
   isDone,
   accentColor,
   accentBackground,
-  accentBorder,
   onStartPress,
   style,
 }: DailyMissionCardProps) {
@@ -37,14 +36,7 @@ function DailyMissionCard({
 
   return (
     <TouchableOpacity
-      style={[
-        styles.card,
-        {
-          borderColor: accentBorder,
-          backgroundColor: colors.surface,
-        },
-        style,
-      ]}
+      style={[styles.card, style]}
       activeOpacity={0.92}
       onPress={onStartPress}
       disabled={!onStartPress}
@@ -55,10 +47,8 @@ function DailyMissionCard({
         pointerEvents="none"
       />
 
-      <View style={styles.topRow}>
-        <View style={[styles.iconWrap, { backgroundColor: accentBackground }]}>
-          {icon}
-        </View>
+      <View style={[styles.iconWrap, { backgroundColor: accentBackground }]}>
+        {icon}
       </View>
 
       <Text style={styles.title} numberOfLines={2}>
@@ -84,7 +74,7 @@ function DailyMissionCard({
           style={[
             styles.progressFill,
             {
-              width: `${Math.max(progressPercent, isDone ? 100 : 0)}%`,
+              width: `${progressPercent}%`,
               backgroundColor: accentColor,
             },
           ]}
@@ -107,8 +97,8 @@ function DailyMissionCard({
 const styles = StyleSheet.create({
   card: {
     width: 168,
-    borderRadius: 22,
-    borderWidth: 1,
+    borderRadius: 20,
+    backgroundColor: colors.surface,
     paddingHorizontal: 14,
     paddingTop: 14,
     paddingBottom: 12,
@@ -119,31 +109,25 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -24,
     right: -18,
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    opacity: 0.55,
-  },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    marginBottom: 12,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    opacity: 0.85,
   },
   iconWrap: {
     width: 40,
     height: 40,
-    borderRadius: 14,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 10,
   },
   title: {
     fontSize: 15,
     fontWeight: '800',
     color: colors.textPrimary,
     lineHeight: 19,
-    minHeight: 38,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   rewardRow: {
     flexDirection: 'row',
@@ -153,7 +137,7 @@ const styles = StyleSheet.create({
   },
   rewardText: {
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '700',
     letterSpacing: 0.1,
   },
   progressTrack: {
@@ -169,11 +153,11 @@ const styles = StyleSheet.create({
   startButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 9,
-    borderRadius: 20,
+    paddingVertical: 10,
+    borderRadius: 999,
   },
   startButtonText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '800',
     color: '#fff',
     letterSpacing: 0.2,
