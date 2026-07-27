@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  ActivityIndicator,
   StyleSheet,
   Text,
   TextInput,
@@ -15,7 +14,7 @@ import SettingsCard from '../../../components/Settings/SettingsCard';
 import SettingsInfoCard from '../../../components/Settings/SettingsInfoCard';
 import SettingsScreenLayout from '../../../components/Settings/SettingsScreenLayout';
 import SettingsSectionHeader from '../../../components/Settings/SettingsSectionHeader';
-import { colors, spacing } from '../../../constants/theme';
+import { colors, inputFieldStyle, spacing, typography } from '../../../constants/theme';
 import type { LoginScreenNavigationProp } from '../../../types/navigation';
 import { appAlert, appAlertButtons, appAlertCopy } from '../../../utils/alert/appAlert';
 import { useChangePasswordForm } from '../../hooks/useChangePasswordForm';
@@ -70,13 +69,13 @@ function ChangePasswordScreen() {
         <SettingsSectionHeader title="New credentials" />
         <SettingsCard style={styles.formCard}>
           <Text style={styles.label}>Current Password</Text>
-          <View style={styles.passwordRow}>
+          <View
+            style={[
+              styles.passwordRow,
+              errors.currentPassword ? styles.inputError : null,
+            ]}>
             <TextInput
-              style={[
-                styles.input,
-                styles.passwordInput,
-                errors.currentPassword ? styles.inputError : null,
-              ]}
+              style={styles.passwordInput}
               placeholder="Enter current password"
               placeholderTextColor={colors.textMuted}
               value={currentPassword}
@@ -106,13 +105,13 @@ function ChangePasswordScreen() {
           ) : null}
 
           <Text style={styles.label}>New Password</Text>
-          <View style={styles.passwordRow}>
+          <View
+            style={[
+              styles.passwordRow,
+              errors.newPassword ? styles.inputError : null,
+            ]}>
             <TextInput
-              style={[
-                styles.input,
-                styles.passwordInput,
-                errors.newPassword ? styles.inputError : null,
-              ]}
+              style={styles.passwordInput}
               placeholder="Enter new password"
               placeholderTextColor={colors.textMuted}
               value={newPassword}
@@ -142,13 +141,13 @@ function ChangePasswordScreen() {
           ) : null}
 
           <Text style={styles.label}>Confirm New Password</Text>
-          <View style={styles.passwordRow}>
+          <View
+            style={[
+              styles.passwordRow,
+              errors.confirmNewPassword ? styles.inputError : null,
+            ]}>
             <TextInput
-              style={[
-                styles.input,
-                styles.passwordInput,
-                errors.confirmNewPassword ? styles.inputError : null,
-              ]}
+              style={styles.passwordInput}
               placeholder="Re-enter new password"
               placeholderTextColor={colors.textMuted}
               value={confirmNewPassword}
@@ -178,18 +177,13 @@ function ChangePasswordScreen() {
           ) : null}
 
           <AppButton
-            title={isSubmitting ? 'Updating...' : 'Update Password'}
+            title="Update Password"
             onPress={handleUpdatePassword}
-            buttonStyle={styles.saveButton}
-            textStyle={styles.saveButtonText}
+            variant="primary"
+            loading={isSubmitting}
             disabled={isSubmitting}
+            buttonStyle={styles.saveButton}
           />
-          {isSubmitting ? (
-            <ActivityIndicator
-              color={colors.primary}
-              style={styles.saveLoader}
-            />
-          ) : null}
         </SettingsCard>
       </View>
     </SettingsScreenLayout>
@@ -204,37 +198,24 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   label: {
-    fontWeight: '600',
+    ...typography.label,
+    color: colors.primary,
     marginBottom: 8,
     marginTop: 12,
-    fontSize: 14,
-    color: colors.primary,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.primaryMuted,
-    borderRadius: 12,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: colors.textPrimary,
-    marginBottom: 4,
-    backgroundColor: colors.surface,
   },
   passwordRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 4,
-    borderWidth: 1,
-    borderColor: colors.primaryMuted,
-    borderRadius: 12,
-    backgroundColor: colors.surface,
+    ...inputFieldStyle,
+    paddingVertical: 0,
   },
   passwordInput: {
     flex: 1,
-    borderWidth: 0,
-    marginBottom: 0,
-    backgroundColor: 'transparent',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    fontSize: 16,
+    color: colors.textPrimary,
   },
   passwordToggle: {
     paddingHorizontal: 14,
@@ -243,7 +224,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   inputError: {
-    borderColor: '#e57373',
+    borderColor: colors.danger,
   },
   errorText: {
     color: colors.danger,
@@ -251,19 +232,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   saveButton: {
-    backgroundColor: colors.primary,
-    paddingVertical: 14,
-    borderRadius: 12,
     marginTop: 20,
-  },
-  saveButtonText: {
-    color: colors.surface,
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  saveLoader: {
-    marginTop: 12,
-    alignSelf: 'center',
   },
 });
 

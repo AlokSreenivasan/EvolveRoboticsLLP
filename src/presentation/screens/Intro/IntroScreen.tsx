@@ -2,7 +2,6 @@ import React, { useRef, useState } from 'react';
 import {
   Image,
   LayoutChangeEvent,
-  Platform,
   StyleSheet,
   Text,
   View,
@@ -11,27 +10,28 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Swiper from 'react-native-swiper';
 import AppButton from '../../../components/AppButton.tsx';
 import ExpandingDotPagination from '../../../components/ExpandingDotPagination';
-import { colors, spacing } from '../../../constants/theme';
+import SurfaceCard from '../../../components/ui/SurfaceCard';
+import {
+  colors,
+  spacing,
+  typography,
+} from '../../../constants/theme';
 import { useIntroFlow } from '../../context/IntroFlowContext';
 
 const slides = [
   {
     id: 1,
     title: 'Explore the Future of Robotics',
-    // image: require('../../../assets/swipeImages/swipe1.png'),
     image: require('../../../assets/swipeScreenImages/swipe1.png'),
-
   },
   {
     id: 2,
     title: 'Smart Automation for Everyone',
-    // image: require('../../../assets/swipeImages/swipe2.png'),
     image: require('../../../assets/swipeScreenImages/swipe2.png'),
   },
   {
     id: 3,
     title: 'Innovating Tomorrow, Today',
-    // image: require('../../../assets/swipeImages/swipe3.png'),
     image: require('../../../assets/swipeScreenImages/swipe4.png'),
   },
 ];
@@ -55,7 +55,6 @@ function IntroScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Swiper (full screen) */}
       <View style={styles.swipeContainer} onLayout={onSwipeContainerLayout}>
         {swiperSize.height > 0 ? (
         <Swiper
@@ -91,10 +90,9 @@ function IntroScreen() {
         </View>
       )}
 
-      {/* Bottom overlay */}
       {isLastSlide && (
         <View style={[styles.bottomOverlay, { paddingBottom: 20 + insets.bottom }]}>
-          <View style={styles.ctaScrim}>
+          <SurfaceCard elevation="elevated" style={styles.ctaCard}>
             <Text style={styles.ctaTitle}>Welcome to Evolve</Text>
             <Text style={styles.ctaSubtitle}>
               Sign in to continue learning or create a new account
@@ -103,17 +101,17 @@ function IntroScreen() {
             <AppButton
               title="Log In"
               onPress={() => finishIntro('Login')}
-              buttonStyle={styles.loginButton}
-              textStyle={styles.loginText}
+              variant="primary"
+              buttonStyle={styles.ctaButton}
             />
 
             <AppButton
               title="Create Account"
               onPress={() => finishIntro('SignUp')}
-              buttonStyle={styles.signUpButton}
-              textStyle={styles.signUpText}
+              variant="secondary"
+              buttonStyle={styles.ctaButtonLast}
             />
-          </View>
+          </SurfaceCard>
         </View>
       )}
     </View>
@@ -123,7 +121,7 @@ function IntroScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: colors.textPrimary,
   },
   swipeContainer: {
     flex: 1,
@@ -137,13 +135,12 @@ const styles = StyleSheet.create({
   },
   slide: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: colors.textPrimary,
   },
   image: {
     width: '100%',
     height: '100%',
   },
-
   bottomOverlay: {
     position: 'absolute',
     left: 0,
@@ -151,81 +148,32 @@ const styles = StyleSheet.create({
     bottom: 0,
     paddingHorizontal: spacing.screenHorizontal,
   },
-  ctaScrim: {
-    width: '100%',
+  ctaCard: {
     paddingHorizontal: 20,
     paddingTop: 24,
-    paddingBottom: 8,
-    borderTopLeftRadius: spacing.cardRadius,
-    borderTopRightRadius: spacing.cardRadius,
-    backgroundColor: 'rgba(0, 0, 0, 0.72)',
-    borderWidth: 1,
-    borderBottomWidth: 0,
+    paddingBottom: 20,
+    backgroundColor: colors.heroOverlay,
     borderColor: 'rgba(238, 205, 244, 0.35)',
-    alignItems: 'stretch',
   },
   ctaTitle: {
+    ...typography.screenTitle,
     color: colors.surface,
-    fontSize: 22,
-    fontWeight: '700',
     textAlign: 'center',
-    marginBottom: 6,
-    letterSpacing: 0.2,
+    marginBottom: 8,
   },
   ctaSubtitle: {
+    ...typography.screenSubtitle,
     color: colors.heroHighlight,
-    fontSize: 14,
-    lineHeight: 20,
     textAlign: 'center',
     marginBottom: 20,
     paddingHorizontal: 8,
   },
-  loginButton: {
-    backgroundColor: colors.primary,
-    minHeight: 52,
-    paddingVertical: 14,
-    borderRadius: 14,
+  ctaButton: {
     marginBottom: 12,
     width: '100%',
-    ...Platform.select({
-      ios: {
-        shadowColor: colors.primary,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.45,
-        shadowRadius: 10,
-      },
-      android: { elevation: 6 },
-    }),
   },
-  loginText: {
-    color: colors.surface,
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-  },
-  signUpButton: {
-    backgroundColor: colors.surface,
-    minHeight: 52,
-    paddingVertical: 14,
-    borderRadius: 14,
+  ctaButtonLast: {
     width: '100%',
-    borderWidth: 2,
-    borderColor: colors.primaryMuted,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.12,
-        shadowRadius: 6,
-      },
-      android: { elevation: 3 },
-    }),
-  },
-  signUpText: {
-    color: colors.primary,
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.3,
   },
 });
 

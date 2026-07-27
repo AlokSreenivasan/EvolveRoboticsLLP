@@ -10,9 +10,14 @@ import {
 } from 'react-native';
 import { RouteProp, useRoute } from '@react-navigation/native';
 
-import BackButton from '../../../components/BackButton';
 import MarkdownDocument from '../../../components/Markdown/MarkdownDocument';
-import { colors, spacing } from '../../../constants/theme';
+import ScreenHeader from '../../../components/ui/ScreenHeader';
+import SurfaceCard from '../../../components/ui/SurfaceCard';
+import {
+  colors,
+  spacing,
+  typography,
+} from '../../../constants/theme';
 import type { RootStackParamList } from '../../../types/navigation';
 
 type ProjectDetailRouteProp = RouteProp<RootStackParamList, 'ProjectDetail'>;
@@ -77,30 +82,27 @@ function ProjectDetailScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <BackButton withSpacingBelow />
-      </View>
+      <ScreenHeader
+        title={project.title}
+        subtitle={project.subtitle ?? undefined}
+        compact
+      />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
         <View style={styles.body}>
-          <Text style={styles.title}>{project.title}</Text>
-          {project.subtitle ? (
-            <Text style={styles.subtitle}>{project.subtitle}</Text>
-          ) : null}
-
           {description ? (
-            <View style={styles.requirementsSection}>
+            <SurfaceCard elevation="default" style={styles.requirementsSection}>
               <Text style={styles.sectionHeading}>
                 {markdownUrl ? 'Summary' : 'Project Requirements'}
               </Text>
               <Text style={styles.requirementsText}>{description}</Text>
-            </View>
+            </SurfaceCard>
           ) : null}
 
           {markdownUrl ? (
-            <View style={styles.markdownDocument}>
+            <SurfaceCard elevation="flat" style={styles.markdownDocument}>
               {markdownLoading ? (
                 <ActivityIndicator color={colors.primary} style={styles.loader} />
               ) : null}
@@ -118,16 +120,16 @@ function ProjectDetailScreen() {
                   This project page is empty.
                 </Text>
               ) : null}
-            </View>
+            </SurfaceCard>
           ) : null}
 
           {!description && !markdownUrl ? (
-            <View style={styles.requirementsSection}>
+            <SurfaceCard elevation="default" style={styles.requirementsSection}>
               <Text style={styles.sectionHeading}>Project Requirements</Text>
               <Text style={styles.emptyRequirements}>
                 Requirements for this project will be shared soon.
               </Text>
-            </View>
+            </SurfaceCard>
           ) : null}
 
           {imageUris.length > 0 ? (
@@ -135,28 +137,33 @@ function ProjectDetailScreen() {
               <Text style={styles.sectionHeading}>Images</Text>
               <View style={styles.imagesStack}>
                 {imageUris.map((uri, index) => (
-                  <Image
+                  <SurfaceCard
                     key={`${index}-${uri.slice(-24)}`}
-                    source={{ uri }}
-                    style={[
-                      styles.stackedImage,
-                      {
-                        aspectRatio: imageAspectRatios[uri] ?? 16 / 9,
-                      },
-                    ]}
-                    resizeMode="contain"
-                    onLoad={event => {
-                      const { width, height } = event.nativeEvent.source;
-                      if (width > 0 && height > 0) {
-                        setImageAspectRatios(prev =>
-                          prev[uri] === width / height
-                            ? prev
-                            : { ...prev, [uri]: width / height },
-                        );
-                      }
-                    }}
-                    accessibilityLabel={`Project image ${index + 1}`}
-                  />
+                    elevation="light"
+                    clipped
+                    style={styles.imageCard}>
+                    <Image
+                      source={{ uri }}
+                      style={[
+                        styles.stackedImage,
+                        {
+                          aspectRatio: imageAspectRatios[uri] ?? 16 / 9,
+                        },
+                      ]}
+                      resizeMode="contain"
+                      onLoad={event => {
+                        const { width, height } = event.nativeEvent.source;
+                        if (width > 0 && height > 0) {
+                          setImageAspectRatios(prev =>
+                            prev[uri] === width / height
+                              ? prev
+                              : { ...prev, [uri]: width / height },
+                          );
+                        }
+                      }}
+                      accessibilityLabel={`Project image ${index + 1}`}
+                    />
+                  </SurfaceCard>
                 ))}
               </View>
             </View>
@@ -172,71 +179,41 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  header: {
-    paddingHorizontal: spacing.screenHorizontal,
-    paddingTop: 8,
-    backgroundColor: colors.surface,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
   scrollContent: {
     paddingBottom: 40,
   },
   body: {
     paddingHorizontal: spacing.screenHorizontal,
-    paddingTop: 20,
-    gap: 8,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: colors.textPrimary,
-    lineHeight: 30,
-  },
-  subtitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.primary,
-    lineHeight: 22,
+    paddingTop: 16,
+    gap: 12,
   },
   requirementsSection: {
-    marginTop: 16,
     padding: 16,
-    borderRadius: spacing.cardRadius,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
-  /** Full-bleed document surface — reads like a GitHub README, not a card. */
   markdownDocument: {
-    marginTop: 20,
-    marginHorizontal: -spacing.screenHorizontal,
     paddingHorizontal: spacing.screenHorizontal + 8,
     paddingVertical: 24,
-    backgroundColor: colors.surface,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
+    borderRadius: spacing.cardRadiusLg,
   },
   imagesSection: {
-    marginTop: 16,
+    marginTop: 4,
   },
   imagesStack: {
     gap: 12,
   },
+  imageCard: {
+    borderRadius: spacing.cardRadiusLg,
+  },
   stackedImage: {
     width: '100%',
-    borderRadius: spacing.cardRadius,
     backgroundColor: colors.primaryLight,
   },
   sectionHeading: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: colors.textPrimary,
+    ...typography.sectionTitle,
     marginBottom: 12,
   },
   requirementsText: {
-    fontSize: 15,
+    ...typography.body,
     color: colors.textSecondary,
     lineHeight: 24,
   },

@@ -3,7 +3,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ChevronRight } from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
 
-import { colors } from '../../constants/theme';
+import { colors, spacing } from '../../constants/theme';
 
 type SettingsLinkRowProps = {
   title: string;
@@ -39,7 +39,7 @@ function SettingsLinkRow({
             styles.iconContainer,
             { backgroundColor: iconBackgroundColor },
           ]}>
-          <Icon size={22} color={iconColor} strokeWidth={2} />
+          <Icon size={20} color={iconColor} strokeWidth={2.15} />
         </View>
       ) : null}
 
@@ -49,11 +49,13 @@ function SettingsLinkRow({
       </View>
 
       {onPress ? (
-        <ChevronRight
-          size={20}
-          color={colors.textMuted}
-          strokeWidth={2}
-        />
+        <View style={styles.chevronWrap}>
+          <ChevronRight
+            size={18}
+            color={colors.primary}
+            strokeWidth={2.25}
+          />
+        </View>
       ) : null}
     </>
   );
@@ -69,7 +71,7 @@ function SettingsLinkRow({
       style={[styles.row, !isLast && styles.rowBorder]}
       onPress={onPress}
       disabled={disabled}
-      activeOpacity={0.7}>
+      activeOpacity={0.72}>
       {content}
     </TouchableOpacity>
   );
@@ -81,15 +83,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 14,
     paddingHorizontal: 16,
+    minHeight: 64,
   },
   rowBorder: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
+    borderBottomColor: 'rgba(164, 42, 139, 0.1)',
   },
   iconContainer: {
     width: 44,
     height: 44,
-    borderRadius: 12,
+    borderRadius: spacing.iconTileRadius,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
@@ -100,19 +103,29 @@ const styles = StyleSheet.create({
   },
   titleDefault: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: colors.textPrimary,
+    letterSpacing: -0.2,
   },
   titleLink: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: colors.link,
+    letterSpacing: -0.2,
   },
   subtitle: {
     fontSize: 13,
     color: colors.textSecondary,
     lineHeight: 18,
     marginTop: 2,
+  },
+  chevronWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 10,
+    backgroundColor: colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 

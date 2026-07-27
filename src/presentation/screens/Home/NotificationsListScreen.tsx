@@ -1,6 +1,5 @@
 import React, { useCallback } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   RefreshControl,
   SafeAreaView,
@@ -12,10 +11,16 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { Bell, Settings2 } from 'lucide-react-native';
 
-import BackButton from '../../../components/BackButton';
 import NotificationItemCard from '../../../components/Home/NotificationItemCard';
+import ScreenHeader from '../../../components/ui/ScreenHeader';
+import ScreenStateCard from '../../../components/ui/ScreenStateCard';
+import SurfaceCard from '../../../components/ui/SurfaceCard';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
-import { cardShadow, colors, spacing } from '../../../constants/theme';
+import {
+  colors,
+  spacing,
+  typography,
+} from '../../../constants/theme';
 import type { LearnerNotification } from '../../../store/content/types/notifications.types';
 import type { LoginScreenNavigationProp } from '../../../types/navigation';
 import {
@@ -51,31 +56,25 @@ function NotificationsListScreen() {
 
   const listEmpty = useCallback(() => {
     if (loading) {
-      return <ActivityIndicator color={colors.primary} style={styles.loader} />;
+      return <ScreenStateCard variant="loading" />;
     }
     if (error) {
       return (
-        <View style={styles.messageCard}>
-          <View style={styles.messageIconWrap}>
-            <Bell size={24} color={colors.primary} strokeWidth={2} />
-          </View>
-          <Text style={styles.messageTitle}>Could not load notifications</Text>
-          <Text style={styles.messageText}>
-            Pull down to refresh, or try again in a moment.
-          </Text>
-        </View>
+        <ScreenStateCard
+          variant="error"
+          title="Could not load notifications"
+          message="Pull down to refresh, or try again in a moment."
+          Icon={Bell}
+        />
       );
     }
     return (
-      <View style={styles.messageCard}>
-        <View style={styles.messageIconWrap}>
-          <Bell size={24} color={colors.primary} strokeWidth={2} />
-        </View>
-        <Text style={styles.messageTitle}>No notifications yet</Text>
-        <Text style={styles.messageText}>
-          New updates from your learning team will show up here.
-        </Text>
-      </View>
+      <ScreenStateCard
+        variant="empty"
+        title="No notifications yet"
+        message="New updates from your learning team will show up here."
+        Icon={Bell}
+      />
     );
   }, [error, loading]);
 
@@ -88,14 +87,10 @@ function NotificationsListScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <BackButton withSpacingBelow />
-        <Text style={styles.title}>Notifications</Text>
-        <Text style={styles.subtitle}>
-          Course news and updates from your instructors.
-        </Text>
-        {countLabel ? <Text style={styles.countBadge}>{countLabel}</Text> : null}
-      </View>
+      <ScreenHeader
+        title="Notifications"
+        subtitle="Course news and updates from your instructors."
+      />
 
       <FlatList
         data={loading || error ? [] : displayNotifications}
@@ -103,7 +98,11 @@ function NotificationsListScreen() {
         renderItem={renderItem}
         ListHeaderComponent={
           !loading && !error ? (
-            <View style={styles.infoCard}>
+            <>
+              {countLabel ? (
+                <Text style={styles.countBadge}>{countLabel}</Text>
+              ) : null}
+              <SurfaceCard tinted elevation="default" style={styles.infoCard}>
               <View style={styles.infoIconWrap}>
                 <Bell size={22} color={colors.primary} strokeWidth={2} />
               </View>
@@ -114,7 +113,8 @@ function NotificationsListScreen() {
                   settings.
                 </Text>
               </View>
-            </View>
+            </SurfaceCard>
+            </>
           ) : null
         }
         ListFooterComponent={
@@ -122,7 +122,9 @@ function NotificationsListScreen() {
             <TouchableOpacity
               style={styles.settingsLink}
               activeOpacity={0.85}
-              onPress={() => navigation.navigate('NotificationPreferences')}>
+              onPress={() => navigation.navigate('NotificationPreferences')}
+              accessibilityRole="button"
+              accessibilityLabel="Notification settings">
               <Settings2 size={18} color={colors.primary} strokeWidth={2} />
               <Text style={styles.settingsLinkText}>
                 Notification settings
@@ -157,28 +159,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  header: {
-    paddingHorizontal: spacing.screenHorizontal,
-    paddingTop: 8,
-    paddingBottom: 12,
-    backgroundColor: colors.surface,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: colors.textPrimary,
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    lineHeight: 20,
-  },
   countBadge: {
     alignSelf: 'flex-start',
-    marginTop: 10,
+    marginBottom: 12,
     fontSize: 12,
     fontWeight: '700',
     color: colors.primary,
@@ -196,19 +179,14 @@ const styles = StyleSheet.create({
   },
   infoCard: {
     flexDirection: 'row',
-    backgroundColor: colors.surface,
-    borderRadius: spacing.cardRadius,
     padding: 16,
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: colors.noticeBorder,
-    ...cardShadow,
   },
   infoIconWrap: {
     width: 44,
     height: 44,
-    borderRadius: 12,
-    backgroundColor: colors.primaryLight,
+    borderRadius: spacing.iconTileRadius,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
@@ -217,51 +195,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   infoTitle: {
+    ...typography.cardTitle,
     fontSize: 15,
-    fontWeight: '700',
-    color: colors.textPrimary,
     marginBottom: 4,
   },
   infoDescription: {
-    fontSize: 13,
-    color: colors.textSecondary,
+    ...typography.bodySecondary,
     lineHeight: 19,
   },
   separator: {
     height: 12,
-  },
-  loader: {
-    marginVertical: 40,
-  },
-  messageCard: {
-    alignItems: 'center',
-    padding: 24,
-    borderRadius: spacing.cardRadius,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  messageIconWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: colors.primaryLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 14,
-  },
-  messageTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    textAlign: 'center',
-    marginBottom: 6,
-  },
-  messageText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 20,
   },
   settingsLink: {
     flexDirection: 'row',
@@ -270,10 +213,10 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: 20,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: spacing.buttonRadius,
     backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderWidth: 1.5,
+    borderColor: colors.primaryMuted,
   },
   settingsLinkText: {
     fontSize: 14,

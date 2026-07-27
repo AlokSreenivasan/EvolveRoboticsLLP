@@ -8,7 +8,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-import { colors, spacing } from '../../constants/theme';
+import { cardShadowLight, colors, glassBorder, spacing } from '../../constants/theme';
 import HomeSectionHeader from './HomeSectionHeader';
 
 type HomeFeedSectionProps = {
@@ -87,11 +87,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   messageWrap: {
-    padding: 16,
-    borderRadius: 12,
+    padding: 18,
+    borderRadius: 18,
     backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
+    ...glassBorder,
+    ...cardShadowLight,
   },
   messageText: {
     fontSize: 14,
@@ -105,6 +105,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     textAlign: 'center',
     marginBottom: 6,
+    letterSpacing: -0.2,
   },
   emptyText: {
     fontSize: 13,

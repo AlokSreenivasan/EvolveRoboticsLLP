@@ -6,13 +6,13 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  ActivityIndicator,
   SafeAreaView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Eye, EyeOff } from 'lucide-react-native';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
 import AppButton from '../../../components/AppButton.tsx';
+import SurfaceCard from '../../../components/ui/SurfaceCard';
 import { isValidEmail } from '../../../domain/Auth/validation/isValidEmail.ts';
 import { appAlert, appAlertCopy } from '../../../utils/alert/appAlert';
 import {
@@ -23,6 +23,12 @@ import { isValidContactNumber } from '../../../domain/Profile/validation/isValid
 import { signUpWithProfile } from '../../../services/firebase/signUpService';
 import { useAuth } from '../../context/AuthContext';
 import { useAuthFlow } from '../../context/AuthFlowContext';
+import {
+  colors,
+  inputFieldStyle,
+  spacing,
+  typography,
+} from '../../../constants/theme';
 
 type Errors = {
   fullName?: string;
@@ -117,16 +123,23 @@ const SignUpScreen = () => {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Sign Up</Text>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}>
+        <Text style={styles.brandLabel}>Sign Up</Text>
 
-        <View style={styles.card}>
+        <SurfaceCard elevation="default" style={styles.card}>
           <Text style={styles.heading}>Create Your Account</Text>
+          <Text style={styles.subText}>
+            Join Evolve Robotics and start your learning journey.
+          </Text>
 
           <Text style={styles.label}>Full Name</Text>
           <TextInput
             style={styles.input}
             placeholder="Enter your full name"
+            placeholderTextColor={colors.textMuted}
             value={fullName}
             onChangeText={handleFullNameChange}
           />
@@ -139,7 +152,7 @@ const SignUpScreen = () => {
               errors.contactNumber ? styles.inputError : null,
             ]}
             placeholder="Enter 10-digit contact number"
-            placeholderTextColor="#999"
+            placeholderTextColor={colors.textMuted}
             value={contactNumber}
             onChangeText={handleContactNumberChange}
             keyboardType="number-pad"
@@ -154,17 +167,20 @@ const SignUpScreen = () => {
           <TextInput
             style={styles.input}
             placeholder="your.email@example.com"
+            placeholderTextColor={colors.textMuted}
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
+            autoCapitalize="none"
           />
           {errors.email && <Text style={styles.error}>{errors.email}</Text>}
 
           <Text style={styles.label}>Password</Text>
           <View style={styles.passwordRow}>
             <TextInput
-              style={[styles.input, styles.passwordInput]}
+              style={styles.passwordInput}
               placeholder="Minimum 8 characters"
+              placeholderTextColor={colors.textMuted}
               value={password}
               onChangeText={setPassword}
               secureTextEntry={!isPasswordVisible}
@@ -179,9 +195,9 @@ const SignUpScreen = () => {
               accessibilityLabel={isPasswordVisible ? 'Hide password' : 'Show password'}
             >
               {isPasswordVisible ? (
-                <EyeOff size={20} color="#a42a8b" />
+                <EyeOff size={20} color={colors.primary} />
               ) : (
-                <Eye size={20} color="#a42a8b" />
+                <Eye size={20} color={colors.primary} />
               )}
             </TouchableOpacity>
           </View>
@@ -190,8 +206,9 @@ const SignUpScreen = () => {
           <Text style={styles.label}>Confirm Password</Text>
           <View style={styles.passwordRow}>
             <TextInput
-              style={[styles.input, styles.passwordInput]}
+              style={styles.passwordInput}
               placeholder="Re-enter password"
+              placeholderTextColor={colors.textMuted}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               secureTextEntry={!isConfirmPasswordVisible}
@@ -208,9 +225,9 @@ const SignUpScreen = () => {
               }
             >
               {isConfirmPasswordVisible ? (
-                <EyeOff size={20} color="#a42a8b" />
+                <EyeOff size={20} color={colors.primary} />
               ) : (
-                <Eye size={20} color="#a42a8b" />
+                <Eye size={20} color={colors.primary} />
               )}
             </TouchableOpacity>
           </View>
@@ -219,114 +236,118 @@ const SignUpScreen = () => {
           )}
 
           <AppButton
-            title={loading ? 'Creating account...' : 'Sign Up'}
+            title="Sign Up"
             onPress={handleSignUp}
-            buttonStyle={styles.button}
-            textStyle={styles.buttonText}
+            variant="primary"
+            loading={loading}
             disabled={loading}
+            buttonStyle={styles.submitButton}
           />
-          {loading ? (
-            <ActivityIndicator color="#a42a8b" style={styles.loader} />
-          ) : null}
 
           <View style={styles.signupline}>
-            <Text>Already have an account?</Text>
+            <Text style={styles.signupPrompt}>Already have an account?</Text>
             <TouchableOpacity onPress={() => navigation.navigate('Login')}>
               <Text style={styles.signinLink}>Sign In</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </SurfaceCard>
       </ScrollView>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#fff' },
-  container: { padding: 20, backgroundColor: '#fff', flexGrow: 1 },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
-    alignSelf: 'center',
+  safe: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  container: {
+    padding: spacing.screenHorizontal,
+    paddingBottom: 32,
+    flexGrow: 1,
+  },
+  brandLabel: {
+    ...typography.label,
+    color: colors.primary,
+    textAlign: 'center',
+    fontWeight: '700',
+    fontSize: 14,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
     marginVertical: 24,
-    color: '#a42a8b',
   },
   card: {
-    backgroundColor: '#fafafa',
-    borderRadius: 10,
     padding: 20,
-    elevation: 2,
   },
   heading: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: 20,
-    alignSelf: 'center',
+    ...typography.screenTitle,
+    fontSize: 22,
+    textAlign: 'center',
+    marginBottom: 8,
   },
-  label: { marginTop: 10, fontWeight: '500', color: '#a42a8b' },
+  subText: {
+    ...typography.screenSubtitle,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  label: {
+    ...typography.label,
+    color: colors.primary,
+    marginTop: 12,
+    marginBottom: 8,
+  },
   input: {
-    borderWidth: 1,
-    borderColor: '#eecdf4',
-    borderRadius: 6,
-    padding: 10,
-    marginTop: 5,
-    color: '#a42a8b',
+    ...inputFieldStyle,
+    fontSize: 16,
+    color: colors.textPrimary,
   },
   passwordRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#eecdf4',
-    borderRadius: 6,
-    marginTop: 5,
+    ...inputFieldStyle,
+    paddingVertical: 0,
   },
   passwordInput: {
     flex: 1,
-    borderWidth: 0,
-    marginTop: 0,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: colors.textPrimary,
   },
   passwordToggle: {
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    minWidth: 44,
+    minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  error: { fontSize: 12, color: 'red', marginBottom: 5 },
+  error: {
+    fontSize: 12,
+    color: colors.danger,
+    marginTop: 6,
+  },
   inputError: {
-    borderColor: '#e57373',
+    borderColor: colors.danger,
   },
-  checkboxContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 12,
-  },
-  checkboxText: { marginLeft: 8 },
-  link: { color: '#a42a8b', fontWeight: '600' },
-  button: {
-    backgroundColor: '#a42a8b',
-    padding: 15,
-    borderRadius: 8,
-    marginTop: 10,
-  },
-  buttonText: { color: '#fff', alignSelf: 'center', fontWeight: 'bold' },
-  footerText: {
-    alignSelf: 'center',
-    marginTop: 15,
+  submitButton: {
+    marginTop: 20,
   },
   signupline: {
     flexDirection: 'row',
-    marginVertical: 15,
+    marginTop: 20,
     justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+    minHeight: 44,
+  },
+  signupPrompt: {
+    ...typography.bodySecondary,
+    color: colors.textSecondary,
   },
   signinLink: {
-    fontSize: 14,
-    color: '#9C27B0',
-    fontWeight: '600',
+    ...typography.bodySecondary,
+    color: colors.link,
+    fontWeight: '700',
     textDecorationLine: 'underline',
-  },
-  loader: {
-    marginTop: 12,
-    alignSelf: 'center',
   },
 });
 

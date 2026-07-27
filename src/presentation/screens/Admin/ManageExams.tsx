@@ -12,7 +12,7 @@ import AdminListSectionHeader from '../../../components/Admin/AdminListSectionHe
 import AdminPublishedSwitch from '../../../components/Admin/AdminPublishedSwitch';
 import AdminContentVisibilityFields from '../../../components/Admin/AdminContentVisibilityFields';
 import { adminStyles } from '../../../components/Admin/adminStyles';
-import { colors, spacing } from '../../../constants/theme';
+import { colors, glassBorder, spacing } from '../../../constants/theme';
 import { useExams } from '../../hooks/useExams';
 import { useSchools } from '../../hooks/useSchools';
 import { useAdminSchoolAudienceForm } from '../../hooks/admin/useAdminSchoolAudienceForm';
@@ -506,7 +506,7 @@ function ManageExams() {
                 onPress={openCreateQuestionEditor}
                 accessibilityRole="button"
                 accessibilityLabel="Add question">
-                <Plus size={16} color="#fff" strokeWidth={2.5} />
+                <Plus size={16} color={colors.surface} strokeWidth={2.5} />
                 <Text style={styles.addQuestionText}>Add</Text>
               </TouchableOpacity>
             </View>
@@ -602,10 +602,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 18,
+    borderRadius: spacing.buttonRadius,
   },
   addQuestionText: {
-    color: '#fff',
+    color: colors.surface,
     fontWeight: '700',
     fontSize: 13,
   },
@@ -627,12 +627,13 @@ const styles = StyleSheet.create({
   questionCard: {
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 12,
+    borderRadius: spacing.inputRadius,
     padding: 12,
     backgroundColor: colors.surface,
     flexDirection: 'row',
     gap: 10,
     alignItems: 'flex-start',
+    ...glassBorder,
   },
   questionMeta: {
     flex: 1,
@@ -670,13 +671,14 @@ const styles = StyleSheet.create({
   choiceRow: {
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 12,
+    borderRadius: spacing.inputRadius,
     paddingHorizontal: 10,
     paddingTop: 10,
     backgroundColor: colors.surface,
     flexDirection: 'row',
     gap: 10,
     alignItems: 'flex-start',
+    ...glassBorder,
   },
   choiceRowSelected: {
     borderColor: colors.primaryMuted,

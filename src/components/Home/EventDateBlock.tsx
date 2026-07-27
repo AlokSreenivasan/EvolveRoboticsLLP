@@ -29,9 +29,11 @@ function EventDateBlock({
 
   return (
     <View style={[isCompact ? styles.blockCompact : styles.block, style]}>
-      <Text style={isCompact ? styles.monthCompact : styles.month}>
-        {displayMonth}
-      </Text>
+      <View style={isCompact ? styles.monthBandCompact : styles.monthBand}>
+        <Text style={isCompact ? styles.monthCompact : styles.month}>
+          {displayMonth}
+        </Text>
+      </View>
       <Text style={isCompact ? styles.dayCompact : styles.day}>
         {day.trim()}
       </Text>
@@ -43,46 +45,62 @@ const styles = StyleSheet.create({
   block: {
     width: 56,
     height: 64,
-    borderRadius: 12,
-    backgroundColor: colors.surface,
+    borderRadius: 14,
+    backgroundColor: colors.primaryLight,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
+    overflow: 'hidden',
     borderWidth: 1,
     borderColor: colors.primaryMuted,
   },
+  monthBand: {
+    width: '100%',
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
   month: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: colors.primary,
-    letterSpacing: 0.5,
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#fff',
+    letterSpacing: 0.8,
   },
   day: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: '800',
     color: colors.textPrimary,
     lineHeight: 30,
+    marginTop: 4,
   },
   blockCompact: {
     width: 48,
     height: 52,
-    borderRadius: 10,
-    backgroundColor: colors.surface,
+    borderRadius: 12,
+    backgroundColor: colors.primaryLight,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
+    overflow: 'hidden',
     borderWidth: 1,
     borderColor: colors.primaryMuted,
   },
+  monthBandCompact: {
+    width: '100%',
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    paddingVertical: 3,
+  },
   monthCompact: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: colors.primary,
-    letterSpacing: 0.5,
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#fff',
+    letterSpacing: 0.6,
   },
   dayCompact: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '800',
     color: colors.textPrimary,
     lineHeight: 22,
+    marginTop: 3,
   },
 });
 

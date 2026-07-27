@@ -54,7 +54,7 @@ function ListSeparator() {
 
 const styles = StyleSheet.create({
   separator: {
-    height: 12,
+    height: 14,
   },
 });
 

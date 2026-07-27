@@ -8,7 +8,12 @@ import {
 } from 'react-native';
 import { ChevronRight, FolderKanban } from 'lucide-react-native';
 
-import { cardShadow, colors } from '../../constants/theme';
+import {
+  cardShadow,
+  colors,
+  glassBorder,
+  spacing,
+} from '../../constants/theme';
 import type { Project } from '../../store/content/types/projects.types';
 
 type ProjectCardProps = {
@@ -34,7 +39,7 @@ function ProjectCard({ project, onPress }: ProjectCardProps) {
         {imageUri ? (
           <Image source={{ uri: imageUri }} style={styles.thumbnail} />
         ) : (
-          <FolderKanban size={28} color={colors.primary} strokeWidth={2} />
+          <FolderKanban size={26} color={colors.primary} strokeWidth={2.15} />
         )}
       </View>
 
@@ -50,11 +55,13 @@ function ProjectCard({ project, onPress }: ProjectCardProps) {
       </View>
 
       {onPress ? (
-        <ChevronRight
-          size={20}
-          color={colors.textMuted}
-          strokeWidth={2}
-        />
+        <View style={styles.chevronWrap}>
+          <ChevronRight
+            size={18}
+            color={colors.primary}
+            strokeWidth={2.25}
+          />
+        </View>
       ) : null}
     </TouchableOpacity>
   );
@@ -66,17 +73,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surface,
-    borderRadius: 16,
+    borderRadius: spacing.cardRadiusLg,
     marginBottom: 12,
     padding: 14,
-    borderWidth: 1,
+    ...glassBorder,
     borderColor: colors.primaryMuted,
     ...cardShadow,
   },
   iconWrap: {
     width: 56,
     height: 56,
-    borderRadius: 14,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
@@ -94,16 +101,25 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
     color: colors.textPrimary,
     lineHeight: 21,
+    letterSpacing: -0.2,
     marginBottom: 2,
   },
   subtitle: {
     fontSize: 13,
-    fontWeight: '500',
+    fontWeight: '600',
     color: colors.primary,
     lineHeight: 18,
+  },
+  chevronWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 10,
+    backgroundColor: colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 

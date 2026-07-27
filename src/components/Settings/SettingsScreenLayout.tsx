@@ -12,8 +12,13 @@ import {
 } from 'react-native';
 
 import BackButton, { backButtonOverlayStyle } from '../BackButton';
-import Header from '../Header.tsx';
-import { colors, spacing } from '../../constants/theme';
+import Header from '../Header';
+import {
+  cardShadowLight,
+  colors,
+  glassBorder,
+  spacing,
+} from '../../constants/theme';
 
 type SettingsScreenLayoutProps = {
   title: string;
@@ -84,8 +89,14 @@ const styles = StyleSheet.create({
   },
   screenHeader: {
     backgroundColor: colors.surface,
-    height: 80,
+    minHeight: 80,
     justifyContent: 'center',
+    borderBottomLeftRadius: spacing.cardRadiusLg,
+    borderBottomRightRadius: spacing.cardRadiusLg,
+    ...glassBorder,
+    borderTopWidth: 0,
+    ...cardShadowLight,
+    marginBottom: 4,
   },
   loadingContainer: {
     flex: 1,
@@ -94,7 +105,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: spacing.screenHorizontal,
-    paddingBottom: 32,
+    paddingBottom: 36,
   },
 });
 

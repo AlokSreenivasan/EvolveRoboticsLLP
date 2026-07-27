@@ -35,8 +35,10 @@ function AdminEntityForm({
       presentationStyle="pageSheet"
       onRequestClose={onClose}>
       <View style={adminStyles.modalContainer}>
-        <Text style={adminStyles.modalTitle}>{title}</Text>
-        {error ? <Text style={adminStyles.formError}>{error}</Text> : null}
+        <View style={adminStyles.modalHeader}>
+          <Text style={adminStyles.modalTitle}>{title}</Text>
+          {error ? <Text style={adminStyles.formError}>{error}</Text> : null}
+        </View>
         <ScrollView contentContainerStyle={adminStyles.modalScroll}>
           {children}
         </ScrollView>
@@ -44,15 +46,15 @@ function AdminEntityForm({
           <AppButton
             title="Cancel"
             onPress={onClose}
+            variant="secondary"
             buttonStyle={adminStyles.secondaryButton}
-            textStyle={adminStyles.secondaryButtonText}
           />
           <AppButton
             title={saving ? savingLabel : saveLabel}
             onPress={onSave}
             disabled={saving}
+            variant="primary"
             buttonStyle={adminStyles.primaryButton}
-            textStyle={adminStyles.primaryButtonText}
           />
         </View>
       </View>

@@ -11,6 +11,12 @@ import {
 } from 'react-native';
 
 import { GRADE_OPTIONS } from '../../constants/gradeOptions';
+import {
+  colors,
+  inputFieldStyle,
+  spacing,
+  typography,
+} from '../../constants/theme';
 
 type GradePickerProps = {
   selectedGrade: string | null;
@@ -66,7 +72,7 @@ function GradePicker({
             ? `Grade, ${displayLabel}. Cannot be changed.`
             : `Grade, ${displayLabel}. Tap to change.`
         }>
-        <GraduationCap size={18} color="#a42a8b" strokeWidth={2} />
+        <GraduationCap size={18} color={colors.primary} strokeWidth={2} />
         <Text
           style={[
             styles.fieldText,
@@ -76,7 +82,7 @@ function GradePicker({
           {displayLabel}
         </Text>
         {disabled ? null : (
-          <ChevronDown size={18} color="#888" strokeWidth={2} />
+          <ChevronDown size={18} color={colors.textMuted} strokeWidth={2} />
         )}
       </TouchableOpacity>
 
@@ -127,38 +133,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    borderWidth: 1,
-    borderColor: '#eecdf4',
-    borderRadius: 15,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    backgroundColor: '#fff',
+    ...inputFieldStyle,
     marginBottom: 4,
+    minHeight: 48,
   },
   fieldError: {
-    borderColor: '#e57373',
+    borderColor: colors.danger,
   },
   fieldDisabled: {
     opacity: 0.6,
   },
   fieldText: {
     flex: 1,
-    fontSize: 16,
-    color: '#000',
+    ...typography.body,
   },
   placeholderText: {
-    color: '#999',
+    color: colors.textMuted,
   },
   backdrop: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: colors.overlayScrim,
   },
   sheet: {
     maxHeight: '70%',
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: spacing.cardRadiusLg,
+    borderTopRightRadius: spacing.cardRadiusLg,
     paddingBottom: 24,
   },
   sheetHeader: {
@@ -168,31 +169,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#eecdf4',
+    borderBottomColor: colors.primaryMuted,
   },
   sheetTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#a42a8b',
+    ...typography.cardTitle,
+    color: colors.primary,
   },
   sheetDone: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#a42a8b',
+    ...typography.body,
+    fontWeight: '700',
+    color: colors.primary,
+    minHeight: 44,
+    lineHeight: 44,
   },
   optionRow: {
     paddingHorizontal: 16,
     paddingVertical: 14,
+    minHeight: 48,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#eee',
+    borderBottomColor: colors.border,
   },
   optionRowSelected: {
-    backgroundColor: '#FAF2FF',
+    backgroundColor: colors.primaryLight,
   },
   optionTitle: {
-    fontSize: 16,
+    ...typography.body,
     fontWeight: '600',
-    color: '#333',
   },
 });
 

@@ -2,7 +2,12 @@ import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Lock, Pause, Play } from 'lucide-react-native';
 
-import { colors } from '../../constants/theme';
+import SurfaceCard from '../ui/SurfaceCard';
+import {
+  colors,
+  spacing,
+  typography,
+} from '../../constants/theme';
 import type { YouTubePlaylistVideo } from '../../store/content/types/youtubePlaylist.types';
 
 type CourseLessonRowProps = {
@@ -22,11 +27,6 @@ function CourseLessonRow({
 }: CourseLessonRowProps) {
   return (
     <TouchableOpacity
-      style={[
-        styles.row,
-        isActive && styles.rowActive,
-        isLocked && styles.rowLocked,
-      ]}
       activeOpacity={isLocked ? 1 : 0.85}
       onPress={isLocked ? undefined : onPress}
       disabled={isLocked}
@@ -35,55 +35,69 @@ function CourseLessonRow({
       accessibilityLabel={`Lesson ${index + 1}: ${lesson.title}${
         isLocked ? ', locked' : ''
       }`}>
-      <View style={styles.thumbnailWrap}>
-        <Image
-          source={{ uri: lesson.thumbnailUrl }}
-          style={[styles.thumbnail, isLocked && styles.thumbnailLocked]}
-        />
-        <View
-          style={[
-            styles.iconBadge,
-            isActive && styles.iconBadgeActive,
-            isLocked && styles.iconBadgeLocked,
-          ]}>
-          {isLocked ? (
-            <Lock size={13} color="#fff" strokeWidth={2.5} />
-          ) : isActive ? (
-            <Pause size={14} color="#fff" strokeWidth={2.5} />
-          ) : (
-            <Play size={14} color="#fff" fill="#fff" strokeWidth={0} />
-          )}
+      <SurfaceCard
+        elevation="light"
+        tinted={isActive}
+        style={[
+          styles.row,
+          isActive && styles.rowActive,
+          isLocked && styles.rowLocked,
+        ]}>
+        <View style={styles.thumbnailWrap}>
+          <Image
+            source={{ uri: lesson.thumbnailUrl }}
+            style={[styles.thumbnail, isLocked && styles.thumbnailLocked]}
+          />
+          <View
+            style={[
+              styles.iconBadge,
+              isActive && styles.iconBadgeActive,
+              isLocked && styles.iconBadgeLocked,
+            ]}>
+            {isLocked ? (
+              <Lock size={13} color={colors.surface} strokeWidth={2.5} />
+            ) : isActive ? (
+              <Pause size={14} color={colors.surface} strokeWidth={2.5} />
+            ) : (
+              <Play
+                size={14}
+                color={colors.surface}
+                fill={colors.surface}
+                strokeWidth={0}
+              />
+            )}
+          </View>
         </View>
-      </View>
 
-      <View style={styles.meta}>
-        <Text
-          style={[
-            styles.index,
-            isActive && styles.indexActive,
-            isLocked && styles.indexLocked,
-          ]}>
-          {index + 1}
-        </Text>
-        <View style={styles.textWrap}>
+        <View style={styles.meta}>
           <Text
             style={[
-              styles.title,
-              isActive && styles.titleActive,
-              isLocked && styles.titleLocked,
-            ]}
-            numberOfLines={2}>
-            {lesson.title}
+              styles.index,
+              isActive && styles.indexActive,
+              isLocked && styles.indexLocked,
+            ]}>
+            {index + 1}
           </Text>
-          {isActive ? (
-            <Text style={styles.playingLabel}>Now playing</Text>
-          ) : isLocked ? (
-            <Text style={styles.lockedLabel}>
-              Finish the previous lesson to unlock
+          <View style={styles.textWrap}>
+            <Text
+              style={[
+                styles.title,
+                isActive && styles.titleActive,
+                isLocked && styles.titleLocked,
+              ]}
+              numberOfLines={2}>
+              {lesson.title}
             </Text>
-          ) : null}
+            {isActive ? (
+              <Text style={styles.playingLabel}>Now playing</Text>
+            ) : isLocked ? (
+              <Text style={styles.lockedLabel}>
+                Finish the previous lesson to unlock
+              </Text>
+            ) : null}
+          </View>
         </View>
-      </View>
+      </SurfaceCard>
     </TouchableOpacity>
   );
 }
@@ -94,19 +108,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     padding: 10,
-    borderRadius: 12,
-    backgroundColor: colors.surface,
     marginBottom: 10,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
   rowActive: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primaryLight,
+    borderColor: colors.primaryMuted,
   },
   rowLocked: {
     opacity: 0.72,
-    backgroundColor: colors.background,
   },
   thumbnailWrap: {
     position: 'relative',
@@ -114,7 +122,7 @@ const styles = StyleSheet.create({
   thumbnail: {
     width: 112,
     height: 63,
-    borderRadius: 8,
+    borderRadius: spacing.chipRadius,
     backgroundColor: colors.primaryMuted,
   },
   thumbnailLocked: {
@@ -162,9 +170,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
+    ...typography.body,
     fontSize: 14,
     fontWeight: '500',
-    color: colors.textPrimary,
     lineHeight: 20,
   },
   titleActive: {

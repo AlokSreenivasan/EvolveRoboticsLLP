@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { LucideIcon } from 'lucide-react-native';
 
-import { colors } from '../../constants/theme';
+import { colors, spacing } from '../../constants/theme';
 import AppSwitch from '../AppSwitch';
 
 type NotificationToggleRowProps = {
@@ -32,7 +32,7 @@ function NotificationToggleRow({
     <View style={[styles.row, !isLast && styles.rowBorder]}>
       <View
         style={[styles.iconContainer, { backgroundColor: iconBackgroundColor }]}>
-        <Icon size={22} color={iconColor} strokeWidth={2} />
+        <Icon size={20} color={iconColor} strokeWidth={2.15} />
       </View>
 
       <View style={styles.textContainer}>
@@ -51,15 +51,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 14,
     paddingHorizontal: 16,
+    minHeight: 72,
   },
   rowBorder: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
+    borderBottomColor: 'rgba(164, 42, 139, 0.1)',
   },
   iconContainer: {
     width: 44,
     height: 44,
-    borderRadius: 12,
+    borderRadius: spacing.iconTileRadius,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
@@ -70,8 +71,9 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: colors.textPrimary,
+    letterSpacing: -0.2,
     marginBottom: 2,
   },
   subtitle: {

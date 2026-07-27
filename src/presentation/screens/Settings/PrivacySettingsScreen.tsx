@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Shield } from 'lucide-react-native';
 
+import AppButton from '../../../components/AppButton.tsx';
 import DeleteAccountConfirmModal from '../../../components/Settings/DeleteAccountConfirmModal';
 import SettingsInfoCard from '../../../components/Settings/SettingsInfoCard';
 import SettingsScreenLayout from '../../../components/Settings/SettingsScreenLayout';
 import SettingsSectionHeader from '../../../components/Settings/SettingsSectionHeader';
-import { colors, spacing } from '../../../constants/theme';
+import { cardShadowLight, colors, spacing } from '../../../constants/theme';
 import { deleteAccount } from '../../../services/firebase/deleteAccountService';
 import { hasEmailPasswordProvider } from '../../../services/firebase/authService';
 import { appAlert, appAlertCopy } from '../../../utils/alert/appAlert';
@@ -66,12 +67,13 @@ function PrivacySettingsScreen() {
             access, and associated user data. This cannot be undone.
           </Text>
 
-          <TouchableOpacity
-            style={styles.deleteButton}
+          <AppButton
+            title="Delete Account"
             onPress={handleDeletePress}
-            disabled={deleting}>
-            <Text style={styles.deleteButtonText}>Delete Account</Text>
-          </TouchableOpacity>
+            variant="danger"
+            disabled={deleting}
+            loading={deleting}
+          />
         </View>
       </View>
 
@@ -91,28 +93,18 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sectionGap,
   },
   dangerCard: {
-    backgroundColor: '#FFF5F5',
-    borderRadius: spacing.cardRadius,
+    backgroundColor: colors.dangerLight,
+    borderRadius: spacing.cardRadiusLg,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#FECACA',
+    borderColor: colors.danger,
+    ...cardShadowLight,
   },
   dangerDescription: {
     fontSize: 13,
     color: colors.textSecondary,
     lineHeight: 19,
     marginBottom: 16,
-  },
-  deleteButton: {
-    backgroundColor: '#DC2626',
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  deleteButtonText: {
-    color: colors.surface,
-    fontSize: 16,
-    fontWeight: '700',
   },
 });
 

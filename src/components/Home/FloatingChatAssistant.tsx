@@ -31,7 +31,7 @@ const ASSISTANT_SIZE = Platform.select({
   default: ANDROID_ASSISTANT_SIZE,
 }) as number;
 
-const TAB_BAR_CLEARANCE = 72;
+const TAB_BAR_CLEARANCE = 86;
 
 /** Heartbeat: quick double-pulse, then a longer rest. */
 const BEAT_UP = 180;

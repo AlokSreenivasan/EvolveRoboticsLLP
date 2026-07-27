@@ -12,8 +12,8 @@ import { useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import { WebView } from 'react-native-webview';
 
-import BackButton from '../../../components/BackButton';
-import { colors, spacing } from '../../../constants/theme';
+import ScreenHeader from '../../../components/ui/ScreenHeader';
+import { colors, spacing, typography } from '../../../constants/theme';
 import type { RootStackParamList } from '../../../types/navigation';
 import { buildEmbeddedPdfViewerUrl } from '../../../utils/resources/pdfViewerUrl';
 
@@ -30,17 +30,23 @@ function ResourcePdfViewerScreen() {
     Linking.openURL(pdfUrl).catch(() => undefined);
   };
 
+  const openExternalLink = (
+    <TouchableOpacity
+      onPress={openExternally}
+      activeOpacity={0.85}
+      accessibilityRole="link"
+      accessibilityLabel="Open in browser">
+      <Text style={styles.openExternal}>Open in browser</Text>
+    </TouchableOpacity>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <BackButton withSpacingBelow />
-        <Text style={styles.title} numberOfLines={2}>
-          {title}
-        </Text>
-        <TouchableOpacity onPress={openExternally} activeOpacity={0.85}>
-          <Text style={styles.openExternal}>Open in browser</Text>
-        </TouchableOpacity>
-      </View>
+      <ScreenHeader
+        title={title}
+        rightSlot={openExternalLink}
+        compact
+      />
 
       <View style={styles.viewerWrap}>
         {loading ? (
@@ -68,23 +74,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  header: {
-    paddingHorizontal: spacing.screenHorizontal,
-    paddingTop: 8,
-    paddingBottom: 12,
-    backgroundColor: colors.surface,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: colors.textPrimary,
-    marginBottom: 6,
-  },
   openExternal: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...typography.label,
     color: colors.link,
   },
   viewerWrap: {

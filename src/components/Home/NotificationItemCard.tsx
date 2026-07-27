@@ -8,7 +8,13 @@ import {
 } from 'react-native';
 import { Bell, CheckCheck } from 'lucide-react-native';
 
-import { cardShadowLight, colors } from '../../constants/theme';
+import {
+  cardShadow,
+  colors,
+  glassBorder,
+  spacing,
+  typography,
+} from '../../constants/theme';
 import type { LearnerNotification } from '../../store/content/types/notifications.types';
 import { formatNotificationTimestamp } from '../../utils/formatNotificationTimestamp';
 
@@ -151,12 +157,12 @@ function NotificationItemCard({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 16,
+    borderRadius: spacing.cardRadiusLg,
     padding: 16,
     paddingLeft: 20,
-    borderWidth: 1,
     overflow: 'hidden',
-    ...cardShadowLight,
+    ...glassBorder,
+    ...cardShadow,
   },
   cardList: {
     paddingVertical: 18,
@@ -178,8 +184,8 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: 4,
-    borderTopLeftRadius: 16,
-    borderBottomLeftRadius: 16,
+    borderTopLeftRadius: spacing.cardRadiusLg,
+    borderBottomLeftRadius: spacing.cardRadiusLg,
   },
   accentUnread: {
     backgroundColor: colors.primary,
@@ -252,9 +258,8 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
+    ...typography.cardTitle,
     fontSize: 15,
-    fontWeight: '700',
-    color: colors.textPrimary,
     lineHeight: 20,
   },
   titleList: {
@@ -266,9 +271,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   body: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    lineHeight: 18,
+    ...typography.bodySecondary,
   },
   bodyList: {
     fontSize: 14,
@@ -286,7 +289,7 @@ const styles = StyleSheet.create({
     marginLeft: 62,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    borderRadius: 10,
+    borderRadius: spacing.chipRadius,
     backgroundColor: colors.primaryLight,
     borderWidth: 1,
     borderColor: colors.primaryMuted,

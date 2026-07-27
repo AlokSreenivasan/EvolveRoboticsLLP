@@ -11,7 +11,13 @@ import {
 import type { LucideIcon } from 'lucide-react-native';
 
 import AppButton from '../AppButton';
-import { cardShadow, colors, spacing } from '../../constants/theme';
+import {
+  cardShadowElevated,
+  colors,
+  glassBorder,
+  spacing,
+  typography,
+} from '../../constants/theme';
 
 export type QuizModalHeroVariant =
   | 'perfect'
@@ -63,8 +69,8 @@ const SCORE_TONE_STYLES: Record<
   }
 > = {
   success: {
-    panelBackground: '#F9FFF9',
-    panelBorder: '#C8E6C9',
+    panelBackground: colors.successLight,
+    panelBorder: 'rgba(76, 175, 80, 0.28)',
     trackBackground: 'rgba(76, 175, 80, 0.14)',
     fillColor: colors.accentGreen,
   },
@@ -75,7 +81,7 @@ const SCORE_TONE_STYLES: Record<
     fillColor: colors.primary,
   },
   warning: {
-    panelBackground: '#FFF8F0',
+    panelBackground: colors.warningLight,
     panelBorder: 'rgba(255, 152, 0, 0.28)',
     trackBackground: 'rgba(255, 152, 0, 0.12)',
     fillColor: colors.accentOrange,
@@ -107,12 +113,14 @@ type QuizModalActionProps = {
   onPress: () => void;
   tone?: 'primary' | 'danger';
   style?: StyleProp<ViewStyle>;
+  disabled?: boolean;
 };
 
 type QuizModalSecondaryActionProps = {
   label: string;
   onPress: () => void;
   style?: StyleProp<ViewStyle>;
+  disabled?: boolean;
 };
 
 type QuizModalActionStackProps = {
@@ -316,17 +324,15 @@ export function QuizModalAction({
   onPress,
   tone = 'primary',
   style,
+  disabled = false,
 }: QuizModalActionProps) {
   return (
     <AppButton
       title={label}
       onPress={onPress}
-      buttonStyle={[
-        styles.actionButton,
-        tone === 'danger' ? styles.actionButtonDanger : styles.actionButtonPrimary,
-        style,
-      ]}
-      textStyle={styles.actionButtonText}
+      variant={tone === 'danger' ? 'danger' : 'primary'}
+      buttonStyle={[styles.actionButton, style]}
+      disabled={disabled}
     />
   );
 }
@@ -335,13 +341,15 @@ export function QuizModalSecondaryAction({
   label,
   onPress,
   style,
+  disabled = false,
 }: QuizModalSecondaryActionProps) {
   return (
     <AppButton
       title={label}
       onPress={onPress}
-      buttonStyle={[styles.actionButton, styles.actionButtonSecondary, style]}
-      textStyle={styles.actionButtonSecondaryText}
+      variant="secondary"
+      buttonStyle={[styles.actionButton, style]}
+      disabled={disabled}
     />
   );
 }
@@ -356,17 +364,16 @@ export function QuizModalActionStack({
 export const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    backgroundColor: colors.overlayScrim,
     justifyContent: 'center',
     paddingHorizontal: spacing.screenHorizontal,
   },
   card: {
     backgroundColor: colors.surface,
-    borderRadius: spacing.cardRadius,
+    borderRadius: spacing.cardRadiusXl,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...cardShadow,
+    ...glassBorder,
+    ...cardShadowElevated,
   },
   hero: {
     alignItems: 'center',
@@ -382,16 +389,16 @@ export const styles = StyleSheet.create({
     backgroundColor: colors.primaryLight,
   },
   heroTimeout: {
-    backgroundColor: '#FFF7ED',
+    backgroundColor: colors.warningLight,
   },
   heroLocked: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: colors.background,
   },
   heroCompleted: {
     backgroundColor: colors.accentGreen,
   },
   heroError: {
-    backgroundColor: '#FEF2F2',
+    backgroundColor: colors.dangerLight,
   },
   heroGlowTop: {
     position: 'absolute',
@@ -448,21 +455,17 @@ export const styles = StyleSheet.create({
     borderColor: 'rgba(244, 67, 54, 0.28)',
   },
   heroTitle: {
+    ...typography.screenTitle,
     fontSize: 22,
-    fontWeight: '800',
-    color: colors.textPrimary,
     textAlign: 'center',
   },
   heroTitleLight: {
     color: '#fff',
   },
   heroSubtitle: {
+    ...typography.screenSubtitle,
     marginTop: 4,
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 20,
   },
   heroSubtitleLight: {
     color: 'rgba(255, 255, 255, 0.88)',
@@ -474,10 +477,8 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   },
   message: {
-    fontSize: 14,
-    color: colors.textSecondary,
+    ...typography.bodySecondary,
     textAlign: 'center',
-    lineHeight: 20,
     marginBottom: 18,
   },
   badgeRow: {
@@ -493,7 +494,7 @@ export const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 20,
+    borderRadius: spacing.chipRadius,
     borderWidth: 1,
   },
   badgeDefault: {
@@ -509,7 +510,7 @@ export const styles = StyleSheet.create({
     borderColor: 'rgba(255, 152, 0, 0.28)',
   },
   badgeMuted: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: colors.background,
     borderColor: colors.border,
   },
   badgeText: {
@@ -537,7 +538,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 16,
-    borderRadius: 14,
+    borderRadius: spacing.cardRadius,
     borderWidth: 1,
     marginBottom: 14,
   },
@@ -562,19 +563,19 @@ export const styles = StyleSheet.create({
   insightChip: {
     paddingHorizontal: 12,
     paddingVertical: 7,
-    borderRadius: 20,
+    borderRadius: spacing.chipRadius,
     borderWidth: 1,
   },
   insightChipSuccess: {
-    backgroundColor: '#E8F5E9',
-    borderColor: '#C8E6C9',
+    backgroundColor: colors.successLight,
+    borderColor: 'rgba(76, 175, 80, 0.28)',
   },
   insightChipWarning: {
-    backgroundColor: '#FFF8E1',
+    backgroundColor: colors.warningLight,
     borderColor: 'rgba(255, 152, 0, 0.28)',
   },
   insightChipMuted: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: colors.background,
     borderColor: colors.border,
   },
   insightChipTextSuccess: {
@@ -613,28 +614,5 @@ export const styles = StyleSheet.create({
   },
   actionButton: {
     alignSelf: 'stretch',
-    paddingVertical: 14,
-    borderRadius: 14,
-  },
-  actionButtonPrimary: {
-    backgroundColor: colors.primary,
-  },
-  actionButtonDanger: {
-    backgroundColor: colors.danger,
-  },
-  actionButtonSecondary: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.primaryMuted,
-  },
-  actionButtonText: {
-    color: '#fff',
-    fontWeight: '800',
-    fontSize: 15,
-  },
-  actionButtonSecondaryText: {
-    color: colors.primary,
-    fontWeight: '800',
-    fontSize: 15,
   },
 });

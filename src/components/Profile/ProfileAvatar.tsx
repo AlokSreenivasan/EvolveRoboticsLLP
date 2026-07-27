@@ -8,6 +8,12 @@ import {
 } from 'react-native';
 import { User } from 'lucide-react-native';
 
+import {
+  cardShadowLight,
+  colors,
+  glassBorder,
+} from '../../constants/theme';
+
 type ProfileAvatarProps = {
   /** Remote Storage URL or local picker URI; omit for empty placeholder. */
   imageUri?: string | null;
@@ -43,7 +49,7 @@ export default function ProfileAvatar({
           ]}>
           <User
             size={Math.round(size * 0.42)}
-            color="#a42a8b"
+            color={colors.primary}
             strokeWidth={2}
             opacity={0.55}
           />
@@ -56,9 +62,10 @@ export default function ProfileAvatar({
 const styles = StyleSheet.create({
   frame: {
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#eecdf4',
-    backgroundColor: '#FAF2FF',
+    ...glassBorder,
+    borderColor: colors.primaryMuted,
+    backgroundColor: colors.primaryLight,
+    ...cardShadowLight,
   },
   image: {
     resizeMode: 'cover',
@@ -66,6 +73,6 @@ const styles = StyleSheet.create({
   placeholder: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FAF2FF',
+    backgroundColor: colors.primaryLight,
   },
 });

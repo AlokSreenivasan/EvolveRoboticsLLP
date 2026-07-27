@@ -3,12 +3,17 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import { FileText } from 'lucide-react-native';
 
-import { cardShadow, colors } from '../../constants/theme';
+import {
+  cardShadow,
+  colors,
+  glassBorder,
+  spacing,
+} from '../../constants/theme';
 
 const CARD_ACCENTS = [
   { badgeColor: colors.primaryLight, accentColor: colors.primary },
-  { badgeColor: '#E8F5E9', accentColor: colors.accentGreen },
-  { badgeColor: '#F3E5F5', accentColor: '#9C27B0' },
+  { badgeColor: colors.successLight, accentColor: colors.accentGreen },
+  { badgeColor: colors.noticeBackground, accentColor: colors.primaryDark },
 ] as const;
 
 export type PdfContentCardProps = {
@@ -44,7 +49,7 @@ function PdfContentCard({
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? title}>
       <View style={[styles.iconWrap, { backgroundColor: accent.badgeColor }]}>
-        <Icon size={28} color={accent.accentColor} strokeWidth={2} />
+        <Icon size={26} color={accent.accentColor} strokeWidth={2.15} />
       </View>
 
       <View style={styles.body}>
@@ -63,7 +68,9 @@ function PdfContentCard({
             {subtitle.trim()}
           </Text>
         ) : null}
-        <Text style={styles.cta}>{ctaLabel}</Text>
+        <View style={styles.ctaPill}>
+          <Text style={styles.cta}>{ctaLabel}</Text>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -75,17 +82,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     backgroundColor: colors.surface,
-    borderRadius: 16,
-    marginBottom: 16,
+    borderRadius: spacing.cardRadiusLg,
+    marginBottom: 14,
     padding: 16,
-    borderWidth: 1,
+    ...glassBorder,
     borderColor: colors.primaryMuted,
     ...cardShadow,
   },
   iconWrap: {
     width: 56,
     height: 56,
-    borderRadius: 14,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
@@ -96,9 +103,9 @@ const styles = StyleSheet.create({
   },
   badge: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
     marginBottom: 6,
   },
   badgeText: {
@@ -106,21 +113,31 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   title: {
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '800',
     color: colors.textPrimary,
     lineHeight: 22,
+    letterSpacing: -0.2,
     marginBottom: 4,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 13,
     color: colors.textSecondary,
-    lineHeight: 20,
-    marginBottom: 8,
+    lineHeight: 19,
+    marginBottom: 10,
+  },
+  ctaPill: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.primaryLight,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.primaryMuted,
   },
   cta: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '700',
     color: colors.link,
   },
 });

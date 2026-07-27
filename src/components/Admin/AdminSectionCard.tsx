@@ -24,8 +24,8 @@ function AdminSectionCard({
         title={saving ? 'Saving…' : saveLabel}
         onPress={onSave}
         disabled={saving}
+        variant="primary"
         buttonStyle={adminStyles.primaryButton}
-        textStyle={adminStyles.primaryButtonText}
       />
     </View>
   );

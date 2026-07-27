@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { cardShadow, colors } from '../../constants/theme';
+import { cardShadow, colors, glassBorder } from '../../constants/theme';
 import type { UpcomingEvent } from '../../store/content/types/upcomingEvents.types';
 import { getDisplayDaysLeftLabel } from '../../utils/upcomingEventDate';
 import EventDateBlock from './EventDateBlock';
@@ -45,34 +45,38 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.eventBackground,
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
+    backgroundColor: colors.surface,
+    borderRadius: 20,
+    padding: 14,
+    ...glassBorder,
     borderColor: colors.eventBorder,
     ...cardShadow,
-    gap: 14,
+    gap: 12,
   },
   details: {
     flex: 1,
+    minWidth: 0,
   },
   title: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     color: colors.textPrimary,
+    letterSpacing: -0.2,
     marginBottom: 4,
   },
   meta: {
-    fontSize: 13,
+    fontSize: 12,
+    fontWeight: '500',
     color: colors.textSecondary,
-    lineHeight: 18,
+    lineHeight: 17,
   },
   badge: {
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.primaryLight,
     paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 14,
-    marginLeft: 8,
+    paddingVertical: 7,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.primaryMuted,
   },
   badgeText: {
     fontSize: 11,

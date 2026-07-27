@@ -6,9 +6,9 @@ import {
   View,
   type ViewStyle,
 } from 'react-native';
-import { Zap } from 'lucide-react-native';
+import { Check, Zap } from 'lucide-react-native';
 
-import { cardShadow, colors } from '../../constants/theme';
+import { cardShadow, colors, glassBorder } from '../../constants/theme';
 
 export type DailyMissionCardProps = {
   icon: React.ReactNode;
@@ -29,10 +29,12 @@ function DailyMissionCard({
   isDone,
   accentColor,
   accentBackground,
+  accentBorder,
   onStartPress,
   style,
 }: DailyMissionCardProps) {
   const progressPercent = isDone ? 100 : 0;
+  const actionLabel = isDone ? 'Done' : 'Start';
 
   return (
     <TouchableOpacity
@@ -47,8 +49,22 @@ function DailyMissionCard({
         pointerEvents="none"
       />
 
-      <View style={[styles.iconWrap, { backgroundColor: accentBackground }]}>
-        {icon}
+      <View style={styles.topRow}>
+        <View
+          style={[
+            styles.iconWrap,
+            {
+              backgroundColor: accentBackground,
+              borderColor: accentBorder,
+            },
+          ]}>
+          {icon}
+        </View>
+        {isDone ? (
+          <View style={[styles.doneChip, { backgroundColor: accentBackground }]}>
+            <Check size={12} color={accentColor} strokeWidth={3} />
+          </View>
+        ) : null}
       </View>
 
       <Text style={styles.title} numberOfLines={2}>
@@ -82,13 +98,28 @@ function DailyMissionCard({
       </View>
 
       <TouchableOpacity
-        style={[styles.startButton, { backgroundColor: accentColor }]}
+        style={[
+          styles.startButton,
+          isDone
+            ? {
+                backgroundColor: accentBackground,
+                borderWidth: 1,
+                borderColor: accentBorder,
+              }
+            : { backgroundColor: accentColor },
+        ]}
         activeOpacity={0.88}
         onPress={onStartPress}
         disabled={!onStartPress}
         accessibilityRole="button"
-        accessibilityLabel={`Start ${title}`}>
-        <Text style={styles.startButtonText}>Start</Text>
+        accessibilityLabel={`${actionLabel} ${title}`}>
+        <Text
+          style={[
+            styles.startButtonText,
+            isDone && { color: accentColor },
+          ]}>
+          {actionLabel}
+        </Text>
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -97,36 +128,51 @@ function DailyMissionCard({
 const styles = StyleSheet.create({
   card: {
     width: 168,
-    borderRadius: 20,
+    borderRadius: 22,
     backgroundColor: colors.surface,
     paddingHorizontal: 14,
     paddingTop: 14,
     paddingBottom: 12,
     overflow: 'hidden',
+    ...glassBorder,
     ...cardShadow,
   },
   glow: {
     position: 'absolute',
-    top: -24,
-    right: -18,
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    opacity: 0.85,
+    top: -28,
+    right: -20,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    opacity: 0.9,
+  },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
   },
   iconWrap: {
-    width: 40,
-    height: 40,
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  doneChip: {
+    width: 24,
+    height: 24,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
   },
   title: {
     fontSize: 15,
     fontWeight: '800',
     color: colors.textPrimary,
     lineHeight: 19,
+    letterSpacing: -0.2,
     marginBottom: 6,
   },
   rewardRow: {
@@ -141,19 +187,19 @@ const styles = StyleSheet.create({
     letterSpacing: 0.1,
   },
   progressTrack: {
-    height: 5,
-    borderRadius: 3,
+    height: 6,
+    borderRadius: 999,
     overflow: 'hidden',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   progressFill: {
     height: '100%',
-    borderRadius: 3,
+    borderRadius: 999,
   },
   startButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
+    paddingVertical: 11,
     borderRadius: 999,
   },
   startButtonText: {

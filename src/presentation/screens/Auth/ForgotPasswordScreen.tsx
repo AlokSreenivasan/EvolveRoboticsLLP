@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  ActivityIndicator,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -12,10 +11,17 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../types/navigation';
 import { useNavigation } from '@react-navigation/native';
 import AppButton from '../../../components/AppButton.tsx';
-import BackButton from '../../../components/BackButton';
+import ScreenHeader from '../../../components/ui/ScreenHeader';
+import SurfaceCard from '../../../components/ui/SurfaceCard';
 import { isValidEmail } from '../../../domain/Auth/validation/isValidEmail.ts';
 import { sendPasswordResetEmail } from '../../../services/firebase/authService';
 import { appAlert, appAlertCopy } from '../../../utils/alert/appAlert';
+import {
+  colors,
+  inputFieldStyle,
+  spacing,
+  typography,
+} from '../../../constants/theme';
 
 type NavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -67,17 +73,20 @@ function ForgotPasswordScreen() {
     }
   };
 
-
-
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView style={styles.container}>
-        <View style={styles.firstBox}>
-          <BackButton onPress={() => navigation.navigate('Login')} />
-          <Text style={styles.title}>Forgot Password</Text>
-        </View>
+      <ScreenHeader
+        title="Forgot Password"
+        subtitle="We'll send you a reset link"
+        onBackPress={() => navigation.navigate('Login')}
+      />
 
-        <View style={styles.content}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}>
+        <SurfaceCard elevation="default" style={styles.card}>
           <Text style={styles.heading}>Reset Your Password</Text>
           <Text style={styles.subText}>
             Enter the email address associated with your account, and we'll send
@@ -86,7 +95,7 @@ function ForgotPasswordScreen() {
 
           <Text style={styles.label}>Email Address</Text>
           <TextInput
-            placeholderTextColor="light black"
+            placeholderTextColor={colors.textMuted}
             style={[styles.input, emailError ? styles.inputError : null]}
             placeholder="your.email@example.com"
             keyboardType="email-address"
@@ -99,66 +108,66 @@ function ForgotPasswordScreen() {
           {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
 
           <AppButton
-            title={loading ? 'Sending...' : 'Send Reset Link'}
+            title="Send Reset Link"
             onPress={handleResetPassword}
-            buttonStyle={styles.button}
-            textStyle={styles.buttonText}
+            variant="primary"
+            loading={loading}
             disabled={loading}
+            buttonStyle={styles.button}
           />
-          {loading ? (
-            <ActivityIndicator color="#a42a8b" style={styles.loader} />
-          ) : null}
-        </View>
+        </SurfaceCard>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#fff' },
-  container: { flex: 1, backgroundColor: '#fff', padding: 20 },
-  firstBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignContent: 'center',
-    height: 56,
+  safe: {
+    flex: 1,
+    backgroundColor: colors.background,
   },
-  title: {
-    fontSize: 18,
-    fontWeight: '600',
-    paddingLeft: '25%',
-    color: '#a42a8b',
+  scroll: {
+    flex: 1,
   },
-  content: { marginTop: 30 },
-  heading: { fontSize: 20, fontWeight: 'bold', marginBottom: 10 },
-  subText: { fontSize: 14, color: '#555', marginBottom: 20, lineHeight: 20 },
-  label: { fontSize: 14, fontWeight: '600', marginBottom: 5, color: '#a42a8b' },
+  scrollContent: {
+    padding: spacing.screenHorizontal,
+    paddingTop: 20,
+    paddingBottom: 32,
+  },
+  card: {
+    padding: 20,
+  },
+  heading: {
+    ...typography.screenTitle,
+    fontSize: 22,
+    marginBottom: 10,
+  },
+  subText: {
+    ...typography.screenSubtitle,
+    marginBottom: 24,
+  },
+  label: {
+    ...typography.label,
+    color: colors.primary,
+    marginBottom: 8,
+  },
   input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 6,
-    padding: 10,
+    ...inputFieldStyle,
+    fontSize: 16,
+    color: colors.textPrimary,
     marginBottom: 4,
   },
   inputError: {
-    borderColor: '#e57373',
+    borderColor: colors.danger,
   },
   errorText: {
-    color: 'red',
+    color: colors.danger,
     fontSize: 13,
     marginBottom: 16,
   },
-  loader: {
-    marginTop: 12,
-    alignSelf: 'center',
-  },
   button: {
-    backgroundColor: '#a42a8b',
-    paddingVertical: 14,
-    borderRadius: 6,
-    alignItems: 'center',
+    marginTop: 8,
   },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
 });
 
 export default ForgotPasswordScreen;

@@ -33,7 +33,13 @@ import AdminSchoolAudiencePicker from '../../../components/Admin/AdminSchoolAudi
 import AppSwitch from '../../../components/AppSwitch';
 import AppButton from '../../../components/AppButton';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
-import { colors, cardShadow, spacing } from '../../../constants/theme';
+import {
+  cardShadow,
+  colors,
+  glassBorder,
+  inputFieldStyle,
+  spacing,
+} from '../../../constants/theme';
 import { useContinueLearningPlaylists } from '../../hooks/useContinueLearningPlaylists';
 import { useSchools } from '../../hooks/useSchools';
 import { useAdminSchoolAudienceForm } from '../../hooks/admin/useAdminSchoolAudienceForm';
@@ -388,7 +394,7 @@ function ManageContinueLearningPlaylists() {
             onPress={openCreateEditor}
             accessibilityRole="button"
             accessibilityLabel="Add playlist">
-            <Plus size={18} color="#fff" strokeWidth={2.5} />
+            <Plus size={18} color={colors.surface} strokeWidth={2.5} />
             <Text style={styles.addButtonText}>Add</Text>
           </TouchableOpacity>
         </View>
@@ -729,10 +735,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 20,
+    borderRadius: spacing.buttonRadius,
   },
   addButtonText: {
-    color: '#fff',
+    color: colors.surface,
     fontWeight: '600',
     fontSize: 14,
   },
@@ -746,11 +752,10 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: colors.surface,
-    borderRadius: 12,
+    borderRadius: spacing.cardRadiusLg,
     padding: 12,
     marginBottom: 10,
-    borderWidth: 1,
-    borderColor: colors.border,
+    ...glassBorder,
     ...cardShadow,
   },
   cardRow: {
@@ -761,7 +766,7 @@ const styles = StyleSheet.create({
   thumb: {
     width: 56,
     height: 56,
-    borderRadius: 8,
+    borderRadius: spacing.chipRadius,
     backgroundColor: colors.primaryMuted,
     flexShrink: 0,
   },
@@ -793,10 +798,10 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     color: colors.accentOrange,
-    backgroundColor: '#FFF3E0',
+    backgroundColor: colors.warningLight,
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 6,
+    borderRadius: spacing.chipRadius,
     overflow: 'hidden',
   },
   cardActions: {
@@ -826,7 +831,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     paddingVertical: 10,
     paddingHorizontal: 14,
-    borderRadius: 10,
+    borderRadius: spacing.inputRadius,
     borderWidth: 1,
     borderColor: colors.primary,
     backgroundColor: colors.primaryLight,
@@ -838,19 +843,14 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    ...inputFieldStyle,
     fontSize: 15,
     color: colors.textPrimary,
-    backgroundColor: colors.background,
   },
   preview: {
     width: '100%',
     height: 120,
-    borderRadius: 10,
+    borderRadius: spacing.inputRadius,
     marginBottom: 14,
     backgroundColor: colors.primaryMuted,
   },
@@ -873,7 +873,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   primaryButtonText: {
-    color: '#fff',
+    color: colors.surface,
     fontWeight: '600',
   },
   secondaryButton: {

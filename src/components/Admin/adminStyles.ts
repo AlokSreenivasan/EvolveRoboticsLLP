@@ -1,6 +1,14 @@
 import { StyleSheet } from 'react-native';
 
-import { colors, cardShadow, spacing } from '../../constants/theme';
+import {
+  colors,
+  cardShadowElevated,
+  cardShadowLight,
+  glassBorder,
+  inputFieldStyle,
+  spacing,
+  typography,
+} from '../../constants/theme';
 
 export const adminStyles = StyleSheet.create({
   scrollContent: {
@@ -8,9 +16,7 @@ export const adminStyles = StyleSheet.create({
     paddingBottom: 40,
   },
   blockTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: colors.textPrimary,
+    ...typography.sectionTitle,
     marginBottom: 10,
   },
   sectionHint: {
@@ -21,31 +27,25 @@ export const adminStyles = StyleSheet.create({
   },
   card: {
     backgroundColor: colors.surface,
-    borderRadius: spacing.cardRadius,
+    borderRadius: spacing.cardRadiusLg,
     padding: 16,
     marginBottom: 24,
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...cardShadow,
+    ...glassBorder,
+    ...cardShadowElevated,
   },
   field: {
     marginBottom: 14,
   },
   fieldLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.textSecondary,
+    ...typography.label,
     marginBottom: 6,
   },
   input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    ...inputFieldStyle,
     fontSize: 15,
     color: colors.textPrimary,
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
+    ...cardShadowLight,
   },
   inputMultiline: {
     minHeight: 88,
@@ -54,26 +54,30 @@ export const adminStyles = StyleSheet.create({
   primaryButton: {
     backgroundColor: colors.primary,
     flex: 1,
+    borderRadius: spacing.buttonRadius,
+    minHeight: 48,
   },
   primaryButtonText: {
     color: '#fff',
-    fontWeight: '600',
+    fontWeight: '800',
   },
   secondaryButton: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: colors.primary,
+    borderWidth: 1.5,
+    borderColor: colors.primaryMuted,
     backgroundColor: colors.surface,
+    borderRadius: spacing.buttonRadius,
+    minHeight: 48,
   },
   secondaryButtonText: {
     color: colors.primary,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   sendLiveButton: {
     backgroundColor: colors.primaryLight,
     borderWidth: 1,
     borderColor: colors.primaryMuted,
-    borderRadius: 12,
+    borderRadius: spacing.buttonRadius,
     paddingVertical: 12,
   },
   sendLiveButtonText: {
@@ -120,15 +124,16 @@ export const adminStyles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
     lineHeight: 20,
+    textAlign: 'center',
+    paddingVertical: 8,
   },
   listRowCard: {
     backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...cardShadow,
+    borderRadius: spacing.cardRadiusLg,
+    padding: 16,
+    marginBottom: 12,
+    ...glassBorder,
+    ...cardShadowElevated,
   },
   listRowTop: {
     flexDirection: 'row',
@@ -171,10 +176,10 @@ export const adminStyles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     color: colors.accentOrange,
-    backgroundColor: '#FFF3E0',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
+    backgroundColor: colors.warningLight,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: spacing.chipRadius,
     overflow: 'hidden',
   },
   listRowActions: {
@@ -190,22 +195,29 @@ export const adminStyles = StyleSheet.create({
   modalContainer: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  modalHeader: {
     paddingTop: 20,
     paddingHorizontal: spacing.screenHorizontal,
+    paddingBottom: 16,
+    backgroundColor: colors.surface,
+    borderBottomLeftRadius: spacing.cardRadiusLg,
+    borderBottomRightRadius: spacing.cardRadiusLg,
+    ...glassBorder,
+    ...cardShadowLight,
   },
   modalTitle: {
+    ...typography.screenTitle,
     fontSize: 22,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: 16,
   },
   formError: {
-    fontSize: 14,
-    lineHeight: 20,
+    ...typography.bodySecondary,
     color: colors.danger,
-    marginBottom: 12,
+    marginTop: 8,
   },
   modalScroll: {
+    paddingHorizontal: spacing.screenHorizontal,
+    paddingTop: 16,
     paddingBottom: 16,
   },
   pdfPicker: {
@@ -214,7 +226,7 @@ export const adminStyles = StyleSheet.create({
     gap: 10,
     borderWidth: 1,
     borderColor: colors.primaryMuted,
-    borderRadius: 10,
+    borderRadius: spacing.inputRadius,
     padding: 14,
     backgroundColor: colors.primaryLight,
     marginBottom: 6,
@@ -236,9 +248,9 @@ export const adminStyles = StyleSheet.create({
     alignSelf: 'flex-start',
     paddingVertical: 10,
     paddingHorizontal: 14,
-    borderRadius: 10,
+    borderRadius: spacing.chipRadius,
     borderWidth: 1,
-    borderColor: colors.primary,
+    borderColor: colors.primaryMuted,
     backgroundColor: colors.primaryLight,
     marginBottom: 14,
   },
@@ -250,7 +262,7 @@ export const adminStyles = StyleSheet.create({
   thumbnailPreview: {
     width: '100%',
     height: 120,
-    borderRadius: 10,
+    borderRadius: spacing.inputRadius,
     marginBottom: 14,
     backgroundColor: colors.primaryMuted,
   },
@@ -264,7 +276,7 @@ export const adminStyles = StyleSheet.create({
   galleryThumbWrap: {
     width: 88,
     height: 88,
-    borderRadius: 10,
+    borderRadius: spacing.inputRadius,
     overflow: 'hidden',
     backgroundColor: colors.primaryMuted,
   },
@@ -307,9 +319,13 @@ export const adminStyles = StyleSheet.create({
   modalActions: {
     flexDirection: 'row',
     gap: 12,
+    paddingHorizontal: spacing.screenHorizontal,
     paddingVertical: 16,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: spacing.cardRadiusLg,
+    borderTopRightRadius: spacing.cardRadiusLg,
+    ...glassBorder,
+    ...cardShadowElevated,
   },
   rowFields: {
     flexDirection: 'row',

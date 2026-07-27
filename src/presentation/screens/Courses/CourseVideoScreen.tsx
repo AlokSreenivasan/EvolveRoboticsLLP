@@ -8,9 +8,15 @@ import {
 } from 'react-native';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 
-import BackButton from '../../../components/BackButton';
 import CourseVideoPlayer from '../../../components/Courses/CourseVideoPlayer';
-import { colors, spacing } from '../../../constants/theme';
+import ScreenHeader from '../../../components/ui/ScreenHeader';
+import SurfaceCard from '../../../components/ui/SurfaceCard';
+import {
+  colors,
+  primaryButtonStyle,
+  spacing,
+  typography,
+} from '../../../constants/theme';
 import {
   recordPlaylistVideoProgress,
   recordVideoWatchSeconds,
@@ -114,12 +120,7 @@ function CourseVideoScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <BackButton />
-        <Text style={styles.headerTitle} numberOfLines={1}>
-          {playlist.title}
-        </Text>
-      </View>
+      <ScreenHeader title={playlist.title} compact />
 
       <View style={styles.playerSection}>
         <CourseVideoPlayer
@@ -129,7 +130,7 @@ function CourseVideoScreen() {
           onWatchProgress={handleWatchProgress}
           onNearEndChange={handleNearEndChange}
         />
-        <View style={styles.playingMeta}>
+        <SurfaceCard elevation="light" style={styles.playingMeta}>
           <Text style={styles.lessonBadge}>
             Lesson {videoIndex + 1} of {videoCount}
           </Text>
@@ -169,7 +170,7 @@ function CourseVideoScreen() {
               )}
             </TouchableOpacity>
           ) : null}
-        </View>
+        </SurfaceCard>
       </View>
     </SafeAreaView>
   );
@@ -180,30 +181,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.screenHorizontal,
-    paddingVertical: 12,
-    gap: 12,
-    backgroundColor: colors.surface,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.textSecondary,
-  },
   playerSection: {
-    backgroundColor: colors.surface,
     flex: 1,
+    gap: 12,
+    paddingHorizontal: spacing.screenHorizontal,
+    paddingTop: 12,
+    paddingBottom: 16,
   },
   playingMeta: {
-    paddingHorizontal: spacing.screenHorizontal,
-    paddingTop: 14,
-    paddingBottom: 16,
+    padding: 16,
   },
   lessonBadge: {
     fontSize: 12,
@@ -214,26 +200,21 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   playingTitle: {
+    ...typography.sectionTitle,
     fontSize: 17,
-    fontWeight: '700',
-    color: colors.textPrimary,
     lineHeight: 24,
   },
   nextButton: {
+    ...primaryButtonStyle,
     marginTop: 18,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
+    minHeight: 56,
   },
   nextButtonDisabled: {
     backgroundColor: colors.primaryMuted,
   },
   nextButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
+    ...typography.button,
+    color: colors.surface,
   },
   nextButtonTextDisabled: {
     color: colors.textSecondary,

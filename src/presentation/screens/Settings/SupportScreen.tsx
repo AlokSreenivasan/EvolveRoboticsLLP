@@ -46,7 +46,7 @@ function SupportScreen() {
       <SettingsInfoCard
         icon={Headphones}
         iconColor={colors.accentOrange}
-        iconBackgroundColor="#FFF3E0"
+        iconBackgroundColor={colors.warningLight}
         title="Get in touch"
         description={SUPPORT_DESCRIPTION}
       />

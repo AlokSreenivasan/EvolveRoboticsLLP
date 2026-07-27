@@ -1,8 +1,9 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { ShieldX } from 'lucide-react-native';
 
 import AppButton from '../AppButton';
+import ScreenStateCard from '../ui/ScreenStateCard';
 import { colors, spacing } from '../../constants/theme';
 
 type AccessDeniedProps = {
@@ -20,19 +21,21 @@ function AccessDenied({
 }: AccessDeniedProps) {
   return (
     <View style={styles.container}>
-      <View style={styles.iconWrap}>
-        <ShieldX size={40} color={colors.primary} strokeWidth={2} />
-      </View>
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.description}>{description}</Text>
-      {onActionPress ? (
-        <AppButton
-          title={actionLabel}
-          onPress={onActionPress}
-          buttonStyle={styles.button}
-          textStyle={styles.buttonText}
-        />
-      ) : null}
+      <ScreenStateCard
+        variant="empty"
+        Icon={ShieldX}
+        title={title}
+        message={description}
+        style={styles.card}>
+        {onActionPress ? (
+          <AppButton
+            title={actionLabel}
+            onPress={onActionPress}
+            variant="primary"
+            buttonStyle={styles.button}
+          />
+        ) : null}
+      </ScreenStateCard>
     </View>
   );
 }
@@ -45,37 +48,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.screenHorizontal + 8,
     backgroundColor: colors.background,
   },
-  iconWrap: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: colors.primaryLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  description: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: 24,
+  card: {
+    width: '100%',
+    maxWidth: 360,
   },
   button: {
-    backgroundColor: colors.primary,
+    marginTop: 8,
     paddingHorizontal: 32,
     minWidth: 200,
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: '600',
   },
 });
 

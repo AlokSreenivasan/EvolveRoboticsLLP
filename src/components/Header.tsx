@@ -2,6 +2,14 @@ import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { Settings } from 'lucide-react-native';
 
+import {
+  cardShadowLight,
+  colors,
+  glassBorder,
+  spacing,
+  typography,
+} from '../constants/theme';
+
 type HeaderProps = {
   title: string;
   avatarUrl?: string;
@@ -18,7 +26,9 @@ export default function Header({
 }: HeaderProps) {
   return (
     <View style={styles.headerContainer}>
-      <Text style={styles.headerTitle}>{title}</Text>
+      <Text style={styles.headerTitle} accessibilityRole="header">
+        {title}
+      </Text>
 
       {onAvatarPress ? (
         <TouchableOpacity
@@ -28,7 +38,9 @@ export default function Header({
           accessibilityRole="button"
           accessibilityLabel="Open settings">
           {rightAction === 'settings' ? (
-            <Settings size={26} color="#a42a8b" strokeWidth={2} />
+            <View style={styles.iconTile}>
+              <Settings size={20} color={colors.primary} strokeWidth={2.25} />
+            </View>
           ) : (
             <Image source={{ uri: avatarUrl }} style={styles.avatarSmall} />
           )}
@@ -40,26 +52,38 @@ export default function Header({
 
 const styles = StyleSheet.create({
   headerContainer: {
-    backgroundColor: '#fff',
-    height: 80,
+    backgroundColor: colors.surface,
+    minHeight: 72,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: spacing.screenHorizontal,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    ...typography.screenTitle,
+    fontSize: 22,
     textAlign: 'center',
-    color: '#000',
   },
   avatarButton: {
     position: 'absolute',
-    right: 20,
+    right: spacing.screenHorizontal,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  iconTile: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...glassBorder,
+    ...cardShadowLight,
+  },
   avatarSmall: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: colors.primaryMuted,
   },
 });

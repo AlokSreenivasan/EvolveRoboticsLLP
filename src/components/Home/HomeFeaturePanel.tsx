@@ -10,7 +10,7 @@ import {
 import { ArrowRight } from 'lucide-react-native';
 import Svg, { Path } from 'react-native-svg';
 
-import { cardShadow, colors } from '../../constants/theme';
+import { cardShadow, colors, glassBorder, spacing } from '../../constants/theme';
 
 export type HomeFeaturePanelProps = {
   badgeLabel: string;
@@ -35,7 +35,7 @@ function CardWaveBackdrop({ width }: { width: number }) {
     return null;
   }
 
-  const height = 80;
+  const height = 88;
 
   return (
     <View style={styles.waveWrap} pointerEvents="none">
@@ -43,7 +43,7 @@ function CardWaveBackdrop({ width }: { width: number }) {
         <Path
           d={`M0 ${height * 0.52} C${width * 0.18} ${height * 0.22} ${width * 0.32} ${height * 0.72} ${width * 0.48} ${height * 0.42} C${width * 0.64} ${height * 0.16} ${width * 0.78} ${height * 0.58} ${width} ${height * 0.34} L${width} ${height} L0 ${height} Z`}
           fill={colors.primaryMuted}
-          opacity="0.45"
+          opacity="0.4"
         />
         <Path
           d={`M0 ${height * 0.68} C${width * 0.2} ${height * 0.42} ${width * 0.36} ${height * 0.82} ${width * 0.52} ${height * 0.56} C${width * 0.7} ${height * 0.32} ${width * 0.84} ${height * 0.7} ${width} ${height * 0.52} L${width} ${height} L0 ${height} Z`}
@@ -173,11 +173,11 @@ function HomeFeaturePanel({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
-    borderRadius: 24,
+    borderRadius: spacing.cardRadiusLg,
     padding: 16,
-    borderWidth: 1,
-    borderColor: colors.primaryMuted,
     overflow: 'hidden',
+    ...glassBorder,
+    borderColor: colors.primaryMuted,
     ...cardShadow,
   },
   waveWrap: {
@@ -185,19 +185,19 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: 80,
+    height: 88,
   },
   mainPress: {
     marginBottom: 14,
   },
   glow: {
     position: 'absolute',
-    top: -24,
-    right: -12,
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    backgroundColor: 'rgba(238, 205, 244, 0.4)',
+    top: -28,
+    right: -16,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(238, 205, 244, 0.45)',
   },
   row: {
     flexDirection: 'row',
@@ -278,6 +278,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: colors.textPrimary,
     lineHeight: 21,
+    letterSpacing: -0.2,
     paddingRight: 2,
   },
   subtitle: {
@@ -302,7 +303,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     paddingHorizontal: 16,
-    paddingVertical: 13,
+    paddingVertical: 14,
     borderRadius: 16,
   },
   ctaActive: {

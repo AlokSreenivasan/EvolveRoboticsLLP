@@ -9,8 +9,13 @@ import {
 } from 'react-native';
 import { RouteProp, useRoute } from '@react-navigation/native';
 
-import BackButton from '../../../components/BackButton';
-import { colors, spacing } from '../../../constants/theme';
+import ScreenHeader from '../../../components/ui/ScreenHeader';
+import SurfaceCard from '../../../components/ui/SurfaceCard';
+import {
+  colors,
+  spacing,
+  typography,
+} from '../../../constants/theme';
 import { courseTrackLabel } from '../../../store/content/types/courses.types';
 import type { RootStackParamList } from '../../../types/navigation';
 
@@ -28,9 +33,7 @@ function CourseDetailScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <BackButton withSpacingBelow />
-      </View>
+      <ScreenHeader title={course.title} compact />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -53,8 +56,6 @@ function CourseDetailScreen() {
         </View>
 
         <View style={styles.body}>
-          <Text style={styles.title}>{course.title}</Text>
-
           {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
 
           {trackLabel ? (
@@ -63,7 +64,7 @@ function CourseDetailScreen() {
             </View>
           ) : null}
 
-          <View style={styles.descriptionSection}>
+          <SurfaceCard elevation="default" style={styles.descriptionSection}>
             <Text style={styles.sectionHeading}>About this course</Text>
             {description ? (
               <Text style={styles.descriptionText}>{description}</Text>
@@ -72,7 +73,7 @@ function CourseDetailScreen() {
                 More details about this course will be shared soon.
               </Text>
             )}
-          </View>
+          </SurfaceCard>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -83,13 +84,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-  },
-  header: {
-    paddingHorizontal: spacing.screenHorizontal,
-    paddingTop: 8,
-    backgroundColor: colors.surface,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
   },
   scrollContent: {
     paddingBottom: 32,
@@ -113,7 +107,7 @@ const styles = StyleSheet.create({
     left: spacing.screenHorizontal,
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 8,
+    borderRadius: spacing.chipRadius,
     backgroundColor: colors.primaryLight,
   },
   durationText: {
@@ -126,12 +120,6 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     gap: 8,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: colors.textPrimary,
-    lineHeight: 30,
-  },
   subtitle: {
     fontSize: 16,
     fontWeight: '600',
@@ -143,7 +131,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: spacing.chipRadius,
     backgroundColor: colors.primaryLight,
   },
   trackChipText: {
@@ -154,19 +142,13 @@ const styles = StyleSheet.create({
   descriptionSection: {
     marginTop: 16,
     padding: 16,
-    borderRadius: spacing.cardRadius,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
   sectionHeading: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: colors.textPrimary,
+    ...typography.sectionTitle,
     marginBottom: 12,
   },
   descriptionText: {
-    fontSize: 15,
+    ...typography.body,
     color: colors.textSecondary,
     lineHeight: 24,
   },

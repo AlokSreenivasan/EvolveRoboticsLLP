@@ -18,7 +18,12 @@ function SettingsSectionHeader({
     <View style={styles.container}>
       <Text style={styles.title}>{title}</Text>
       {actionLabel && onActionPress ? (
-        <TouchableOpacity onPress={onActionPress} hitSlop={8}>
+        <TouchableOpacity
+          onPress={onActionPress}
+          hitSlop={8}
+          style={styles.actionHit}
+          accessibilityRole="button"
+          accessibilityLabel={actionLabel}>
           <Text style={styles.action}>{actionLabel}</Text>
         </TouchableOpacity>
       ) : null}
@@ -32,14 +37,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 12,
-    paddingHorizontal: 4,
+    paddingHorizontal: 2,
   },
   title: {
     ...sectionTitleStyle,
+    fontWeight: '800',
+  },
+  actionHit: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 999,
+    backgroundColor: colors.primaryLight,
   },
   action: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '700',
     color: colors.link,
   },
 });

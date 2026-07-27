@@ -7,15 +7,20 @@ import {
   SafeAreaView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { MessageCircle } from 'lucide-react-native';
-
-import BackButton from '../../../components/BackButton';
+import AppButton from '../../../components/AppButton';
 import ChatComposer from '../../../components/Chatbot/ChatComposer';
-import { cardShadow, colors, spacing } from '../../../constants/theme';
+import ScreenHeader from '../../../components/ui/ScreenHeader';
+import {
+  cardShadowElevated,
+  cardShadowLight,
+  colors,
+  glassBorder,
+  spacing,
+  typography,
+} from '../../../constants/theme';
 import { findChatKeywordResponse } from '../../../services/firebase/chatKeywordsService';
 import { useChatKeywords } from '../../hooks/useChatKeywords';
 import type { LoginScreenNavigationProp } from '../../../types/navigation';
@@ -140,9 +145,12 @@ function ChatbotScreen() {
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}>
-        <View style={styles.header}>
-          <BackButton onPress={handleBack} />
-        </View>
+        <ScreenHeader
+          title="Chat Assistant"
+          subtitle={isChatActive ? 'Ask me anything about Evolve' : 'Your robotics learning companion'}
+          onBackPress={handleBack}
+          compact
+        />
 
         {isChatActive ? (
           <View style={styles.chatContainer}>
@@ -186,19 +194,13 @@ function ChatbotScreen() {
             </View>
 
             <View style={styles.footer}>
-              <TouchableOpacity
-                style={styles.startChatButton}
-                activeOpacity={0.85}
+              <AppButton
+                title="Start Chat"
                 onPress={handleStartChat}
-                accessibilityRole="button"
-                accessibilityLabel="Start chat">
-                <MessageCircle
-                  size={20}
-                  color={colors.surface}
-                  strokeWidth={2.5}
-                />
-                <Text style={styles.startChatButtonText}>Start Chat</Text>
-              </TouchableOpacity>
+                variant="primary"
+                buttonStyle={styles.startChatButton}
+                textStyle={styles.startChatButtonText}
+              />
             </View>
           </>
         )}
@@ -213,13 +215,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: colors.primaryLight,
-  },
-  header: {
-    paddingHorizontal: spacing.screenHorizontal,
-    paddingTop: 8,
-    paddingBottom: 4,
-    zIndex: 2,
+    backgroundColor: colors.background,
   },
   content: {
     flex: 1,
@@ -229,11 +225,12 @@ const styles = StyleSheet.create({
   },
   mascotGlow: {
     position: 'absolute',
-    width: 220,
-    height: 220,
-    borderRadius: 110,
+    width: 240,
+    height: 240,
+    borderRadius: 120,
     backgroundColor: colors.primaryMuted,
-    opacity: 0.45,
+    opacity: 0.5,
+    ...cardShadowLight,
   },
   mascot: {
     width: 180,
@@ -245,21 +242,14 @@ const styles = StyleSheet.create({
   },
   startChatButton: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
     gap: 10,
-    backgroundColor: colors.primary,
-    paddingVertical: 16,
-    borderRadius: spacing.cardRadius,
-    ...cardShadow,
   },
   startChatButtonText: {
-    color: colors.surface,
-    fontSize: 16,
-    fontWeight: '700',
+    ...typography.button,
   },
   chatContainer: {
     flex: 1,
+    backgroundColor: colors.primaryLight,
   },
   watermarkWrap: {
     ...StyleSheet.absoluteFillObject,
@@ -270,7 +260,7 @@ const styles = StyleSheet.create({
   watermark: {
     width: 220,
     height: 220,
-    opacity: 0.27,
+    opacity: 0.22,
   },
   messageList: {
     flex: 1,
@@ -278,7 +268,7 @@ const styles = StyleSheet.create({
   },
   messageListContent: {
     paddingHorizontal: spacing.screenHorizontal,
-    paddingTop: 8,
+    paddingTop: 12,
     paddingBottom: 16,
     flexGrow: 1,
   },
@@ -293,20 +283,21 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
   },
   messageBubble: {
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    ...cardShadow,
+    borderRadius: spacing.cardRadius,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    ...cardShadowElevated,
   },
   assistantBubble: {
     backgroundColor: colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.primaryMuted,
+    ...glassBorder,
   },
   userBubble: {
     backgroundColor: colors.primary,
+    borderWidth: 0,
   },
   messageText: {
+    ...typography.body,
     fontSize: 15,
     lineHeight: 21,
   },

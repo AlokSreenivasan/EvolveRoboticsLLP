@@ -15,7 +15,15 @@ import { CheckCircle2, Circle } from 'lucide-react-native';
 import AppButton from '../../../components/AppButton';
 import BackButton from '../../../components/BackButton';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
-import { colors, spacing } from '../../../constants/theme';
+import {
+  cardShadow,
+  cardShadowElevated,
+  cardShadowLight,
+  colors,
+  glassBorder,
+  spacing,
+  typography,
+} from '../../../constants/theme';
 import { createExamAttempt } from '../../../services/firebase/examAttemptsService';
 import { useExam } from '../../hooks/useExam';
 import type { ExamQuestion } from '../../../store/content/types/exams.types';
@@ -298,12 +306,12 @@ function ExamAttemptScreen() {
           }
           onPress={handleSubmit}
           disabled={!canSubmit || submitting || submittedRef.current}
+          variant="primary"
           buttonStyle={[
             styles.submitButton,
             (!canSubmit || submitting || submittedRef.current) &&
               styles.submitButtonDisabled,
           ]}
-          textStyle={styles.submitText}
         />
       </View>
     </SafeAreaView>
@@ -318,31 +326,36 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: spacing.screenHorizontal,
     paddingTop: 8,
-    paddingBottom: 12,
+    paddingBottom: 14,
     backgroundColor: colors.surface,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
+    borderBottomLeftRadius: spacing.cardRadiusLg,
+    borderBottomRightRadius: spacing.cardRadiusLg,
+    ...glassBorder,
+    ...cardShadowLight,
   },
   title: {
+    ...typography.screenTitle,
     fontSize: 20,
-    fontWeight: '800',
-    color: colors.textPrimary,
   },
   subtitle: {
     marginTop: 4,
-    fontSize: 13,
-    color: colors.textSecondary,
+    ...typography.bodySecondary,
   },
   progress: {
     fontSize: 12,
+    fontWeight: '600',
     color: colors.textMuted,
   },
   metaRow: {
-    marginTop: 8,
+    marginTop: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: 12,
+    backgroundColor: colors.background,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: spacing.chipRadius,
   },
   timer: {
     fontSize: 12,
@@ -363,43 +376,39 @@ const styles = StyleSheet.create({
   messageCard: {
     margin: spacing.screenHorizontal,
     padding: 20,
-    borderRadius: 12,
+    borderRadius: spacing.cardRadiusLg,
     backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
+    ...glassBorder,
+    ...cardShadow,
   },
   messageTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.textPrimary,
+    ...typography.cardTitle,
     textAlign: 'center',
     marginBottom: 6,
   },
   messageText: {
-    fontSize: 14,
-    color: colors.textSecondary,
+    ...typography.bodySecondary,
     textAlign: 'center',
-    lineHeight: 20,
   },
   questionCard: {
     padding: 16,
-    borderRadius: 14,
+    borderRadius: spacing.cardRadiusLg,
     backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
     marginBottom: 14,
+    ...glassBorder,
+    ...cardShadow,
   },
   questionIndex: {
     fontSize: 12,
     fontWeight: '800',
     color: colors.primary,
     marginBottom: 8,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
   },
   questionPrompt: {
-    fontSize: 15,
+    ...typography.body,
     fontWeight: '700',
-    color: colors.textPrimary,
-    lineHeight: 22,
     marginBottom: 12,
   },
   choices: {
@@ -410,11 +419,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
+    paddingHorizontal: 14,
+    borderRadius: spacing.inputRadius,
     backgroundColor: colors.background,
+    ...glassBorder,
+    ...cardShadowLight,
   },
   choiceRowSelected: {
     borderColor: colors.primaryMuted,
@@ -434,23 +443,16 @@ const styles = StyleSheet.create({
     bottom: 0,
     paddingHorizontal: spacing.screenHorizontal,
     paddingBottom: 18,
-    paddingTop: 12,
+    paddingTop: 14,
     backgroundColor: colors.surface,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
+    borderTopLeftRadius: spacing.cardRadiusLg,
+    borderTopRightRadius: spacing.cardRadiusLg,
+    ...glassBorder,
+    ...cardShadowElevated,
   },
-  submitButton: {
-    backgroundColor: colors.primary,
-    paddingVertical: 14,
-    borderRadius: 14,
-  },
+  submitButton: {},
   submitButtonDisabled: {
-    backgroundColor: colors.textMuted,
-  },
-  submitText: {
-    color: '#fff',
-    fontWeight: '800',
-    fontSize: 14,
+    opacity: 0.55,
   },
 });
 

@@ -1,6 +1,5 @@
 import React, { useCallback, useState } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   SafeAreaView,
   StyleSheet,
@@ -11,11 +10,17 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { CheckCircle2, Lock } from 'lucide-react-native';
 
-import BackButton from '../../../components/BackButton';
 import QuizAlertModal from '../../../components/QuizCompetitions/QuizAlertModal';
 import QuizCompetitionIcon from '../../../components/Home/icons/QuizCompetitionIcon';
+import ScreenHeader from '../../../components/ui/ScreenHeader';
+import ScreenStateCard from '../../../components/ui/ScreenStateCard';
+import SurfaceCard from '../../../components/ui/SurfaceCard';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
-import { colors, spacing } from '../../../constants/theme';
+import {
+  colors,
+  spacing,
+  typography,
+} from '../../../constants/theme';
 import type { QuizCompetition } from '../../../store/content/types/quizCompetitions.types';
 import type { LoginScreenNavigationProp } from '../../../types/navigation';
 import { getQuizAccessStatus } from '../../../utils/quizAccess';
@@ -113,11 +118,6 @@ function QuizCompetitionsScreen() {
 
       return (
         <TouchableOpacity
-          style={[
-            styles.card,
-            isLocked && styles.cardLocked,
-            (isCompleted || isRetryable) && styles.cardCompleted,
-          ]}
           activeOpacity={isLocked ? 1 : 0.85}
           onPress={() => handleQuizPress(item, index)}
           accessibilityRole="button"
@@ -131,83 +131,92 @@ function QuizCompetitionsScreen() {
                   : ', available'
           }`}
           accessibilityState={{ disabled: isLocked }}>
-          <View
+          <SurfaceCard
+            elevation="light"
+            tinted={isCompleted || isRetryable}
             style={[
-              styles.cardIcon,
-              isLocked && styles.cardIconLocked,
-              (isCompleted || isRetryable) && styles.cardIconCompleted,
+              styles.card,
+              isLocked && styles.cardLocked,
+              (isCompleted || isRetryable) && styles.cardCompleted,
             ]}>
-            {isLocked ? (
-              <Lock size={20} color={colors.textMuted} strokeWidth={2.5} />
-            ) : isCompleted || isRetryable ? (
-              <CheckCircle2
-                size={22}
-                color={colors.accentGreen}
-                strokeWidth={2.5}
-              />
-            ) : (
-              <QuizCompetitionIcon
-                size={22}
-                color={colors.accentBlue}
-                strokeWidth={2.5}
-              />
-            )}
-          </View>
-          <View style={styles.cardText}>
-            <View style={styles.cardTitleRow}>
-              <Text
-                style={[
-                  styles.cardTitle,
-                  isLocked && styles.cardTitleLocked,
-                ]}>
-                {index + 1}. {item.title}
-              </Text>
+            <View
+              style={[
+                styles.cardIcon,
+                isLocked && styles.cardIconLocked,
+                (isCompleted || isRetryable) && styles.cardIconCompleted,
+              ]}>
               {isLocked ? (
-                <View style={styles.statusBadgeLocked}>
-                  <Text style={styles.statusBadgeTextLocked}>Locked</Text>
-                </View>
-              ) : isCompleted ? (
-                <View style={styles.statusBadgeCompleted}>
-                  <Text style={styles.statusBadgeTextCompleted}>Done</Text>
-                </View>
-              ) : isRetryable ? (
-                <View style={styles.statusBadgeRetry}>
-                  <Text style={styles.statusBadgeTextRetry}>Retry</Text>
-                </View>
+                <Lock size={20} color={colors.textMuted} strokeWidth={2.5} />
+              ) : isCompleted || isRetryable ? (
+                <CheckCircle2
+                  size={22}
+                  color={colors.accentGreen}
+                  strokeWidth={2.5}
+                />
               ) : (
-                <View style={styles.statusBadgeAvailable}>
-                  <Text style={styles.statusBadgeTextAvailable}>Start</Text>
-                </View>
+                <QuizCompetitionIcon
+                  size={22}
+                  color={colors.accentBlue}
+                  strokeWidth={2.5}
+                />
               )}
             </View>
-            {item.description.trim() ? (
+            <View style={styles.cardText}>
+              <View style={styles.cardTitleRow}>
+                <Text
+                  style={[
+                    styles.cardTitle,
+                    isLocked && styles.cardTitleLocked,
+                  ]}>
+                  {index + 1}. {item.title}
+                </Text>
+                {isLocked ? (
+                  <View style={styles.statusBadgeLocked}>
+                    <Text style={styles.statusBadgeTextLocked}>Locked</Text>
+                  </View>
+                ) : isCompleted ? (
+                  <View style={styles.statusBadgeCompleted}>
+                    <Text style={styles.statusBadgeTextCompleted}>Done</Text>
+                  </View>
+                ) : isRetryable ? (
+                  <View style={styles.statusBadgeRetry}>
+                    <Text style={styles.statusBadgeTextRetry}>Retry</Text>
+                  </View>
+                ) : (
+                  <View style={styles.statusBadgeAvailable}>
+                    <Text style={styles.statusBadgeTextAvailable}>Start</Text>
+                  </View>
+                )}
+              </View>
+              {item.description.trim() ? (
+                <Text
+                  style={[
+                    styles.cardSubtitle,
+                    isLocked && styles.cardSubtitleLocked,
+                  ]}
+                  numberOfLines={2}>
+                  {item.description.trim()}
+                </Text>
+              ) : null}
               <Text
                 style={[
-                  styles.cardSubtitle,
-                  isLocked && styles.cardSubtitleLocked,
-                ]}
-                numberOfLines={2}>
-                {item.description.trim()}
+                  styles.cardMeta,
+                  isLocked && styles.cardMetaLocked,
+                ]}>
+                {item.questions.length} questions • {formatMinutes(item.timerSeconds)} min • {item.xpValue} XP on 100%
+                {(isCompleted || isRetryable) && attempt
+                  ? ` • Score ${attempt.correctCount}/${attempt.totalQuestions}${
+                      isCompleted ? ` • ${attempt.xpEarned} XP` : ''
+                    }`
+                  : ''}
               </Text>
-            ) : null}
-            <Text
-              style={[
-                styles.cardMeta,
-                isLocked && styles.cardMetaLocked,
-              ]}>
-              {item.questions.length} questions • {formatMinutes(item.timerSeconds)} min • {item.xpValue} XP on 100%
-              {(isCompleted || isRetryable) && attempt
-                ? ` • Score ${attempt.correctCount}/${attempt.totalQuestions}${
-                    isCompleted ? ` • ${attempt.xpEarned} XP` : ''
-                  }`
-                : ''}
-            </Text>
-            {isLocked ? (
-              <Text style={styles.lockedHint}>
-                Score 100% on quiz {index} to unlock
-              </Text>
-            ) : null}
-          </View>
+              {isLocked ? (
+                <Text style={styles.lockedHint}>
+                  Score 100% on quiz {index} to unlock
+                </Text>
+              ) : null}
+            </View>
+          </SurfaceCard>
         </TouchableOpacity>
       );
     },
@@ -221,38 +230,32 @@ function QuizCompetitionsScreen() {
 
   const listEmpty = useCallback(() => {
     if (isLoading) {
-      return <ActivityIndicator color={colors.primary} style={styles.loader} />;
+      return <ScreenStateCard variant="loading" />;
     }
     if (loadError) {
       return (
-        <View style={styles.messageCard}>
-          <Text style={styles.messageTitle}>Could not load quizzes</Text>
-          <Text style={styles.messageText}>
-            Go back and try again in a moment.
-          </Text>
-        </View>
+        <ScreenStateCard
+          variant="error"
+          title="Could not load quizzes"
+          message="Go back and try again in a moment."
+        />
       );
     }
     return (
-      <View style={styles.messageCard}>
-        <Text style={styles.messageTitle}>No quizzes yet</Text>
-        <Text style={styles.messageText}>
-          Quiz competitions will appear here once your instructors publish them.
-        </Text>
-      </View>
+      <ScreenStateCard
+        variant="empty"
+        title="No quizzes yet"
+        message="Quiz competitions will appear here once your instructors publish them."
+      />
     );
   }, [isLoading, loadError]);
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <BackButton withSpacingBelow />
-        <Text style={styles.title}>Quiz competition</Text>
-        <Text style={styles.subtitle}>
-          Complete quizzes in order. Each quiz unlocks only after you score 100%
-          on the previous one. Retry any quiz where you did not score 100%.
-        </Text>
-      </View>
+      <ScreenHeader
+        title="Quiz competition"
+        subtitle="Complete quizzes in order. Each quiz unlocks only after you score 100% on the previous one. Retry any quiz where you did not score 100%."
+      />
 
       <FlatList
         data={isLoading || loadError ? [] : quizzes}
@@ -286,91 +289,44 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  header: {
-    paddingHorizontal: spacing.screenHorizontal,
-    paddingTop: 8,
-    paddingBottom: 12,
-    backgroundColor: colors.surface,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: colors.textPrimary,
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    lineHeight: 20,
-  },
   scrollContent: {
     paddingHorizontal: spacing.screenHorizontal,
     paddingTop: 16,
-    paddingBottom: 24,
+    paddingBottom: 28,
     flexGrow: 1,
-  },
-  loader: {
-    marginVertical: 40,
-  },
-  messageCard: {
-    padding: 20,
-    borderRadius: 12,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  messageTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    textAlign: 'center',
-    marginBottom: 6,
-  },
-  messageText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 20,
   },
   card: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 12,
     padding: 14,
-    borderRadius: 14,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
     marginBottom: 12,
   },
   cardLocked: {
-    backgroundColor: '#F3F4F6',
-    borderColor: '#E5E7EB',
+    backgroundColor: colors.background,
     opacity: 0.92,
   },
   cardCompleted: {
-    borderColor: '#C8E6C9',
-    backgroundColor: '#F9FFF9',
+    borderColor: colors.successLight,
+    backgroundColor: colors.successLight,
   },
   cardIcon: {
     width: 44,
     height: 44,
-    borderRadius: 12,
-    backgroundColor: '#E8F4FD',
+    borderRadius: spacing.iconTileRadius,
+    backgroundColor: colors.infoLight,
     borderWidth: 1,
     borderColor: colors.primaryMuted,
     alignItems: 'center',
     justifyContent: 'center',
   },
   cardIconLocked: {
-    backgroundColor: '#ECEFF1',
+    backgroundColor: colors.border,
     borderColor: colors.border,
   },
   cardIconCompleted: {
-    backgroundColor: '#E8F5E9',
-    borderColor: '#C8E6C9',
+    backgroundColor: colors.successLight,
+    borderColor: colors.successLight,
   },
   cardText: {
     flex: 1,
@@ -383,18 +339,15 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     flex: 1,
+    ...typography.cardTitle,
     fontSize: 15,
-    fontWeight: '700',
-    color: colors.textPrimary,
   },
   cardTitleLocked: {
     color: colors.textMuted,
   },
   cardSubtitle: {
     marginTop: 4,
-    fontSize: 13,
-    color: colors.textSecondary,
-    lineHeight: 18,
+    ...typography.bodySecondary,
   },
   cardSubtitleLocked: {
     color: colors.textMuted,
@@ -405,7 +358,7 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
   cardMetaLocked: {
-    color: '#B0B7C3',
+    color: colors.textMuted,
   },
   lockedHint: {
     marginTop: 6,
@@ -417,7 +370,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 999,
-    backgroundColor: '#ECEFF1',
+    backgroundColor: colors.border,
   },
   statusBadgeTextLocked: {
     fontSize: 11,
@@ -428,7 +381,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 999,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: colors.successLight,
   },
   statusBadgeTextCompleted: {
     fontSize: 11,
@@ -439,23 +392,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 999,
-    backgroundColor: '#E8F4FD',
+    backgroundColor: colors.primaryLight,
   },
   statusBadgeTextAvailable: {
     fontSize: 11,
     fontWeight: '700',
-    color: colors.accentBlue,
+    color: colors.primary,
   },
   statusBadgeRetry: {
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 999,
-    backgroundColor: '#FFF8E1',
+    backgroundColor: colors.warningLight,
   },
   statusBadgeTextRetry: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#F57F17',
+    color: colors.accentOrange,
   },
 });
 

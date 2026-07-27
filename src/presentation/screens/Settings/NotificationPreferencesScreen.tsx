@@ -13,7 +13,7 @@ import SettingsCard from '../../../components/Settings/SettingsCard';
 import SettingsInfoCard from '../../../components/Settings/SettingsInfoCard';
 import SettingsScreenLayout from '../../../components/Settings/SettingsScreenLayout';
 import SettingsSectionHeader from '../../../components/Settings/SettingsSectionHeader';
-import { colors, spacing } from '../../../constants/theme';
+import { cardShadowLight, colors, spacing } from '../../../constants/theme';
 import {
   DEFAULT_NOTIFICATION_PREFERENCES,
   type NotificationPreferenceKey,
@@ -179,7 +179,7 @@ function NotificationPreferencesScreen() {
           <NotificationToggleRow
             icon={Volume2}
             iconColor={colors.accentOrange}
-            iconBackgroundColor="#FFF3E0"
+            iconBackgroundColor={colors.warningLight}
             title="Sound & Vibration"
             subtitle="Play sounds and vibrate for new alerts"
             value={preferences.soundAndVibration}
@@ -208,7 +208,7 @@ function NotificationPreferencesScreen() {
           <NotificationToggleRow
             icon={CalendarDays}
             iconColor={colors.accentBlue}
-            iconBackgroundColor="#E3F2FD"
+            iconBackgroundColor={colors.infoLight}
             title="Events & Workshops"
             subtitle="Robotics competitions, hackathons, and meetups"
             value={preferences.eventsAndWorkshops}
@@ -220,7 +220,7 @@ function NotificationPreferencesScreen() {
           <NotificationToggleRow
             icon={Megaphone}
             iconColor={colors.accentOrange}
-            iconBackgroundColor="#FFF3E0"
+            iconBackgroundColor={colors.warningLight}
             title="Promotional Offers"
             subtitle="Special programs and partner announcements"
             value={preferences.promotionalOffers}
@@ -250,11 +250,12 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sectionGap,
   },
   hintCard: {
-    backgroundColor: '#FFF8E1',
-    borderRadius: 12,
+    backgroundColor: colors.warningLight,
+    borderRadius: spacing.chipRadius,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#FFE082',
+    borderColor: colors.noticeBorder,
+    ...cardShadowLight,
   },
   hintText: {
     fontSize: 13,

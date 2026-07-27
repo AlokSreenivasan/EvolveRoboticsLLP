@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
   },
   rowBorder: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
+    borderBottomColor: 'rgba(164, 42, 139, 0.1)',
   },
   label: {
     fontSize: 12,

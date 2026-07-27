@@ -3,12 +3,18 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  View,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { ChevronLeft } from 'lucide-react-native';
 
-import { colors } from '../constants/theme';
+import {
+  cardShadowLight,
+  colors,
+  glassBorder,
+} from '../constants/theme';
 
 export const backButtonOverlayStyle: ViewStyle = {
   position: 'absolute',
@@ -30,7 +36,7 @@ type BackButtonProps = {
 
 function BackButton({
   onPress,
-  label = '← Back',
+  label = 'Back',
   disabled = false,
   style,
   withSpacingBelow = false,
@@ -52,28 +58,43 @@ function BackButton({
       onPress={handlePress}
       disabled={disabled}
       hitSlop={8}
-      activeOpacity={0.7}
+      activeOpacity={0.75}
       accessibilityRole="button"
       accessibilityLabel="Go back"
       style={[styles.button, withSpacingBelow && styles.spacingBelow, style]}>
-      <Text style={styles.text}>{label}</Text>
+      <View style={styles.chip}>
+        <ChevronLeft size={18} color={colors.primary} strokeWidth={2.5} />
+        <Text style={styles.text}>{label}</Text>
+      </View>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   button: {
-    paddingVertical: 4,
-    paddingRight: 4,
     alignSelf: 'flex-start',
   },
   spacingBelow: {
-    marginBottom: 8,
+    marginBottom: 10,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    paddingVertical: 8,
+    paddingLeft: 6,
+    paddingRight: 12,
+    borderRadius: 14,
+    backgroundColor: colors.primaryLight,
+    minHeight: 36,
+    ...glassBorder,
+    borderColor: colors.primaryMuted,
+    ...cardShadowLight,
   },
   text: {
-    fontSize: 16,
+    fontSize: 14,
     color: colors.primary,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });
 

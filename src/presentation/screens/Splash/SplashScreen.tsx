@@ -1,17 +1,18 @@
 import React from 'react';
-import { ActivityIndicator, Image, SafeAreaView, StyleSheet } from 'react-native';
+import { ActivityIndicator, Image, SafeAreaView, StyleSheet, View } from 'react-native';
+
+import { cardShadowLight, colors, spacing } from '../../../constants/theme';
 
 const SplashScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
-      {/* App Logo */}
+      <View style={styles.logoGlow} />
       <Image
         source={require('../../../assets/LOGO__.png')}
         style={styles.logo}
         resizeMode="contain"
       />
-      {/* Loading Indicator */}
-      <ActivityIndicator size="large" color="#a42a8b" style={styles.loader} />
+      <ActivityIndicator size="large" color={colors.primary} style={styles.loader} />
     </SafeAreaView>
   );
 };
@@ -21,16 +22,24 @@ export default SplashScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff', // you can use your brand color
+    backgroundColor: colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
-
+  },
+  logoGlow: {
+    position: 'absolute',
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: colors.primaryMuted,
+    opacity: 0.45,
+    ...cardShadowLight,
   },
   logo: {
-    width: 150,
-    height: 150,
+    width: 140,
+    height: 140,
   },
   loader: {
-    marginTop: 20,
+    marginTop: spacing.sectionGap,
   },
 });

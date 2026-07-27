@@ -18,7 +18,7 @@ import Svg, {
 } from 'react-native-svg';
 
 import LevelBadgeIllustration from './icons/LevelBadgeIllustration';
-import { cardShadow, colors } from '../../constants/theme';
+import { cardShadowElevated, colors, spacing } from '../../constants/theme';
 import { useUserStreakStats } from '../../presentation/hooks/useUserStreakStats';
 import type { LoginScreenNavigationProp } from '../../types/navigation';
 import { getLearnerMotivation } from '../../utils/gamification/learnerRank';
@@ -243,16 +243,16 @@ function StreakBoardPanel() {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 24,
+    borderRadius: spacing.cardRadiusXl,
     borderWidth: 1,
-    borderColor: 'rgba(238, 205, 244, 0.28)',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    marginBottom: 20,
+    borderColor: 'rgba(238, 205, 244, 0.32)',
+    paddingHorizontal: 18,
+    paddingVertical: 18,
+    marginBottom: 22,
     overflow: 'hidden',
-    minHeight: 188,
+    minHeight: 196,
     backgroundColor: CARD_BG_BOTTOM,
-    ...cardShadow,
+    ...cardShadowElevated,
   },
   fallbackBg: {
     backgroundColor: CARD_BG_BOTTOM,
@@ -341,11 +341,13 @@ const styles = StyleSheet.create({
     paddingRight: 4,
   },
   progressTrack: {
-    height: 10,
+    height: 11,
     borderRadius: 999,
-    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+    backgroundColor: 'rgba(255, 255, 255, 0.14)',
     overflow: 'hidden',
     marginTop: 2,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   progressFill: {
     height: '100%',
@@ -373,13 +375,13 @@ const styles = StyleSheet.create({
   statChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    paddingHorizontal: 9,
-    paddingVertical: 6,
+    gap: 5,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    paddingHorizontal: 10,
+    paddingVertical: 7,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.16)',
+    borderColor: 'rgba(255, 255, 255, 0.18)',
   },
   statChipPressed: {
     opacity: 0.82,

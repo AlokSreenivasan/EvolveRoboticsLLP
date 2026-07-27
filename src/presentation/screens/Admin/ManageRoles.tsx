@@ -16,7 +16,7 @@ import AdminUserListRow from '../../../components/Admin/AdminUserListRow';
 import { adminStyles } from '../../../components/Admin/adminStyles';
 import { getGradeLabel } from '../../../constants/gradeOptions';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
-import { colors } from '../../../constants/theme';
+import { colors, glassBorder, inputFieldStyle, spacing } from '../../../constants/theme';
 import { useAdminUsersList } from '../../hooks/admin/useAdminUsersList';
 import { useSchools } from '../../hooks/useSchools';
 import {
@@ -318,12 +318,13 @@ const styles = StyleSheet.create({
   },
   auditBox: {
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
+    borderColor: colors.noticeBorder,
+    borderRadius: spacing.cardRadiusLg,
     backgroundColor: colors.primaryLight,
     paddingHorizontal: 12,
     paddingVertical: 10,
     gap: 6,
+    ...glassBorder,
   },
   auditTitle: {
     fontSize: 13,
@@ -350,12 +351,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    paddingHorizontal: 12,
+    ...inputFieldStyle,
     paddingVertical: 10,
-    backgroundColor: colors.surface,
   },
   searchInput: {
     flex: 1,

@@ -21,7 +21,13 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import AdminScreenLayout from '../../../components/Admin/AdminScreenLayout';
-import { colors, cardShadow, spacing } from '../../../constants/theme';
+import {
+  cardShadow,
+  colors,
+  glassBorder,
+  spacing,
+  typography,
+} from '../../../constants/theme';
 import { useUserRole } from '../../hooks/useUserRole';
 import type { AdminStackParamList } from '../../../types/navigation';
 import { canAccessAdminDashboardScreen } from '../../../utils/admin/adminDashboardAccess';
@@ -144,7 +150,7 @@ function AdminDashboard() {
           : 'Manage Resources, Assignments, Exams, and Quiz Competition'
       }>
       <View style={styles.heroCard}>
-        <LayoutDashboard size={28} color={colors.primary} strokeWidth={2} />
+        <LayoutDashboard size={28} color={colors.primary} strokeWidth={2.15} />
         <Text style={styles.heroTitle}>Administrator dashboard</Text>
         <Text style={styles.heroText}>
           {isSuperAdmin
@@ -165,13 +171,15 @@ function AdminDashboard() {
               accessibilityRole="button"
               accessibilityLabel={item.title}>
               <View style={styles.menuIconWrap}>
-                <Icon size={22} color={colors.primary} strokeWidth={2} />
+                <Icon size={20} color={colors.primary} strokeWidth={2.15} />
               </View>
               <View style={styles.menuText}>
                 <Text style={styles.menuTitle}>{item.title}</Text>
                 <Text style={styles.menuDescription}>{item.description}</Text>
               </View>
-              <Text style={styles.chevron}>›</Text>
+              <View style={styles.chevronWrap}>
+                <Text style={styles.chevron}>›</Text>
+              </View>
             </TouchableOpacity>
           );
         })}
@@ -183,24 +191,22 @@ function AdminDashboard() {
 const styles = StyleSheet.create({
   heroCard: {
     backgroundColor: colors.primaryLight,
-    borderRadius: spacing.cardRadius,
+    borderRadius: spacing.cardRadiusLg,
     padding: 20,
     marginBottom: spacing.sectionGap,
-    borderWidth: 1,
+    ...glassBorder,
     borderColor: colors.primaryMuted,
     ...cardShadow,
   },
   heroTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.textPrimary,
+    ...typography.sectionTitle,
     marginTop: 12,
     marginBottom: 6,
   },
   heroText: {
+    ...typography.bodySecondary,
     fontSize: 14,
     lineHeight: 20,
-    color: colors.textSecondary,
   },
   menu: {
     gap: 12,
@@ -209,16 +215,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surface,
-    borderRadius: spacing.cardRadius,
+    borderRadius: spacing.cardRadiusLg,
     padding: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
+    ...glassBorder,
     ...cardShadow,
   },
   menuIconWrap: {
     width: 44,
     height: 44,
-    borderRadius: 12,
+    borderRadius: spacing.iconTileRadius,
     backgroundColor: colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
@@ -230,8 +235,9 @@ const styles = StyleSheet.create({
   },
   menuTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '800',
     color: colors.textPrimary,
+    letterSpacing: -0.2,
     marginBottom: 4,
   },
   menuDescription: {
@@ -239,9 +245,19 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     color: colors.textSecondary,
   },
+  chevronWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 10,
+    backgroundColor: colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   chevron: {
-    fontSize: 22,
-    color: colors.textMuted,
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.primary,
+    marginTop: -2,
   },
 });
 

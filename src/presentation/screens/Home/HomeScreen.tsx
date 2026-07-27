@@ -37,7 +37,7 @@ import { useStoredProfileFullName } from '../../hooks/useStoredProfileFullName';
 import { useUserRole } from '../../hooks/useUserRole';
 import { isPlaylistInProgress } from '../../../utils/continueLearning/formatVideoProgress';
 
-const TAB_BAR_HEIGHT = 64;
+const TAB_BAR_HEIGHT = 78;
 
 function HomeScreen() {
   useHomeFeedFocus();
@@ -196,16 +196,16 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: spacing.screenHorizontal,
-    paddingTop: 4,
+    paddingTop: 6,
   },
   section: {
-    marginBottom: spacing.sectionGap,
+    marginBottom: spacing.sectionGap + 4,
   },
   horizontalList: {
     paddingRight: 4,
   },
   continueLearningSection: {
-    marginTop: 20,
+    marginTop: 22,
   },
   tabBarWrap: {
     position: 'absolute',

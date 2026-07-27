@@ -8,13 +8,18 @@ import {
 } from 'react-native';
 import { BookOpen } from 'lucide-react-native';
 
-import { cardShadow, colors } from '../../constants/theme';
+import {
+  cardShadow,
+  colors,
+  glassBorder,
+  spacing,
+} from '../../constants/theme';
 import type { Course } from '../../store/content/types/courses.types';
 
 const CARD_ACCENTS = [
   { badgeColor: colors.primaryLight, accentColor: colors.primary },
-  { badgeColor: '#E8F5E9', accentColor: colors.accentGreen },
-  { badgeColor: '#F3E5F5', accentColor: '#9C27B0' },
+  { badgeColor: colors.successLight, accentColor: colors.accentGreen },
+  { badgeColor: colors.noticeBackground, accentColor: colors.primaryDark },
 ] as const;
 
 type CourseCatalogCardProps = {
@@ -51,6 +56,7 @@ function CourseCatalogCard({
         ) : (
           <View style={[styles.image, styles.imagePlaceholder]} />
         )}
+        <View style={styles.mediaOverlay} />
         {duration ? (
           <View style={[styles.badge, { backgroundColor: accent.badgeColor }]}>
             <Text style={[styles.badgeText, { color: accent.accentColor }]}>
@@ -59,7 +65,7 @@ function CourseCatalogCard({
           </View>
         ) : null}
         <View style={styles.iconButton} accessibilityElementsHidden>
-          <BookOpen size={22} color="#fff" strokeWidth={2} />
+          <BookOpen size={20} color="#fff" strokeWidth={2.25} />
         </View>
       </View>
 
@@ -76,10 +82,10 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     backgroundColor: colors.surface,
-    borderRadius: 16,
+    borderRadius: spacing.cardRadiusLg,
     marginBottom: 16,
     overflow: 'hidden',
-    borderWidth: 1,
+    ...glassBorder,
     borderColor: colors.primaryMuted,
     ...cardShadow,
   },
@@ -95,14 +101,20 @@ const styles = StyleSheet.create({
   imagePlaceholder: {
     backgroundColor: colors.primaryMuted,
   },
+  mediaOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(26, 26, 46, 0.18)',
+  },
   badge: {
     position: 'absolute',
-    top: 10,
-    left: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    top: 12,
+    left: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
     maxWidth: '70%',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.55)',
   },
   badgeText: {
     fontSize: 12,
@@ -112,33 +124,24 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 14,
     right: 14,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.9)',
   },
   body: {
     padding: 16,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 17,
+    fontWeight: '800',
     color: colors.textPrimary,
-    lineHeight: 24,
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    lineHeight: 20,
-    marginBottom: 8,
-  },
-  description: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    lineHeight: 18,
+    lineHeight: 23,
+    letterSpacing: -0.2,
   },
 });
 

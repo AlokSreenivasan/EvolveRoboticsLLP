@@ -21,7 +21,7 @@ import {
   QUICK_ACCESS_ITEMS,
   type QuickAccessItem,
 } from '../../constants/homeScreenData';
-import { colors } from '../../constants/theme';
+import { cardShadowLight, colors, glassBorder } from '../../constants/theme';
 import type { LoginScreenNavigationProp } from '../../types/navigation';
 
 function QuickAccessIcon({
@@ -29,8 +29,8 @@ function QuickAccessIcon({
 }: {
   item: QuickAccessItem;
 }) {
-  const size = 24;
-  const stroke = 2;
+  const size = 22;
+  const stroke = 2.15;
   const color = item.iconColor;
 
   switch (item.iconName) {
@@ -79,10 +79,16 @@ function QuickAccessGrid() {
           onPress={() => handlePress(item.id)}
           accessibilityRole="button"
           accessibilityLabel={item.label}>
-          <View style={[styles.iconBox, { backgroundColor: item.backgroundColor }]}>
+          <View
+            style={[
+              styles.iconBox,
+              { backgroundColor: item.backgroundColor },
+            ]}>
             <QuickAccessIcon item={item} />
           </View>
-          <Text style={styles.label}>{item.label}</Text>
+          <Text style={styles.label} numberOfLines={1}>
+            {item.label}
+          </Text>
         </TouchableOpacity>
       ))}
     </View>
@@ -93,25 +99,32 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
+    backgroundColor: colors.surface,
+    borderRadius: 22,
+    paddingVertical: 16,
+    paddingHorizontal: 8,
+    ...glassBorder,
+    ...cardShadowLight,
   },
   item: {
     alignItems: 'center',
   },
   iconBox: {
-    width: 56,
-    height: 56,
-    borderRadius: 14,
+    width: 52,
+    height: 52,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.primaryMuted,
     marginBottom: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.7)',
   },
   label: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
     color: colors.textPrimary,
     textAlign: 'center',
+    letterSpacing: -0.1,
   },
 });
 

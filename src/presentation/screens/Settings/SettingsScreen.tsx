@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  ActivityIndicator,
   StyleSheet,
   Text,
   View,
@@ -23,7 +22,7 @@ import SettingsCard from '../../../components/Settings/SettingsCard';
 import SettingsLinkRow from '../../../components/Settings/SettingsLinkRow';
 import SettingsScreenLayout from '../../../components/Settings/SettingsScreenLayout';
 import SettingsSectionHeader from '../../../components/Settings/SettingsSectionHeader';
-import { colors, spacing } from '../../../constants/theme';
+import { colors, spacing, typography } from '../../../constants/theme';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { useAdminNavigation } from '../../hooks/useAdminNavigation';
@@ -83,8 +82,7 @@ function SettingsScreen() {
         <AppButton
           title="Personal details"
           onPress={() => navigation.navigate('Profile')}
-          buttonStyle={styles.outlineButton}
-          textStyle={styles.outlineButtonText}
+          variant="secondary"
         />
       </SettingsCard>
 
@@ -172,16 +170,10 @@ function SettingsScreen() {
       <AppButton
         title={loggingOut ? 'Logging out...' : 'Log Out'}
         onPress={handleLogoutPress}
-        buttonStyle={styles.outlineButton}
-        textStyle={styles.outlineButtonText}
+        variant="ghost"
         disabled={loggingOut}
+        loading={loggingOut}
       />
-      {loggingOut ? (
-        <ActivityIndicator
-          color={colors.primary}
-          style={styles.loader}
-        />
-      ) : null}
     </SettingsScreenLayout>
   );
 }
@@ -191,7 +183,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sectionGap,
   },
   profileCard: {
-    padding: 16,
+    padding: 18,
     marginBottom: spacing.sectionGap,
   },
   profileRow: {
@@ -204,32 +196,13 @@ const styles = StyleSheet.create({
     marginLeft: 16,
   },
   userName: {
+    ...typography.screenTitle,
     fontSize: 22,
-    fontWeight: '700',
-    color: colors.textPrimary,
     marginBottom: 4,
   },
   userEmail: {
+    ...typography.bodySecondary,
     fontSize: 14,
-    color: colors.textSecondary,
-  },
-  outlineButton: {
-    borderWidth: 1,
-    borderColor: colors.primary,
-    paddingVertical: 10,
-    borderRadius: 12,
-    width: '100%',
-    height: 44,
-  },
-  outlineButtonText: {
-    color: colors.primary,
-    textAlign: 'center',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  loader: {
-    marginTop: 12,
-    alignSelf: 'center',
   },
 });
 

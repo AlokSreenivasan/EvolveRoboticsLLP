@@ -7,7 +7,7 @@ import {
   View,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { BookOpen, Sparkles, Target } from 'lucide-react-native';
+import { BookOpen, Target } from 'lucide-react-native';
 
 import DailyMissionCard from './DailyMissionCard';
 import QuizCompetitionIcon from './icons/QuizCompetitionIcon';
@@ -28,7 +28,7 @@ const MISSION_THEME = {
   accentBorder: colors.primaryMuted,
 };
 
-const MISSION_GAP = 10;
+const MISSION_GAP = 12;
 const MISSION_CARD_WIDTH =
   (Dimensions.get('window').width -
     spacing.screenHorizontal * 2 -
@@ -40,15 +40,9 @@ function DailyMissionsHeader() {
     <View style={styles.header}>
       <View style={styles.headerTitleRow}>
         <View style={styles.headerIconWrap}>
-          <Target size={15} color="#fff" strokeWidth={2.5} />
+          <Target size={14} color="#fff" strokeWidth={2.5} />
         </View>
         <Text style={styles.headerTitle}>Daily Missions</Text>
-        <View style={styles.sparkles}>
-          <Sparkles size={14} color={colors.primarySoft} strokeWidth={2.4} />
-          <View style={styles.sparkleOffset}>
-            <Sparkles size={10} color={colors.primaryMuted} strokeWidth={2.4} />
-          </View>
-        </View>
       </View>
     </View>
   );
@@ -137,20 +131,20 @@ function DailyMissionsSection() {
 
 const styles = StyleSheet.create({
   section: {
-    marginTop: 18,
+    marginTop: 20,
   },
   header: {
     marginBottom: 14,
-    paddingHorizontal: 4,
+    paddingHorizontal: 2,
   },
   headerTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   headerIconWrap: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 28,
+    height: 28,
+    borderRadius: 10,
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
@@ -159,15 +153,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     ...sectionTitleStyle,
     fontWeight: '800',
-  },
-  sparkles: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginLeft: 8,
-    gap: 2,
-  },
-  sparkleOffset: {
-    marginTop: -4,
   },
   cardsRow: {
     flexDirection: 'row',

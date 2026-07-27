@@ -9,7 +9,7 @@ import {
   Shield,
 } from 'lucide-react-native';
 
-import { colors } from '../../constants/theme';
+import { cardShadowElevated, colors, glassBorder } from '../../constants/theme';
 
 export type HomeTabKey =
   | 'home'
@@ -50,49 +50,73 @@ function HomeBottomTabBar({
   return (
     <View
       style={[
-        styles.container,
-        { paddingBottom: Math.max(insets.bottom, 8) },
+        styles.shell,
+        { paddingBottom: Math.max(insets.bottom, 10) },
       ]}>
-      {tabs.map(tab => {
-        const isActive = tab.key === activeTab;
-        const Icon = tab.icon;
-        const color = isActive ? ACTIVE_COLOR : INACTIVE_COLOR;
+      <View style={styles.container}>
+        {tabs.map(tab => {
+          const isActive = tab.key === activeTab;
+          const Icon = tab.icon;
+          const color = isActive ? ACTIVE_COLOR : INACTIVE_COLOR;
 
-        return (
-          <TouchableOpacity
-            key={tab.key}
-            style={styles.tab}
-            onPress={() => onTabPress?.(tab.key)}
-            activeOpacity={0.8}
-            accessibilityRole="button"
-            accessibilityState={{ selected: isActive }}
-            accessibilityLabel={tab.label}>
-            <View style={styles.iconWrap}>
-              <Icon size={22} color={color} strokeWidth={isActive ? 2.5 : 2} />
-            </View>
-            <Text style={[styles.label, { color }]}>{tab.label}</Text>
-          </TouchableOpacity>
-        );
-      })}
+          return (
+            <TouchableOpacity
+              key={tab.key}
+              style={styles.tab}
+              onPress={() => onTabPress?.(tab.key)}
+              activeOpacity={0.82}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isActive }}
+              accessibilityLabel={tab.label}>
+              <View
+                style={[
+                  styles.iconWrap,
+                  isActive && styles.iconWrapActive,
+                ]}>
+                <Icon
+                  size={20}
+                  color={color}
+                  strokeWidth={isActive ? 2.5 : 2}
+                />
+              </View>
+              <Text
+                style={[
+                  styles.label,
+                  { color },
+                  isActive && styles.labelActive,
+                ]}>
+                {tab.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  shell: {
+    paddingHorizontal: 14,
+    paddingTop: 4,
+  },
   container: {
     flexDirection: 'row',
-    backgroundColor: colors.surface,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
+    backgroundColor: 'rgba(255, 255, 255, 0.94)',
+    borderRadius: 28,
     paddingTop: 8,
+    paddingBottom: 8,
+    paddingHorizontal: 4,
+    ...glassBorder,
+    ...cardShadowElevated,
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 6,
+        shadowColor: colors.primaryDark,
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.12,
+        shadowRadius: 24,
       },
-      android: { elevation: 12 },
+      android: { elevation: 10 },
       default: {},
     }),
   },
@@ -100,14 +124,26 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 4,
+    paddingVertical: 2,
   },
   iconWrap: {
-    marginBottom: 4,
+    width: 44,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 2,
+  },
+  iconWrapActive: {
+    backgroundColor: colors.primaryLight,
   },
   label: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '600',
+    letterSpacing: 0.1,
+  },
+  labelActive: {
+    fontWeight: '700',
   },
 });
 

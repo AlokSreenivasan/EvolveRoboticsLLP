@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, spacing } from '../../constants/theme';
+import { colors, spacing, typography } from '../../constants/theme';
 import type { ChatKeyword } from '../../store/content/types/chatKeywords.types';
 import ChatKeywordChip from './ChatKeywordChip';
 
@@ -36,17 +36,13 @@ function ChatKeywordOptions({
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 12,
+    paddingTop: 14,
     paddingBottom: 4,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.primaryMuted,
-    backgroundColor: colors.primaryLight,
+    backgroundColor: colors.surface,
   },
   hint: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.textSecondary,
-    letterSpacing: 0.4,
+    ...typography.label,
+    letterSpacing: 0.6,
     textTransform: 'uppercase',
     marginBottom: 10,
     paddingHorizontal: spacing.screenHorizontal,

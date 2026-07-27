@@ -11,6 +11,12 @@ import {
   View,
 } from 'react-native';
 
+import {
+  colors,
+  inputFieldStyle,
+  spacing,
+  typography,
+} from '../../constants/theme';
 import type { School as SchoolOption } from '../../store/content/types/schools.types';
 
 type SchoolPickerProps = {
@@ -80,7 +86,7 @@ function SchoolPicker({
             ? `School, ${displayLabel}. Cannot be changed.`
             : `School, ${displayLabel}. Tap to change.`
         }>
-        <School size={18} color="#a42a8b" strokeWidth={2} />
+        <School size={18} color={colors.primary} strokeWidth={2} />
         <Text
           style={[
             styles.fieldText,
@@ -92,9 +98,9 @@ function SchoolPicker({
           {loading ? 'Loading schools...' : displayLabel}
         </Text>
         {loading ? (
-          <ActivityIndicator size="small" color="#a42a8b" />
+          <ActivityIndicator size="small" color={colors.primary} />
         ) : disabled ? null : (
-          <ChevronDown size={18} color="#888" strokeWidth={2} />
+          <ChevronDown size={18} color={colors.textMuted} strokeWidth={2} />
         )}
       </TouchableOpacity>
 
@@ -157,43 +163,38 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    borderWidth: 1,
-    borderColor: '#eecdf4',
-    borderRadius: 15,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    backgroundColor: '#fff',
+    ...inputFieldStyle,
     marginBottom: 4,
+    minHeight: 48,
   },
   fieldError: {
-    borderColor: '#e57373',
+    borderColor: colors.danger,
   },
   fieldDisabled: {
     opacity: 0.6,
   },
   fieldText: {
     flex: 1,
-    fontSize: 16,
-    color: '#000',
+    ...typography.body,
   },
   placeholderText: {
-    color: '#999',
+    color: colors.textMuted,
   },
   helperError: {
-    color: '#c62828',
+    color: colors.danger,
     fontSize: 13,
     marginBottom: 4,
   },
   backdrop: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: colors.overlayScrim,
   },
   sheet: {
     maxHeight: '70%',
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: spacing.cardRadiusLg,
+    borderTopRightRadius: spacing.cardRadiusLg,
     paddingBottom: 24,
   },
   sheetHeader: {
@@ -203,41 +204,41 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#eecdf4',
+    borderBottomColor: colors.primaryMuted,
   },
   sheetTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#a42a8b',
+    ...typography.cardTitle,
+    color: colors.primary,
   },
   sheetDone: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#a42a8b',
+    ...typography.body,
+    fontWeight: '700',
+    color: colors.primary,
+    minHeight: 44,
+    lineHeight: 44,
   },
   emptyText: {
+    ...typography.body,
+    color: colors.textSecondary,
     padding: 20,
-    fontSize: 15,
-    color: '#555',
     textAlign: 'center',
   },
   optionRow: {
     paddingHorizontal: 16,
     paddingVertical: 14,
+    minHeight: 48,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#eee',
+    borderBottomColor: colors.border,
   },
   optionRowSelected: {
-    backgroundColor: '#FAF2FF',
+    backgroundColor: colors.primaryLight,
   },
   optionTitle: {
-    fontSize: 16,
+    ...typography.body,
     fontWeight: '600',
-    color: '#333',
   },
   optionSubtitle: {
-    fontSize: 13,
-    color: '#666',
+    ...typography.bodySecondary,
     marginTop: 2,
   },
 });

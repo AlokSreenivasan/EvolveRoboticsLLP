@@ -1,7 +1,8 @@
 import React from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { colors } from '../../constants/theme';
+import ScreenStateCard from '../ui/ScreenStateCard';
+import { colors, spacing } from '../../constants/theme';
 
 type RoleLoadingViewProps = {
   message?: string;
@@ -12,8 +13,11 @@ function RoleLoadingView({
 }: RoleLoadingViewProps) {
   return (
     <View style={styles.container}>
-      <ActivityIndicator size="large" color={colors.primary} />
-      <Text style={styles.message}>{message}</Text>
+      <ScreenStateCard
+        variant="loading"
+        message={message}
+        style={styles.card}
+      />
     </View>
   );
 }
@@ -24,13 +28,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.background,
-    paddingHorizontal: 24,
+    paddingHorizontal: spacing.screenHorizontal + 8,
   },
-  message: {
-    marginTop: 16,
-    fontSize: 15,
-    color: colors.textSecondary,
-    textAlign: 'center',
+  card: {
+    width: '100%',
+    maxWidth: 360,
   },
 });
 

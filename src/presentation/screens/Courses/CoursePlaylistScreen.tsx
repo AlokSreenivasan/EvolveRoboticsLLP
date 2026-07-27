@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   SafeAreaView,
   StyleSheet,
@@ -10,15 +9,22 @@ import {
 } from 'react-native';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 
-import BackButton from '../../../components/BackButton';
 import CourseLessonRow from '../../../components/Courses/CourseLessonRow';
-import { colors, spacing } from '../../../constants/theme';
+import ScreenHeader from '../../../components/ui/ScreenHeader';
+import ScreenStateCard from '../../../components/ui/ScreenStateCard';
+import SurfaceCard from '../../../components/ui/SurfaceCard';
+import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
+import {
+  colors,
+  secondaryButtonStyle,
+  spacing,
+  typography,
+} from '../../../constants/theme';
 import type { YouTubePlaylistVideo } from '../../../store/content/types/youtubePlaylist.types';
 import type {
   LoginScreenNavigationProp,
   RootStackParamList,
 } from '../../../types/navigation';
-import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import {
   computeProgressPercent,
   formatVideoProgressLabel,
@@ -107,7 +113,7 @@ function CoursePlaylistScreen() {
 
   const listHeader = useCallback(
     () => (
-      <View style={styles.progressHeader}>
+      <SurfaceCard elevation="light" style={styles.progressHeader}>
         <View style={styles.progressMeta}>
           <Text style={styles.listHeading}>{progressLabel}</Text>
           <Text style={styles.progressPercent}>{progressPercent}%</Text>
@@ -130,40 +136,37 @@ function CoursePlaylistScreen() {
             ]}
           />
         </View>
-      </View>
+      </SurfaceCard>
     ),
     [progressLabel, progressPercent],
   );
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <BackButton />
-        <View style={styles.headerTitles}>
-          <Text style={styles.headerTitle} numberOfLines={1}>
-            {playlist.title}
-          </Text>
-          {playlist.subtitle ? (
-            <Text style={styles.headerSubtitle} numberOfLines={1}>
-              {playlist.subtitle}
-            </Text>
-          ) : null}
-        </View>
-      </View>
+      <ScreenHeader
+        title={playlist.title}
+        subtitle={playlist.subtitle ?? undefined}
+        compact
+      />
 
       <View style={styles.listContent}>{listHeader()}</View>
 
       {loading ? (
-        <ActivityIndicator
-          color={colors.primary}
-          style={styles.centeredLoader}
-        />
+        <ScreenStateCard variant="loading" style={styles.stateCard} />
       ) : error ? (
         <View style={styles.messageWrap}>
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity onPress={reload} style={styles.retryButton}>
-            <Text style={styles.retryText}>Try again</Text>
-          </TouchableOpacity>
+          <ScreenStateCard
+            variant="error"
+            title="Could not load playlist"
+            message={error}>
+            <TouchableOpacity
+              onPress={reload}
+              style={styles.retryButton}
+              accessibilityRole="button"
+              accessibilityLabel="Try again">
+              <Text style={styles.retryText}>Try again</Text>
+            </TouchableOpacity>
+          </ScreenStateCard>
         </View>
       ) : (
         <FlatList
@@ -185,63 +188,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.screenHorizontal,
-    paddingVertical: 12,
-    gap: 12,
-    backgroundColor: colors.surface,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  headerTitles: {
-    flex: 1,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  headerSubtitle: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  centeredLoader: {
-    marginTop: 32,
-  },
-  messageWrap: {
-    padding: spacing.screenHorizontal,
-    alignItems: 'center',
-  },
-  errorText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 12,
-  },
-  retryButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: colors.primaryLight,
-  },
-  retryText: {
-    color: colors.primary,
-    fontWeight: '600',
-  },
   listContent: {
     paddingHorizontal: spacing.screenHorizontal,
   },
   listBodyContent: {
     paddingHorizontal: spacing.screenHorizontal,
-    paddingBottom: 24,
+    paddingBottom: 28,
   },
   progressHeader: {
     marginTop: 14,
     marginBottom: 10,
+    padding: 14,
   },
   progressMeta: {
     flexDirection: 'row',
@@ -250,9 +207,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   listHeading: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.textSecondary,
+    ...typography.label,
   },
   progressPercent: {
     fontSize: 13,
@@ -269,6 +224,25 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 3,
     backgroundColor: colors.primary,
+  },
+  stateCard: {
+    marginHorizontal: spacing.screenHorizontal,
+    marginTop: 16,
+  },
+  messageWrap: {
+    paddingHorizontal: spacing.screenHorizontal,
+    marginTop: 8,
+  },
+  retryButton: {
+    ...secondaryButtonStyle,
+    marginTop: 12,
+    minHeight: 44,
+    paddingVertical: 10,
+  },
+  retryText: {
+    ...typography.button,
+    color: colors.primary,
+    fontSize: 14,
   },
 });
 

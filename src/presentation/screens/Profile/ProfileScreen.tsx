@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import {
-  ActivityIndicator,
   BackHandler,
   KeyboardAvoidingView,
   Platform,
@@ -16,12 +15,12 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 
 import AppButton from '../../../components/AppButton.tsx';
-import BackButton, { backButtonOverlayStyle } from '../../../components/BackButton';
-import Header from '../../../components/Header.tsx';
 import ProfilePhotoSection from '../../../components/Profile/ProfilePhotoSection.tsx';
 import GradePicker from '../../../components/Profile/GradePicker.tsx';
 import ProfileTrackPicker from '../../../components/Profile/ProfileTrackPicker.tsx';
 import SchoolPicker from '../../../components/Profile/SchoolPicker.tsx';
+import ScreenHeader from '../../../components/ui/ScreenHeader';
+import SurfaceCard from '../../../components/ui/SurfaceCard';
 import { CONTACT_NUMBER_MAX_LENGTH } from '../../../domain/Profile/validation/formatContactNumber';
 import { isProfileComplete } from '../../../domain/Profile/validation/isProfileComplete';
 import { useAuth } from '../../context/AuthContext';
@@ -33,6 +32,12 @@ import {
 } from '../../../services/profilePhotoPicker';
 import type { RootStackParamList } from '../../../types/navigation';
 import { appAlert, appAlertCopy } from '../../../utils/alert/appAlert';
+import {
+  colors,
+  inputFieldStyle,
+  spacing,
+  typography,
+} from '../../../constants/theme';
 
 type ProfileScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -138,46 +143,42 @@ function ProfileScreen() {
     }
   };
 
+  const subtitle = requireCompletion
+    ? 'Complete your profile to get started.'
+    : 'Update your personal details below.';
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.container}>
       <SafeAreaView style={styles.container}>
-        <View style={styles.screenHeader}>
-          {!requireCompletion ? (
-            <BackButton
-              style={backButtonOverlayStyle}
-              disabled={isFormDisabled}
-            />
-          ) : null}
-          <Header title="Profile" />
-        </View>
+        <ScreenHeader
+          title="Profile"
+          subtitle={subtitle}
+          showBack={!requireCompletion}
+          backDisabled={isFormDisabled}
+          compact
+        />
 
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
-          <Text style={styles.pageSubtitle}>
-            {requireCompletion
-              ? 'Complete your profile to get started.'
-              : 'Update your personal details below.'}
-          </Text>
-
-          <View style={styles.photoCard}>
+          <SurfaceCard elevation="light" tinted style={styles.photoCard}>
             <ProfilePhotoSection
               photoUri={profile.photoUri}
               onChangePhotoPress={isFormDisabled ? undefined : handleChangePhoto}
             />
-          </View>
+          </SurfaceCard>
 
-          <View style={styles.formCard}>
+          <SurfaceCard elevation="default" style={styles.formCard}>
             <Text style={styles.sectionTitle}>Personal Details</Text>
 
             <Text style={styles.label}>Full Name</Text>
             <TextInput
               style={[styles.input, errors.fullName ? styles.inputError : null]}
               placeholder="Enter your full name"
-              placeholderTextColor="#999"
+              placeholderTextColor={colors.textMuted}
               value={profile.fullName}
               onChangeText={setFullName}
               autoCapitalize="words"
@@ -204,7 +205,7 @@ function ProfileScreen() {
                 errors.contactNumber ? styles.inputError : null,
               ]}
               placeholder="Enter 10-digit contact number"
-              placeholderTextColor="#999"
+              placeholderTextColor={colors.textMuted}
               value={profile.contactNumber}
               onChangeText={setContactNumber}
               keyboardType="number-pad"
@@ -270,21 +271,17 @@ function ProfileScreen() {
 
             <AppButton
               title={
-                isSaving
-                  ? 'Saving...'
-                  : requireCompletion
-                    ? 'Save & Continue'
-                    : 'Save Changes'
+                requireCompletion
+                  ? 'Save & Continue'
+                  : 'Save Changes'
               }
               onPress={handleSave}
-              buttonStyle={styles.saveButton}
-              textStyle={styles.saveButtonText}
+              variant="primary"
+              loading={isSaving}
               disabled={isFormDisabled}
+              buttonStyle={styles.saveButton}
             />
-            {isSaving ? (
-              <ActivityIndicator color="#a42a8b" style={styles.saveLoader} />
-            ) : null}
-          </View>
+          </SurfaceCard>
         </ScrollView>
       </SafeAreaView>
     </KeyboardAvoidingView>
@@ -294,65 +291,32 @@ function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-  },
-  screenHeader: {
-    backgroundColor: '#fff',
-    height: 80,
-    justifyContent: 'center',
+    backgroundColor: colors.background,
   },
   scrollContent: {
-    padding: 16,
+    padding: spacing.screenHorizontal,
     paddingBottom: 32,
-  },
-  pageTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#a42a8b',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  pageSubtitle: {
-    fontSize: 14,
-    color: '#555',
-    textAlign: 'center',
-    marginBottom: 20,
+    gap: 16,
   },
   photoCard: {
-    backgroundColor: '#FAF2FF',
-    borderRadius: 15,
-    borderWidth: 1,
-    borderColor: '#eecdf4',
     paddingVertical: 8,
-    marginBottom: 16,
   },
   formCard: {
-    backgroundColor: '#fff',
-    borderRadius: 15,
     padding: 16,
-    borderWidth: 1,
-    borderColor: '#eecdf4',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#a42a8b',
+    ...typography.sectionTitle,
+    color: colors.primary,
     paddingBottom: 12,
     marginBottom: 4,
     borderBottomWidth: 1,
-    borderBottomColor: '#eecdf4',
+    borderBottomColor: colors.primaryMuted,
   },
   label: {
-    fontWeight: '600',
+    ...typography.label,
+    color: colors.primary,
     marginBottom: 8,
     marginTop: 12,
-    fontSize: 14,
-    color: '#a42a8b',
   },
   labelRow: {
     flexDirection: 'row',
@@ -362,74 +326,51 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   labelInRow: {
-    fontWeight: '600',
-    fontSize: 14,
-    color: '#a42a8b',
+    ...typography.label,
+    color: colors.primary,
   },
   readOnlyBadge: {
     fontSize: 11,
-    fontWeight: '600',
-    color: '#a42a8b',
-    backgroundColor: '#FAF2FF',
+    fontWeight: '700',
+    color: colors.primary,
+    backgroundColor: colors.primaryLight,
     paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 10,
+    paddingVertical: 4,
+    borderRadius: spacing.chipRadius,
     borderWidth: 1,
-    borderColor: '#eecdf4',
+    borderColor: colors.primaryMuted,
     overflow: 'hidden',
   },
   readOnlyField: {
-    borderWidth: 1,
-    borderColor: '#eecdf4',
-    borderRadius: 15,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    backgroundColor: '#FAF2FF',
+    ...inputFieldStyle,
+    backgroundColor: colors.primaryLight,
     marginBottom: 4,
   },
   readOnlyText: {
-    fontSize: 16,
-    color: '#555',
+    ...typography.body,
+    color: colors.textSecondary,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#eecdf4',
-    borderRadius: 15,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
+    ...inputFieldStyle,
     fontSize: 16,
-    color: '#000',
+    color: colors.textPrimary,
     marginBottom: 4,
-    backgroundColor: '#fff',
   },
   inputError: {
-    borderColor: '#e57373',
+    borderColor: colors.danger,
   },
   errorText: {
-    color: 'red',
+    color: colors.danger,
     fontSize: 13,
     marginBottom: 8,
   },
   helperText: {
-    color: '#666',
-    fontSize: 13,
+    ...typography.bodySecondary,
     marginTop: 4,
     marginBottom: 8,
   },
   saveButton: {
-    backgroundColor: '#a42a8b',
-    paddingVertical: 14,
-    borderRadius: 12,
     marginTop: 20,
-  },
-  saveButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  saveLoader: {
-    marginTop: 12,
-    alignSelf: 'center',
   },
 });
 

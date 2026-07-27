@@ -1,14 +1,13 @@
 import React, { useCallback } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
-  Text,
   type ListRenderItem,
 } from 'react-native';
+import { Inbox } from 'lucide-react-native';
 
 import AdminScreenLayout from './AdminScreenLayout';
+import ScreenStateCard from '../ui/ScreenStateCard';
 import { VERTICAL_LIST_PERF } from '../../constants/listPerformance';
-import { colors } from '../../constants/theme';
 import { adminStyles } from './adminStyles';
 
 type AdminListLayoutProps<T> = {
@@ -36,12 +35,17 @@ function AdminListLayout<T>({
 }: AdminListLayoutProps<T>) {
   const listEmpty = useCallback(() => {
     if (loading) {
-      return (
-        <ActivityIndicator color={colors.primary} style={adminStyles.loader} />
-      );
+      return <ScreenStateCard variant="loading" />;
     }
     if (data.length === 0) {
-      return <Text style={adminStyles.emptyText}>{emptyMessage}</Text>;
+      return (
+        <ScreenStateCard
+          variant="empty"
+          title="Nothing here yet"
+          message={emptyMessage}
+          Icon={Inbox}
+        />
+      );
     }
     return null;
   }, [data.length, emptyMessage, loading]);

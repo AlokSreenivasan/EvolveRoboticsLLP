@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Bell } from 'lucide-react-native';
 
-import { cardShadowLight, colors } from '../../constants/theme';
+import { cardShadowLight, colors, glassBorder, spacing } from '../../constants/theme';
 import { useNotifications } from '../../presentation/hooks/useNotifications';
 import type { LoginScreenNavigationProp } from '../../types/navigation';
 
@@ -20,7 +20,9 @@ function HomeHeader({ displayName }: HomeHeaderProps) {
   return (
     <View style={styles.container}>
       <View style={styles.textBlock}>
-        <Text style={styles.greeting}>Hello, {firstName}</Text>
+        <Text style={styles.greeting} accessibilityRole="header">
+          Hello, {firstName}
+        </Text>
         <Text style={styles.tagline}>
           Keep learning, keep building the future!
         </Text>
@@ -40,7 +42,7 @@ function HomeHeader({ displayName }: HomeHeaderProps) {
             styles.notificationButton,
             pressed && styles.notificationButtonPressed,
           ]}>
-          <Bell size={22} color={colors.primary} strokeWidth={2.25} />
+          <Bell size={20} color={colors.primary} strokeWidth={2.25} />
           {notificationCount > 0 ? (
             <View style={styles.notificationDot} />
           ) : null}
@@ -55,25 +57,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: spacing.screenHorizontal,
+    paddingTop: 8,
+    paddingBottom: 14,
     backgroundColor: colors.background,
-    gap: 12,
+    gap: 14,
   },
   textBlock: {
     flex: 1,
     minWidth: 0,
   },
   greeting: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 24,
+    fontWeight: '800',
     color: colors.textPrimary,
-    marginBottom: 2,
+    letterSpacing: -0.5,
+    marginBottom: 4,
   },
   tagline: {
-    fontSize: 12,
+    fontSize: 13,
+    fontWeight: '500',
     color: colors.textSecondary,
-    lineHeight: 16,
+    lineHeight: 18,
   },
   actions: {
     flexDirection: 'row',
@@ -81,27 +86,29 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   notificationButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+    width: 48,
+    height: 48,
+    borderRadius: 16,
     backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
+    ...glassBorder,
     ...cardShadowLight,
   },
   notificationButtonPressed: {
-    opacity: 0.88,
+    opacity: 0.9,
     backgroundColor: colors.primaryLight,
+    transform: [{ scale: 0.96 }],
   },
   notificationDot: {
     position: 'absolute',
-    top: 8,
-    right: 9,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    top: 11,
+    right: 12,
+    width: 9,
+    height: 9,
+    borderRadius: 5,
     backgroundColor: colors.primary,
-    borderWidth: 1.5,
+    borderWidth: 2,
     borderColor: colors.surface,
   },
 });

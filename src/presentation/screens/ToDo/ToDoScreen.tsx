@@ -1,21 +1,20 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   SafeAreaView,
   StyleSheet,
-  Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
-import { BookOpen, FolderKanban } from 'lucide-react-native';
+import { AlertCircle, BookOpen, FolderKanban } from 'lucide-react-native';
 
-import BackButton from '../../../components/BackButton';
 import ContinueLearningCard from '../../../components/Home/ContinueLearningCard';
 import ProjectCard from '../../../components/Projects/ProjectCard';
+import ScreenHeader from '../../../components/ui/ScreenHeader';
+import ScreenStateCard from '../../../components/ui/ScreenStateCard';
+import SegmentedControl from '../../../components/ui/SegmentedControl';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
-import { cardShadowLight, colors, spacing } from '../../../constants/theme';
+import { colors, spacing } from '../../../constants/theme';
 import type { ContinueLearningPlaylist } from '../../../store/content/types/continueLearningPlaylists.types';
 import type { Project } from '../../../store/content/types/projects.types';
 import type {
@@ -29,52 +28,10 @@ import { useProjects } from '../../hooks/useProjects';
 
 type ToDoTab = 'learn' | 'project';
 
-type TabConfig = {
-  key: ToDoTab;
-  label: string;
-  icon: typeof BookOpen;
-};
-
-const TABS: TabConfig[] = [
-  { key: 'learn', label: 'Learn', icon: BookOpen },
-  { key: 'project', label: 'Project', icon: FolderKanban },
+const TAB_OPTIONS = [
+  { key: 'learn' as const, label: 'Learn' },
+  { key: 'project' as const, label: 'Project' },
 ];
-
-type ToDoTabBarProps = {
-  activeTab: ToDoTab;
-  onTabChange: (tab: ToDoTab) => void;
-};
-
-function ToDoTabBar({ activeTab, onTabChange }: ToDoTabBarProps) {
-  return (
-    <View style={styles.tabBar}>
-      {TABS.map(tab => {
-        const isActive = tab.key === activeTab;
-        const Icon = tab.icon;
-
-        return (
-          <TouchableOpacity
-            key={tab.key}
-            style={[styles.tab, isActive && styles.tabActive]}
-            activeOpacity={0.85}
-            onPress={() => onTabChange(tab.key)}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: isActive }}
-            accessibilityLabel={tab.label}>
-            <Icon
-              size={18}
-              color={isActive ? colors.primary : colors.textMuted}
-              strokeWidth={isActive ? 2.5 : 2}
-            />
-            <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
-    </View>
-  );
-}
 
 function ToDoScreen() {
   useHomeFeedFocus();
@@ -124,31 +81,29 @@ function ToDoScreen() {
 
   const listEmpty = useCallback(() => {
     if (loading) {
-      return <ActivityIndicator color={colors.primary} style={styles.loader} />;
+      return <ScreenStateCard variant="loading" />;
     }
     if (error) {
       return (
-        <View style={styles.messageCard}>
-          <Text style={styles.messageTitle}>
-            {isLearnTab ? 'Could not load lessons' : 'Could not load projects'}
-          </Text>
-          <Text style={styles.messageText}>
-            Pull to refresh or try again in a moment.
-          </Text>
-        </View>
+        <ScreenStateCard
+          variant="error"
+          title={isLearnTab ? 'Could not load lessons' : 'Could not load projects'}
+          message="Pull to refresh or try again in a moment."
+          Icon={AlertCircle}
+        />
       );
     }
     return (
-      <View style={styles.messageCard}>
-        <Text style={styles.messageTitle}>
-          {isLearnTab ? 'No lessons yet' : 'No projects yet'}
-        </Text>
-        <Text style={styles.messageText}>
-          {isLearnTab
+      <ScreenStateCard
+        variant="empty"
+        title={isLearnTab ? 'No lessons yet' : 'No projects yet'}
+        message={
+          isLearnTab
             ? 'New lesson playlists will appear here once they are published.'
-            : 'New projects will appear here once they are published.'}
-        </Text>
-      </View>
+            : 'New projects will appear here once they are published.'
+        }
+        Icon={isLearnTab ? BookOpen : FolderKanban}
+      />
     );
   }, [error, isLearnTab, loading]);
 
@@ -161,13 +116,17 @@ function ToDoScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <BackButton withSpacingBelow />
-        <Text style={styles.title}>To Do</Text>
-        <Text style={styles.headerSubtitle}>
-          Lessons and projects in one place.
-        </Text>
-        <ToDoTabBar activeTab={activeTab} onTabChange={setActiveTab} />
+      <ScreenHeader
+        title="To Do"
+        subtitle="Lessons and projects in one place."
+      />
+
+      <View style={styles.tabWrap}>
+        <SegmentedControl
+          options={TAB_OPTIONS}
+          value={activeTab}
+          onChange={setActiveTab}
+        />
       </View>
 
       {isLearnTab ? (
@@ -194,83 +153,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  header: {
+  tabWrap: {
     paddingHorizontal: spacing.screenHorizontal,
-    paddingTop: 8,
-    paddingBottom: 16,
-    backgroundColor: colors.surface,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: colors.textPrimary,
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    lineHeight: 20,
+    paddingTop: 4,
+    paddingBottom: 12,
   },
   scrollContent: {
     paddingHorizontal: spacing.screenHorizontal,
-    paddingTop: 16,
+    paddingTop: 4,
     paddingBottom: 24,
     flexGrow: 1,
-  },
-  tabBar: {
-    flexDirection: 'row',
-    backgroundColor: '#ECEEF2',
-    borderRadius: 14,
-    padding: 4,
-    marginTop: 14,
-  },
-  tab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 11,
-    borderRadius: 11,
-  },
-  tabActive: {
-    backgroundColor: colors.surface,
-    ...cardShadowLight,
-  },
-  tabLabel: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.textMuted,
-  },
-  tabLabelActive: {
-    color: colors.textPrimary,
-    fontWeight: '700',
-  },
-  loader: {
-    marginVertical: 40,
-  },
-  messageCard: {
-    padding: 20,
-    borderRadius: 12,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginTop: 8,
-  },
-  messageTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    textAlign: 'center',
-    marginBottom: 6,
-  },
-  messageText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 20,
   },
 });
 

@@ -1,6 +1,13 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import {
+  cardShadowLight,
+  colors,
+  glassBorder,
+  spacing,
+  typography,
+} from '../../constants/theme';
 import type { CourseTrack } from '../../store/content/types/courses.types';
 
 const TRACK_OPTIONS: ReadonlyArray<{
@@ -25,73 +32,85 @@ function ProfileTrackPicker({
   hasError = false,
 }: ProfileTrackPickerProps) {
   return (
-    <View style={styles.row}>
-      {TRACK_OPTIONS.map(option => {
-        const selected = selectedTrack === option.value;
+    <View style={styles.wrap}>
+      <Text style={styles.label}>Learning Track</Text>
+      <View style={styles.row}>
+        {TRACK_OPTIONS.map(option => {
+          const selected = selectedTrack === option.value;
 
-        return (
-          <Pressable
-            key={option.value}
-            style={[
-              styles.option,
-              selected ? styles.optionSelected : null,
-              hasError && !selected ? styles.optionError : null,
-              disabled ? styles.optionDisabled : null,
-            ]}
-            onPress={() => onSelectTrack(option.value)}
-            disabled={disabled}
-            accessibilityRole="radio"
-            accessibilityState={{ selected, disabled }}
-            accessibilityLabel={option.label}>
-            <Text
+          return (
+            <Pressable
+              key={option.value}
               style={[
-                styles.optionLabel,
-                selected ? styles.optionLabelSelected : null,
-              ]}>
-              {option.label}
-            </Text>
-          </Pressable>
-        );
-      })}
+                styles.option,
+                selected ? styles.optionSelected : null,
+                hasError && !selected ? styles.optionError : null,
+                disabled ? styles.optionDisabled : null,
+              ]}
+              onPress={() => onSelectTrack(option.value)}
+              disabled={disabled}
+              accessibilityRole="radio"
+              accessibilityState={{ selected, disabled }}
+              accessibilityLabel={option.label}>
+              <Text
+                style={[
+                  styles.optionLabel,
+                  selected ? styles.optionLabelSelected : null,
+                ]}>
+                {option.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrap: {
+    marginTop: 12,
+  },
+  label: {
+    ...typography.label,
+    color: colors.primary,
+    marginBottom: 8,
+  },
   row: {
     flexDirection: 'row',
     gap: 12,
-    marginTop: 12,
     marginBottom: 4,
   },
   option: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#eecdf4',
-    borderRadius: 15,
+    minHeight: 48,
+    borderRadius: spacing.inputRadius,
     paddingVertical: 14,
     paddingHorizontal: 12,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
+    ...glassBorder,
+    ...cardShadowLight,
   },
   optionSelected: {
-    borderColor: '#a42a8b',
-    backgroundColor: '#FAF2FF',
+    borderColor: colors.primary,
+    backgroundColor: colors.primaryLight,
   },
   optionError: {
-    borderColor: '#e57373',
+    borderColor: colors.danger,
   },
   optionDisabled: {
     opacity: 0.6,
   },
   optionLabel: {
-    fontSize: 16,
+    ...typography.body,
     fontWeight: '600',
-    color: '#555',
+    color: colors.textSecondary,
   },
   optionLabelSelected: {
-    color: '#a42a8b',
+    color: colors.primary,
+    fontWeight: '700',
   },
 });
 

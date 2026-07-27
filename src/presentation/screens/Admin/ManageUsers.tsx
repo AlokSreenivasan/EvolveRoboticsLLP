@@ -16,7 +16,7 @@ import AdminUserListRow from '../../../components/Admin/AdminUserListRow';
 import { adminStyles } from '../../../components/Admin/adminStyles';
 import { getGradeLabel } from '../../../constants/gradeOptions';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
-import { colors } from '../../../constants/theme';
+import { colors, inputFieldStyle, spacing } from '../../../constants/theme';
 import { useAdminUsersList } from '../../hooks/admin/useAdminUsersList';
 import { useSchools } from '../../hooks/useSchools';
 import { resetUserQuizProgress } from '../../../services/firebase/adminQuizProgressService';
@@ -229,12 +229,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    paddingHorizontal: 12,
+    ...inputFieldStyle,
     paddingVertical: 10,
-    backgroundColor: colors.surface,
   },
   searchInput: {
     flex: 1,

@@ -10,13 +10,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
-  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Eye, EyeOff } from 'lucide-react-native';
 import { signInWithEmailPassword } from '../../../services/firebase/authService';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
 import AppButton from '../../../components/AppButton.tsx';
+import SurfaceCard from '../../../components/ui/SurfaceCard';
 import { isValidEmail } from '../../../domain/Auth/validation/isValidEmail.ts';
 import { useAuthFlow } from '../../context/AuthFlowContext';
 import { appAlert, appAlertCopy } from '../../../utils/alert/appAlert';
@@ -24,6 +24,12 @@ import {
   isGoogleSignInCancelled,
   signInWithGoogle,
 } from '../../../services/auth/googleSignInService';
+import {
+  colors,
+  inputFieldStyle,
+  spacing,
+  typography,
+} from '../../../constants/theme';
 
 function getAuthErrorMessage(error: { code?: string; message?: string }) {
   switch (error.code) {
@@ -124,31 +130,37 @@ function LoginScreen() {
     }
   };
 
+  const isBusy = loading || googleLoading;
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.container}
     >
       <SafeAreaView style={styles.container}>
-        <ScrollView style={styles.scrollContainer}>
+        <ScrollView
+          style={styles.scrollContainer}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}>
           <View style={styles.logoView}>
             <Image
               source={require('../../../assets/LOGO__.png')}
               style={styles.logo}
             />
           </View>
-          <View style={styles.card}>
-            <Text style={styles.title}>Login</Text>
+
+          <SurfaceCard elevation="default" style={styles.card}>
+            <Text style={styles.brandLabel}>Login</Text>
             <Text style={styles.welcomeText}>Welcome Back!</Text>
             <Text style={styles.subText}>
               Sign in to continue your journey with Evolve Robotics.
             </Text>
 
             <Text style={styles.label}>Email Address</Text>
-
             <TextInput
               placeholder="Enter your email"
-              placeholderTextColor="light black"
+              placeholderTextColor={colors.textMuted}
               value={email}
               onChangeText={handleEmailChange}
               keyboardType="email-address"
@@ -159,12 +171,10 @@ function LoginScreen() {
               <Text style={styles.errorText}>{emailError}</Text>
             ) : null}
 
-
             <Text style={styles.label}>Password</Text>
-
             <View style={styles.passwordContainer}>
               <TextInput
-                placeholderTextColor="light black"
+                placeholderTextColor={colors.textMuted}
                 placeholder="Enter your password"
                 value={password}
                 onChangeText={setPassword}
@@ -181,51 +191,44 @@ function LoginScreen() {
                 accessibilityLabel={isPasswordVisible ? 'Hide password' : 'Show password'}
               >
                 {isPasswordVisible ? (
-                  <EyeOff size={20} color="#a42a8b" />
+                  <EyeOff size={20} color={colors.primary} />
                 ) : (
-                  <Eye size={20} color="#a42a8b" />
+                  <Eye size={20} color={colors.primary} />
                 )}
               </TouchableOpacity>
             </View>
 
-            {/* Forgot Password */}
             <TouchableOpacity
               onPress={() => navigation.navigate('ForgotPassword')}
-            >
+              style={styles.forgotPasswordButton}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>
 
             <AppButton
-              title={loading ? 'Signing in...' : 'Login to Account'}
+              title="Login to Account"
               onPress={handleSignIn}
-              buttonStyle={styles.loginButton}
-              textStyle={styles.loginText}
-              disabled={loading || googleLoading}
+              variant="primary"
+              loading={loading}
+              disabled={isBusy}
             />
-            {loading ? (
-              <ActivityIndicator color="#a42a8b" style={styles.loader} />
-            ) : null}
 
-            <TouchableOpacity
+            <AppButton
+              title="Continue with Google"
               onPress={handleGoogleSignIn}
-              disabled={loading || googleLoading}
-              style={[
-                styles.googleButton,
-                loading || googleLoading ? styles.googleButtonDisabled : null,
-              ]}
-            >
-              <Text style={styles.googleButtonText}>
-                {googleLoading ? 'Signing in with Google...' : 'Continue with Google'}
-              </Text>
-            </TouchableOpacity>
+              variant="secondary"
+              loading={googleLoading}
+              disabled={isBusy}
+              buttonStyle={styles.googleButton}
+            />
 
             <View style={styles.signupContainer}>
-              <Text>Don't have an account?</Text>
+              <Text style={styles.signupPrompt}>Don't have an account?</Text>
               <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
                 <Text style={styles.signupLink}>Sign up</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </SurfaceCard>
         </ScrollView>
       </SafeAreaView>
     </KeyboardAvoidingView>
@@ -233,152 +236,124 @@ function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   scrollContainer: {
+    flex: 1,
+  },
+  scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingVertical: 20,
-    marginTop: 40,
-    backgroundColor: '#fff',
+    paddingHorizontal: spacing.screenHorizontal,
+    paddingVertical: 24,
   },
   logoView: {
-    flex: 1,
-    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+    marginTop: 16,
   },
   logo: {
-    height: 60,
-    width: 60,
-    alignSelf: 'center',
+    height: 72,
+    width: 72,
   },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 14,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
-    height: '100%',
-    paddingVertical: 20,
-    top: '7%',
+    padding: 20,
+    gap: 4,
   },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
-    alignSelf: 'center',
-    color: '#a42a8b',
-    marginBottom: 22,
-    paddingTop: 15,
+  brandLabel: {
+    ...typography.label,
+    color: colors.primary,
+    textAlign: 'center',
+    fontWeight: '700',
+    fontSize: 14,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    marginBottom: 8,
   },
   welcomeText: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 8,
+    ...typography.screenTitle,
     textAlign: 'center',
-    color: '#000',
+    marginBottom: 8,
   },
   subText: {
-    fontSize: 14,
+    ...typography.screenSubtitle,
     textAlign: 'center',
-    marginBottom: 32,
-    color: '#555',
+    marginBottom: 28,
   },
   label: {
-    fontWeight: '600',
+    ...typography.label,
+    color: colors.primary,
     marginBottom: 8,
-    fontSize: 14,
-    color: '#a42a8b',
+    marginTop: 4,
+  },
+  forgotPasswordButton: {
+    alignSelf: 'flex-end',
+    marginBottom: 24,
+    minHeight: 44,
+    justifyContent: 'center',
   },
   forgotPasswordText: {
-    color: '#9C27B0', // Purple color
-    textAlign: 'right',
-    marginBottom: 32,
-    fontSize: 14,
+    ...typography.bodySecondary,
+    color: colors.link,
+    fontWeight: '600',
   },
-
   input: {
-    borderWidth: 1,
-    borderColor: '#eecdf4',
-    borderRadius: 15,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
+    ...inputFieldStyle,
     fontSize: 16,
-    color: '#000',
-    marginBottom: 15,
+    color: colors.textPrimary,
+    marginBottom: 12,
   },
   passwordInput: {
     flex: 1,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#000',
+    color: colors.textPrimary,
   },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderColor: '#eecdf4',
-    borderWidth: 1,
-    borderRadius: 15,
-    marginBottom: 20,
-    paddingHorizontal: 10,
+    ...inputFieldStyle,
+    marginBottom: 8,
+    paddingVertical: 0,
   },
   passwordToggle: {
     paddingHorizontal: 10,
     paddingVertical: 8,
+    minWidth: 44,
+    minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  loginButton: {
-    backgroundColor: '#a42a8b',
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  loader: {
-    marginTop: 12,
-  },
-  loginText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
   googleButton: {
     marginTop: 12,
-    borderWidth: 1,
-    borderColor: '#eecdf4',
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    backgroundColor: '#fff',
-  },
-  googleButtonDisabled: {
-    opacity: 0.6,
-  },
-  googleButtonText: {
-    color: '#111',
-    fontSize: 15,
-    fontWeight: '600',
   },
   signupContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 10,
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 20,
+    minHeight: 44,
+  },
+  signupPrompt: {
+    ...typography.bodySecondary,
+    color: colors.textSecondary,
   },
   signupLink: {
-    fontSize: 14,
-    color: '#9C27B0',
-    fontWeight: '600',
+    ...typography.bodySecondary,
+    color: colors.link,
+    fontWeight: '700',
     textDecorationLine: 'underline',
   },
   inputError: {
-    // borderColor: 'red',
+    borderColor: colors.danger,
   },
   errorText: {
-    color: 'red',
+    color: colors.danger,
     fontSize: 13,
-    marginBottom: 10,
+    marginBottom: 8,
   },
-
 });
 
 export default LoginScreen;

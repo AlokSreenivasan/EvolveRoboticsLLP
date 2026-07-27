@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { BookOpen, Play } from 'lucide-react-native';
 
-import { cardShadow, colors } from '../../constants/theme';
+import { cardShadow, colors, glassBorder } from '../../constants/theme';
 import type { ContinueLearningPlaylist } from '../../store/content/types/continueLearningPlaylists.types';
 import {
   computeProgressPercent,
@@ -68,13 +68,13 @@ function ContinueLearningCard({
       <View style={[styles.body, isList && styles.bodyList]}>
         <Text
           style={[styles.title, isList && styles.titleList]}
-          numberOfLines={isList ? 2 : 2}>
+          numberOfLines={2}>
           {playlist.title}
         </Text>
         {playlist.subtitle ? (
           <Text
             style={[styles.subtitle, isList && styles.subtitleList]}
-            numberOfLines={isList ? 2 : 2}>
+            numberOfLines={2}>
             {playlist.subtitle}
           </Text>
         ) : null}
@@ -116,12 +116,12 @@ function ContinueLearningCard({
 
 const styles = StyleSheet.create({
   card: {
-    width: 220,
+    width: 228,
     backgroundColor: colors.surface,
-    borderRadius: 20,
+    borderRadius: 22,
     marginRight: 14,
     overflow: 'hidden',
-    borderWidth: 1,
+    ...glassBorder,
     borderColor: colors.primaryMuted,
     ...cardShadow,
   },
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   media: {
-    height: 128,
+    height: 132,
     position: 'relative',
   },
   mediaList: {
@@ -147,16 +147,18 @@ const styles = StyleSheet.create({
   },
   mediaOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(26, 26, 46, 0.35)',
+    backgroundColor: 'rgba(26, 26, 46, 0.28)',
   },
   progressPill: {
     position: 'absolute',
     top: 10,
     left: 10,
-    backgroundColor: colors.primary,
+    backgroundColor: 'rgba(164, 42, 139, 0.92)',
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.25)',
   },
   progressPillText: {
     fontSize: 11,
@@ -167,15 +169,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 10,
     right: 10,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     paddingLeft: 2,
     borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.9)',
+    borderColor: 'rgba(255,255,255,0.92)',
   },
   playFabList: {
     bottom: 14,
@@ -201,6 +203,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: colors.textPrimary,
     lineHeight: 20,
+    letterSpacing: -0.2,
     marginBottom: 3,
   },
   titleList: {
@@ -220,19 +223,19 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   progressTrack: {
-    height: 5,
-    backgroundColor: colors.primaryMuted,
-    borderRadius: 3,
+    height: 6,
+    backgroundColor: colors.primaryLight,
+    borderRadius: 999,
     overflow: 'hidden',
     marginBottom: 10,
   },
   progressTrackList: {
-    height: 6,
+    height: 7,
     marginBottom: 12,
   },
   progressFill: {
     height: '100%',
-    borderRadius: 3,
+    borderRadius: 999,
     backgroundColor: colors.primary,
   },
   footer: {
