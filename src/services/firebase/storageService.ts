@@ -5,7 +5,10 @@ import {
   putFile,
   ref,
   refFromURL,
+  StringFormat,
+  uploadString,
 } from '@react-native-firebase/storage';
+
 
 import { assertAuthenticatedUserId } from '../../utils/firebase/assertAuthenticated';
 import { syncFirestoreAuthSession } from '../../utils/firebase/firestoreSessionSync';
@@ -375,6 +378,28 @@ export async function deleteProjectImagesByUrlsSafe(
   await Promise.all(imageUrls.map(url => deleteProjectImageByUrlSafe(url)));
 }
 
+/**
+ * Reads a local file URI as UTF-8 text.
+ * Uses XHR because RN fetch(file://) often returns status 0 and fails response.ok.
+ */
+function readLocalTextFile(localFileUri: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.onerror = () => reject(new Error('Failed to read the Markdown file.'));
+    xhr.onload = () => {
+      // file:// responses commonly use status 0 on success.
+      if (xhr.status === 0 || (xhr.status >= 200 && xhr.status < 300)) {
+        resolve(typeof xhr.responseText === 'string' ? xhr.responseText : '');
+        return;
+      }
+      reject(new Error('Failed to read the Markdown file.'));
+    };
+    xhr.open('GET', localFileUri);
+    xhr.responseType = 'text';
+    xhr.send();
+  });
+}
+
 /** Uploads a project markdown brief; requires Storage rules for projectMarkdown. */
 export async function uploadProjectMarkdown(
   projectId: string,
@@ -390,11 +415,28 @@ export async function uploadProjectMarkdown(
     }
 
     const uid = await syncFirestoreAuthSession();
-
     const reference = buildProjectMarkdownRef(uid, projectId.trim());
-    await putFile(reference, trimmedUri, {
-      contentType: 'text/markdown',
-    });
+
+    // Prefer putFile (same path as working PDF uploads). Cache file is *.txt so
+    // iOS MIME detection yields text/plain, which Storage rules accept.
+    try {
+      await putFile(reference, trimmedUri, {
+        contentType: 'text/plain',
+      });
+    } catch (putFileError) {
+      // Fallback: read bytes and uploadString (honors contentType on iOS).
+      if (__DEV__) {
+        console.warn(
+          '[uploadProjectMarkdown] putFile failed, trying uploadString',
+          putFileError,
+        );
+      }
+      const markdownText = await readLocalTextFile(trimmedUri);
+      await uploadString(reference, markdownText, StringFormat.RAW, {
+        contentType: 'text/plain',
+      });
+    }
+
     return getDownloadURL(reference);
   } catch (error) {
     throw wrapFirebaseError(

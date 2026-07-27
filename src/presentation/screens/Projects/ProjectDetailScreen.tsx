@@ -9,9 +9,9 @@ import {
   View,
 } from 'react-native';
 import { RouteProp, useRoute } from '@react-navigation/native';
-import Markdown from 'react-native-markdown-display';
 
 import BackButton from '../../../components/BackButton';
+import MarkdownDocument from '../../../components/Markdown/MarkdownDocument';
 import { colors, spacing } from '../../../constants/theme';
 import type { RootStackParamList } from '../../../types/navigation';
 
@@ -100,8 +100,7 @@ function ProjectDetailScreen() {
           ) : null}
 
           {markdownUrl ? (
-            <View style={styles.markdownSection}>
-              <Text style={styles.sectionHeading}>Project page</Text>
+            <View style={styles.markdownDocument}>
               {markdownLoading ? (
                 <ActivityIndicator color={colors.primary} style={styles.loader} />
               ) : null}
@@ -109,7 +108,10 @@ function ProjectDetailScreen() {
                 <Text style={styles.emptyRequirements}>{markdownError}</Text>
               ) : null}
               {markdownBody ? (
-                <Markdown style={markdownStyles}>{markdownBody}</Markdown>
+                <MarkdownDocument
+                  content={markdownBody}
+                  documentUrl={markdownUrl}
+                />
               ) : null}
               {!markdownLoading && !markdownError && !markdownBody ? (
                 <Text style={styles.emptyRequirements}>
@@ -165,64 +167,6 @@ function ProjectDetailScreen() {
   );
 }
 
-const markdownStyles = StyleSheet.create({
-  body: {
-    color: colors.textSecondary,
-    fontSize: 15,
-    lineHeight: 24,
-  },
-  heading1: {
-    color: colors.textPrimary,
-    fontSize: 22,
-    fontWeight: '800',
-    marginTop: 8,
-    marginBottom: 8,
-  },
-  heading2: {
-    color: colors.textPrimary,
-    fontSize: 18,
-    fontWeight: '700',
-    marginTop: 8,
-    marginBottom: 6,
-  },
-  heading3: {
-    color: colors.textPrimary,
-    fontSize: 16,
-    fontWeight: '700',
-    marginTop: 6,
-    marginBottom: 4,
-  },
-  paragraph: {
-    marginTop: 0,
-    marginBottom: 10,
-  },
-  bullet_list: {
-    marginBottom: 8,
-  },
-  ordered_list: {
-    marginBottom: 8,
-  },
-  list_item: {
-    marginBottom: 4,
-  },
-  code_inline: {
-    backgroundColor: colors.primaryLight,
-    color: colors.textPrimary,
-    borderRadius: 4,
-    paddingHorizontal: 4,
-  },
-  fence: {
-    backgroundColor: colors.primaryLight,
-    borderColor: colors.border,
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 10,
-  },
-  link: {
-    color: colors.primary,
-  },
-});
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -236,7 +180,7 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   scrollContent: {
-    paddingBottom: 32,
+    paddingBottom: 40,
   },
   body: {
     paddingHorizontal: spacing.screenHorizontal,
@@ -263,12 +207,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  markdownSection: {
-    marginTop: 16,
-    padding: 16,
-    borderRadius: spacing.cardRadius,
+  /** Full-bleed document surface — reads like a GitHub README, not a card. */
+  markdownDocument: {
+    marginTop: 20,
+    marginHorizontal: -spacing.screenHorizontal,
+    paddingHorizontal: spacing.screenHorizontal + 8,
+    paddingVertical: 24,
     backgroundColor: colors.surface,
-    borderWidth: 1,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
   },
   imagesSection: {
@@ -300,7 +247,7 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   loader: {
-    marginVertical: 16,
+    marginVertical: 24,
   },
 });
 

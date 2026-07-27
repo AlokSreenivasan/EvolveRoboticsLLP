@@ -131,6 +131,11 @@ dependencies {
     // Required by react-native-image-picker for the system photo picker on API < 30
     implementation("androidx.activity:activity:1.9.+")
 
+    // Animated GIF / WebP for React Native <Image> (Fresco version matches RN 0.80)
+    implementation("com.facebook.fresco:animated-gif:3.6.0")
+    implementation("com.facebook.fresco:animated-webp:3.6.0")
+    implementation("com.facebook.fresco:webpsupport:3.6.0")
+
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
     } else {

@@ -67,16 +67,6 @@ function CourseCatalogCard({
         <Text style={styles.title} numberOfLines={2}>
           {course.title}
         </Text>
-        {course.subtitle?.trim() ? (
-          <Text style={styles.subtitle} numberOfLines={2}>
-            {course.subtitle.trim()}
-          </Text>
-        ) : null}
-        {course.description?.trim() ? (
-          <Text style={styles.description} numberOfLines={3}>
-            {course.description.trim()}
-          </Text>
-        ) : null}
       </View>
     </TouchableOpacity>
   );

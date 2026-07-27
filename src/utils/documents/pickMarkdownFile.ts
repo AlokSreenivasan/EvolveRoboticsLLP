@@ -5,17 +5,15 @@ import {
   pick,
   types,
 } from '@react-native-documents/picker';
-import { Platform } from 'react-native';
 
 const MARKDOWN_EXTENSION = /\.(md|markdown)$/i;
 
-function ensureMarkdownFileName(name: string | null | undefined): string {
-  const trimmed = name?.trim() || 'project.md';
-  if (MARKDOWN_EXTENSION.test(trimmed)) {
-    return trimmed.replace(/\.markdown$/i, '.md');
-  }
-  return `${trimmed}.md`;
-}
+/**
+ * Local cache name uses .txt so iOS Firebase putFile MIME detection yields
+ * text/plain (always allowed by Storage rules). The Storage object path is
+ * still projectMarkdown/{uid}/{projectId}.md.
+ */
+const CACHE_FILE_NAME = 'project.txt';
 
 function looksLikeMarkdownUri(uri: string): boolean {
   try {
@@ -30,103 +28,74 @@ function assertMarkdownSelection(
   name: string | null | undefined,
   type: string | null | undefined,
   uri: string,
-  options?: { isVirtual?: boolean | null; canExportText?: boolean },
+  nativeType?: string | null,
 ): void {
-  if (options?.isVirtual && options.canExportText) {
-    return;
-  }
-
   const fileName = name?.trim() ?? '';
   const mime = type?.trim().toLowerCase() ?? '';
+  const native = nativeType?.trim().toLowerCase() ?? '';
+
   const hasMarkdownExtension =
     MARKDOWN_EXTENSION.test(fileName) || looksLikeMarkdownUri(uri);
-  const hasMarkdownMime =
+  const hasMarkdownType =
     mime === 'text/markdown' ||
     mime === 'text/x-markdown' ||
     mime === 'text/x-web-markdown' ||
     mime.startsWith('text/markdown') ||
-    // Some editors export .md as plain text.
-    mime === 'text/plain';
+    mime === 'text/plain' ||
+    native === 'net.daringfireball.markdown' ||
+    native === 'public.markdown';
 
-  // Android frequently labels .md as application/octet-stream — only accept
-  // that when the file name or URI still indicates Markdown.
-  if (!hasMarkdownExtension && !hasMarkdownMime) {
+  if (!hasMarkdownExtension && !hasMarkdownType) {
     throw new Error('Please choose a Markdown (.md) file.');
   }
 }
 
-function resolveVirtualExportMime(
-  convertibleToMimeTypes:
-    | Array<{ mimeType?: string | null } | null>
-    | null
-    | undefined,
-): string | undefined {
-  const candidates =
-    convertibleToMimeTypes
-      ?.map(item => item?.mimeType?.trim().toLowerCase() ?? '')
-      .filter(Boolean) ?? [];
-
-  return (
-    candidates.find(
-      mime =>
-        mime === 'text/plain' ||
-        mime === 'text/markdown' ||
-        mime === 'text/x-markdown' ||
-        mime.startsWith('text/'),
-    ) ?? candidates[0]
-  );
-}
-
 /**
- * Picks a .md file and returns a local file:// URI suitable for Storage putFile.
+ * Picks a Markdown (.md) file and returns a local file:// URI for Storage putFile.
  *
- * Important: do not pass convertVirtualFileToType for normal files. On Android,
- * keepLocalCopy then uses openTypedAssetFileDescriptor, which fails for typical
- * .md MIME types (text/markdown / application/octet-stream) when asked for
- * text/plain.
+ * Mirrors {@link pickPdfFile}: import mode + keepLocalCopy into caches.
+ * Does NOT pass convertVirtualFileToType for normal files — on Android that
+ * forces openTypedAssetFileDescriptor and fails for typical .md MIME types.
  */
 export async function pickMarkdownFile(): Promise<string | null> {
   try {
     const [file] = await pick({
-      // Prefer allFiles so OS MIME maps that omit text/markdown still show .md.
-      type:
-        Platform.OS === 'ios'
-          ? [types.allFiles, types.plainText]
-          : [types.allFiles, types.plainText, 'text/markdown', 'text/x-markdown'],
+      // Single catch-all type. Multiple MIME filters break Android GET_CONTENT.
+      type: [types.allFiles],
       mode: 'import',
       allowVirtualFiles: true,
     });
+
     const uri = file.uri?.trim();
     if (!uri) {
       return null;
     }
 
-    const virtualExportMime = file.isVirtual
-      ? resolveVirtualExportMime(file.convertibleToMimeTypes)
-      : undefined;
-
-    assertMarkdownSelection(file.name, file.type, uri, {
-      isVirtual: file.isVirtual,
-      canExportText: Boolean(virtualExportMime),
-    });
+    const isVirtual = Boolean(file.isVirtual);
+    if (!isVirtual) {
+      assertMarkdownSelection(file.name, file.type, uri, file.nativeType);
+    }
 
     const [localCopy] = await keepLocalCopy({
       files: [
         {
           uri,
-          fileName: ensureMarkdownFileName(file.name),
-          ...(virtualExportMime
-            ? { convertVirtualFileToType: virtualExportMime }
-            : {}),
+          fileName: CACHE_FILE_NAME,
+          // Only virtual providers (e.g. Google Docs) need an export MIME.
+          ...(isVirtual ? { convertVirtualFileToType: 'text/plain' } : {}),
         },
       ],
       destination: 'cachesDirectory',
     });
 
     if (localCopy.status !== 'success') {
-      throw new Error(
-        localCopy.copyError || 'Failed to prepare the Markdown file.',
-      );
+      const copyError = localCopy.copyError || '';
+      if (/no data was copied/i.test(copyError)) {
+        throw new Error(
+          'The selected Markdown file is empty. Add some content and try again.',
+        );
+      }
+      throw new Error(copyError || 'Failed to prepare the Markdown file.');
     }
 
     return localCopy.localUri.trim() || null;

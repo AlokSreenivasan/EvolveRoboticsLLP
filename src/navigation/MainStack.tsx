@@ -1,6 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+import CourseDetailScreen from '../presentation/screens/Courses/CourseDetailScreen';
 import CoursePlaylistScreen from '../presentation/screens/Courses/CoursePlaylistScreen';
 import CourseVideoScreen from '../presentation/screens/Courses/CourseVideoScreen';
 import CoursesScreen from '../presentation/screens/Courses/CoursesScreen';
@@ -72,6 +73,7 @@ function MainStack() {
         component={ResourcePdfViewerScreen}
       />
       <Stack.Screen name="Courses" component={CoursesScreen} />
+      <Stack.Screen name="CourseDetail" component={CourseDetailScreen} />
       <Stack.Screen name="CoursePlaylist" component={CoursePlaylistScreen} />
       <Stack.Screen name="CourseVideo" component={CourseVideoScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />

@@ -23,20 +23,35 @@ jest.mock('react-native-config', () => ({
   default: {},
 }));
 
-jest.mock('@react-native-documents/picker', () => ({
-  __esModule: true,
-  pick: jest.fn(() => Promise.resolve([])),
-  keepLocalCopy: jest.fn(() =>
-    Promise.resolve([{ status: 'success', sourceUri: 'file://src', localUri: 'file://local.pdf' }]),
-  ),
-  types: {
-    pdf: 'application/pdf',
-    plainText: 'text/plain',
-    allFiles: '*/*',
-  },
-  errorCodes: { OPERATION_CANCELED: 'OPERATION_CANCELED' },
-  isErrorWithCode: jest.fn(error => typeof error?.code === 'string'),
-}));
+jest.mock('@react-native-documents/picker', () => {
+  const { Platform } = require('react-native');
+  return {
+    __esModule: true,
+    pick: jest.fn(() => Promise.resolve([])),
+    keepLocalCopy: jest.fn(() =>
+      Promise.resolve([
+        {
+          status: 'success',
+          sourceUri: 'file://src',
+          localUri: 'file://local.pdf',
+        },
+      ]),
+    ),
+    types: {
+      get pdf() {
+        return Platform.OS === 'ios' ? 'com.adobe.pdf' : 'application/pdf';
+      },
+      get plainText() {
+        return Platform.OS === 'ios' ? 'public.plain-text' : 'text/plain';
+      },
+      get allFiles() {
+        return Platform.OS === 'ios' ? 'public.item' : '*/*';
+      },
+    },
+    errorCodes: { OPERATION_CANCELED: 'OPERATION_CANCELED' },
+    isErrorWithCode: jest.fn(error => typeof error?.code === 'string'),
+  };
+});
 
 jest.mock('@react-native-community/datetimepicker', () => {
   const React = require('react');

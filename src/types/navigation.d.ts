@@ -2,6 +2,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 
 import type { ContinueLearningPlaylist } from '../store/content/types/continueLearningPlaylists.types';
+import type { Course } from '../store/content/types/courses.types';
 import type { Project } from '../store/content/types/projects.types';
 
 export type AdminStackParamList = {
@@ -52,6 +53,8 @@ export type RootStackParamList = {
   };
   /** Course catalog — optional `track` filters kids vs professionals. */
   Courses: { track?: 'kids' | 'professionals' } | undefined;
+  /** Full course details from the catalog. */
+  CourseDetail: { course: Course };
   /** Full list of lesson playlists from Home and To Do. */
   ContinueLearningList: undefined;
   /** Full list of in-app announcements from home. */

@@ -7,17 +7,25 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useRoute, type RouteProp } from '@react-navigation/native';
+import {
+  useNavigation,
+  useRoute,
+  type RouteProp,
+} from '@react-navigation/native';
 import BackButton from '../../../components/BackButton';
 import CourseCatalogCard from '../../../components/Courses/CourseCatalogCard';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import { colors, spacing } from '../../../constants/theme';
 import type { Course } from '../../../store/content/types/courses.types';
 import { courseTrackLabel } from '../../../store/content/types/courses.types';
-import type { RootStackParamList } from '../../../types/navigation';
+import type {
+  LoginScreenNavigationProp,
+  RootStackParamList,
+} from '../../../types/navigation';
 import { useCourses } from '../../hooks/useCourses';
 
 function CoursesScreen() {
+  const navigation = useNavigation<LoginScreenNavigationProp>();
   const route = useRoute<RouteProp<RootStackParamList, 'Courses'>>();
   const trackFilter = route.params?.track;
   const { courses, loading, error } = useCourses();
@@ -38,9 +46,13 @@ function CoursesScreen() {
 
   const renderCourse = useCallback(
     ({ item, index }: { item: Course; index: number }) => (
-      <CourseCatalogCard course={item} accentIndex={index} />
+      <CourseCatalogCard
+        course={item}
+        accentIndex={index}
+        onPress={() => navigation.navigate('CourseDetail', { course: item })}
+      />
     ),
-    [],
+    [navigation],
   );
 
   const keyExtractor = useCallback((item: Course) => item.id, []);

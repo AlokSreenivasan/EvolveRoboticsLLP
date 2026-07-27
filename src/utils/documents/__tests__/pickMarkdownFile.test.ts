@@ -9,7 +9,7 @@ describe('pickMarkdownFile', () => {
     (Platform as { OS: string }).OS = 'android';
   });
 
-  test('copies a normal .md file without convertVirtualFileToType', async () => {
+  test('copies a normal .md file as project.txt without convertVirtualFileToType', async () => {
     (pick as jest.Mock).mockResolvedValueOnce([
       {
         uri: 'content://downloads/brief.md',
@@ -23,23 +23,28 @@ describe('pickMarkdownFile', () => {
       {
         status: 'success',
         sourceUri: 'content://downloads/brief.md',
-        localUri: 'file:///cache/brief.md',
+        localUri: 'file:///cache/project.txt',
       },
     ]);
 
-    await expect(pickMarkdownFile()).resolves.toBe('file:///cache/brief.md');
+    await expect(pickMarkdownFile()).resolves.toBe('file:///cache/project.txt');
+    expect(pick).toHaveBeenCalledWith({
+      type: ['*/*'],
+      mode: 'import',
+      allowVirtualFiles: true,
+    });
     expect(keepLocalCopy).toHaveBeenCalledWith({
       files: [
         {
           uri: 'content://downloads/brief.md',
-          fileName: 'brief.md',
+          fileName: 'project.txt',
         },
       ],
       destination: 'cachesDirectory',
     });
   });
 
-  test('exports virtual files with a convertible text MIME type', async () => {
+  test('exports virtual files as text/plain', async () => {
     (pick as jest.Mock).mockResolvedValueOnce([
       {
         uri: 'content://com.google.android.apps.docs/document',
@@ -48,7 +53,6 @@ describe('pickMarkdownFile', () => {
         isVirtual: true,
         convertibleToMimeTypes: [
           { mimeType: 'text/plain', extension: 'txt' },
-          { mimeType: 'application/pdf', extension: 'pdf' },
         ],
       },
     ]);
@@ -56,16 +60,16 @@ describe('pickMarkdownFile', () => {
       {
         status: 'success',
         sourceUri: 'content://com.google.android.apps.docs/document',
-        localUri: 'file:///cache/Notes.md',
+        localUri: 'file:///cache/project.txt',
       },
     ]);
 
-    await expect(pickMarkdownFile()).resolves.toBe('file:///cache/Notes.md');
+    await expect(pickMarkdownFile()).resolves.toBe('file:///cache/project.txt');
     expect(keepLocalCopy).toHaveBeenCalledWith({
       files: [
         {
           uri: 'content://com.google.android.apps.docs/document',
-          fileName: 'Notes.md',
+          fileName: 'project.txt',
           convertVirtualFileToType: 'text/plain',
         },
       ],
@@ -121,13 +125,34 @@ describe('pickMarkdownFile', () => {
       {
         status: 'success',
         sourceUri: 'content://downloads/document%2Fproject-brief.md',
-        localUri: 'file:///cache/project-brief.md',
+        localUri: 'file:///cache/project.txt',
       },
     ]);
 
-    await expect(pickMarkdownFile()).resolves.toBe(
-      'file:///cache/project-brief.md',
-    );
+    await expect(pickMarkdownFile()).resolves.toBe('file:///cache/project.txt');
+  });
+
+  test('accepts markdown identified by iOS native type', async () => {
+    (Platform as { OS: string }).OS = 'ios';
+    (pick as jest.Mock).mockResolvedValueOnce([
+      {
+        uri: 'file:///tmp/Notes',
+        name: 'Notes',
+        type: null,
+        nativeType: 'net.daringfireball.markdown',
+        isVirtual: false,
+        convertibleToMimeTypes: null,
+      },
+    ]);
+    (keepLocalCopy as jest.Mock).mockResolvedValueOnce([
+      {
+        status: 'success',
+        sourceUri: 'file:///tmp/Notes',
+        localUri: 'file:///cache/project.txt',
+      },
+    ]);
+
+    await expect(pickMarkdownFile()).resolves.toBe('file:///cache/project.txt');
   });
 
   test('returns null when the picker is canceled', async () => {
