@@ -21,7 +21,7 @@ type ResourcePdfRoute = RouteProp<RootStackParamList, 'ResourcePdfViewer'>;
 
 function ResourcePdfViewerScreen() {
   const route = useRoute<ResourcePdfRoute>();
-  const { title, pdfUrl } = route.params;
+  const { title, pdfUrl, showOpenInBrowser = true } = route.params;
   const [loading, setLoading] = useState(true);
 
   const viewerUrl = useMemo(() => buildEmbeddedPdfViewerUrl(pdfUrl), [pdfUrl]);
@@ -30,7 +30,7 @@ function ResourcePdfViewerScreen() {
     Linking.openURL(pdfUrl).catch(() => undefined);
   };
 
-  const openExternalLink = (
+  const openExternalLink = showOpenInBrowser ? (
     <TouchableOpacity
       onPress={openExternally}
       activeOpacity={0.85}
@@ -38,7 +38,7 @@ function ResourcePdfViewerScreen() {
       accessibilityLabel="Open in browser">
       <Text style={styles.openExternal}>Open in browser</Text>
     </TouchableOpacity>
-  );
+  ) : undefined;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -60,7 +60,6 @@ function ResourcePdfViewerScreen() {
           source={{ uri: viewerUrl }}
           onLoadEnd={() => setLoading(false)}
           onError={() => setLoading(false)}
-          startInLoadingState
           style={styles.webview}
           allowsInlineMediaPlayback
         />

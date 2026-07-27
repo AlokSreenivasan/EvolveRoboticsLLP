@@ -26,6 +26,7 @@ function AssignmentsScreen() {
           navigation.navigate('ResourcePdfViewer', {
             title: item.title,
             pdfUrl: item.pdfUrl,
+            showOpenInBrowser: false,
           })
         }
         accessibilityLabel={`Assignment ${item.title}`}

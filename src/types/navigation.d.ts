@@ -73,7 +73,12 @@ export type RootStackParamList = {
   ExamAttempt: { examId: string };
   /** User's submitted exam attempts / results. */
   ExamAttempts: undefined;
-  ResourcePdfViewer: { title: string; pdfUrl: string };
+  ResourcePdfViewer: {
+    title: string;
+    pdfUrl: string;
+    /** Defaults to true. Set false for assignment PDFs. */
+    showOpenInBrowser?: boolean;
+  };
   /** Registered only for admin users after role resolves. */
   AdminStack: undefined;
   /** Fallback when a non-admin attempts restricted navigation. */
