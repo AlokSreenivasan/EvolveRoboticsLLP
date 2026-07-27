@@ -18,7 +18,8 @@ import Svg, {
 } from 'react-native-svg';
 
 import LevelBadgeIllustration from './icons/LevelBadgeIllustration';
-import { cardShadowElevated, colors, spacing } from '../../constants/theme';
+import { colors, spacing } from '../../constants/theme';
+import CardShadowShell from '../ui/CardShadowShell';
 import { useUserStreakStats } from '../../presentation/hooks/useUserStreakStats';
 import type { LoginScreenNavigationProp } from '../../types/navigation';
 import { getLearnerMotivation } from '../../utils/gamification/learnerRank';
@@ -143,16 +144,24 @@ function StreakBoardPanel() {
 
   if (loading) {
     return (
-      <View style={styles.card} onLayout={onCardLayout}>
+      <CardShadowShell
+        elevation="elevated"
+        borderRadius={spacing.cardRadiusXl}
+        style={styles.shell}
+        innerStyle={styles.cardInner}
+        onLayout={onCardLayout}>
         <CardBackdrop width={cardSize.width} height={cardSize.height} />
         <ActivityIndicator color={colors.heroHighlight} style={styles.loader} />
-      </View>
+      </CardShadowShell>
     );
   }
 
   return (
-    <View
-      style={styles.card}
+    <CardShadowShell
+      elevation="elevated"
+      borderRadius={spacing.cardRadiusXl}
+      style={styles.shell}
+      innerStyle={styles.cardInner}
       onLayout={onCardLayout}
       accessibilityRole="summary"
       accessibilityLabel={`Level ${stats.level}. ${stats.currentXp} of ${XP_LEVEL_SIZE} experience points. ${dayStreakLabel} streak.`}>
@@ -237,22 +246,21 @@ function StreakBoardPanel() {
           <LevelBadgeIllustration size={112} />
         </View>
       </View>
-    </View>
+    </CardShadowShell>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    borderRadius: spacing.cardRadiusXl,
+  shell: {
+    marginBottom: 22,
+  },
+  cardInner: {
+    backgroundColor: CARD_BG_BOTTOM,
     borderWidth: 1,
     borderColor: 'rgba(238, 205, 244, 0.32)',
     paddingHorizontal: 18,
     paddingVertical: 18,
-    marginBottom: 22,
-    overflow: 'hidden',
     minHeight: 196,
-    backgroundColor: CARD_BG_BOTTOM,
-    ...cardShadowElevated,
   },
   fallbackBg: {
     backgroundColor: CARD_BG_BOTTOM,

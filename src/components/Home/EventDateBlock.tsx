@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 
 import { colors } from '../../constants/theme';
+import CardShadowShell from '../ui/CardShadowShell';
 
 export type EventDateBlockSize = 'default' | 'compact';
 
@@ -26,9 +27,15 @@ function EventDateBlock({
 }: EventDateBlockProps) {
   const isCompact = size === 'compact';
   const displayMonth = month.trim().toUpperCase().slice(0, 3);
+  const borderRadius = isCompact ? 12 : 14;
 
   return (
-    <View style={[isCompact ? styles.blockCompact : styles.block, style]}>
+    <CardShadowShell
+      elevation="light"
+      borderRadius={borderRadius}
+      borderless
+      style={style}
+      innerStyle={isCompact ? styles.innerCompact : styles.inner}>
       <View style={isCompact ? styles.monthBandCompact : styles.monthBand}>
         <Text style={isCompact ? styles.monthCompact : styles.month}>
           {displayMonth}
@@ -37,21 +44,28 @@ function EventDateBlock({
       <Text style={isCompact ? styles.dayCompact : styles.day}>
         {day.trim()}
       </Text>
-    </View>
+    </CardShadowShell>
   );
 }
 
 const styles = StyleSheet.create({
-  block: {
+  inner: {
     width: 56,
     height: 64,
-    borderRadius: 14,
     backgroundColor: colors.primaryLight,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    overflow: 'hidden',
     borderWidth: 1,
     borderColor: colors.primaryMuted,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
+  innerCompact: {
+    width: 48,
+    height: 52,
+    backgroundColor: colors.primaryLight,
+    borderWidth: 1,
+    borderColor: colors.primaryMuted,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
   },
   monthBand: {
     width: '100%',
@@ -71,17 +85,6 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     lineHeight: 30,
     marginTop: 4,
-  },
-  blockCompact: {
-    width: 48,
-    height: 52,
-    borderRadius: 12,
-    backgroundColor: colors.primaryLight,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.primaryMuted,
   },
   monthBandCompact: {
     width: '100%',

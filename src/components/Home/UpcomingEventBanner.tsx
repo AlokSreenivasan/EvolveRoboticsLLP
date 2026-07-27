@@ -1,7 +1,8 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { cardShadow, colors, glassBorder } from '../../constants/theme';
+import { colors } from '../../constants/theme';
+import CardShadowShell from '../ui/CardShadowShell';
 import type { UpcomingEvent } from '../../store/content/types/upcomingEvents.types';
 import { getDisplayDaysLeftLabel } from '../../utils/upcomingEventDate';
 import EventDateBlock from './EventDateBlock';
@@ -19,38 +20,42 @@ function UpcomingEventBanner({ event }: UpcomingEventBannerProps) {
   );
 
   return (
-    <View style={styles.card}>
-      <EventDateBlock month={event.month} day={event.day} />
+    <CardShadowShell
+      elevation="none"
+      borderRadius={20}
+      innerStyle={styles.cardInner}>
+      <View style={styles.card}>
+        <EventDateBlock month={event.month} day={event.day} />
 
-      <View style={styles.details}>
-        <Text style={styles.title}>{event.title}</Text>
-        {event.dateRange ? (
-          <Text style={styles.meta}>{event.dateRange}</Text>
-        ) : null}
-        {event.timeRange ? (
-          <Text style={styles.meta}>{event.timeRange}</Text>
+        <View style={styles.details}>
+          <Text style={styles.title}>{event.title}</Text>
+          {event.dateRange ? (
+            <Text style={styles.meta}>{event.dateRange}</Text>
+          ) : null}
+          {event.timeRange ? (
+            <Text style={styles.meta}>{event.timeRange}</Text>
+          ) : null}
+        </View>
+
+        {daysLeftLabel ? (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{daysLeftLabel}</Text>
+          </View>
         ) : null}
       </View>
-
-      {daysLeftLabel ? (
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>{daysLeftLabel}</Text>
-        </View>
-      ) : null}
-    </View>
+    </CardShadowShell>
   );
 }
 
 const styles = StyleSheet.create({
+  cardInner: {
+    borderColor: colors.eventBorder,
+    backgroundColor: colors.surface,
+  },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: 20,
     padding: 14,
-    ...glassBorder,
-    borderColor: colors.eventBorder,
-    ...cardShadow,
     gap: 12,
   },
   details: {

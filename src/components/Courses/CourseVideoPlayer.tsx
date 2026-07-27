@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   LayoutChangeEvent,
-  Platform,
   StyleSheet,
   View,
 } from 'react-native';
@@ -167,11 +166,19 @@ function CourseVideoPlayer({
   }, [ready, playing, persistWatchProgress, markNearEndAndUnlock]);
 
   const handleLayout = (event: LayoutChangeEvent) => {
-    const width = Math.round(event.nativeEvent.layout.width);
-    if (width <= 0 || width === size.width) {
+    const { width, height } = event.nativeEvent.layout;
+    const roundedWidth = Math.round(width);
+    const roundedHeight = Math.round(height);
+    if (roundedWidth <= 0 || roundedHeight <= 0) {
       return;
     }
-    setSize({ width, height: Math.round((width * 9) / 16) });
+    if (
+      roundedWidth === size.width &&
+      roundedHeight === size.height
+    ) {
+      return;
+    }
+    setSize({ width: roundedWidth, height: roundedHeight });
   };
 
   const flushWatchProgress = () => {
@@ -180,40 +187,49 @@ function CourseVideoPlayer({
 
   return (
     <View style={styles.frame} onLayout={handleLayout}>
-      {size.width > 0 ? (
-        <YoutubePlayer
-          ref={playerRef}
-          height={size.height}
-          width={size.width}
-          play={playing}
-          videoId={videoId}
-          forceAndroidAutoplay
-          initialPlayerParams={{
-            controls: true,
-            modestbranding: true,
-            rel: false,
-            iv_load_policy: 3,
-          }}
-          viewContainerStyle={{ width: size.width, height: size.height }}
-          webViewStyle={{ width: size.width, height: size.height }}
-          webViewProps={{ androidLayerType: 'hardware' }}
-          onReady={() => setReady(true)}
-          onChangeState={(state: PLAYER_STATES) => {
-            if (state === PLAYER_STATES.ENDED) {
-              setPlaying(false);
-              markNearEndAndUnlock();
-              flushWatchProgress();
-              onEndedRef.current?.();
-            }
-            if (state === PLAYER_STATES.PAUSED) {
-              setPlaying(false);
-              flushWatchProgress();
-            }
-            if (state === PLAYER_STATES.PLAYING) {
-              setPlaying(true);
-            }
-          }}
-        />
+      {size.width > 0 && size.height > 0 ? (
+        <View style={styles.playerSlot}>
+          <YoutubePlayer
+            ref={playerRef}
+            height={size.height}
+            width={size.width}
+            play={playing}
+            videoId={videoId}
+            forceAndroidAutoplay
+            contentScale={1.01}
+            initialPlayerParams={{
+              controls: true,
+              modestbranding: true,
+              rel: false,
+              iv_load_policy: 3,
+            }}
+            viewContainerStyle={{
+              width: size.width,
+              height: size.height,
+            }}
+            webViewStyle={{
+              width: size.width,
+              height: size.height,
+            }}
+            webViewProps={{ androidLayerType: 'hardware' }}
+            onReady={() => setReady(true)}
+            onChangeState={(state: PLAYER_STATES) => {
+              if (state === PLAYER_STATES.ENDED) {
+                setPlaying(false);
+                markNearEndAndUnlock();
+                flushWatchProgress();
+                onEndedRef.current?.();
+              }
+              if (state === PLAYER_STATES.PAUSED) {
+                setPlaying(false);
+                flushWatchProgress();
+              }
+              if (state === PLAYER_STATES.PLAYING) {
+                setPlaying(true);
+              }
+            }}
+          />
+        </View>
       ) : null}
 
       {!ready && size.width > 0 ? (
@@ -221,8 +237,6 @@ function CourseVideoPlayer({
           <ActivityIndicator color={colors.primary} size="large" />
         </View>
       ) : null}
-
-      <View style={styles.brandingShield} pointerEvents="none" />
     </View>
   );
 }
@@ -234,25 +248,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
     overflow: 'hidden',
   },
+  playerSlot: {
+    ...StyleSheet.absoluteFillObject,
+  },
   loader: {
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#000',
     zIndex: 2,
-  },
-  brandingShield: {
-    position: 'absolute',
-    left: 0,
-    bottom: 0,
-    width: 168,
-    height: 40,
-    backgroundColor: '#000',
-    zIndex: 10,
-    ...Platform.select({
-      android: { elevation: 10 },
-      default: {},
-    }),
   },
 });
 

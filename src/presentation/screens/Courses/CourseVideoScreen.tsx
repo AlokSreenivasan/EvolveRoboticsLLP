@@ -122,14 +122,15 @@ function CourseVideoScreen() {
     <SafeAreaView style={styles.container}>
       <ScreenHeader title={playlist.title} compact />
 
-      <View style={styles.playerSection}>
-        <CourseVideoPlayer
-          key={videoId}
-          videoId={videoId}
-          initialWatchSeconds={initialWatchSeconds}
-          onWatchProgress={handleWatchProgress}
-          onNearEndChange={handleNearEndChange}
-        />
+      <CourseVideoPlayer
+        key={videoId}
+        videoId={videoId}
+        initialWatchSeconds={initialWatchSeconds}
+        onWatchProgress={handleWatchProgress}
+        onNearEndChange={handleNearEndChange}
+      />
+
+      <View style={styles.metaSection}>
         <SurfaceCard elevation="light" style={styles.playingMeta}>
           <Text style={styles.lessonBadge}>
             Lesson {videoIndex + 1} of {videoCount}
@@ -181,7 +182,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  playerSection: {
+  metaSection: {
     flex: 1,
     gap: 12,
     paddingHorizontal: spacing.screenHorizontal,

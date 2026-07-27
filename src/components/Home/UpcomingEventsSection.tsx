@@ -41,6 +41,7 @@ function UpcomingEventsSection() {
             keyExtractor={keyExtractor}
             renderItem={renderEvent}
             ItemSeparatorComponent={ListSeparator}
+            contentContainerStyle={styles.listContent}
             {...NESTED_LIST_PERF}
           />
         ) : null}
@@ -53,6 +54,9 @@ function ListSeparator() {
 }
 
 const styles = StyleSheet.create({
+  listContent: {
+    paddingVertical: 6,
+  },
   separator: {
     height: 14,
   },

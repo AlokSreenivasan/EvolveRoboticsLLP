@@ -10,7 +10,8 @@ import {
 import { ArrowRight } from 'lucide-react-native';
 import Svg, { Path } from 'react-native-svg';
 
-import { cardShadow, colors, glassBorder, spacing } from '../../constants/theme';
+import { colors, spacing } from '../../constants/theme';
+import CardShadowShell from '../ui/CardShadowShell';
 
 export type HomeFeaturePanelProps = {
   badgeLabel: string;
@@ -79,7 +80,10 @@ function HomeFeaturePanel({
   }, []);
 
   return (
-    <View style={styles.card} onLayout={onCardLayout}>
+    <CardShadowShell
+      innerStyle={styles.cardInner}
+      borderRadius={spacing.cardRadiusLg}
+      onLayout={onCardLayout}>
       <CardWaveBackdrop width={cardWidth} />
       <View style={styles.glow} pointerEvents="none" />
       <TouchableOpacity
@@ -166,19 +170,14 @@ function HomeFeaturePanel({
           ) : null}
         </TouchableOpacity>
       </View>
-    </View>
+    </CardShadowShell>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: spacing.cardRadiusLg,
+  cardInner: {
     padding: 16,
-    overflow: 'hidden',
-    ...glassBorder,
     borderColor: colors.primaryMuted,
-    ...cardShadow,
   },
   waveWrap: {
     position: 'absolute',

@@ -157,6 +157,7 @@ const styles = StyleSheet.create({
   cardsRow: {
     flexDirection: 'row',
     gap: MISSION_GAP,
+    paddingVertical: 8,
   },
   card: {
     width: MISSION_CARD_WIDTH,

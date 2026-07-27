@@ -51,24 +51,31 @@ function SurfaceCard({
   tinted = false,
   clipped = false,
 }: SurfaceCardProps) {
+  const surfaceStyle = [
+    styles.card,
+    tinted && styles.tinted,
+    clipped && styles.clipped,
+  ];
+
+  if (elevation === 'flat') {
+    return <View style={[...surfaceStyle, style]}>{children}</View>;
+  }
+
   return (
-    <View
-      style={[
-        styles.card,
-        tinted && styles.tinted,
-        elevationStyle(elevation),
-        clipped && styles.clipped,
-        style,
-      ]}>
-      {children}
+    <View style={[styles.shadowShell, elevationStyle(elevation), style]}>
+      <View style={surfaceStyle}>{children}</View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  shadowShell: {
+    borderRadius: spacing.cardRadiusLg,
+  },
   card: {
     backgroundColor: colors.surface,
     borderRadius: spacing.cardRadiusLg,
+    overflow: 'hidden',
     ...glassBorder,
   },
   tinted: {

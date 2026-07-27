@@ -8,7 +8,8 @@ import {
 } from 'react-native';
 import { Check, Zap } from 'lucide-react-native';
 
-import { cardShadow, colors, glassBorder } from '../../constants/theme';
+import { colors, glassBorder } from '../../constants/theme';
+import CardShadowShell from '../ui/CardShadowShell';
 
 export type DailyMissionCardProps = {
   icon: React.ReactNode;
@@ -37,13 +38,17 @@ function DailyMissionCard({
   const actionLabel = isDone ? 'Done' : 'Start';
 
   return (
-    <TouchableOpacity
-      style={[styles.card, style]}
-      activeOpacity={0.92}
-      onPress={onStartPress}
-      disabled={!onStartPress}
-      accessibilityRole="button"
-      accessibilityLabel={`${title}. Earn ${xpReward} XP. ${isDone ? 'Completed' : 'Not started'}.`}>
+    <CardShadowShell
+      style={[styles.shell, style]}
+      innerStyle={styles.cardInner}
+      borderRadius={22}>
+      <TouchableOpacity
+        style={styles.pressable}
+        activeOpacity={0.92}
+        onPress={onStartPress}
+        disabled={!onStartPress}
+        accessibilityRole="button"
+        accessibilityLabel={`${title}. Earn ${xpReward} XP. ${isDone ? 'Completed' : 'Not started'}.`}>
       <View
         style={[styles.glow, { backgroundColor: accentBackground }]}
         pointerEvents="none"
@@ -121,21 +126,20 @@ function DailyMissionCard({
           {actionLabel}
         </Text>
       </TouchableOpacity>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </CardShadowShell>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
+  shell: {
     width: 168,
-    borderRadius: 22,
-    backgroundColor: colors.surface,
+  },
+  cardInner: {},
+  pressable: {
     paddingHorizontal: 14,
     paddingTop: 14,
     paddingBottom: 12,
-    overflow: 'hidden',
-    ...glassBorder,
-    ...cardShadow,
   },
   glow: {
     position: 'absolute',

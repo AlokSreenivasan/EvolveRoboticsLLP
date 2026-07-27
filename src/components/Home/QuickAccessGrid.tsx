@@ -21,7 +21,8 @@ import {
   QUICK_ACCESS_ITEMS,
   type QuickAccessItem,
 } from '../../constants/homeScreenData';
-import { cardShadowLight, colors, glassBorder } from '../../constants/theme';
+import { colors } from '../../constants/theme';
+import CardShadowShell from '../ui/CardShadowShell';
 import type { LoginScreenNavigationProp } from '../../types/navigation';
 
 function QuickAccessIcon({
@@ -70,7 +71,11 @@ function QuickAccessGrid() {
   const itemWidth: DimensionValue = `${100 / visibleItems.length}%`;
 
   return (
-    <View style={styles.grid}>
+    <CardShadowShell
+      elevation="light"
+      borderRadius={22}
+      innerStyle={styles.gridInner}>
+      <View style={styles.grid}>
       {visibleItems.map(item => (
         <TouchableOpacity
           key={item.id}
@@ -91,20 +96,18 @@ function QuickAccessGrid() {
           </Text>
         </TouchableOpacity>
       ))}
-    </View>
+      </View>
+    </CardShadowShell>
   );
 }
 
 const styles = StyleSheet.create({
+  gridInner: {},
   grid: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
-    backgroundColor: colors.surface,
-    borderRadius: 22,
     paddingVertical: 16,
     paddingHorizontal: 8,
-    ...glassBorder,
-    ...cardShadowLight,
   },
   item: {
     alignItems: 'center',

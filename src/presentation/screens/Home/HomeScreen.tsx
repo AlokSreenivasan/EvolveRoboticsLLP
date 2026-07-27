@@ -203,6 +203,7 @@ const styles = StyleSheet.create({
   },
   horizontalList: {
     paddingRight: 4,
+    paddingVertical: 8,
   },
   continueLearningSection: {
     marginTop: 22,

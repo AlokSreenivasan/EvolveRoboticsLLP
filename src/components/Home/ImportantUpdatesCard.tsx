@@ -2,7 +2,8 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Megaphone } from 'lucide-react-native';
 
-import { cardShadowLight, colors, glassBorder } from '../../constants/theme';
+import { colors } from '../../constants/theme';
+import CardShadowShell from '../ui/CardShadowShell';
 import type { ImportantUpdateNotice } from '../../store/content/types/importantUpdates.types';
 
 type ImportantUpdatesCardProps = {
@@ -18,11 +19,15 @@ function ImportantUpdatesCard({ notice, onPress }: ImportantUpdatesCardProps) {
   const description = notice.description?.trim();
 
   return (
-    <TouchableOpacity
-      style={styles.card}
-      activeOpacity={0.9}
-      onPress={onPress}
-      disabled={!onPress}>
+    <CardShadowShell
+      elevation="light"
+      borderRadius={20}
+      innerStyle={styles.cardInner}>
+      <TouchableOpacity
+        style={styles.pressable}
+        activeOpacity={0.9}
+        onPress={onPress}
+        disabled={!onPress}>
       <View style={styles.accentBar} />
       <View style={styles.iconWrap}>
         <Megaphone size={20} color={colors.primary} strokeWidth={2.15} />
@@ -38,23 +43,22 @@ function ImportantUpdatesCard({ notice, onPress }: ImportantUpdatesCardProps) {
           <Text style={styles.description}>{description}</Text>
         ) : null}
       </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </CardShadowShell>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
+  cardInner: {
+    backgroundColor: colors.noticeBackground,
+    borderColor: colors.noticeBorder,
+  },
+  pressable: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.noticeBackground,
-    borderRadius: 20,
     paddingVertical: 16,
     paddingRight: 16,
     paddingLeft: 14,
-    overflow: 'hidden',
-    ...glassBorder,
-    borderColor: colors.noticeBorder,
-    ...cardShadowLight,
   },
   accentBar: {
     position: 'absolute',
@@ -74,7 +78,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
-    ...cardShadowLight,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   content: {
     flex: 1,

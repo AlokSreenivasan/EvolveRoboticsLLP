@@ -8,7 +8,8 @@ import {
 } from 'react-native';
 import { BookOpen, Play } from 'lucide-react-native';
 
-import { cardShadow, colors, glassBorder } from '../../constants/theme';
+import { colors } from '../../constants/theme';
+import CardShadowShell from '../ui/CardShadowShell';
 import type { ContinueLearningPlaylist } from '../../store/content/types/continueLearningPlaylists.types';
 import {
   computeProgressPercent,
@@ -36,13 +37,17 @@ function ContinueLearningCard({
   const videoCountLabel = formatVideoProgressLabel(videosWatched, videoCount);
 
   return (
-    <TouchableOpacity
-      style={[styles.card, isList && styles.cardList]}
-      activeOpacity={0.92}
-      onPress={onPress}
-      disabled={!onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`Open course ${playlist.title}. ${videoCountLabel}, ${progressPercent}% complete`}>
+    <CardShadowShell
+      style={[styles.shell, isList && styles.shellList]}
+      innerStyle={styles.cardInner}
+      borderRadius={22}>
+      <TouchableOpacity
+        style={styles.pressable}
+        activeOpacity={0.92}
+        onPress={onPress}
+        disabled={!onPress}
+        accessibilityRole="button"
+        accessibilityLabel={`Open course ${playlist.title}. ${videoCountLabel}, ${progressPercent}% complete`}>
       <View style={[styles.media, isList && styles.mediaList]}>
         {playlist.imageUri ? (
           <Image source={{ uri: playlist.imageUri }} style={styles.image} />
@@ -110,26 +115,25 @@ function ContinueLearningCard({
           </Text>
         </View>
       </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </CardShadowShell>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
+  shell: {
     width: 228,
-    backgroundColor: colors.surface,
-    borderRadius: 22,
     marginRight: 14,
-    overflow: 'hidden',
-    ...glassBorder,
-    borderColor: colors.primaryMuted,
-    ...cardShadow,
   },
-  cardList: {
+  shellList: {
     width: '100%',
     marginRight: 0,
     marginBottom: 16,
   },
+  cardInner: {
+    borderColor: colors.primaryMuted,
+  },
+  pressable: {},
   media: {
     height: 132,
     position: 'relative',

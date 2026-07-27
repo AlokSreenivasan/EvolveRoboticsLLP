@@ -1,3 +1,4 @@
+export { default as CardShadowShell } from './CardShadowShell';
 export { default as SurfaceCard } from './SurfaceCard';
 export { default as ScreenStateCard } from './ScreenStateCard';
 export { default as ScreenHeader } from './ScreenHeader';
