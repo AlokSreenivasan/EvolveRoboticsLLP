@@ -321,7 +321,9 @@ function ManageResources() {
           picking={pdfPicker.pickingPdf}
           onPick={() => {
             setFormError(null);
-            void pdfPicker.handlePickPdf();
+            pdfPicker.handlePickPdf().catch(() => {
+              // Errors are surfaced by the picker hook.
+            });
           }}
         />
         <AdminPublishedSwitch

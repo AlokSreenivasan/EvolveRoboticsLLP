@@ -69,7 +69,7 @@ function extractQuestions(data, docId) {
   ];
 }
 
-function resolveAnswerKey(questions, answerKeyData, contentData, docId) {
+function resolveAnswerKey(questions, answerKeyData, contentData, _docId) {
   const byQuestionId = {};
 
   if (
@@ -108,7 +108,6 @@ function resolveAnswerKey(questions, answerKeyData, contentData, docId) {
     }
   }
 
-  void docId;
   return byQuestionId;
 }
 
