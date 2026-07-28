@@ -3,7 +3,6 @@ import {
   FlatList,
   SafeAreaView,
   StyleSheet,
-  View,
   type ListRenderItem,
   type StyleProp,
   type ViewStyle,

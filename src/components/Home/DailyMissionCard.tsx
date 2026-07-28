@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { Check, Zap } from 'lucide-react-native';
 
-import { colors, glassBorder } from '../../constants/theme';
+import { colors } from '../../constants/theme';
 import CardShadowShell from '../ui/CardShadowShell';
 
 export type DailyMissionCardProps = {
@@ -108,7 +108,7 @@ function DailyMissionCard({
           isDone
             ? {
                 backgroundColor: accentBackground,
-                borderWidth: 1,
+                ...styles.startButtonDone,
                 borderColor: accentBorder,
               }
             : { backgroundColor: accentColor },
@@ -205,6 +205,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 11,
     borderRadius: 999,
+  },
+  startButtonDone: {
+    borderWidth: 1,
   },
   startButtonText: {
     fontSize: 13,

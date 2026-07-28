@@ -1,5 +1,31 @@
 This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
 
+# Release Quality Gates
+
+The repository now includes a CI workflow at `.github/workflows/ci.yml` that runs on pull requests and on pushes to `main`/`master`.
+
+Before shipping, the following checks must pass:
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm test -- --ci`
+- `npm run test:rules`
+
+## EAS Build Pipeline (baseline)
+
+An `eas.json` file is included with `development`, `preview`, and `production` profiles.
+
+Typical usage:
+
+```sh
+npm i -g eas-cli
+eas login
+eas build --platform android --profile preview
+eas build --platform ios --profile preview
+```
+
+For store builds, use the `production` profile.
+
 # Getting Started
 
 > **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.

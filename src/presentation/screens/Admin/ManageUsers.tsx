@@ -16,7 +16,7 @@ import AdminUserListRow from '../../../components/Admin/AdminUserListRow';
 import { adminStyles } from '../../../components/Admin/adminStyles';
 import { getGradeLabel } from '../../../constants/gradeOptions';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
-import { colors, inputFieldStyle, spacing } from '../../../constants/theme';
+import { colors, inputFieldStyle } from '../../../constants/theme';
 import { useAdminUsersList } from '../../hooks/admin/useAdminUsersList';
 import { useSchools } from '../../hooks/useSchools';
 import { resetUserQuizProgress } from '../../../services/firebase/adminQuizProgressService';

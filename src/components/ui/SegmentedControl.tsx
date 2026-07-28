@@ -12,7 +12,6 @@ import {
   cardShadowLight,
   colors,
   glassBorder,
-  spacing,
 } from '../../constants/theme';
 
 export type SegmentedOption<T extends string> = {

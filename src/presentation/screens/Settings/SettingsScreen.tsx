@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  Linking,
   StyleSheet,
   Text,
   View,
@@ -29,6 +30,18 @@ import { useAdminNavigation } from '../../hooks/useAdminNavigation';
 import { useStoredProfileFullName } from '../../hooks/useStoredProfileFullName';
 import { useUserRole } from '../../hooks/useUserRole';
 import { appAlert, appAlertButtons, appAlertCopy } from '../../../utils/alert/appAlert';
+
+const PRIVACY_POLICY_URL = 'https://www.evolveroboticsindia.com/privacy-policy';
+const TERMS_AND_CONDITIONS_URL =
+  'https://www.evolveroboticsindia.com/terms-and-conditions';
+
+async function openExternalUrl(url: string, failureMessage: string) {
+  try {
+    await Linking.openURL(url);
+  } catch {
+    appAlert(appAlertCopy.learner.unavailableTitle, failureMessage);
+  }
+}
 
 function SettingsScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
@@ -61,6 +74,20 @@ function SettingsScreen() {
         { text: appAlertButtons.cancel, style: 'cancel' },
         { text: appAlertButtons.logOut, onPress: performLogout },
       ],
+    );
+  };
+
+  const handlePrivacyPolicyPress = () => {
+    openExternalUrl(
+      PRIVACY_POLICY_URL,
+      'Unable to open the privacy policy right now. Please try again shortly.',
+    );
+  };
+
+  const handleTermsPress = () => {
+    openExternalUrl(
+      TERMS_AND_CONDITIONS_URL,
+      'Unable to open the terms and conditions right now. Please try again shortly.',
     );
   };
 
@@ -155,13 +182,15 @@ function SettingsScreen() {
             iconBackgroundColor={colors.primaryLight}
             title="Privacy Policy"
             variant="link"
+            onPress={handlePrivacyPolicyPress}
           />
           <SettingsLinkRow
             icon={ScrollText}
             iconColor={colors.primary}
             iconBackgroundColor={colors.primaryLight}
-            title="Terms of Service"
+            title="Terms and Conditions"
             variant="link"
+            onPress={handleTermsPress}
             isLast
           />
         </SettingsCard>

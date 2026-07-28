@@ -13,7 +13,7 @@ import type { RouteProp } from '@react-navigation/native';
 import { WebView } from 'react-native-webview';
 
 import ScreenHeader from '../../../components/ui/ScreenHeader';
-import { colors, spacing, typography } from '../../../constants/theme';
+import { colors, typography } from '../../../constants/theme';
 import type { RootStackParamList } from '../../../types/navigation';
 import { buildEmbeddedPdfViewerUrl } from '../../../utils/resources/pdfViewerUrl';
 
