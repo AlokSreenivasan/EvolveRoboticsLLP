@@ -92,7 +92,9 @@ function QuizAttemptScreen() {
   const accessLoading = quizzesLoading || attemptsLoading;
   const existingAttempt = attemptByQuizId.get(quizId);
   const isAlreadyCompleted = completedQuizIds.has(quizId);
-  const canRetry = isAlreadyCompleted && canRetryQuizAttempt(existingAttempt);
+  const canRetry =
+    isAlreadyCompleted &&
+    canRetryQuizAttempt(existingAttempt, quiz?.allowRetry === true);
 
   const canStartAttempt =
     !quizzesLoading &&

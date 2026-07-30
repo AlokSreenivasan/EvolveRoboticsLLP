@@ -11,7 +11,10 @@ import type {
 export interface ResourcesSectionDocument {
   sectionTitle: string;
   sectionSubtitle: string;
-  /** Required by shared appContent Firestore rules; unused on the Resources screen. */
+  /**
+   * Required by shared appContent Firestore rules.
+   * When non-empty, used as the learner PDF card CTA label.
+   */
   actionLabel: string;
   updatedAt:
     | FirebaseFirestoreTypes.Timestamp

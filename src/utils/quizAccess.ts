@@ -12,8 +12,15 @@ export function isPerfectQuizScore(attempt: QuizAttempt): boolean {
 
 export function canRetryQuizAttempt(
   attempt: QuizAttempt | undefined,
+  allowRetry = false,
 ): boolean {
-  return attempt != null && !isPerfectQuizScore(attempt);
+  if (attempt == null) {
+    return false;
+  }
+  if (!isPerfectQuizScore(attempt)) {
+    return true;
+  }
+  return allowRetry === true;
 }
 
 export function hasPassedQuiz(
@@ -33,7 +40,9 @@ export function getQuizAccessStatus(
 ): QuizAccessStatus {
   if (completedQuizIds.has(quiz.id)) {
     const attempt = attemptByQuizId.get(quiz.id);
-    return canRetryQuizAttempt(attempt) ? 'retryable' : 'completed';
+    return canRetryQuizAttempt(attempt, quiz.allowRetry)
+      ? 'retryable'
+      : 'completed';
   }
 
   if (index === 0) {

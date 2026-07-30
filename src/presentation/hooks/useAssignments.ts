@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { DEFAULT_ASSIGNMENTS_SECTION } from '../../constants/assignmentsDefaults';
 import {
@@ -71,12 +71,9 @@ export function useAssignments(options?: UseAssignmentsOptions) {
     };
   }, [subscribeOptions]);
 
-  const displayAssignments = useMemo(() => assignments, [assignments]);
-
   return {
     section,
     assignments,
-    displayAssignments,
     loading,
     error,
   };

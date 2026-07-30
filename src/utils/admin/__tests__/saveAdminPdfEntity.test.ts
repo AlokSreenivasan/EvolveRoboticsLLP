@@ -91,6 +91,82 @@ describe('saveAdminPdfEntity', () => {
       }),
     ).rejects.toThrow('PDF required');
   });
+
+  it('rolls back created stub when upload fails', async () => {
+    const uploadError = new Error('upload failed');
+    const uploadPdf = jest.fn().mockRejectedValue(uploadError);
+    const createEntity = jest.fn().mockResolvedValue({ id: 'note-new' });
+    const updateEntity = jest.fn();
+    const deleteCreatedEntity = jest.fn().mockResolvedValue(undefined);
+    const deleteOldPdf = jest.fn();
+
+    await expect(
+      saveAdminPdfEntity({
+        editingId: null,
+        pendingPdfUri: 'file:///pending.pdf',
+        existingPdfUrl: '',
+        uploadPdf,
+        deleteOldPdf,
+        deleteCreatedEntity,
+        createEntity,
+        updateEntity,
+      }),
+    ).rejects.toThrow('upload failed');
+
+    expect(updateEntity).not.toHaveBeenCalled();
+    expect(deleteOldPdf).not.toHaveBeenCalled();
+    expect(deleteCreatedEntity).toHaveBeenCalledWith('note-new');
+  });
+
+  it('rolls back uploaded PDF and stub when update fails after upload', async () => {
+    const updateError = new Error('update failed');
+    const uploadPdf = jest
+      .fn()
+      .mockResolvedValue('https://storage.example/new.pdf');
+    const createEntity = jest.fn().mockResolvedValue({ id: 'note-new' });
+    const updateEntity = jest.fn().mockRejectedValue(updateError);
+    const deleteCreatedEntity = jest.fn().mockResolvedValue(undefined);
+    const deleteOldPdf = jest.fn().mockResolvedValue(undefined);
+
+    await expect(
+      saveAdminPdfEntity({
+        editingId: null,
+        pendingPdfUri: 'file:///pending.pdf',
+        existingPdfUrl: '',
+        uploadPdf,
+        deleteOldPdf,
+        deleteCreatedEntity,
+        createEntity,
+        updateEntity,
+      }),
+    ).rejects.toThrow('update failed');
+
+    expect(deleteOldPdf).toHaveBeenCalledWith(
+      'https://storage.example/new.pdf',
+    );
+    expect(deleteCreatedEntity).toHaveBeenCalledWith('note-new');
+  });
+
+  it('still throws original error if rollback cleanup fails', async () => {
+    const uploadError = new Error('upload failed');
+    const uploadPdf = jest.fn().mockRejectedValue(uploadError);
+    const createEntity = jest.fn().mockResolvedValue({ id: 'note-new' });
+    const deleteCreatedEntity = jest
+      .fn()
+      .mockRejectedValue(new Error('cleanup failed'));
+
+    await expect(
+      saveAdminPdfEntity({
+        editingId: null,
+        pendingPdfUri: 'file:///pending.pdf',
+        existingPdfUrl: '',
+        uploadPdf,
+        deleteCreatedEntity,
+        createEntity,
+        updateEntity: jest.fn(),
+      }),
+    ).rejects.toThrow('upload failed');
+  });
 });
 
 describe('getAdminPdfStatusLabel', () => {

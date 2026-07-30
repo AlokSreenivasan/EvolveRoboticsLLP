@@ -179,6 +179,9 @@ export const appAlertCopy = {
       'Could not open your email app. Copy the address and email us directly.',
     phoneDialerUnavailable:
       'Could not open the phone dialer. Call us at the number shown on this screen.',
+    pdfOpenFailedTitle: 'Could not open PDF',
+    pdfOpenFailedMessage:
+      'We could not open this file in your browser. Try again in a moment.',
     examTimeUpTitle: "Time's up!",
     examSubmittedTitle: 'Exam submitted',
     examSubmitFailedTitle: 'Could not submit exam',

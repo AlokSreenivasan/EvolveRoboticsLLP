@@ -103,7 +103,8 @@ service firebase.storage {
         && request.resource.size < 25 * 1024 * 1024
         && isPdfUpload();
 
-      allow delete: if isAdmin() && request.auth.uid == uid;
+      // Any admin may delete so cleanup works across admins.
+      allow delete: if isAdmin();
     }
 
     match /assignments/{uid}/{pdfFile} {
@@ -115,7 +116,8 @@ service firebase.storage {
         && request.resource.size < 25 * 1024 * 1024
         && isPdfUpload();
 
-      allow delete: if isAdmin() && request.auth.uid == uid;
+      // Any admin may delete so cleanup works across admins.
+      allow delete: if isAdmin();
     }
 
     match /{allPaths=**} {

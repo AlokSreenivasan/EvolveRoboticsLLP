@@ -392,6 +392,8 @@ exports.submitExamAttempt = onCall(async request => {
   const attemptRef = db.collection(`users/${uid}/examAttempts`).doc();
   await attemptRef.set({
     examId,
+    examTitle:
+      typeof examData.title === 'string' ? examData.title.trim() : '',
     answers,
     correctCount,
     totalQuestions,

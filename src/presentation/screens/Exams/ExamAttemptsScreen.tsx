@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   FlatList,
   SafeAreaView,
@@ -19,6 +19,7 @@ import {
 } from '../../../constants/theme';
 import type { ExamAttempt } from '../../../services/firebase/examAttemptsService';
 import { useExamAttempts } from '../../hooks/useExamAttempts';
+import { useExams } from '../../hooks/useExams';
 
 function formatSubmittedAt(attempt: ExamAttempt): string {
   const dt = attempt.submittedAt?.toDate?.();
@@ -30,25 +31,45 @@ function formatSubmittedAt(attempt: ExamAttempt): string {
 
 function ExamAttemptsScreen() {
   const { attempts, loading, error } = useExamAttempts();
+  const { exams } = useExams();
+
+  const titleByExamId = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const exam of exams) {
+      const title = exam.title.trim();
+      if (title) {
+        map.set(exam.id, title);
+      }
+    }
+    return map;
+  }, [exams]);
 
   const renderAttempt = useCallback(
-    ({ item }: { item: ExamAttempt }) => (
-      <SurfaceCard elevation="light" style={styles.card}>
-        <View style={styles.iconBox}>
-          <ClipboardCheck size={20} color={colors.primary} strokeWidth={2.5} />
-        </View>
-        <View style={styles.cardText}>
-          <Text style={styles.cardTitle}>Exam attempt</Text>
-          <Text style={styles.cardMeta}>
-            Score: {item.correctCount}/{item.totalQuestions} ({item.percentage}%)
-          </Text>
-          {formatSubmittedAt(item) ? (
-            <Text style={styles.cardSubtle}>{formatSubmittedAt(item)}</Text>
-          ) : null}
-        </View>
-      </SurfaceCard>
-    ),
-    [],
+    ({ item }: { item: ExamAttempt }) => {
+      const examTitle =
+        item.examTitle.trim() ||
+        titleByExamId.get(item.examId)?.trim() ||
+        'Exam attempt';
+
+      return (
+        <SurfaceCard elevation="light" style={styles.card}>
+          <View style={styles.iconBox}>
+            <ClipboardCheck size={20} color={colors.primary} strokeWidth={2.5} />
+          </View>
+          <View style={styles.cardText}>
+            <Text style={styles.cardTitle}>{examTitle}</Text>
+            <Text style={styles.cardMeta}>
+              Score: {item.correctCount}/{item.totalQuestions} ({item.percentage}
+              %)
+            </Text>
+            {formatSubmittedAt(item) ? (
+              <Text style={styles.cardSubtle}>{formatSubmittedAt(item)}</Text>
+            ) : null}
+          </View>
+        </SurfaceCard>
+      );
+    },
+    [titleByExamId],
   );
 
   const keyExtractor = useCallback((item: ExamAttempt) => item.id, []);

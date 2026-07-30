@@ -355,7 +355,11 @@ function ManageExams() {
           exam.timerSeconds,
         )} min`}
         statusLine={`${
-          exam.questions?.length ? 'Ready to publish' : 'Add questions'
+          !exam.questions?.length
+            ? 'Add questions'
+            : exam.isPublished
+              ? 'Published'
+              : 'Ready to publish'
         } · ${formatContentVisibilitySummary(exam.track, exam, schools)}`}
         isPublished={exam.isPublished}
         index={index}

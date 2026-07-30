@@ -59,6 +59,7 @@ function ExamAttemptScreen() {
 
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
+  const [started, setStarted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const submittedRef = useRef(false);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -73,16 +74,30 @@ function ExamAttemptScreen() {
   const examTimerSecondsRef = useRef<number | null>(null);
   examTimerSecondsRef.current = exam?.timerSeconds ?? null;
 
-  // Reset attempt state only when a different exam loads; the timer value is
-  // read through a ref so later edits to the exam doc don't restart the attempt.
+  // Reset attempt state only when a different exam loads.
   useEffect(() => {
-    if (loadedExamId == null || examTimerSecondsRef.current == null) {
+    if (loadedExamId == null) {
       return;
     }
 
     setAnswers({});
     setSubmitting(false);
+    setStarted(false);
     submittedRef.current = false;
+    setRemainingSeconds(null);
+
+    if (tickRef.current) {
+      clearInterval(tickRef.current);
+      tickRef.current = null;
+    }
+  }, [loadedExamId]);
+
+  // Start the countdown only after the learner confirms on the pre-start screen.
+  // Timer seconds are read through a ref so later exam-doc edits don't restart it.
+  useEffect(() => {
+    if (!started || examTimerSecondsRef.current == null) {
+      return;
+    }
 
     setRemainingSeconds(examTimerSecondsRef.current);
 
@@ -109,7 +124,11 @@ function ExamAttemptScreen() {
         tickRef.current = null;
       }
     };
-  }, [loadedExamId]);
+  }, [started]);
+
+  const handleStartExam = useCallback(() => {
+    setStarted(true);
+  }, []);
 
   const handleSelect = useCallback(
     (questionId: string, choiceIndex: number) => {
@@ -222,7 +241,7 @@ function ExamAttemptScreen() {
   }, [finishSubmission]);
 
   useEffect(() => {
-    if (!exam) {
+    if (!exam || !started) {
       return;
     }
     if (remainingSeconds == null) {
@@ -232,7 +251,7 @@ function ExamAttemptScreen() {
       return;
     }
     finishSubmission('timeout');
-  }, [exam, finishSubmission, remainingSeconds]);
+  }, [exam, finishSubmission, remainingSeconds, started]);
 
   const timeLabel =
     remainingSeconds == null ? '' : formatTimeMMSS(remainingSeconds);
@@ -257,6 +276,49 @@ function ExamAttemptScreen() {
           <Text style={styles.messageText}>
             {error ?? 'The exam was not found.'}
           </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!started) {
+    const description = exam.description.trim();
+
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <BackButton withSpacingBelow />
+          <Text style={styles.title}>{exam.title}</Text>
+          <Text style={styles.subtitle}>
+            {questionCount} questions • {formatMinutes(exam.timerSeconds)} min
+          </Text>
+        </View>
+
+        <View style={styles.preStartBody}>
+          <View style={styles.messageCard}>
+            <Text style={styles.messageTitle}>Before you start</Text>
+            {description ? (
+              <Text style={styles.messageText}>{description}</Text>
+            ) : (
+              <Text style={styles.messageText}>
+                Answer all questions before time runs out. The timer starts when
+                you begin.
+              </Text>
+            )}
+            <Text style={styles.preStartMeta}>
+              {questionCount} questions • {formatMinutes(exam.timerSeconds)}{' '}
+              minute{formatMinutes(exam.timerSeconds) === 1 ? '' : 's'}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.footer}>
+          <AppButton
+            title="Start exam"
+            onPress={handleStartExam}
+            variant="primary"
+            buttonStyle={styles.submitButton}
+          />
         </View>
       </SafeAreaView>
     );
@@ -388,6 +450,18 @@ const styles = StyleSheet.create({
   },
   messageText: {
     ...typography.bodySecondary,
+    textAlign: 'center',
+  },
+  preStartBody: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingBottom: 120,
+  },
+  preStartMeta: {
+    marginTop: 14,
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.primary,
     textAlign: 'center',
   },
   questionCard: {

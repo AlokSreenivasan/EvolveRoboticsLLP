@@ -185,6 +185,7 @@ function ManageResources() {
         existingPdfUrl: pdfPicker.existingPdfUrl,
         uploadPdf: uploadResourceNotePdf,
         deleteOldPdf: deleteResourceNotePdfByUrlSafe,
+        deleteCreatedEntity: deleteResourceNote,
         createEntity: () =>
           createResourceNote({
             title: noteForm.title,

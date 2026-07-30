@@ -193,6 +193,7 @@ function ManageAssignments() {
         existingPdfUrl: pdfPicker.existingPdfUrl,
         uploadPdf: uploadAssignmentPdf,
         deleteOldPdf: deleteAssignmentPdfByUrlSafe,
+        deleteCreatedEntity: deleteAssignment,
         createEntity: () =>
           createAssignment({
             title: form.title,
@@ -259,7 +260,7 @@ function ManageAssignments() {
           label="Screen subtitle"
           value={sectionSubtitle}
           onChangeText={setSectionSubtitle}
-          placeholder="Download and complete your tasks"
+          placeholder="Open assignment sheets and check due dates"
         />
       </AdminSectionCard>
       <AdminListSectionHeader title="Assignments" onAdd={openCreateEditor} />
@@ -298,7 +299,7 @@ function ManageAssignments() {
         keyExtractor={keyExtractor}
         renderItem={renderAssignment}
         listHeader={listHeader}
-        emptyMessage="No assignments yet. Add a PDF for students to download."
+        emptyMessage="No assignments yet. Add a PDF for students to open."
       />
 
       <AdminEntityForm

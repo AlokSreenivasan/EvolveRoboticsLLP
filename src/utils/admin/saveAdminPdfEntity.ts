@@ -4,6 +4,8 @@ export type SaveAdminPdfEntityParams = {
   existingPdfUrl: string;
   uploadPdf: (entityId: string, localUri: string) => Promise<string>;
   deleteOldPdf?: (url: string) => Promise<void>;
+  /** Removes a newly created stub if upload/update fails after create. */
+  deleteCreatedEntity?: (id: string) => Promise<void>;
   createEntity: () => Promise<{ id: string }>;
   updateEntity: (id: string, pdfUrl: string) => Promise<void>;
 };
@@ -11,6 +13,7 @@ export type SaveAdminPdfEntityParams = {
 /**
  * Two-step PDF admin save: create stub → upload → set URL, or update with optional replace.
  * Upload helpers call syncFirestoreAuthSession before Storage writes.
+ * On create, rolls back the stub (and any uploaded PDF) if a later step fails.
  */
 export async function saveAdminPdfEntity(
   params: SaveAdminPdfEntityParams,
@@ -21,6 +24,7 @@ export async function saveAdminPdfEntity(
     existingPdfUrl,
     uploadPdf,
     deleteOldPdf,
+    deleteCreatedEntity,
     createEntity,
     updateEntity,
   } = params;
@@ -42,8 +46,27 @@ export async function saveAdminPdfEntity(
   }
 
   const created = await createEntity();
-  const pdfUrl = await uploadPdf(created.id, pendingPdfUri);
-  await updateEntity(created.id, pdfUrl);
+  let uploadedUrl = '';
+  try {
+    uploadedUrl = await uploadPdf(created.id, pendingPdfUri);
+    await updateEntity(created.id, uploadedUrl);
+  } catch (error) {
+    if (uploadedUrl.trim() && deleteOldPdf) {
+      try {
+        await deleteOldPdf(uploadedUrl);
+      } catch {
+        // Best-effort cleanup; keep the original save error.
+      }
+    }
+    if (deleteCreatedEntity) {
+      try {
+        await deleteCreatedEntity(created.id);
+      } catch {
+        // Best-effort cleanup; keep the original save error.
+      }
+    }
+    throw error;
+  }
 }
 
 export function getAdminPdfStatusLabel(

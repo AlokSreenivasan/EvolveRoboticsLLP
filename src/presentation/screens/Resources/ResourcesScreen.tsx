@@ -12,11 +12,14 @@ function ResourcesScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const { section, notes, loading, error } = useResources();
 
+  const noteCtaLabel = section.actionLabel?.trim() || undefined;
+
   const renderNote = useCallback(
     ({ item, index }: { item: ResourceNote; index: number }) => (
       <ResourceNoteCard
         note={item}
         accentIndex={index}
+        ctaLabel={noteCtaLabel}
         onPress={() =>
           navigation.navigate('ResourcePdfViewer', {
             title: item.title,
@@ -25,7 +28,7 @@ function ResourcesScreen() {
         }
       />
     ),
-    [navigation],
+    [navigation, noteCtaLabel],
   );
 
   const keyExtractor = useCallback((item: ResourceNote) => item.id, []);

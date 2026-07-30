@@ -2,7 +2,7 @@ import type { AssignmentsSection } from '../store/content/types/assignments.type
 
 export const DEFAULT_ASSIGNMENTS_SECTION: AssignmentsSection = {
   sectionTitle: 'Assignments',
-  sectionSubtitle: 'Download assignment sheets and check due dates.',
+  sectionSubtitle: 'Open assignment sheets and check due dates.',
   actionLabel: '',
   updatedAt: null,
 };

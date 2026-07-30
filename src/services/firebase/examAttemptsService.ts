@@ -17,6 +17,8 @@ import {
 
 export type ExamAttemptDocument = {
   examId: string;
+  /** Snapshot of exam title at submit time (optional for legacy attempts). */
+  examTitle?: string;
   /** Map of questionId -> selected choice index (0..3). */
   answers: Record<string, number>;
   correctCount: number;
@@ -30,6 +32,7 @@ export type ExamAttemptDocument = {
 export type ExamAttempt = {
   id: string;
   examId: string;
+  examTitle: string;
   answers: Record<string, number>;
   correctCount: number;
   totalQuestions: number;
@@ -60,6 +63,8 @@ function mapAttempt(id: string, data: ExamAttemptDocument): ExamAttempt {
   return {
     id,
     examId: data.examId?.trim() ?? '',
+    examTitle:
+      typeof data.examTitle === 'string' ? data.examTitle.trim() : '',
     answers: (data.answers ?? {}) as Record<string, number>,
     correctCount: typeof data.correctCount === 'number' ? data.correctCount : 0,
     totalQuestions:

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { DEFAULT_RESOURCES_SECTION } from '../../constants/resourcesDefaults';
 import {
@@ -71,12 +71,9 @@ export function useResources(options?: UseResourcesOptions) {
     };
   }, [subscribeOptions]);
 
-  const displayNotes = useMemo(() => notes, [notes]);
-
   return {
     section,
     notes,
-    displayNotes,
     loading,
     error,
   };
