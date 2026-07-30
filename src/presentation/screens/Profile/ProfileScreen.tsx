@@ -21,6 +21,7 @@ import ProfileTrackPicker from '../../../components/Profile/ProfileTrackPicker.t
 import SchoolPicker from '../../../components/Profile/SchoolPicker.tsx';
 import ScreenHeader from '../../../components/ui/ScreenHeader';
 import SurfaceCard from '../../../components/ui/SurfaceCard';
+import { resolveGradeOptionsForSchool } from '../../../constants/gradeOptions';
 import { CONTACT_NUMBER_MAX_LENGTH } from '../../../domain/Profile/validation/formatContactNumber';
 import { isProfileComplete } from '../../../domain/Profile/validation/isProfileComplete';
 import { useAuth } from '../../context/AuthContext';
@@ -49,7 +50,7 @@ function ProfileScreen() {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
   const route = useRoute<ProfileScreenRouteProp>();
   const requireCompletion = route.params?.requireCompletion === true;
-  const { user, profile: userProfile, profileLoading, isAdmin } = useAuth();
+  const { user, profile: userProfile, profileLoading } = useAuth();
   const userEmail = userProfile?.email ?? user?.email ?? '';
   const {
     profile,
@@ -59,6 +60,8 @@ function ProfileScreen() {
     saveError,
     isSchoolLocked,
     isGradeLocked,
+    requireLearningTrack,
+    roleLoading,
     setFullName,
     setContactNumber,
     setTrack,
@@ -74,9 +77,11 @@ function ProfileScreen() {
     error: schoolsError,
   } = useSchools();
 
-  const isFormDisabled = isLoading || isSaving;
-  const showSchoolAndGrade = profile.track === 'kids';
+  const isFormDisabled = isLoading || isSaving || roleLoading;
+  const showSchoolAndGrade = requireLearningTrack && profile.track === 'kids';
   const schoolAndGradeLocked = isSchoolLocked || isGradeLocked;
+  const selectedSchool = schools.find(school => school.id === profile.schoolId);
+  const gradeOptions = resolveGradeOptionsForSchool(selectedSchool);
 
   useEffect(() => {
     if (!requireCompletion || profileLoading) {
@@ -107,7 +112,13 @@ function ProfileScreen() {
   }, [requireCompletion]);
 
   const handleSave = async () => {
-    if (!validate()) {
+    if (
+      !validate({
+        validGradeValues: showSchoolAndGrade
+          ? gradeOptions.map(option => option.value)
+          : undefined,
+      })
+    ) {
       return;
     }
 
@@ -217,7 +228,7 @@ function ProfileScreen() {
               <Text style={styles.errorText}>{errors.contactNumber}</Text>
             ) : null}
 
-            {!isAdmin ? (
+            {requireLearningTrack ? (
               <>
                 <ProfileTrackPicker
                   selectedTrack={profile.track}
@@ -251,7 +262,10 @@ function ProfileScreen() {
                 <GradePicker
                   selectedGrade={profile.grade}
                   onSelectGrade={setGrade}
-                  disabled={isFormDisabled || isGradeLocked}
+                  options={gradeOptions}
+                  disabled={
+                    isFormDisabled || isGradeLocked || !profile.schoolId
+                  }
                   hasError={Boolean(errors.grade)}
                 />
                 {errors.grade ? (

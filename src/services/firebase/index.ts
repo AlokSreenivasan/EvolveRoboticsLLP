@@ -18,6 +18,8 @@ export {
 export type { ProfileEditPayload } from './profileUpdateService';
 export {
   deleteAllUserProfileImages,
+  deleteContinueLearningThumbnailByUrlSafe,
+  deleteCourseThumbnailByUrlSafe,
   deleteProfileImage,
   deleteProfileImageByUrlSafe,
   uploadContinueLearningThumbnail,
@@ -96,8 +98,10 @@ export {
   updateAssignmentsSection,
 } from './assignmentsService';
 export {
+  computeMovedChatKeywordIds,
   createChatKeyword,
   deleteChatKeyword,
+  findChatKeywordResponse,
   moveChatKeyword,
   reorderChatKeywords,
   subscribeChatKeywords,

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -15,6 +15,7 @@ import SettingsInfoCard from '../../../components/Settings/SettingsInfoCard';
 import SettingsScreenLayout from '../../../components/Settings/SettingsScreenLayout';
 import SettingsSectionHeader from '../../../components/Settings/SettingsSectionHeader';
 import { colors, inputFieldStyle, spacing, typography } from '../../../constants/theme';
+import { hasEmailPasswordProvider } from '../../../services/firebase/authService';
 import type { LoginScreenNavigationProp } from '../../../types/navigation';
 import { appAlert, appAlertButtons, appAlertCopy } from '../../../utils/alert/appAlert';
 import { useChangePasswordForm } from '../../hooks/useChangePasswordForm';
@@ -35,6 +36,12 @@ function ChangePasswordScreen() {
     setConfirmNewPassword,
     submitPasswordChange,
   } = useChangePasswordForm();
+
+  useEffect(() => {
+    if (!hasEmailPasswordProvider()) {
+      navigation.goBack();
+    }
+  }, [navigation]);
 
   const handleUpdatePassword = async () => {
     const result = await submitPasswordChange();

@@ -4,7 +4,12 @@ import {
 } from '@react-native-firebase/auth';
 import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
 
+import { PASSWORD_REQUIREMENTS_MESSAGE } from '../../domain/Auth/validation/isValidPassword';
 import type { UserProfile } from '../../store/user/types';
+import {
+  extractFirebaseErrorDetails,
+  normalizeFirebaseErrorCode,
+} from '../../utils/firebase/extractFirebaseError';
 import { getErrorMessage } from '../../utils/firebase/errors';
 import { uploadProfileImage } from './storageService';
 import { createUserProfileIfNotExists } from './userService';
@@ -27,7 +32,7 @@ function mapAuthError(error: { code?: string; message?: string }): string {
     case 'auth/invalid-email':
       return 'Please enter a valid email address.';
     case 'auth/weak-password':
-      return 'Password must be at least 6 characters.';
+      return PASSWORD_REQUIREMENTS_MESSAGE;
     case 'auth/operation-not-allowed':
       return 'Email/password sign-up is not enabled in Firebase.';
     default:
@@ -35,10 +40,47 @@ function mapAuthError(error: { code?: string; message?: string }): string {
   }
 }
 
+function mapProfilePersistenceError(error: unknown): string | null {
+  const details = extractFirebaseErrorDetails(error);
+  const nested =
+    error instanceof Error && 'cause' in error
+      ? extractFirebaseErrorDetails((error as { cause?: unknown }).cause)
+      : { code: undefined, message: undefined };
+  const codes = [details.code, nested.code]
+    .map(normalizeFirebaseErrorCode)
+    .filter(Boolean);
+  const message = `${details.message ?? ''} ${nested.message ?? ''}`;
+
+  if (
+    codes.includes('unavailable') ||
+    /firestore\/unavailable/i.test(message) ||
+    /The service is currently unavailable/i.test(message)
+  ) {
+    return (
+      'Cloud Firestore is not set up for this Firebase project. ' +
+      'In Firebase Console → Build → Firestore Database, create the default database, ' +
+      'then deploy rules (firebase deploy --only firestore) and try again.'
+    );
+  }
+
+  if (codes.includes('permission-denied')) {
+    return (
+      'Firestore denied profile creation. Deploy security rules for this project ' +
+      '(firebase deploy --only firestore:rules) and try again.'
+    );
+  }
+
+  return null;
+}
+
 function toSignUpError(error: unknown): Error {
   const firebaseAuthError = error as { code?: string; message?: string };
   if (firebaseAuthError?.code?.startsWith('auth/')) {
     return new Error(mapAuthError(firebaseAuthError));
+  }
+  const profileMessage = mapProfilePersistenceError(error);
+  if (profileMessage) {
+    return new Error(profileMessage);
   }
   return new Error(getErrorMessage(error));
 }

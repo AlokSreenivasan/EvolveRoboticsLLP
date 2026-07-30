@@ -7,6 +7,7 @@ import {
 import type { Profile } from '../../domain/Profile/models/Profile';
 import type { UserProfile } from '../../store/user/types';
 import { DEFAULT_USER_ROLE } from '../../store/user/types/role.types';
+import { isAdminRole } from '../role/normalizeUserRole';
 
 export function buildFallbackUserProfile(
   user: FirebaseAuthTypes.User,
@@ -97,7 +98,25 @@ export function isRicherUserProfile(
     (profile.grade?.trim() ? 1 : 0) +
     (profile.track ? 1 : 0);
 
-  return score(candidate) > score(baseline);
+  const candidateScore = score(candidate);
+  const baselineScore = score(baseline);
+
+  if (candidateScore > baselineScore) {
+    return true;
+  }
+  if (candidateScore < baselineScore) {
+    return false;
+  }
+
+  // Equal field scores: still apply role upgrades (admin / superadmin) from Firestore.
+  if (isAdminRole(candidate.role) && !isAdminRole(baseline.role)) {
+    return true;
+  }
+  if (candidate.role !== baseline.role) {
+    return true;
+  }
+
+  return false;
 }
 
 export function isLocalImageUri(uri: string | null | undefined): boolean {

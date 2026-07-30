@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 
-import { GRADE_OPTIONS } from '../../constants/gradeOptions';
+import { GRADE_OPTIONS, type GradeOption } from '../../constants/gradeOptions';
 import {
   colors,
   inputFieldStyle,
@@ -21,15 +21,20 @@ import {
 type GradePickerProps = {
   selectedGrade: string | null;
   onSelectGrade: (grade: string) => void;
+  /** Defaults to the global GRADE_OPTIONS list. */
+  options?: GradeOption[];
   disabled?: boolean;
   hasError?: boolean;
+  emptyMessage?: string;
 };
 
 function GradePicker({
   selectedGrade,
   onSelectGrade,
+  options = GRADE_OPTIONS,
   disabled = false,
   hasError = false,
+  emptyMessage = 'No grades available for this school yet.',
 }: GradePickerProps) {
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -38,9 +43,9 @@ function GradePicker({
       return 'Select your grade';
     }
 
-    const match = GRADE_OPTIONS.find(option => option.value === selectedGrade);
+    const match = options.find(option => option.value === selectedGrade);
     return match?.label ?? 'Grade no longer listed';
-  }, [selectedGrade]);
+  }, [options, selectedGrade]);
 
   const closeModal = () => setModalOpen(false);
 
@@ -100,27 +105,31 @@ function GradePicker({
               </TouchableOpacity>
             </View>
 
-            <FlatList
-              data={GRADE_OPTIONS}
-              keyExtractor={item => item.value}
-              keyboardShouldPersistTaps="handled"
-              renderItem={({ item }) => {
-                const selected = item.value === selectedGrade;
+            {options.length === 0 ? (
+              <Text style={styles.emptyText}>{emptyMessage}</Text>
+            ) : (
+              <FlatList
+                data={options}
+                keyExtractor={item => item.value}
+                keyboardShouldPersistTaps="handled"
+                renderItem={({ item }) => {
+                  const selected = item.value === selectedGrade;
 
-                return (
-                  <TouchableOpacity
-                    style={[
-                      styles.optionRow,
-                      selected ? styles.optionRowSelected : null,
-                    ]}
-                    onPress={() => handleSelect(item.value)}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected }}>
-                    <Text style={styles.optionTitle}>{item.label}</Text>
-                  </TouchableOpacity>
-                );
-              }}
-            />
+                  return (
+                    <TouchableOpacity
+                      style={[
+                        styles.optionRow,
+                        selected ? styles.optionRowSelected : null,
+                      ]}
+                      onPress={() => handleSelect(item.value)}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected }}>
+                      <Text style={styles.optionTitle}>{item.label}</Text>
+                    </TouchableOpacity>
+                  );
+                }}
+              />
+            )}
           </Pressable>
         </Pressable>
       </Modal>
@@ -195,6 +204,12 @@ const styles = StyleSheet.create({
   optionTitle: {
     ...typography.body,
     fontWeight: '600',
+  },
+  emptyText: {
+    ...typography.body,
+    color: colors.textMuted,
+    paddingHorizontal: 16,
+    paddingVertical: 20,
   },
 });
 

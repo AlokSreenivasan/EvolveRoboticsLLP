@@ -37,6 +37,26 @@ function normalizeAudience(data) {
   return data?.audience === 'schools' ? 'schools' : 'all';
 }
 
+/**
+ * Kids / professionals track from a notification or user doc.
+ * Returns null when unset or invalid (legacy docs without track).
+ */
+function normalizeContentTrack(value) {
+  return value === 'kids' || value === 'professionals' ? value : null;
+}
+
+/**
+ * When the notification targets a track, only users on that track match.
+ * Notifications without a track remain visible to every user (legacy).
+ */
+function userMatchesTrackTarget(userData, targetTrack) {
+  if (targetTrack == null) {
+    return true;
+  }
+
+  return normalizeContentTrack(userData?.track) === targetTrack;
+}
+
 function normalizeSchoolIds(data) {
   if (!Array.isArray(data?.schoolIds)) {
     return [];
@@ -225,9 +245,11 @@ module.exports = {
   DEFAULT_NOTIFICATION_PREFERENCES,
   CATEGORY_PREFERENCE_KEYS,
   normalizeAudience,
+  normalizeContentTrack,
   normalizeSchoolIds,
   normalizeSchoolGradeIds,
   userMatchesSchoolGradeTarget,
+  userMatchesTrackTarget,
   normalizeNotificationCategory,
   resolveUserPreferences,
   isCategoryEnabledForUser,

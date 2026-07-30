@@ -6,9 +6,11 @@ const { getMessaging } = require('firebase-admin/messaging');
 
 const {
   normalizeAudience,
+  normalizeContentTrack,
   normalizeSchoolIds,
   normalizeSchoolGradeIds,
   userMatchesSchoolGradeTarget,
+  userMatchesTrackTarget,
   normalizeNotificationCategory,
   resolveUserPreferences,
   collectEligibleTokens,
@@ -53,7 +55,12 @@ async function loadNotificationPreferencesByUser(db) {
   return byUser;
 }
 
-async function loadAllowedUserIds(db, targetSchoolIds, schoolGradeIds) {
+async function loadAllowedUserIds(
+  db,
+  targetSchoolIds,
+  schoolGradeIds,
+  targetTrack,
+) {
   const allowed = new Set();
 
   for (let i = 0; i < targetSchoolIds.length; i += 10) {
@@ -64,7 +71,11 @@ async function loadAllowedUserIds(db, targetSchoolIds, schoolGradeIds) {
       .get();
 
     snapshot.docs.forEach(doc => {
-      if (userMatchesSchoolGradeTarget(doc.data(), schoolGradeIds)) {
+      const userData = doc.data();
+      if (
+        userMatchesSchoolGradeTarget(userData, schoolGradeIds) &&
+        userMatchesTrackTarget(userData, targetTrack)
+      ) {
         allowed.add(doc.id);
       }
     });
@@ -73,9 +84,24 @@ async function loadAllowedUserIds(db, targetSchoolIds, schoolGradeIds) {
   return allowed;
 }
 
+async function loadAllowedUserIdsByTrack(db, targetTrack) {
+  const allowed = new Set();
+  const snapshot = await db
+    .collection('users')
+    .where('track', '==', targetTrack)
+    .get();
+
+  snapshot.docs.forEach(doc => {
+    allowed.add(doc.id);
+  });
+
+  return allowed;
+}
+
 /**
  * Callable: admin sends a push notification to registered device tokens.
- * Respects notification audience (all schools vs selected schools).
+ * Respects notification audience (all schools vs selected schools) and
+ * kids / professionals track targeting.
  * Expects { notificationId, title, body }.
  */
 exports.sendLiveNotification = onCall(async request => {
@@ -117,6 +143,7 @@ exports.sendLiveNotification = onCall(async request => {
 
   const notificationData = notificationSnap.data() ?? {};
   const category = normalizeNotificationCategory(notificationData.category);
+  const targetTrack = normalizeContentTrack(notificationData.track);
   const audience = normalizeAudience(notificationData);
   const targetSchoolIds = normalizeSchoolIds(notificationData);
   const schoolGradeIds = normalizeSchoolGradeIds(
@@ -131,10 +158,17 @@ exports.sendLiveNotification = onCall(async request => {
     );
   }
 
-  const allowedUserIds =
-    audience === 'schools'
-      ? await loadAllowedUserIds(db, targetSchoolIds, schoolGradeIds)
-      : null;
+  let allowedUserIds = null;
+  if (audience === 'schools') {
+    allowedUserIds = await loadAllowedUserIds(
+      db,
+      targetSchoolIds,
+      schoolGradeIds,
+      targetTrack,
+    );
+  } else if (targetTrack != null) {
+    allowedUserIds = await loadAllowedUserIdsByTrack(db, targetTrack);
+  }
 
   const preferencesByUser = await loadNotificationPreferencesByUser(db);
   const tokenSnap = await db.collectionGroup('fcmTokens').get();
@@ -147,15 +181,26 @@ exports.sendLiveNotification = onCall(async request => {
   const recipientCount = withSound.length + silent.length;
 
   if (recipientCount === 0) {
+    const trackLabel =
+      targetTrack === 'kids'
+        ? 'kids'
+        : targetTrack === 'professionals'
+          ? 'professionals'
+          : null;
+    const trackSuffix = trackLabel ? ` on the ${trackLabel} track` : '';
     throw new HttpsError(
       'failed-precondition',
       audience === 'schools'
         ? category === 'general'
-          ? 'No devices are registered for learners at the selected schools.'
-          : 'No devices are registered for learners at the selected schools with this notification category enabled.'
+          ? `No devices are registered for learners at the selected schools${trackSuffix}.`
+          : `No devices are registered for learners at the selected schools${trackSuffix} with this notification category enabled.`
         : category === 'general'
-          ? 'No devices are registered for push notifications yet.'
-          : 'No devices are registered with this notification category enabled.',
+          ? trackLabel
+            ? `No devices are registered for ${trackLabel} learners yet.`
+            : 'No devices are registered for push notifications yet.'
+          : trackLabel
+            ? `No devices are registered for ${trackLabel} learners with this notification category enabled.`
+            : 'No devices are registered with this notification category enabled.',
     );
   }
 

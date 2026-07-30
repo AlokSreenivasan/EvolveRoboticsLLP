@@ -70,14 +70,24 @@ service cloud.firestore {
     }
 
     // ---------------------------------------------------------------
-    // Superadmin-only CMS collections.
+    // Superadmin-only CMS collections (except appContent resources /
+    // assignments section docs, which plain admins may also edit).
     // Role "admin" is limited to resources/assignments/exams/quizzes,
     // matching the admin-dashboard screens they can open.
     // ---------------------------------------------------------------
 
     match /appContent/{docId} {
       allow read: if isAuthenticated();
-      allow create, update: if isSuperAdmin(database) && isValidAppContentSection();
+      // Superadmin: all section docs. Plain admin: Resources + Assignments
+      // headings only (screens they can manage).
+      allow create, update: if isValidAppContentSection()
+        && (
+          isSuperAdmin(database)
+          || (
+            isAdmin(database)
+            && (docId == 'resources' || docId == 'assignments')
+          )
+        );
       allow delete: if isSuperAdmin(database);
     }
 
@@ -564,7 +574,14 @@ function isValidSchoolFields(data) {
     && data.city is string
     && data.city.size() <= 200
     && data.sortOrder is number
-    && data.sortOrder >= 0;
+    && data.sortOrder >= 0
+    && (
+      !('grades' in data)
+      || (
+        data.grades is list
+        && data.grades.size() <= 40
+      )
+    );
 }
 
 function isValidSchoolCreate() {

@@ -1,4 +1,7 @@
-import { isValidPassword } from './isValidPassword';
+import {
+  isValidPassword,
+  PASSWORD_REQUIREMENTS_MESSAGE,
+} from './isValidPassword';
 
 export type ChangePasswordFormErrors = {
   currentPassword?: string;
@@ -24,7 +27,7 @@ export function validateChangePasswordForm(
   if (!input.newPassword.trim()) {
     errors.newPassword = 'New password is required';
   } else if (!isValidPassword(input.newPassword)) {
-    errors.newPassword = 'Minimum 8 characters';
+    errors.newPassword = PASSWORD_REQUIREMENTS_MESSAGE;
   }
 
   if (!input.confirmNewPassword.trim()) {

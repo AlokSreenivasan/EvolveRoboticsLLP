@@ -153,7 +153,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (remote) {
-        applyProfileIfRicher(remote);
+        // Firestore is source of truth — always apply so role upgrades
+        // (admin / superadmin) are not blocked by equal field-score merges.
+        setProfile(remote);
         await setCachedUserProfile(remote);
         applyRoleResolution(roleResolutionIssue);
         return;
@@ -247,7 +249,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               return;
             }
             if (result.profile) {
-              applyProfileIfRicher(result.profile);
+              setProfile(result.profile);
               setCachedUserProfile(result.profile).catch(() => undefined);
             }
             applyRoleResolution(result.roleResolution.issue ?? null);

@@ -1,19 +1,35 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 import { NESTED_LIST_PERF } from '../../constants/listPerformance';
 import { useUpcomingEvents } from '../../presentation/hooks/useUpcomingEvents';
 import type { UpcomingEvent } from '../../store/content/types/upcomingEvents.types';
+import type { LoginScreenNavigationProp } from '../../types/navigation';
 import HomeFeedSection from './HomeFeedSection';
 import UpcomingEventBanner from './UpcomingEventBanner';
 
+const HOME_PREVIEW_LIMIT = 3;
+
 function UpcomingEventsSection() {
+  const navigation = useNavigation<LoginScreenNavigationProp>();
   const { section, displayEvents, loading, error } = useUpcomingEvents();
+  const previewEvents = useMemo(
+    () => displayEvents.slice(0, HOME_PREVIEW_LIMIT),
+    [displayEvents],
+  );
   const isEmpty = !loading && !error && displayEvents.length === 0;
+  const hasEvents = !loading && !error && displayEvents.length > 0;
+
+  const openList = useCallback(() => {
+    navigation.navigate('UpcomingEventsList');
+  }, [navigation]);
 
   const renderEvent = useCallback(
-    ({ item }: { item: UpcomingEvent }) => <UpcomingEventBanner event={item} />,
-    [],
+    ({ item }: { item: UpcomingEvent }) => (
+      <UpcomingEventBanner event={item} onPress={openList} />
+    ),
+    [openList],
   );
 
   const keyExtractor = useCallback((item: UpcomingEvent) => item.id, []);
@@ -21,7 +37,12 @@ function UpcomingEventsSection() {
   return (
     <HomeFeedSection
         title={section.sectionTitle}
-        actionLabel={section.actionLabel || undefined}
+        actionLabel={
+          hasEvents
+            ? section.actionLabel?.trim() || 'View Calendar'
+            : undefined
+        }
+        onActionPress={hasEvents ? openList : undefined}
         subtitle={section.sectionSubtitle?.trim() || undefined}
         loading={loading}
         errorMessage={
@@ -35,9 +56,9 @@ function UpcomingEventsSection() {
             ? 'When admins add events, they’ll show up here instantly.'
             : undefined
         }>
-        {!loading && !error && displayEvents.length > 0 ? (
+        {hasEvents ? (
           <FlatList
-            data={displayEvents}
+            data={previewEvents}
             keyExtractor={keyExtractor}
             renderItem={renderEvent}
             ItemSeparatorComponent={ListSeparator}

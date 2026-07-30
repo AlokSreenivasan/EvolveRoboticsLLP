@@ -126,12 +126,12 @@ export function useAdminUsersList() {
     refreshing,
   ]);
 
-  const refresh = useCallback(() => {
+  const refresh = useCallback(async () => {
     if (loading || refreshing) {
       return;
     }
     cursorRef.current = null;
-    loadPage('refresh', debouncedSearch, activeFilters);
+    await loadPage('refresh', debouncedSearch, activeFilters);
   }, [activeFilters, debouncedSearch, loadPage, loading, refreshing]);
 
   const clearFilters = useCallback(() => {

@@ -5,7 +5,10 @@ import {
   Text,
   View,
 } from 'react-native';
-import { signOut } from '../../../services/firebase/authService';
+import {
+  hasEmailPasswordProvider,
+  signOut,
+} from '../../../services/firebase/authService';
 import { useNavigation } from '@react-navigation/native';
 import {
   Bell,
@@ -51,6 +54,7 @@ function SettingsScreen() {
   const { isAdmin, roleLoading } = useUserRole();
   const { openAdmin } = useAdminNavigation();
   const [loggingOut, setLoggingOut] = useState(false);
+  const canChangePassword = hasEmailPasswordProvider();
 
   const performLogout = async () => {
     setLoggingOut(true);
@@ -133,13 +137,15 @@ function SettingsScreen() {
       <View style={styles.sectionBlock}>
         <SettingsSectionHeader title="Account Settings" />
         <SettingsCard>
-          <SettingsLinkRow
-            icon={Lock}
-            iconColor={colors.accentBlue}
-            iconBackgroundColor="#E3F2FD"
-            title="Change Password"
-            onPress={() => navigation.navigate('ChangePassword')}
-          />
+          {canChangePassword ? (
+            <SettingsLinkRow
+              icon={Lock}
+              iconColor={colors.accentBlue}
+              iconBackgroundColor="#E3F2FD"
+              title="Change Password"
+              onPress={() => navigation.navigate('ChangePassword')}
+            />
+          ) : null}
           <SettingsLinkRow
             icon={Shield}
             iconColor={colors.danger}

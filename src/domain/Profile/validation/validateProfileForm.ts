@@ -1,4 +1,3 @@
-import { GRADE_OPTIONS } from '../../../constants/gradeOptions';
 import { isCourseTrack } from '../../../store/content/types/courses.types';
 import { isValidContactNumber } from './isValidContactNumber';
 
@@ -20,13 +19,19 @@ export type ProfileFormInput = {
 
 export type ProfileFormValidationOptions = {
   requireTrack?: boolean;
+  /**
+   * When provided (e.g. grades for the selected school), grade must be one of
+   * these values. When omitted, any non-empty grade is accepted so custom
+   * school grade ids still count as a complete profile.
+   */
+  validGradeValues?: string[];
 };
 
 export function validateProfileForm(
   input: ProfileFormInput,
   options: ProfileFormValidationOptions = {},
 ): ProfileFormErrors {
-  const { requireTrack = true } = options;
+  const { requireTrack = true, validGradeValues } = options;
   const errors: ProfileFormErrors = {};
 
   if (!input.fullName.trim()) {
@@ -54,7 +59,10 @@ export function validateProfileForm(
 
     if (!input.grade?.trim()) {
       errors.grade = 'Please select your grade';
-    } else if (!GRADE_OPTIONS.some(option => option.value === input.grade)) {
+    } else if (
+      validGradeValues &&
+      !validGradeValues.includes(input.grade)
+    ) {
       errors.grade = 'Please select a valid grade';
     }
   }

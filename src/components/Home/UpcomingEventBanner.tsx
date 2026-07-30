@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors } from '../../constants/theme';
 import CardShadowShell from '../ui/CardShadowShell';
@@ -9,9 +9,10 @@ import EventDateBlock from './EventDateBlock';
 
 type UpcomingEventBannerProps = {
   event: UpcomingEvent;
+  onPress?: () => void;
 };
 
-function UpcomingEventBanner({ event }: UpcomingEventBannerProps) {
+function UpcomingEventBanner({ event, onPress }: UpcomingEventBannerProps) {
   const daysLeftLabel = getDisplayDaysLeftLabel(
     event.month,
     event.day,
@@ -19,30 +20,43 @@ function UpcomingEventBanner({ event }: UpcomingEventBannerProps) {
     event.year ?? undefined,
   );
 
+  const content = (
+    <View style={styles.card}>
+      <EventDateBlock month={event.month} day={event.day} />
+
+      <View style={styles.details}>
+        <Text style={styles.title}>{event.title}</Text>
+        {event.dateRange ? (
+          <Text style={styles.meta}>{event.dateRange}</Text>
+        ) : null}
+        {event.timeRange ? (
+          <Text style={styles.meta}>{event.timeRange}</Text>
+        ) : null}
+      </View>
+
+      {daysLeftLabel ? (
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>{daysLeftLabel}</Text>
+        </View>
+      ) : null}
+    </View>
+  );
+
   return (
     <CardShadowShell
       elevation="none"
       borderRadius={20}
       innerStyle={styles.cardInner}>
-      <View style={styles.card}>
-        <EventDateBlock month={event.month} day={event.day} />
-
-        <View style={styles.details}>
-          <Text style={styles.title}>{event.title}</Text>
-          {event.dateRange ? (
-            <Text style={styles.meta}>{event.dateRange}</Text>
-          ) : null}
-          {event.timeRange ? (
-            <Text style={styles.meta}>{event.timeRange}</Text>
-          ) : null}
-        </View>
-
-        {daysLeftLabel ? (
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{daysLeftLabel}</Text>
-          </View>
-        ) : null}
-      </View>
+      {onPress ? (
+        <Pressable
+          onPress={onPress}
+          accessibilityRole="button"
+          accessibilityLabel={event.title}>
+          {content}
+        </Pressable>
+      ) : (
+        content
+      )}
     </CardShadowShell>
   );
 }

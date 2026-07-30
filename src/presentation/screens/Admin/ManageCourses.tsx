@@ -34,7 +34,10 @@ import {
   moveCourse,
   updateCourse,
 } from '../../../services/firebase/coursesService';
-import { uploadCourseThumbnail } from '../../../services/firebase/storageService';
+import {
+  deleteCourseThumbnailByUrlSafe,
+  uploadCourseThumbnail,
+} from '../../../services/firebase/storageService';
 import type {
   Course,
   CourseTrack,
@@ -65,7 +68,7 @@ const EMPTY_FORM: CourseFormState = {
 };
 
 function ManageCourses() {
-  const { courses, loading } = useCourses({ includeUnpublished: true });
+  const { courses, loading, error } = useCourses({ includeUnpublished: true });
   const { schools, loading: schoolsLoading, error: schoolsError } = useSchools();
   const audienceForm = useAdminSchoolAudienceForm();
 
@@ -74,6 +77,7 @@ function ManageCourses() {
   const [form, setForm] = useState<CourseFormState>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
+  const [previousImageUri, setPreviousImageUri] = useState<string | null>(null);
   const formRef = useRef(form);
   const imagePicker = useAdminImagePicker();
   const { resetAudience } = audienceForm;
@@ -88,6 +92,7 @@ function ManageCourses() {
   const openCreateEditor = () => {
     setEditingId(null);
     setForm(EMPTY_FORM);
+    setPreviousImageUri(null);
     audienceForm.resetAudience();
     imagePicker.resetImageState();
     setEditorVisible(true);
@@ -105,6 +110,7 @@ function ManageCourses() {
         isPublished: course.isPublished,
       });
       loadExistingImage(course.imageUri);
+      setPreviousImageUri(course.imageUri.trim() || null);
       resetAudience({
         audience: course.audience,
         schoolIds: course.schoolIds,
@@ -119,6 +125,7 @@ function ManageCourses() {
     setEditorVisible(false);
     setEditingId(null);
     setForm(EMPTY_FORM);
+    setPreviousImageUri(null);
     audienceForm.resetAudience();
     imagePicker.resetImageState();
   };
@@ -184,6 +191,15 @@ function ManageCourses() {
       } else {
         await createCourse(payload, { courseId });
       }
+
+      const replacedThumbnail =
+        previousImageUri &&
+        previousImageUri !== imageUri &&
+        previousImageUri.trim().length > 0;
+      if (replacedThumbnail) {
+        await deleteCourseThumbnailByUrlSafe(previousImageUri);
+      }
+
       closeEditor();
     } catch (error) {
       appAlert(appAlertCopy.admin.saveFailedTitle, toAdminWriteErrorMessage(error));
@@ -200,7 +216,7 @@ function ManageCourses() {
     });
   };
 
-  const confirmDelete = (course: Course) => {
+  const confirmDelete = useCallback((course: Course) => {
     appAlert(appAlertCopy.admin.deleteTitle('course'), appAlertCopy.admin.deleteConfirm('course', course.title), [
       { text: appAlertButtons.cancel, style: 'cancel' },
       {
@@ -208,6 +224,7 @@ function ManageCourses() {
         style: 'destructive',
         onPress: async () => {
           try {
+            await deleteCourseThumbnailByUrlSafe(course.imageUri);
             await deleteCourse(course.id);
           } catch (error) {
             appAlert(appAlertCopy.admin.deleteFailedTitle, toAdminWriteErrorMessage(error));
@@ -215,7 +232,7 @@ function ManageCourses() {
         },
       },
     ]);
-  };
+  }, []);
 
   const listHeader = (
     <AdminListSectionHeader title="All courses" onAdd={openCreateEditor} />
@@ -236,7 +253,14 @@ function ManageCourses() {
         onDelete={() => confirmDelete(course)}
       />
     ),
-    [courses.length, handleMove, openEditEditor, reorderingId, schools],
+    [
+      confirmDelete,
+      courses.length,
+      handleMove,
+      openEditEditor,
+      reorderingId,
+      schools,
+    ],
   );
 
   const keyExtractor = useCallback((item: Course) => item.id, []);
@@ -253,6 +277,7 @@ function ManageCourses() {
         subtitle="Create courses shown in the Courses tab"
         data={courses}
         loading={loading}
+        error={error}
         reorderingId={reorderingId}
         keyExtractor={keyExtractor}
         renderItem={renderCourse}

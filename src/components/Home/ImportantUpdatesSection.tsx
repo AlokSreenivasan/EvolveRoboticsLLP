@@ -1,21 +1,35 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 import { NESTED_LIST_PERF } from '../../constants/listPerformance';
 import { useImportantUpdates } from '../../presentation/hooks/useImportantUpdates';
 import type { ImportantUpdateNotice } from '../../store/content/types/importantUpdates.types';
+import type { LoginScreenNavigationProp } from '../../types/navigation';
 import HomeFeedSection from './HomeFeedSection';
 import ImportantUpdatesCard from './ImportantUpdatesCard';
 
+const HOME_PREVIEW_LIMIT = 3;
+
 function ImportantUpdatesSection() {
+  const navigation = useNavigation<LoginScreenNavigationProp>();
   const { section, displayNotices, loading, error } = useImportantUpdates();
+  const previewNotices = useMemo(
+    () => displayNotices.slice(0, HOME_PREVIEW_LIMIT),
+    [displayNotices],
+  );
   const isEmpty = !loading && !error && displayNotices.length === 0;
+  const hasNotices = !loading && !error && displayNotices.length > 0;
+
+  const openList = useCallback(() => {
+    navigation.navigate('ImportantUpdatesList');
+  }, [navigation]);
 
   const renderNotice = useCallback(
     ({ item }: { item: ImportantUpdateNotice }) => (
-      <ImportantUpdatesCard notice={item} />
+      <ImportantUpdatesCard notice={item} onPress={openList} />
     ),
-    [],
+    [openList],
   );
 
   const keyExtractor = useCallback(
@@ -26,7 +40,10 @@ function ImportantUpdatesSection() {
   return (
     <HomeFeedSection
       title={section.sectionTitle}
-      actionLabel={section.actionLabel || undefined}
+      actionLabel={
+        hasNotices ? section.actionLabel?.trim() || 'View all' : undefined
+      }
+      onActionPress={hasNotices ? openList : undefined}
       subtitle={section.sectionSubtitle?.trim() || undefined}
       loading={loading}
       errorMessage={
@@ -40,9 +57,9 @@ function ImportantUpdatesSection() {
           ? 'When admins post announcements, they’ll show up here instantly.'
           : undefined
       }>
-      {!loading && !error && displayNotices.length > 0 ? (
+      {hasNotices ? (
         <FlatList
-          data={displayNotices}
+          data={previewNotices}
           keyExtractor={keyExtractor}
           renderItem={renderNotice}
           ItemSeparatorComponent={ListSeparator}

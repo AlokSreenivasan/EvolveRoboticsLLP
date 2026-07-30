@@ -3,21 +3,21 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>232814396673-n9naa6hquc2tc9f4q6b0o5dpk3ssd1kq.apps.googleusercontent.com</string>
+	<string>477024087655-cts6bkc24kcg4mj4261ujpc3o71spars.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.232814396673-n9naa6hquc2tc9f4q6b0o5dpk3ssd1kq</string>
+	<string>com.googleusercontent.apps.477024087655-cts6bkc24kcg4mj4261ujpc3o71spars</string>
 	<key>API_KEY</key>
-	<string>AIzaSyDTa7TBw2VPLBxRAWs5VmdWBpmNPaWYAwE</string>
+	<string>AIzaSyCzdOdduV5qxR2jf3QYJKJ-ZiYx2I15Tsw</string>
 	<key>GCM_SENDER_ID</key>
-	<string>232814396673</string>
+	<string>477024087655</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
 	<string>com.evolve</string>
 	<key>PROJECT_ID</key>
-	<string>evolve-robotics-llp</string>
+	<string>evolve-robotics-llp-fad1e</string>
 	<key>STORAGE_BUCKET</key>
-	<string>evolve-robotics-llp.firebasestorage.app</string>
+	<string>evolve-robotics-llp-fad1e.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -29,6 +29,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:232814396673:ios:746ae324cb25988c22c700</string>
+	<string>1:477024087655:ios:287a40c72cc9f3d0a8aec2</string>
 </dict>
 </plist>

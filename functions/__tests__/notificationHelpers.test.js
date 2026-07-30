@@ -3,9 +3,11 @@ const {
   ANDROID_CHANNEL_SILENT,
   DEFAULT_NOTIFICATION_PREFERENCES,
   normalizeAudience,
+  normalizeContentTrack,
   normalizeSchoolIds,
   normalizeSchoolGradeIds,
   userMatchesSchoolGradeTarget,
+  userMatchesTrackTarget,
   normalizeNotificationCategory,
   resolveUserPreferences,
   isCategoryEnabledForUser,
@@ -83,6 +85,31 @@ describe('userMatchesSchoolGradeTarget', () => {
       userMatchesSchoolGradeTarget({ schoolId: 's1', grade: 'g9' }, target),
     ).toBe(false);
     expect(userMatchesSchoolGradeTarget({ schoolId: 's1' }, target)).toBe(false);
+  });
+});
+
+describe('normalizeContentTrack / userMatchesTrackTarget', () => {
+  it('keeps kids and professionals and drops invalid values', () => {
+    expect(normalizeContentTrack('kids')).toBe('kids');
+    expect(normalizeContentTrack('professionals')).toBe('professionals');
+    expect(normalizeContentTrack('other')).toBeNull();
+    expect(normalizeContentTrack(undefined)).toBeNull();
+  });
+
+  it('matches everyone when the notification has no track', () => {
+    expect(userMatchesTrackTarget({ track: 'kids' }, null)).toBe(true);
+    expect(userMatchesTrackTarget({}, null)).toBe(true);
+  });
+
+  it('requires the user track to match the notification track', () => {
+    expect(userMatchesTrackTarget({ track: 'kids' }, 'kids')).toBe(true);
+    expect(userMatchesTrackTarget({ track: 'professionals' }, 'kids')).toBe(
+      false,
+    );
+    expect(userMatchesTrackTarget({}, 'kids')).toBe(false);
+    expect(userMatchesTrackTarget({ track: 'unknown' }, 'professionals')).toBe(
+      false,
+    );
   });
 });
 

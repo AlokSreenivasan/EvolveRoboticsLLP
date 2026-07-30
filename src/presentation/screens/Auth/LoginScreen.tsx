@@ -21,6 +21,7 @@ import { isValidEmail } from '../../../domain/Auth/validation/isValidEmail.ts';
 import { useAuthFlow } from '../../context/AuthFlowContext';
 import { appAlert, appAlertCopy } from '../../../utils/alert/appAlert';
 import {
+  getGoogleSignInErrorMessage,
   isGoogleSignInCancelled,
   signInWithGoogle,
 } from '../../../services/auth/googleSignInService';
@@ -113,7 +114,7 @@ function LoginScreen() {
       if (!isGoogleSignInCancelled(error)) {
         appAlert(
           appAlertCopy.auth.googleSignInFailedTitle,
-          (error as Error)?.message ?? appAlertCopy.auth.googleSignInFailedMessage,
+          getGoogleSignInErrorMessage(error),
         );
       }
     } finally {

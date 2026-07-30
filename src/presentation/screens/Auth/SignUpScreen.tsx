@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -9,11 +9,15 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Eye, EyeOff } from 'lucide-react-native';
+import { Eye, EyeOff, Info } from 'lucide-react-native';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
 import AppButton from '../../../components/AppButton.tsx';
 import SurfaceCard from '../../../components/ui/SurfaceCard';
 import { isValidEmail } from '../../../domain/Auth/validation/isValidEmail.ts';
+import {
+  isValidPassword,
+  PASSWORD_REQUIREMENTS_MESSAGE,
+} from '../../../domain/Auth/validation/isValidPassword';
 import { appAlert, appAlertCopy } from '../../../utils/alert/appAlert';
 import {
   CONTACT_NUMBER_MAX_LENGTH,
@@ -21,6 +25,11 @@ import {
 } from '../../../domain/Profile/validation/formatContactNumber';
 import { isValidContactNumber } from '../../../domain/Profile/validation/isValidContactNumber';
 import { signUpWithProfile } from '../../../services/firebase/signUpService';
+import {
+  getGoogleSignInErrorMessage,
+  isGoogleSignInCancelled,
+  signInWithGoogle,
+} from '../../../services/auth/googleSignInService';
 import { useAuth } from '../../context/AuthContext';
 import { useAuthFlow } from '../../context/AuthFlowContext';
 import {
@@ -52,6 +61,16 @@ const SignUpScreen = () => {
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const googleSignInMountedRef = useRef(true);
+
+  useEffect(() => {
+    googleSignInMountedRef.current = true;
+    setGoogleLoading(false);
+    return () => {
+      googleSignInMountedRef.current = false;
+    };
+  }, []);
 
   const handleFullNameChange = (text: string) => {
     const formatted = text
@@ -73,6 +92,13 @@ const SignUpScreen = () => {
     }
   };
 
+  const showPasswordRequirements = () => {
+    appAlert(
+      appAlertCopy.auth.passwordRequirementsTitle,
+      PASSWORD_REQUIREMENTS_MESSAGE,
+    );
+  };
+
   const validate = () => {
     const newErrors: Errors = {};
 
@@ -84,8 +110,8 @@ const SignUpScreen = () => {
     }
     if (!email || !isValidEmail(email))
       newErrors.email = 'Valid email is required';
-    if (!password || password.length < 8)
-      newErrors.password = 'Minimum 8 characters';
+    if (!password || !isValidPassword(password))
+      newErrors.password = 'Does not meet password requirements';
     if (confirmPassword !== password)
       newErrors.confirmPassword = 'Passwords do not match';
 
@@ -94,7 +120,11 @@ const SignUpScreen = () => {
   };
 
   const handleSignUp = async () => {
-    if (!validate()) {
+    const isValid = validate();
+    if (!isValid) {
+      if (!password || !isValidPassword(password)) {
+        showPasswordRequirements();
+      }
       return;
     }
 
@@ -120,6 +150,37 @@ const SignUpScreen = () => {
       setLoading(false);
     }
   };
+
+  const handleGoogleSignIn = async () => {
+    if (googleLoading) {
+      return;
+    }
+
+    setGoogleLoading(true);
+    try {
+      await signInWithGoogle();
+      if (!googleSignInMountedRef.current) {
+        return;
+      }
+      notifyAuthSuccess();
+    } catch (error) {
+      if (!googleSignInMountedRef.current) {
+        return;
+      }
+      if (!isGoogleSignInCancelled(error)) {
+        appAlert(
+          appAlertCopy.auth.googleSignInFailedTitle,
+          getGoogleSignInErrorMessage(error),
+        );
+      }
+    } finally {
+      if (googleSignInMountedRef.current) {
+        setGoogleLoading(false);
+      }
+    }
+  };
+
+  const isBusy = loading || googleLoading;
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -175,11 +236,22 @@ const SignUpScreen = () => {
           />
           {errors.email && <Text style={styles.error}>{errors.email}</Text>}
 
-          <Text style={styles.label}>Password</Text>
+          <View style={styles.labelRow}>
+            <Text style={[styles.label, styles.labelInRow]}>Password</Text>
+            <TouchableOpacity
+              onPress={showPasswordRequirements}
+              style={styles.passwordInfoButton}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityRole="button"
+              accessibilityLabel="Password requirements"
+            >
+              <Info size={16} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
           <View style={styles.passwordRow}>
             <TextInput
               style={styles.passwordInput}
-              placeholder="Minimum 8 characters"
+              placeholder="e.g. Evolve@1"
               placeholderTextColor={colors.textMuted}
               value={password}
               onChangeText={setPassword}
@@ -240,8 +312,17 @@ const SignUpScreen = () => {
             onPress={handleSignUp}
             variant="primary"
             loading={loading}
-            disabled={loading}
+            disabled={isBusy}
             buttonStyle={styles.submitButton}
+          />
+
+          <AppButton
+            title="Continue with Google"
+            onPress={handleGoogleSignIn}
+            variant="secondary"
+            loading={googleLoading}
+            disabled={isBusy}
+            buttonStyle={styles.googleButton}
           />
 
           <View style={styles.signupline}>
@@ -290,11 +371,28 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 20,
   },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    marginBottom: 8,
+    gap: 6,
+  },
   label: {
     ...typography.label,
     color: colors.primary,
     marginTop: 12,
     marginBottom: 8,
+  },
+  labelInRow: {
+    marginTop: 0,
+    marginBottom: 0,
+  },
+  passwordInfoButton: {
+    minWidth: 28,
+    minHeight: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   input: {
     ...inputFieldStyle,
@@ -330,6 +428,9 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     marginTop: 20,
+  },
+  googleButton: {
+    marginTop: 12,
   },
   signupline: {
     flexDirection: 'row',

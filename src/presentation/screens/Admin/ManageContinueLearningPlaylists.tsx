@@ -52,7 +52,10 @@ import {
   resolveYouTubePlaylistUrl,
   updateContinueLearningPlaylist,
 } from '../../../services/firebase/continueLearningPlaylistsService';
-import { uploadContinueLearningThumbnail } from '../../../services/firebase/storageService';
+import {
+  deleteContinueLearningThumbnailByUrlSafe,
+  uploadContinueLearningThumbnail,
+} from '../../../services/firebase/storageService';
 import { fetchYouTubePlaylistVideos } from '../../../services/youtube/youtubePlaylistService';
 import { pickProfilePhotoFromGallery } from '../../../services/profilePhotoPicker';
 import type { ContinueLearningPlaylist } from '../../../store/content/types/continueLearningPlaylists.types';
@@ -60,9 +63,9 @@ import {
   courseTrackLabel,
   type CourseTrack,
 } from '../../../store/content/types/courses.types';
+import { toAdminWriteErrorMessage } from '../../../utils/admin/adminWriteErrorMessage';
 import { extractFirebaseErrorDetails } from '../../../utils/firebase/extractFirebaseError';
 import { formatSchoolAudienceSummary } from '../../../utils/content/schoolAudience';
-import { getErrorMessage } from '../../../utils/firebase/errors';
 import { getCurrentUserId } from '../../../services/firebase/authService';
 import { isAdmin } from '../../../services/firebase/roleService';
 import { appAlert, appAlertButtons, appAlertCopy } from '../../../utils/alert/appAlert';
@@ -95,40 +98,8 @@ function parseVideoCount(value: string): number | null {
   return parsed;
 }
 
-function isPermissionDenied(error: unknown): boolean {
-  const code = (error as { code?: string } | null)?.code;
-  if (typeof code === 'string' && code.includes('permission-denied')) {
-    return true;
-  }
-  const message = (error as { message?: string } | null)?.message;
-  return typeof message === 'string' && message.toLowerCase().includes('permission');
-}
-
-function toAdminWriteErrorMessage(error: unknown): string {
-  const { code, message } = extractFirebaseErrorDetails(error);
-  const base = message || getErrorMessage(error);
-  const uid = getCurrentUserId();
-  const uidLine = uid ? `\nYour UID: ${uid}` : '';
-
-  if (!isPermissionDenied(error)) {
-    return `${base}${uidLine}`;
-  }
-
-  const service =
-    code?.includes('storage') ? 'Storage' : 'Firestore';
-
-  return (
-    `${service} permission denied.${uidLine}\n\n` +
-    'Fix checklist:\n' +
-    '1) Firestore → users → (your UID) → field role must be exactly: admin\n' +
-    '2) Sign out, sign back in, then retry\n' +
-    '3) Deploy rules: cd Evolve && firebase deploy --only firestore:rules,storage\n' +
-    `4) Error code: ${code ?? 'unknown'}`
-  );
-}
-
 function ManageContinueLearningPlaylists() {
-  const { playlists, loading } = useContinueLearningPlaylists({
+  const { playlists, loading, error } = useContinueLearningPlaylists({
     includeUnpublished: true,
   });
   const { schools, loading: schoolsLoading, error: schoolsError } = useSchools();
@@ -144,6 +115,7 @@ function ManageContinueLearningPlaylists() {
     null,
   );
   const [reorderingId, setReorderingId] = useState<string | null>(null);
+  const [previousImageUri, setPreviousImageUri] = useState<string | null>(null);
   const formRef = useRef(form);
   const localThumbnailRef = useRef<string | null>(null);
 
@@ -159,6 +131,7 @@ function ManageContinueLearningPlaylists() {
     setEditingId(null);
     setForm(EMPTY_FORM);
     setLocalThumbnailUri(null);
+    setPreviousImageUri(null);
     resetAudience();
     setEditorVisible(true);
   }, [resetAudience]);
@@ -185,6 +158,7 @@ function ManageContinueLearningPlaylists() {
         resetAudience();
       }
       setLocalThumbnailUri(null);
+      setPreviousImageUri(playlist.imageUri.trim() || null);
       setEditorVisible(true);
     },
     [resetAudience],
@@ -195,6 +169,7 @@ function ManageContinueLearningPlaylists() {
     setEditingId(null);
     setForm(EMPTY_FORM);
     setLocalThumbnailUri(null);
+    setPreviousImageUri(null);
     audienceForm.resetAudience();
   };
 
@@ -326,6 +301,15 @@ function ManageContinueLearningPlaylists() {
       } else {
         await createContinueLearningPlaylist(payload, { playlistId });
       }
+
+      const replacedThumbnail =
+        previousImageUri &&
+        previousImageUri !== imageUri &&
+        previousImageUri.trim().length > 0;
+      if (replacedThumbnail) {
+        await deleteContinueLearningThumbnailByUrlSafe(previousImageUri);
+      }
+
       closeEditor();
     } catch (error) {
       const details = extractFirebaseErrorDetails(error);
@@ -357,6 +341,7 @@ function ManageContinueLearningPlaylists() {
           style: 'destructive',
           onPress: async () => {
             try {
+              await deleteContinueLearningThumbnailByUrlSafe(playlist.imageUri);
               await deleteContinueLearningPlaylist(playlist.id);
             } catch (error) {
               appAlert(
@@ -412,6 +397,9 @@ function ManageContinueLearningPlaylists() {
     if (loading) {
       return <ActivityIndicator color={colors.primary} style={styles.loader} />;
     }
+    if (error) {
+      return <Text style={styles.emptyText}>{error}</Text>;
+    }
     if (playlists.length === 0) {
       return (
         <Text style={styles.emptyText}>
@@ -420,7 +408,7 @@ function ManageContinueLearningPlaylists() {
       );
     }
     return null;
-  }, [loading, playlists.length]);
+  }, [error, loading, playlists.length]);
 
   const renderPlaylist = useCallback(
     ({ item: playlist, index }: { item: ContinueLearningPlaylist; index: number }) => (

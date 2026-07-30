@@ -3,7 +3,7 @@ import {
   FlatList,
   type ListRenderItem,
 } from 'react-native';
-import { Inbox } from 'lucide-react-native';
+import { AlertCircle, Inbox } from 'lucide-react-native';
 
 import AdminScreenLayout from './AdminScreenLayout';
 import ScreenStateCard from '../ui/ScreenStateCard';
@@ -15,6 +15,7 @@ type AdminListLayoutProps<T> = {
   subtitle?: string;
   data: T[];
   loading: boolean;
+  error?: string | null;
   reorderingId: string | null;
   keyExtractor: (item: T) => string;
   renderItem: ListRenderItem<T>;
@@ -27,6 +28,7 @@ function AdminListLayout<T>({
   subtitle,
   data,
   loading,
+  error = null,
   reorderingId,
   keyExtractor,
   renderItem,
@@ -36,6 +38,16 @@ function AdminListLayout<T>({
   const listEmpty = useCallback(() => {
     if (loading) {
       return <ScreenStateCard variant="loading" />;
+    }
+    if (error) {
+      return (
+        <ScreenStateCard
+          variant="error"
+          title="Couldn't load list"
+          message={error}
+          Icon={AlertCircle}
+        />
+      );
     }
     if (data.length === 0) {
       return (
@@ -48,7 +60,7 @@ function AdminListLayout<T>({
       );
     }
     return null;
-  }, [data.length, emptyMessage, loading]);
+  }, [data.length, emptyMessage, error, loading]);
 
   return (
     <AdminScreenLayout title={title} subtitle={subtitle} scrollable={false}>

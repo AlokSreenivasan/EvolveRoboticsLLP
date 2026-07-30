@@ -241,9 +241,12 @@ export function validateSchoolAudienceInput(
   return null;
 }
 
-function formatSchoolGradeSummary(gradeIds: string[]): string {
+function formatSchoolGradeSummary(
+  gradeIds: string[],
+  schools: School[],
+): string {
   const labels = gradeIds
-    .map(id => getGradeLabel(id) ?? id)
+    .map(id => getGradeLabel(id, schools) ?? id)
     .filter((label): label is string => Boolean(label));
 
   if (labels.length === 0) {
@@ -275,7 +278,7 @@ export function formatSchoolAudienceSummary(
     const gradeIds = fields.schoolGradeIds[schoolId];
 
     if (gradeIds && gradeIds.length > 0) {
-      return `${schoolLabel} (${formatSchoolGradeSummary(gradeIds)})`;
+      return `${schoolLabel} (${formatSchoolGradeSummary(gradeIds, schools)})`;
     }
 
     return schoolLabel;

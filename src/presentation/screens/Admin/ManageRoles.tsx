@@ -165,13 +165,13 @@ function ManageRoles() {
         phoneNumber={item.phoneNumber}
         role={item.role}
         schoolLabel={schoolNameById(item.schoolId)}
-        gradeLabel={getGradeLabel(item.grade)}
+        gradeLabel={getGradeLabel(item.grade, schools)}
         roleAssignmentTarget="admin"
         onToggleRole={() => confirmToggleAdminRole(item)}
         updatingRole={updatingRoleUid === item.uid}
       />
     ),
-    [confirmToggleAdminRole, schoolNameById, updatingRoleUid],
+    [confirmToggleAdminRole, schoolNameById, schools, updatingRoleUid],
   );
 
   const keyExtractor = useCallback((item: AdminUserListItem) => item.uid, []);

@@ -108,12 +108,12 @@ function ManageUsers() {
         phoneNumber={item.phoneNumber}
         role={item.role}
         schoolLabel={schoolNameById(item.schoolId)}
-        gradeLabel={getGradeLabel(item.grade)}
+        gradeLabel={getGradeLabel(item.grade, schools)}
         onResetQuizProgress={() => confirmResetQuizProgress(item)}
         resettingQuizProgress={resettingUid === item.uid}
       />
     ),
-    [confirmResetQuizProgress, resettingUid, schoolNameById],
+    [confirmResetQuizProgress, resettingUid, schoolNameById, schools],
   );
 
   const keyExtractor = useCallback((item: AdminUserListItem) => item.uid, []);

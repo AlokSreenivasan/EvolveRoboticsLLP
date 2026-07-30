@@ -6,7 +6,9 @@ import CoursePlaylistScreen from '../presentation/screens/Courses/CoursePlaylist
 import CourseVideoScreen from '../presentation/screens/Courses/CourseVideoScreen';
 import CoursesScreen from '../presentation/screens/Courses/CoursesScreen';
 import ContinueLearningListScreen from '../presentation/screens/Home/ContinueLearningListScreen';
+import ImportantUpdatesListScreen from '../presentation/screens/Home/ImportantUpdatesListScreen';
 import NotificationsListScreen from '../presentation/screens/Home/NotificationsListScreen';
+import UpcomingEventsListScreen from '../presentation/screens/Home/UpcomingEventsListScreen';
 import HomeScreen from '../presentation/screens/Home/HomeScreen';
 import ToDoScreen from '../presentation/screens/ToDo/ToDoScreen';
 import ProjectsScreen from '../presentation/screens/Projects/ProjectsScreen';
@@ -42,7 +44,9 @@ function MainStack() {
   const { profile } = useAuth();
   const { isAdmin, roleLoading } = useUserRole();
   const showAdminStack = !roleLoading && isAdmin;
-  const needsProfileCompletion = !isProfileComplete(profile);
+  // Wait for role so admin/superadmin are not forced through Learning Track.
+  const needsProfileCompletion =
+    !roleLoading && !isProfileComplete(profile);
 
   return (
     <HomeFeedProvider>
@@ -60,6 +64,14 @@ function MainStack() {
       <Stack.Screen
         name="NotificationsList"
         component={NotificationsListScreen}
+      />
+      <Stack.Screen
+        name="ImportantUpdatesList"
+        component={ImportantUpdatesListScreen}
+      />
+      <Stack.Screen
+        name="UpcomingEventsList"
+        component={UpcomingEventsListScreen}
       />
       <Stack.Screen name="Resources" component={ResourcesScreen} />
       <Stack.Screen name="Assignments" component={AssignmentsScreen} />

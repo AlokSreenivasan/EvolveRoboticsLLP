@@ -11,7 +11,12 @@ import {
   View,
 } from 'react-native';
 
-import { GRADE_OPTIONS } from '../../constants/gradeOptions';
+import {
+  GRADE_OPTIONS,
+  getGradeLabel,
+  resolveGradeOptionsForSchool,
+  type GradeOption,
+} from '../../constants/gradeOptions';
 import { colors } from '../../constants/theme';
 import type { School as SchoolOption } from '../../store/content/types/schools.types';
 
@@ -45,6 +50,27 @@ function AdminUserFilters({
     [schools, selectedSchoolId],
   );
 
+  const gradeOptions = useMemo((): GradeOption[] => {
+    if (selectedSchool) {
+      return resolveGradeOptionsForSchool(selectedSchool);
+    }
+
+    const seen = new Set<string>();
+    const options: GradeOption[] = [];
+
+    schools.forEach(school => {
+      resolveGradeOptionsForSchool(school).forEach(option => {
+        if (seen.has(option.value)) {
+          return;
+        }
+        seen.add(option.value);
+        options.push(option);
+      });
+    });
+
+    return options.length > 0 ? options : GRADE_OPTIONS;
+  }, [schools, selectedSchool]);
+
   const schoolLabel = useMemo(() => {
     if (!selectedSchoolId) {
       return 'All schools';
@@ -59,9 +85,12 @@ function AdminUserFilters({
     if (!selectedGrade) {
       return 'All grades';
     }
-    const match = GRADE_OPTIONS.find(option => option.value === selectedGrade);
-    return match?.label ?? 'Grade no longer listed';
-  }, [selectedGrade]);
+    return (
+      getGradeLabel(selectedGrade, schools) ??
+      gradeOptions.find(option => option.value === selectedGrade)?.label ??
+      'Grade no longer listed'
+    );
+  }, [gradeOptions, schools, selectedGrade]);
 
   const closeModal = () => setOpenModal(null);
 
@@ -186,7 +215,7 @@ function AdminUserFilters({
             </View>
 
             <FlatList
-              data={GRADE_OPTIONS}
+              data={gradeOptions}
               keyExtractor={item => item.value}
               keyboardShouldPersistTaps="handled"
               ListHeaderComponent={

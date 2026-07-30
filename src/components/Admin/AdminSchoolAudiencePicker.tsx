@@ -9,7 +9,7 @@ import {
 import { Check } from 'lucide-react-native';
 
 import { adminStyles } from './adminStyles';
-import { GRADE_OPTIONS } from '../../constants/gradeOptions';
+import { resolveGradeOptionsForSchool } from '../../constants/gradeOptions';
 import { colors } from '../../constants/theme';
 import type { School } from '../../store/content/types/schools.types';
 import type {
@@ -178,7 +178,7 @@ function AdminSchoolAudiencePicker({
 
                       {gradeMode === 'grades' ? (
                         <View style={styles.gradeGrid}>
-                          {GRADE_OPTIONS.map(option => {
+                          {resolveGradeOptionsForSchool(school).map(option => {
                             const gradeSelected = selectedGrades.includes(
                               option.value,
                             );

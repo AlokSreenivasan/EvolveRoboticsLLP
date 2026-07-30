@@ -269,6 +269,24 @@ describe('users collection', () => {
     );
   });
 
+  test('superadmins can demote an admin to user', async () => {
+    await assertSucceeds(
+      updateDoc(doc(db(SUPERADMIN_UID), 'users', ADMIN_UID), {
+        role: 'user',
+        updatedAt: serverTimestamp(),
+      }),
+    );
+  });
+
+  test('admins cannot change another user role', async () => {
+    await assertFails(
+      updateDoc(doc(db(ADMIN_UID), 'users', OWNER_UID), {
+        role: 'admin',
+        updatedAt: serverTimestamp(),
+      }),
+    );
+  });
+
   test('superadmins cannot promote a user to superadmin', async () => {
     await assertFails(
       updateDoc(doc(db(SUPERADMIN_UID), 'users', OWNER_UID), {
@@ -404,6 +422,53 @@ describe('CMS content (courses)', () => {
   });
 });
 
+describe('appContent section headings', () => {
+  const validSection = {
+    sectionTitle: 'Resources',
+    sectionSubtitle: 'Study notes',
+    actionLabel: '',
+    updatedAt: serverTimestamp(),
+  };
+
+  test('admins can write resources and assignments section docs', async () => {
+    await assertSucceeds(
+      setDoc(doc(db(ADMIN_UID), 'appContent', 'resources'), validSection),
+    );
+    await assertSucceeds(
+      setDoc(doc(db(ADMIN_UID), 'appContent', 'assignments'), {
+        ...validSection,
+        sectionTitle: 'Assignments',
+      }),
+    );
+  });
+
+  test('admins cannot write superadmin-only section docs', async () => {
+    await assertFails(
+      setDoc(doc(db(ADMIN_UID), 'appContent', 'importantUpdates'), {
+        ...validSection,
+        sectionTitle: 'Important Updates',
+        actionLabel: 'View All',
+      }),
+    );
+  });
+
+  test('superadmins can write any section doc', async () => {
+    await assertSucceeds(
+      setDoc(doc(db(SUPERADMIN_UID), 'appContent', 'importantUpdates'), {
+        ...validSection,
+        sectionTitle: 'Important Updates',
+        actionLabel: 'View All',
+      }),
+    );
+  });
+
+  test('regular users cannot write section docs', async () => {
+    await assertFails(
+      setDoc(doc(db(OWNER_UID), 'appContent', 'resources'), validSection),
+    );
+  });
+});
+
 describe('admin-writable content (resourceNotes)', () => {
   const validNote = {
     title: 'Note',
@@ -483,6 +548,225 @@ describe('answer keys', () => {
       }),
     );
     await assertSucceeds(getDoc(doc(database, 'examAnswerKeys', 'exam1')));
+  });
+});
+
+describe('schools collection (Add Schools)', () => {
+  const validSchool = {
+    name: 'Riverside High School',
+    city: 'Austin, TX',
+    sortOrder: 0,
+    grades: [
+      { id: 'grade_1', name: 'Grade 1', sortOrder: 0 },
+      { id: 'grade_2', name: 'Grade 2', sortOrder: 1 },
+    ],
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  };
+
+  test('authenticated users can read schools', async () => {
+    await testEnv.withSecurityRulesDisabled(async context => {
+      await setDoc(doc(context.firestore(), 'schools', 'school1'), {
+        ...validSchool,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    });
+
+    await assertSucceeds(getDoc(doc(db(OWNER_UID), 'schools', 'school1')));
+  });
+
+  test('unauthenticated users cannot read schools', async () => {
+    await testEnv.withSecurityRulesDisabled(async context => {
+      await setDoc(doc(context.firestore(), 'schools', 'school1'), {
+        ...validSchool,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    });
+
+    await assertFails(getDoc(doc(db(null), 'schools', 'school1')));
+  });
+
+  test('superadmins can create, update, and delete schools', async () => {
+    const database = db(SUPERADMIN_UID);
+
+    await assertSucceeds(
+      setDoc(doc(database, 'schools', 'school-new'), validSchool),
+    );
+
+    await assertSucceeds(
+      updateDoc(doc(database, 'schools', 'school-new'), {
+        name: 'Riverside Academy',
+        city: 'Dallas, TX',
+        updatedAt: serverTimestamp(),
+      }),
+    );
+
+    await assertSucceeds(
+      updateDoc(doc(database, 'schools', 'school-new'), {
+        sortOrder: 1,
+        updatedAt: serverTimestamp(),
+      }),
+    );
+
+    await assertSucceeds(
+      updateDoc(doc(database, 'schools', 'school-new'), {
+        grades: [{ id: 'grade_8', name: 'Grade 8', sortOrder: 0 }],
+        updatedAt: serverTimestamp(),
+      }),
+    );
+
+    await assertSucceeds(deleteDoc(doc(database, 'schools', 'school-new')));
+  });
+
+  test('admins cannot create, update, or delete schools', async () => {
+    await testEnv.withSecurityRulesDisabled(async context => {
+      await setDoc(doc(context.firestore(), 'schools', 'school1'), {
+        ...validSchool,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    });
+
+    const database = db(ADMIN_UID);
+
+    await assertFails(
+      setDoc(doc(database, 'schools', 'school-admin'), validSchool),
+    );
+    await assertFails(
+      updateDoc(doc(database, 'schools', 'school1'), {
+        name: 'Hacked School',
+        updatedAt: serverTimestamp(),
+      }),
+    );
+    await assertFails(deleteDoc(doc(database, 'schools', 'school1')));
+  });
+
+  test('school create without a name is rejected', async () => {
+    await assertFails(
+      setDoc(doc(db(SUPERADMIN_UID), 'schools', 'school-bad'), {
+        ...validSchool,
+        name: '',
+      }),
+    );
+  });
+
+  test('school create with city over 200 chars is rejected', async () => {
+    await assertFails(
+      setDoc(doc(db(SUPERADMIN_UID), 'schools', 'school-bad'), {
+        ...validSchool,
+        city: 'x'.repeat(201),
+      }),
+    );
+  });
+
+  test('school create with more than 40 grades is rejected', async () => {
+    await assertFails(
+      setDoc(doc(db(SUPERADMIN_UID), 'schools', 'school-bad'), {
+        ...validSchool,
+        grades: Array.from({ length: 41 }, (_, index) => ({
+          id: `grade_${index}`,
+          name: `Grade ${index}`,
+          sortOrder: index,
+        })),
+      }),
+    );
+  });
+});
+
+describe('chatKeywords', () => {
+  const validKeyword = {
+    label: 'Courses',
+    response: 'Browse available courses.',
+    sortOrder: 0,
+    isPublished: true,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  };
+
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async context => {
+      const adminDb = context.firestore();
+      await setDoc(doc(adminDb, 'chatKeywords', 'published-kw'), {
+        ...validKeyword,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      await setDoc(doc(adminDb, 'chatKeywords', 'draft-kw'), {
+        ...validKeyword,
+        label: 'Draft',
+        isPublished: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    });
+  });
+
+  test('authenticated users can read published keywords', async () => {
+    await assertSucceeds(
+      getDoc(doc(db(OWNER_UID), 'chatKeywords', 'published-kw')),
+    );
+  });
+
+  test('learners cannot read draft keywords', async () => {
+    await assertFails(getDoc(doc(db(OWNER_UID), 'chatKeywords', 'draft-kw')));
+  });
+
+  test('admins can read draft keywords', async () => {
+    await assertSucceeds(
+      getDoc(doc(db(ADMIN_UID), 'chatKeywords', 'draft-kw')),
+    );
+  });
+
+  test('superadmins can create, update, reorder, and delete keywords', async () => {
+    const database = db(SUPERADMIN_UID);
+    await assertSucceeds(
+      setDoc(doc(database, 'chatKeywords', 'kw1'), validKeyword),
+    );
+    await assertSucceeds(
+      updateDoc(doc(database, 'chatKeywords', 'kw1'), {
+        response: 'Updated reply',
+        updatedAt: serverTimestamp(),
+      }),
+    );
+    await assertSucceeds(
+      updateDoc(doc(database, 'chatKeywords', 'kw1'), {
+        sortOrder: 1,
+        updatedAt: serverTimestamp(),
+      }),
+    );
+    await assertSucceeds(deleteDoc(doc(database, 'chatKeywords', 'kw1')));
+  });
+
+  test('plain admins cannot write chat keywords', async () => {
+    await assertFails(
+      setDoc(doc(db(ADMIN_UID), 'chatKeywords', 'kw-admin'), validKeyword),
+    );
+  });
+
+  test('regular users cannot write chat keywords', async () => {
+    await assertFails(
+      setDoc(doc(db(OWNER_UID), 'chatKeywords', 'kw-user'), validKeyword),
+    );
+  });
+
+  test('keyword create with empty label is rejected', async () => {
+    await assertFails(
+      setDoc(doc(db(SUPERADMIN_UID), 'chatKeywords', 'kw-bad'), {
+        ...validKeyword,
+        label: '',
+      }),
+    );
+  });
+
+  test('keyword create with response over 1000 chars is rejected', async () => {
+    await assertFails(
+      setDoc(doc(db(SUPERADMIN_UID), 'chatKeywords', 'kw-long'), {
+        ...validKeyword,
+        response: 'x'.repeat(1001),
+      }),
+    );
   });
 });
 

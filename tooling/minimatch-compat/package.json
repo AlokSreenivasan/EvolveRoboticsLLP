@@ -1,0 +1,10 @@
+{
+  "name": "minimatch",
+  "version": "10.2.6",
+  "description": "Callable-default compat shim over minimatch 10 for ESLint 8 tooling",
+  "main": "index.js",
+  "license": "ISC",
+  "dependencies": {
+    "brace-expansion": "5.0.8"
+  }
+}

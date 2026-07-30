@@ -24,6 +24,7 @@ export function useProfileForm() {
     profileSaving,
     profileError,
     isAdmin,
+    roleLoading,
     updateSessionProfile,
   } = useAuth();
 
@@ -39,6 +40,9 @@ export function useProfileForm() {
     () => isSchoolOrGradeLocked(sessionProfile?.grade),
     [sessionProfile?.grade],
   );
+
+  /** Admins and superadmins are not learners — skip Learning Track. */
+  const requireLearningTrack = !roleLoading && !isAdmin;
 
   useEffect(() => {
     if (!sessionProfile) {
@@ -111,10 +115,15 @@ export function useProfileForm() {
         return;
       }
       markDirty();
-      setProfileForm(prev => ({ ...prev, schoolId }));
-      setErrors(prev => ({ ...prev, schoolId: undefined }));
+      setProfileForm(prev => ({
+        ...prev,
+        schoolId,
+        // Changing school invalidates a previously chosen grade.
+        grade: isGradeLocked ? prev.grade : null,
+      }));
+      setErrors(prev => ({ ...prev, schoolId: undefined, grade: undefined }));
     },
-    [isSchoolLocked, markDirty],
+    [isGradeLocked, isSchoolLocked, markDirty],
   );
 
   const setGrade = useCallback(
@@ -129,27 +138,33 @@ export function useProfileForm() {
     [isGradeLocked, markDirty],
   );
 
-  const validate = useCallback((): boolean => {
-    const nextErrors = validateProfileForm(
-      {
-        fullName: profileForm.fullName,
-        contactNumber: profileForm.contactNumber,
-        track: profileForm.track,
-        schoolId: profileForm.schoolId,
-        grade: profileForm.grade,
-      },
-      { requireTrack: !isAdmin },
-    );
-    setErrors(nextErrors);
-    return !hasProfileFormErrors(nextErrors);
-  }, [
-    isAdmin,
-    profileForm.contactNumber,
-    profileForm.fullName,
-    profileForm.track,
-    profileForm.schoolId,
-    profileForm.grade,
-  ]);
+  const validate = useCallback(
+    (options?: { validGradeValues?: string[] }): boolean => {
+      const nextErrors = validateProfileForm(
+        {
+          fullName: profileForm.fullName,
+          contactNumber: profileForm.contactNumber,
+          track: profileForm.track,
+          schoolId: profileForm.schoolId,
+          grade: profileForm.grade,
+        },
+        {
+          requireTrack: requireLearningTrack,
+          validGradeValues: options?.validGradeValues,
+        },
+      );
+      setErrors(nextErrors);
+      return !hasProfileFormErrors(nextErrors);
+    },
+    [
+      requireLearningTrack,
+      profileForm.contactNumber,
+      profileForm.fullName,
+      profileForm.track,
+      profileForm.schoolId,
+      profileForm.grade,
+    ],
+  );
 
   const persistProfile = useCallback(async (): Promise<boolean> => {
     const isKidsTrack = profileForm.track === 'kids';
@@ -189,6 +204,8 @@ export function useProfileForm() {
     saveError: profileError,
     isSchoolLocked,
     isGradeLocked,
+    requireLearningTrack,
+    roleLoading,
     setFullName,
     setContactNumber,
     setTrack,

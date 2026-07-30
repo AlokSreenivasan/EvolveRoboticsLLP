@@ -593,7 +593,8 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
 
 /**
  * Call from screens that display home feed data so listeners stay active
- * while Home, Lessons list, or Notifications list is focused.
+ * while Home, Lessons list, Notifications, Important Updates, or Upcoming
+ * Events list is focused.
  */
 export function useHomeFeedFocus() {
   const register = useContext(HomeFeedFocusContext);

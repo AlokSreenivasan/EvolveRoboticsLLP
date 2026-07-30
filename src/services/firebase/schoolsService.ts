@@ -8,6 +8,7 @@ import type {
   CreateSchoolInput,
   School,
   SchoolDocument,
+  SchoolGrade,
   UpdateSchoolInput,
 } from '../../store/content/types/schools.types';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
@@ -29,6 +30,10 @@ import {
   writeBatch,
 } from './firestoreClient';
 
+const MAX_SCHOOL_GRADES = 40;
+const MAX_GRADE_NAME_LENGTH = 100;
+const MAX_GRADE_ID_LENGTH = 80;
+
 function isTimestamp(
   value: unknown,
 ): value is FirebaseFirestoreTypes.Timestamp {
@@ -44,12 +49,51 @@ function schoolsCollection() {
   return collection(db, FIRESTORE_COLLECTIONS.schools);
 }
 
+function normalizeGrades(value: unknown): SchoolGrade[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const grades: SchoolGrade[] = [];
+
+  value.forEach((entry, index) => {
+    if (!entry || typeof entry !== 'object') {
+      return;
+    }
+
+    const raw = entry as Record<string, unknown>;
+    const id = typeof raw.id === 'string' ? raw.id.trim() : '';
+    const name = typeof raw.name === 'string' ? raw.name.trim() : '';
+    if (!id || !name) {
+      return;
+    }
+    if (id.length > MAX_GRADE_ID_LENGTH || name.length > MAX_GRADE_NAME_LENGTH) {
+      return;
+    }
+
+    grades.push({
+      id,
+      name,
+      sortOrder:
+        typeof raw.sortOrder === 'number' && Number.isFinite(raw.sortOrder)
+          ? Math.max(0, Math.trunc(raw.sortOrder))
+          : index,
+    });
+  });
+
+  return grades
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .slice(0, MAX_SCHOOL_GRADES)
+    .map((grade, index) => ({ ...grade, sortOrder: index }));
+}
+
 function mapSchool(id: string, data: SchoolDocument): School {
   return {
     id,
     name: data.name?.trim() ?? '',
     city: data.city?.trim() ?? '',
     sortOrder: typeof data.sortOrder === 'number' ? data.sortOrder : 0,
+    grades: normalizeGrades(data.grades),
     createdAt: isTimestamp(data.createdAt) ? data.createdAt : null,
     updatedAt: isTimestamp(data.updatedAt) ? data.updatedAt : null,
   };
@@ -94,10 +138,12 @@ export async function createSchool(input: CreateSchoolInput): Promise<School> {
   try {
     const sortOrder = Math.trunc(await getNextSortOrder());
     const ref = doc(schoolsCollection());
+    const grades = normalizeGrades(input.grades ?? []);
     const payload: SchoolDocument = {
       name: input.name.trim(),
       city: input.city?.trim() ?? '',
       sortOrder,
+      grades,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
@@ -131,6 +177,9 @@ export async function updateSchool(
     }
     if (input.sortOrder !== undefined) {
       updates.sortOrder = input.sortOrder;
+    }
+    if (input.grades !== undefined) {
+      updates.grades = normalizeGrades(input.grades);
     }
 
     await updateDoc(
@@ -175,26 +224,39 @@ export async function reorderSchools(orderedIds: string[]): Promise<void> {
   }
 }
 
-export async function moveSchool(
+/** Returns reordered ids after a one-step move, or null when the move is a no-op. */
+export function computeMovedSchoolIds(
   schoolId: string,
   direction: 'up' | 'down',
   currentSchools: School[],
-): Promise<void> {
+): string[] | null {
   const ids = currentSchools.map(school => school.id);
   const index = ids.indexOf(schoolId);
 
   if (index < 0) {
-    return;
+    return null;
   }
 
   const targetIndex = direction === 'up' ? index - 1 : index + 1;
   if (targetIndex < 0 || targetIndex >= ids.length) {
-    return;
+    return null;
   }
 
   const nextIds = [...ids];
   const [removed] = nextIds.splice(index, 1);
   nextIds.splice(targetIndex, 0, removed);
+  return nextIds;
+}
+
+export async function moveSchool(
+  schoolId: string,
+  direction: 'up' | 'down',
+  currentSchools: School[],
+): Promise<void> {
+  const nextIds = computeMovedSchoolIds(schoolId, direction, currentSchools);
+  if (!nextIds) {
+    return;
+  }
 
   await reorderSchools(nextIds);
 }

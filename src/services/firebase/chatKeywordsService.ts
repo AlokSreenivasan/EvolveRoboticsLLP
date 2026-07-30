@@ -206,26 +206,42 @@ export async function reorderChatKeywords(orderedIds: string[]): Promise<void> {
   }
 }
 
-export async function moveChatKeyword(
+export function computeMovedChatKeywordIds(
   keywordId: string,
   direction: 'up' | 'down',
   currentKeywords: ChatKeyword[],
-): Promise<void> {
+): string[] | null {
   const ids = currentKeywords.map(keyword => keyword.id);
   const index = ids.indexOf(keywordId);
 
   if (index < 0) {
-    return;
+    return null;
   }
 
   const targetIndex = direction === 'up' ? index - 1 : index + 1;
   if (targetIndex < 0 || targetIndex >= ids.length) {
-    return;
+    return null;
   }
 
   const nextIds = [...ids];
   const [removed] = nextIds.splice(index, 1);
   nextIds.splice(targetIndex, 0, removed);
+  return nextIds;
+}
+
+export async function moveChatKeyword(
+  keywordId: string,
+  direction: 'up' | 'down',
+  currentKeywords: ChatKeyword[],
+): Promise<void> {
+  const nextIds = computeMovedChatKeywordIds(
+    keywordId,
+    direction,
+    currentKeywords,
+  );
+  if (!nextIds) {
+    return;
+  }
 
   await reorderChatKeywords(nextIds);
 }

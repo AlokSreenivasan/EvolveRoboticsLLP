@@ -50,6 +50,7 @@ export const appAlertCopy = {
     schoolVisibilityRequired: (detail: string) => detail,
     keywordRequired: 'Enter a label for this quick-reply option in chat.',
     schoolNameRequired: 'Enter a name for the partner school.',
+    gradeNameRequired: 'Enter a name for this grade.',
     notificationDraftSaved: 'Notification saved as a draft for later.',
     notificationLiveSaved:
       'Notification is live — learners can see it in the app now.',
@@ -131,6 +132,7 @@ export const appAlertCopy = {
     passwordEmpty:
       'Enter your password to continue your Evolve journey.',
     passwordEmptyTitle: 'Almost there',
+    passwordRequirementsTitle: 'Password requirements',
     signInFailedTitle: 'Could not sign in',
     googleSignInFailedTitle: 'Google sign-in did not work',
     googleSignInFailedMessage:

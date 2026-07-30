@@ -59,7 +59,13 @@ export function toAdminWriteErrorMessage(error: unknown): string {
     service === 'Storage'
       ? 'firebase deploy --only storage,firestore:rules'
       : 'firebase deploy --only firestore:rules,storage';
-  return `${base}\n\nFix checklist:\n1) users/{your-uid}.role must be exactly "admin" or "superadmin"\n2) Deploy rules: cd Evolve && ${deployTarget}\n3) Sign out and sign back in after changing your role\n4) ${service} permission denied`;
+  return (
+    `${base}\n\nFix checklist:\n` +
+    '1) users/{your-uid}.role must be "superadmin" for Lessons, Courses, Projects, and similar CMS screens ("admin" is enough only for Resources, Assignments, Exams, Quiz)\n' +
+    `2) Deploy rules: cd Evolve && ${deployTarget}\n` +
+    '3) Sign out and sign back in after changing your role\n' +
+    `4) ${service} permission denied`
+  );
 }
 
 export function toRoleWriteErrorMessage(

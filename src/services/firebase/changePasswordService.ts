@@ -1,5 +1,6 @@
 import { EmailAuthProvider } from '@react-native-firebase/auth';
 
+import { PASSWORD_REQUIREMENTS_MESSAGE } from '../../domain/Auth/validation/isValidPassword';
 import {
   getCurrentUser,
   getCurrentUserEmail,
@@ -21,7 +22,7 @@ function mapChangePasswordAuthError(error: {
     case 'auth/invalid-credential':
       return 'Current password is incorrect.';
     case 'auth/weak-password':
-      return 'Password must be at least 6 characters.';
+      return PASSWORD_REQUIREMENTS_MESSAGE;
     case 'auth/requires-recent-login':
       return 'Your session has expired. Please sign in again and try updating your password.';
     case 'auth/network-request-failed':

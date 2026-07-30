@@ -59,6 +59,10 @@ export type RootStackParamList = {
   ContinueLearningList: undefined;
   /** Full list of in-app announcements from home. */
   NotificationsList: undefined;
+  /** Full list of Important Updates notices from home. */
+  ImportantUpdatesList: undefined;
+  /** Full list of Upcoming Events from home. */
+  UpcomingEventsList: undefined;
   /** PDF study notes from Quick Access → Resources. */
   Resources: undefined;
   /** PDF assignments from Quick Access → Assignments. */

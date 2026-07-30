@@ -71,7 +71,7 @@ function HomeScreen() {
     !playlistsLoading && !progressLoading && resumePlaylists.length > 0;
 
   useEffect(() => {
-    if (profileLoading || isProfileComplete(profile)) {
+    if (profileLoading || roleLoading || isProfileComplete(profile)) {
       return;
     }
 
@@ -79,7 +79,7 @@ function HomeScreen() {
       index: 0,
       routes: [{ name: 'Profile', params: { requireCompletion: true } }],
     });
-  }, [navigation, profile, profileLoading]);
+  }, [navigation, profile, profileLoading, roleLoading]);
 
   const handleTabPress = (tab: HomeTabKey) => {
     switch (tab) {

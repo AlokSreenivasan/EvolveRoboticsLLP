@@ -51,7 +51,8 @@ service firebase.storage {
         && request.resource.size < 5 * 1024 * 1024
         && isImageUpload();
 
-      allow delete: if isSuperAdmin() && request.auth.uid == uid;
+      // Any superadmin may delete so playlist cleanup works across admins.
+      allow delete: if isSuperAdmin();
     }
 
     match /courseThumbnails/{uid}/{imageFile} {

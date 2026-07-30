@@ -12,7 +12,8 @@ describe('toAdminWriteErrorMessage', () => {
     const message = toAdminWriteErrorMessage(error);
     expect(message).toContain('Storage permission denied');
     expect(message).toContain('firebase deploy --only storage,firestore:rules');
-    expect(message).toContain('"admin" or "superadmin"');
+    expect(message).toContain('superadmin');
+    expect(message).toContain('Lessons');
   });
 
   test('passes through non-permission errors', () => {

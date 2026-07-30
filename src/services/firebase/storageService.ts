@@ -176,6 +176,29 @@ export async function uploadContinueLearningThumbnail(
   }
 }
 
+/** Deletes a playlist thumbnail by download URL. Ignores missing objects. */
+export async function deleteContinueLearningThumbnailByUrlSafe(
+  imageUrl: string | null | undefined,
+): Promise<void> {
+  if (!isFirebaseStorageUrl(imageUrl)) {
+    return;
+  }
+
+  try {
+    await deleteObject(refFromURL(firebaseStorage, imageUrl!.trim()));
+  } catch (error) {
+    const { code } = extractFirebaseErrorDetails(error);
+    if (isFirebaseNotFoundError(code)) {
+      return;
+    }
+    logFirebaseOperationError(
+      'deleteContinueLearningThumbnailByUrlSafe',
+      'deleteByUrl',
+      error,
+    );
+  }
+}
+
 /** Uploads a resource note PDF; requires Storage rules for resourceNotes. */
 export async function uploadResourceNotePdf(
   noteId: string,
@@ -306,6 +329,29 @@ export async function uploadCourseThumbnail(
       error,
       'UPLOAD_FAILED',
       'Failed to upload course thumbnail.',
+    );
+  }
+}
+
+/** Deletes a course thumbnail by download URL. Ignores missing objects. */
+export async function deleteCourseThumbnailByUrlSafe(
+  imageUrl: string | null | undefined,
+): Promise<void> {
+  if (!isFirebaseStorageUrl(imageUrl)) {
+    return;
+  }
+
+  try {
+    await deleteObject(refFromURL(firebaseStorage, imageUrl!.trim()));
+  } catch (error) {
+    const { code } = extractFirebaseErrorDetails(error);
+    if (isFirebaseNotFoundError(code)) {
+      return;
+    }
+    logFirebaseOperationError(
+      'deleteCourseThumbnailByUrlSafe',
+      'deleteByUrl',
+      error,
     );
   }
 }
