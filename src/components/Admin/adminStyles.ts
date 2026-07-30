@@ -33,6 +33,11 @@ export const adminStyles = StyleSheet.create({
     ...glassBorder,
     ...cardShadowElevated,
   },
+  /** Content styles for SurfaceCard-based admin section panels. */
+  sectionCard: {
+    padding: 16,
+    marginBottom: 24,
+  },
   field: {
     marginBottom: 14,
   },
@@ -128,12 +133,8 @@ export const adminStyles = StyleSheet.create({
     paddingVertical: 8,
   },
   listRowCard: {
-    backgroundColor: colors.surface,
-    borderRadius: spacing.cardRadiusLg,
     padding: 16,
     marginBottom: 12,
-    ...glassBorder,
-    ...cardShadowElevated,
   },
   listRowTop: {
     flexDirection: 'row',

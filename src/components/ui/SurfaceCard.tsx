@@ -14,6 +14,7 @@ import {
   glassBorder,
   spacing,
 } from '../../constants/theme';
+import { splitSurfaceStyle } from '../../utils/ui/splitSurfaceStyle';
 
 export type SurfaceCardElevation = 'flat' | 'light' | 'default' | 'elevated';
 
@@ -43,6 +44,9 @@ function elevationStyle(elevation: SurfaceCardElevation): ViewStyle {
 
 /**
  * Premium elevated surface used across Home, Settings, lists, and Admin.
+ *
+ * Shadow lives on an outer shell; padding / borders live on the inner surface
+ * so elevation never draws a larger rectangular frame around inset content.
  */
 function SurfaceCard({
   children,
@@ -51,19 +55,39 @@ function SurfaceCard({
   tinted = false,
   clipped = false,
 }: SurfaceCardProps) {
-  const surfaceStyle = [
-    styles.card,
-    tinted && styles.tinted,
-    clipped && styles.clipped,
-  ];
-
   if (elevation === 'flat') {
-    return <View style={[...surfaceStyle, style]}>{children}</View>;
+    return (
+      <View
+        style={[
+          styles.card,
+          tinted && styles.tinted,
+          clipped && styles.clipped,
+          style,
+        ]}>
+        {children}
+      </View>
+    );
   }
 
+  const { shell, content } = splitSurfaceStyle(style);
+
   return (
-    <View style={[styles.shadowShell, elevationStyle(elevation), style]}>
-      <View style={surfaceStyle}>{children}</View>
+    <View
+      style={[
+        styles.shadowShell,
+        tinted ? styles.tintedShell : styles.surfaceShell,
+        elevationStyle(elevation),
+        shell,
+      ]}>
+      <View
+        style={[
+          styles.card,
+          tinted && styles.tinted,
+          clipped && styles.clipped,
+          content,
+        ]}>
+        {children}
+      </View>
     </View>
   );
 }
@@ -71,6 +95,12 @@ function SurfaceCard({
 const styles = StyleSheet.create({
   shadowShell: {
     borderRadius: spacing.cardRadiusLg,
+  },
+  surfaceShell: {
+    backgroundColor: colors.surface,
+  },
+  tintedShell: {
+    backgroundColor: colors.noticeBackground,
   },
   card: {
     backgroundColor: colors.surface,

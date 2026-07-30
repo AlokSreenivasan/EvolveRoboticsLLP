@@ -2,12 +2,8 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { LucideIcon } from 'lucide-react-native';
 
-import {
-  cardShadow,
-  colors,
-  glassBorder,
-  spacing,
-} from '../../constants/theme';
+import { colors, spacing } from '../../constants/theme';
+import SurfaceCard from '../ui/SurfaceCard';
 
 type SettingsInfoCardProps = {
   icon: LucideIcon;
@@ -25,7 +21,7 @@ function SettingsInfoCard({
   description,
 }: SettingsInfoCardProps) {
   return (
-    <View style={styles.card}>
+    <SurfaceCard elevation="default" style={styles.card}>
       <View style={[styles.iconWrap, { backgroundColor: iconBackgroundColor }]}>
         <Icon size={20} color={iconColor} strokeWidth={2.15} />
       </View>
@@ -33,19 +29,15 @@ function SettingsInfoCard({
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.description}>{description}</Text>
       </View>
-    </View>
+    </SurfaceCard>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
-    backgroundColor: colors.surface,
-    borderRadius: spacing.cardRadiusLg,
     padding: 16,
     marginBottom: spacing.sectionGap,
-    ...glassBorder,
-    ...cardShadow,
   },
   iconWrap: {
     width: 44,

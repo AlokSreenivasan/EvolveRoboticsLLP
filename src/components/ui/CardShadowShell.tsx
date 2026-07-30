@@ -16,6 +16,7 @@ import {
   glassBorder,
   spacing,
 } from '../../constants/theme';
+import { splitSurfaceStyle } from '../../utils/ui/splitSurfaceStyle';
 
 export type CardShadowElevation = 'none' | 'light' | 'default' | 'elevated';
 
@@ -46,7 +47,8 @@ function elevationStyle(elevation: CardShadowElevation): ViewStyle {
 
 /**
  * Renders shadow on an outer shell and clips content on an inner surface so
- * iOS/Android shadows follow rounded corners instead of being cut off.
+ * iOS/Android shadows follow rounded corners instead of being cut off or
+ * drawing a larger rectangular frame around inset padding.
  */
 function CardShadowShell({
   children,
@@ -60,10 +62,19 @@ function CardShadowShell({
   accessibilityLabel,
 }: CardShadowShellProps) {
   const radiusStyle = { borderRadius };
+  const { shell, content } = splitSurfaceStyle(style);
+  const flatInner = (StyleSheet.flatten(innerStyle) ?? {}) as ViewStyle;
+  const shellBackground =
+    flatInner.backgroundColor ?? shell.backgroundColor ?? colors.surface;
 
   return (
     <View
-      style={[radiusStyle, elevationStyle(elevation), style]}
+      style={[
+        radiusStyle,
+        { backgroundColor: shellBackground },
+        elevation !== 'none' && elevationStyle(elevation),
+        shell,
+      ]}
       onLayout={onLayout}
       accessibilityRole={accessibilityRole}
       accessibilityLabel={accessibilityLabel}>
@@ -72,6 +83,7 @@ function CardShadowShell({
           styles.inner,
           !borderless && styles.innerBordered,
           radiusStyle,
+          content,
           innerStyle,
         ]}>
         {children}

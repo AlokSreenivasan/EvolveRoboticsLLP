@@ -4,10 +4,11 @@ import { BookOpen, EyeOff } from 'lucide-react-native';
 
 import AdminListRowActions from './AdminListRowActions';
 import { adminStyles } from './adminStyles';
-import { cardShadow, colors, spacing } from '../../constants/theme';
+import { colors } from '../../constants/theme';
 import type { Course } from '../../store/content/types/courses.types';
 import type { School } from '../../store/content/types/schools.types';
 import { formatContentVisibilitySummary } from '../../utils/admin/contentVisibility';
+import SurfaceCard from '../ui/SurfaceCard';
 
 const CARD_ACCENTS = [
   { badgeColor: colors.primaryLight, accentColor: colors.primary },
@@ -47,7 +48,7 @@ function AdminCourseListCard({
   const imageUri = course.imageUri?.trim();
 
   return (
-    <View style={styles.card}>
+    <SurfaceCard elevation="default" clipped style={styles.card}>
       <View style={styles.imageWrap}>
         {imageUri ? (
           <Image source={{ uri: imageUri }} style={styles.image} />
@@ -109,19 +110,14 @@ function AdminCourseListCard({
           onDelete={onDelete}
         />
       </View>
-    </View>
+    </SurfaceCard>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
-    borderRadius: spacing.cardRadius,
     marginBottom: 14,
-    overflow: 'hidden',
-    borderWidth: 1,
     borderColor: colors.primaryMuted,
-    ...cardShadow,
   },
   imageWrap: {
     height: 148,

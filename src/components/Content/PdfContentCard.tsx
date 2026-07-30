@@ -3,12 +3,8 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import { FileText } from 'lucide-react-native';
 
-import {
-  cardShadow,
-  colors,
-  glassBorder,
-  spacing,
-} from '../../constants/theme';
+import { colors } from '../../constants/theme';
+import SurfaceCard from '../ui/SurfaceCard';
 
 const CARD_ACCENTS = [
   { badgeColor: colors.primaryLight, accentColor: colors.primary },
@@ -41,53 +37,53 @@ function PdfContentCard({
   const trimmedBadge = badgeLabel?.trim();
 
   return (
-    <TouchableOpacity
-      style={styles.card}
-      activeOpacity={0.9}
-      onPress={onPress}
-      disabled={!onPress}
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel ?? title}>
-      <View style={[styles.iconWrap, { backgroundColor: accent.badgeColor }]}>
-        <Icon size={26} color={accent.accentColor} strokeWidth={2.15} />
-      </View>
-
-      <View style={styles.body}>
-        {trimmedBadge ? (
-          <View style={[styles.badge, { backgroundColor: accent.badgeColor }]}>
-            <Text style={[styles.badgeText, { color: accent.accentColor }]}>
-              {trimmedBadge}
-            </Text>
-          </View>
-        ) : null}
-        <Text style={styles.title} numberOfLines={2}>
-          {title}
-        </Text>
-        {subtitle?.trim() ? (
-          <Text style={styles.subtitle} numberOfLines={3}>
-            {subtitle.trim()}
-          </Text>
-        ) : null}
-        <View style={styles.ctaPill}>
-          <Text style={styles.cta}>{ctaLabel}</Text>
+    <SurfaceCard elevation="default" style={styles.card}>
+      <TouchableOpacity
+        style={styles.pressable}
+        activeOpacity={0.9}
+        onPress={onPress}
+        disabled={!onPress}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel ?? title}>
+        <View style={[styles.iconWrap, { backgroundColor: accent.badgeColor }]}>
+          <Icon size={26} color={accent.accentColor} strokeWidth={2.15} />
         </View>
-      </View>
-    </TouchableOpacity>
+
+        <View style={styles.body}>
+          {trimmedBadge ? (
+            <View style={[styles.badge, { backgroundColor: accent.badgeColor }]}>
+              <Text style={[styles.badgeText, { color: accent.accentColor }]}>
+                {trimmedBadge}
+              </Text>
+            </View>
+          ) : null}
+          <Text style={styles.title} numberOfLines={2}>
+            {title}
+          </Text>
+          {subtitle?.trim() ? (
+            <Text style={styles.subtitle} numberOfLines={3}>
+              {subtitle.trim()}
+            </Text>
+          ) : null}
+          <View style={styles.ctaPill}>
+            <Text style={styles.cta}>{ctaLabel}</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    </SurfaceCard>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
     width: '100%',
+    marginBottom: 14,
+    borderColor: colors.primaryMuted,
+  },
+  pressable: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: colors.surface,
-    borderRadius: spacing.cardRadiusLg,
-    marginBottom: 14,
     padding: 16,
-    ...glassBorder,
-    borderColor: colors.primaryMuted,
-    ...cardShadow,
   },
   iconWrap: {
     width: 56,

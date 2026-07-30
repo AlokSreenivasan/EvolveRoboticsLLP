@@ -7,7 +7,8 @@ import DeleteAccountConfirmModal from '../../../components/Settings/DeleteAccoun
 import SettingsInfoCard from '../../../components/Settings/SettingsInfoCard';
 import SettingsScreenLayout from '../../../components/Settings/SettingsScreenLayout';
 import SettingsSectionHeader from '../../../components/Settings/SettingsSectionHeader';
-import { cardShadowLight, colors, spacing } from '../../../constants/theme';
+import { colors, spacing } from '../../../constants/theme';
+import SurfaceCard from '../../../components/ui/SurfaceCard';
 import { deleteAccount } from '../../../services/firebase/deleteAccountService';
 import { hasEmailPasswordProvider } from '../../../services/firebase/authService';
 import { appAlert, appAlertCopy } from '../../../utils/alert/appAlert';
@@ -61,7 +62,7 @@ function PrivacySettingsScreen() {
 
       <View style={styles.sectionBlock}>
         <SettingsSectionHeader title="Danger zone" />
-        <View style={styles.dangerCard}>
+        <SurfaceCard elevation="light" style={styles.dangerCard}>
           <Text style={styles.dangerDescription}>
             Permanently delete your account and remove your profile, sign-in
             access, and associated user data. This cannot be undone.
@@ -74,7 +75,7 @@ function PrivacySettingsScreen() {
             disabled={deleting}
             loading={deleting}
           />
-        </View>
+        </SurfaceCard>
       </View>
 
       <DeleteAccountConfirmModal
@@ -94,11 +95,9 @@ const styles = StyleSheet.create({
   },
   dangerCard: {
     backgroundColor: colors.dangerLight,
-    borderRadius: spacing.cardRadiusLg,
     padding: 16,
     borderWidth: 1,
     borderColor: colors.danger,
-    ...cardShadowLight,
   },
   dangerDescription: {
     fontSize: 13,

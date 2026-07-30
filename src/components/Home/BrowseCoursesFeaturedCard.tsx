@@ -8,12 +8,13 @@ import {
 } from 'react-native';
 import { ArrowRight, BookOpen, GraduationCap, Play, Sparkles } from 'lucide-react-native';
 
-import { cardShadow, colors } from '../../constants/theme';
+import { colors } from '../../constants/theme';
 import type { ContinueLearningPlaylist } from '../../store/content/types/continueLearningPlaylists.types';
 import {
   computeProgressPercent,
   formatVideoProgressLabel,
 } from '../../utils/continueLearning/formatVideoProgress';
+import SurfaceCard from '../ui/SurfaceCard';
 
 type BrowseCoursesFeaturedCardProps = {
   playlist?: ContinueLearningPlaylist | null;
@@ -30,34 +31,38 @@ function BrowseCoursesFeaturedCard({
 }: BrowseCoursesFeaturedCardProps) {
   if (!playlist) {
     return (
-      <TouchableOpacity
-        style={styles.promoCard}
-        activeOpacity={0.92}
-        onPress={onBrowsePress}
-        disabled={!onBrowsePress}
-        accessibilityRole="button"
-        accessibilityLabel="Browse all courses">
-        <View style={styles.promoGlow} />
-        <View style={styles.promoContent}>
-          <View style={styles.promoBadge}>
-            <Sparkles size={14} color={colors.primary} strokeWidth={2.5} />
-            <Text style={styles.promoBadgeText}>Featured</Text>
+      <SurfaceCard
+        elevation="default"
+        clipped
+        style={styles.promoCard}>
+        <TouchableOpacity
+          activeOpacity={0.92}
+          onPress={onBrowsePress}
+          disabled={!onBrowsePress}
+          accessibilityRole="button"
+          accessibilityLabel="Browse all courses">
+          <View style={styles.promoGlow} />
+          <View style={styles.promoContent}>
+            <View style={styles.promoBadge}>
+              <Sparkles size={14} color={colors.primary} strokeWidth={2.5} />
+              <Text style={styles.promoBadgeText}>Featured</Text>
+            </View>
+            <Text style={styles.promoTitle}>
+              Explore. Learn.{'\n'}
+              <Text style={styles.promoTitleAccent}>Build. Innovate.</Text>
+            </Text>
+            <Text style={styles.promoSubtitle}>
+              Advance your robotics skills with expert-led courses and hands-on
+              projects.
+            </Text>
+            <View style={styles.promoCta}>
+              <GraduationCap size={18} color="#fff" strokeWidth={2} />
+              <Text style={styles.promoCtaText}>Browse Courses</Text>
+              <ArrowRight size={18} color="#fff" strokeWidth={2.5} />
+            </View>
           </View>
-          <Text style={styles.promoTitle}>
-            Explore. Learn.{'\n'}
-            <Text style={styles.promoTitleAccent}>Build. Innovate.</Text>
-          </Text>
-          <Text style={styles.promoSubtitle}>
-            Advance your robotics skills with expert-led courses and hands-on
-            projects.
-          </Text>
-          <View style={styles.promoCta}>
-            <GraduationCap size={18} color="#fff" strokeWidth={2} />
-            <Text style={styles.promoCtaText}>Browse Courses</Text>
-            <ArrowRight size={18} color="#fff" strokeWidth={2.5} />
-          </View>
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+      </SurfaceCard>
     );
   }
 
@@ -70,76 +75,72 @@ function BrowseCoursesFeaturedCard({
   const ctaLabel = hasProgress ? 'Resume lesson' : 'Start lesson';
 
   return (
-    <TouchableOpacity
-      style={styles.card}
-      activeOpacity={0.92}
-      onPress={onPress}
-      disabled={!onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`Open course ${playlist.title}`}>
-      <View style={styles.media}>
-        {playlist.imageUri ? (
-          <Image source={{ uri: playlist.imageUri }} style={styles.image} />
-        ) : (
-          <View style={[styles.image, styles.imagePlaceholder]} />
-        )}
-        <View style={styles.mediaOverlay} />
-        <View style={styles.mediaTopRow}>
-          <View style={styles.chip}>
-            <Sparkles size={12} color={colors.primary} strokeWidth={2.5} />
-            <Text style={styles.chipText}>
-              {hasProgress ? 'In progress' : 'New course'}
-            </Text>
+    <SurfaceCard elevation="default" clipped style={styles.card}>
+      <TouchableOpacity
+        activeOpacity={0.92}
+        onPress={onPress}
+        disabled={!onPress}
+        accessibilityRole="button"
+        accessibilityLabel={`Open course ${playlist.title}`}>
+        <View style={styles.media}>
+          {playlist.imageUri ? (
+            <Image source={{ uri: playlist.imageUri }} style={styles.image} />
+          ) : (
+            <View style={[styles.image, styles.imagePlaceholder]} />
+          )}
+          <View style={styles.mediaOverlay} />
+          <View style={styles.mediaTopRow}>
+            <View style={styles.chip}>
+              <Sparkles size={12} color={colors.primary} strokeWidth={2.5} />
+              <Text style={styles.chipText}>
+                {hasProgress ? 'In progress' : 'New course'}
+              </Text>
+            </View>
+            <View style={styles.progressPill}>
+              <Text style={styles.progressPillText}>{progress}%</Text>
+            </View>
           </View>
-          <View style={styles.progressPill}>
-            <Text style={styles.progressPillText}>{progress}%</Text>
+          <View style={styles.playFab} accessibilityElementsHidden>
+            <Play size={22} color="#fff" fill="#fff" strokeWidth={0} />
           </View>
         </View>
-        <View style={styles.playFab} accessibilityElementsHidden>
-          <Play size={22} color="#fff" fill="#fff" strokeWidth={0} />
-        </View>
-      </View>
 
-      <View style={styles.body}>
-        <Text style={styles.title} numberOfLines={2}>
-          {playlist.title}
-        </Text>
-        {playlist.subtitle ? (
-          <Text style={styles.subtitle} numberOfLines={2}>
-            {playlist.subtitle}
+        <View style={styles.body}>
+          <Text style={styles.title} numberOfLines={2}>
+            {playlist.title}
           </Text>
-        ) : null}
+          {playlist.subtitle ? (
+            <Text style={styles.subtitle} numberOfLines={2}>
+              {playlist.subtitle}
+            </Text>
+          ) : null}
 
-        <View style={styles.progressTrack}>
-          <View
-            style={[styles.progressFill, { width: `${Math.max(progress, 4)}%` }]}
-          />
-        </View>
+          <View style={styles.progressTrack}>
+            <View
+              style={[styles.progressFill, { width: `${Math.max(progress, 4)}%` }]}
+            />
+          </View>
 
-        <View style={styles.footer}>
-          <View style={styles.meta}>
-            <BookOpen size={15} color={colors.primary} strokeWidth={2} />
-            <Text style={styles.metaText}>{progressLabel}</Text>
-          </View>
-          <View style={styles.cta}>
-            <Text style={styles.ctaText}>{ctaLabel}</Text>
-            <ArrowRight size={16} color={colors.primary} strokeWidth={2.5} />
+          <View style={styles.footer}>
+            <View style={styles.meta}>
+              <BookOpen size={15} color={colors.primary} strokeWidth={2} />
+              <Text style={styles.metaText}>{progressLabel}</Text>
+            </View>
+            <View style={styles.cta}>
+              <Text style={styles.ctaText}>{ctaLabel}</Text>
+              <ArrowRight size={16} color={colors.primary} strokeWidth={2.5} />
+            </View>
           </View>
         </View>
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </SurfaceCard>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
     width: '100%',
-    backgroundColor: colors.surface,
-    borderRadius: 20,
-    overflow: 'hidden',
-    borderWidth: 1,
     borderColor: colors.primaryMuted,
-    ...cardShadow,
   },
   media: {
     height: 156,
@@ -270,12 +271,8 @@ const styles = StyleSheet.create({
   promoCard: {
     width: '100%',
     minHeight: 220,
-    borderRadius: 20,
-    overflow: 'hidden',
     backgroundColor: colors.primaryDark,
-    borderWidth: 1,
     borderColor: colors.primarySoft,
-    ...cardShadow,
   },
   promoGlow: {
     position: 'absolute',

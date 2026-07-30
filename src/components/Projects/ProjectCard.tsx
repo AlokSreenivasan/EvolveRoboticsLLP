@@ -8,13 +8,9 @@ import {
 } from 'react-native';
 import { ChevronRight, FolderKanban } from 'lucide-react-native';
 
-import {
-  cardShadow,
-  colors,
-  glassBorder,
-  spacing,
-} from '../../constants/theme';
+import { colors } from '../../constants/theme';
 import type { Project } from '../../store/content/types/projects.types';
+import SurfaceCard from '../ui/SurfaceCard';
 
 type ProjectCardProps = {
   project: Project;
@@ -28,57 +24,57 @@ function ProjectCard({ project, onPress }: ProjectCardProps) {
     '';
 
   return (
-    <TouchableOpacity
-      style={styles.card}
-      activeOpacity={0.9}
-      onPress={onPress}
-      disabled={!onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`Open project ${project.title}`}>
-      <View style={styles.iconWrap}>
-        {imageUri ? (
-          <Image source={{ uri: imageUri }} style={styles.thumbnail} />
-        ) : (
-          <FolderKanban size={26} color={colors.primary} strokeWidth={2.15} />
-        )}
-      </View>
-
-      <View style={styles.body}>
-        <Text style={styles.title} numberOfLines={2}>
-          {project.title}
-        </Text>
-        {project.subtitle ? (
-          <Text style={styles.subtitle} numberOfLines={2}>
-            {project.subtitle}
-          </Text>
-        ) : null}
-      </View>
-
-      {onPress ? (
-        <View style={styles.chevronWrap}>
-          <ChevronRight
-            size={18}
-            color={colors.primary}
-            strokeWidth={2.25}
-          />
+    <SurfaceCard elevation="default" style={styles.card}>
+      <TouchableOpacity
+        style={styles.pressable}
+        activeOpacity={0.9}
+        onPress={onPress}
+        disabled={!onPress}
+        accessibilityRole="button"
+        accessibilityLabel={`Open project ${project.title}`}>
+        <View style={styles.iconWrap}>
+          {imageUri ? (
+            <Image source={{ uri: imageUri }} style={styles.thumbnail} />
+          ) : (
+            <FolderKanban size={26} color={colors.primary} strokeWidth={2.15} />
+          )}
         </View>
-      ) : null}
-    </TouchableOpacity>
+
+        <View style={styles.body}>
+          <Text style={styles.title} numberOfLines={2}>
+            {project.title}
+          </Text>
+          {project.subtitle ? (
+            <Text style={styles.subtitle} numberOfLines={2}>
+              {project.subtitle}
+            </Text>
+          ) : null}
+        </View>
+
+        {onPress ? (
+          <View style={styles.chevronWrap}>
+            <ChevronRight
+              size={18}
+              color={colors.primary}
+              strokeWidth={2.25}
+            />
+          </View>
+        ) : null}
+      </TouchableOpacity>
+    </SurfaceCard>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
     width: '100%',
+    marginBottom: 12,
+    borderColor: colors.primaryMuted,
+  },
+  pressable: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: spacing.cardRadiusLg,
-    marginBottom: 12,
     padding: 14,
-    ...glassBorder,
-    borderColor: colors.primaryMuted,
-    ...cardShadow,
   },
   iconWrap: {
     width: 56,

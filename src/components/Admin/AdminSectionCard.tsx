@@ -1,7 +1,7 @@
 import React from 'react';
-import { View } from 'react-native';
 
 import AppButton from '../AppButton';
+import SurfaceCard from '../ui/SurfaceCard';
 import { adminStyles } from './adminStyles';
 
 type AdminSectionCardProps = {
@@ -18,7 +18,7 @@ function AdminSectionCard({
   children,
 }: AdminSectionCardProps) {
   return (
-    <View style={adminStyles.card}>
+    <SurfaceCard elevation="elevated" style={adminStyles.sectionCard}>
       {children}
       <AppButton
         title={saving ? 'Saving…' : saveLabel}
@@ -27,7 +27,7 @@ function AdminSectionCard({
         variant="primary"
         buttonStyle={adminStyles.primaryButton}
       />
-    </View>
+    </SurfaceCard>
   );
 }
 

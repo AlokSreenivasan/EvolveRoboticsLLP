@@ -1,6 +1,7 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 
+import SurfaceCard from '../ui/SurfaceCard';
 import AdminListRowActions from './AdminListRowActions';
 import { adminStyles } from './adminStyles';
 
@@ -36,7 +37,7 @@ function AdminListRow({
   footer,
 }: AdminListRowProps) {
   return (
-    <View style={adminStyles.listRowCard}>
+    <SurfaceCard elevation="elevated" style={adminStyles.listRowCard}>
       <View style={adminStyles.listRowTop}>
         <View style={adminStyles.listRowMeta}>
           {tag ? <Text style={adminStyles.listRowTag}>{tag}</Text> : null}
@@ -62,7 +63,7 @@ function AdminListRow({
         />
       </View>
       {footer ? <View style={adminStyles.listRowFooter}>{footer}</View> : null}
-    </View>
+    </SurfaceCard>
   );
 }
 

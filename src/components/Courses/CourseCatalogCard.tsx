@@ -8,13 +8,9 @@ import {
 } from 'react-native';
 import { BookOpen } from 'lucide-react-native';
 
-import {
-  cardShadow,
-  colors,
-  glassBorder,
-  spacing,
-} from '../../constants/theme';
+import { colors } from '../../constants/theme';
 import type { Course } from '../../store/content/types/courses.types';
+import SurfaceCard from '../ui/SurfaceCard';
 
 const CARD_ACCENTS = [
   { badgeColor: colors.primaryLight, accentColor: colors.primary },
@@ -40,54 +36,50 @@ function CourseCatalogCard({
   const duration = course.durationLabel?.trim();
 
   return (
-    <TouchableOpacity
-      style={styles.card}
-      activeOpacity={0.9}
-      onPress={onPress}
-      disabled={!onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`Course ${course.title}`}>
-      <View style={styles.imageWrap}>
-        {course.imageUri?.trim() ? (
-          <Image
-            source={{ uri: course.imageUri.trim() }}
-            style={styles.image}
-          />
-        ) : (
-          <View style={[styles.image, styles.imagePlaceholder]} />
-        )}
-        <View style={styles.mediaOverlay} />
-        {duration ? (
-          <View style={[styles.badge, { backgroundColor: accent.badgeColor }]}>
-            <Text style={[styles.badgeText, { color: accent.accentColor }]}>
-              {duration}
-            </Text>
+    <SurfaceCard elevation="default" clipped style={styles.card}>
+      <TouchableOpacity
+        activeOpacity={0.9}
+        onPress={onPress}
+        disabled={!onPress}
+        accessibilityRole="button"
+        accessibilityLabel={`Course ${course.title}`}>
+        <View style={styles.imageWrap}>
+          {course.imageUri?.trim() ? (
+            <Image
+              source={{ uri: course.imageUri.trim() }}
+              style={styles.image}
+            />
+          ) : (
+            <View style={[styles.image, styles.imagePlaceholder]} />
+          )}
+          <View style={styles.mediaOverlay} />
+          {duration ? (
+            <View style={[styles.badge, { backgroundColor: accent.badgeColor }]}>
+              <Text style={[styles.badgeText, { color: accent.accentColor }]}>
+                {duration}
+              </Text>
+            </View>
+          ) : null}
+          <View style={styles.iconButton} accessibilityElementsHidden>
+            <BookOpen size={20} color="#fff" strokeWidth={2.25} />
           </View>
-        ) : null}
-        <View style={styles.iconButton} accessibilityElementsHidden>
-          <BookOpen size={20} color="#fff" strokeWidth={2.25} />
         </View>
-      </View>
 
-      <View style={styles.body}>
-        <Text style={styles.title} numberOfLines={2}>
-          {course.title}
-        </Text>
-      </View>
-    </TouchableOpacity>
+        <View style={styles.body}>
+          <Text style={styles.title} numberOfLines={2}>
+            {course.title}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    </SurfaceCard>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
     width: '100%',
-    backgroundColor: colors.surface,
-    borderRadius: spacing.cardRadiusLg,
     marginBottom: 16,
-    overflow: 'hidden',
-    ...glassBorder,
     borderColor: colors.primaryMuted,
-    ...cardShadow,
   },
   imageWrap: {
     height: 200,

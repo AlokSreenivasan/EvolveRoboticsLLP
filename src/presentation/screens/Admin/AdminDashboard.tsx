@@ -21,10 +21,9 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import AdminScreenLayout from '../../../components/Admin/AdminScreenLayout';
+import SurfaceCard from '../../../components/ui/SurfaceCard';
 import {
-  cardShadow,
   colors,
-  glassBorder,
   spacing,
   typography,
 } from '../../../constants/theme';
@@ -149,7 +148,7 @@ function AdminDashboard() {
           ? 'Manage app content, users, and communications'
           : 'Manage Resources, Assignments, Exams, and Quiz Competition'
       }>
-      <View style={styles.heroCard}>
+      <SurfaceCard elevation="default" tinted style={styles.heroCard}>
         <LayoutDashboard size={28} color={colors.primary} strokeWidth={2.15} />
         <Text style={styles.heroTitle}>Administrator dashboard</Text>
         <Text style={styles.heroText}>
@@ -157,30 +156,31 @@ function AdminDashboard() {
             ? 'Choose a section below to manage the Evolve platform.'
             : 'Choose a section below. Your admin account is limited to learning content tools.'}
         </Text>
-      </View>
+      </SurfaceCard>
 
       <View style={styles.menu}>
         {visibleMenuItems.map(item => {
           const Icon = item.icon;
           return (
-            <TouchableOpacity
-              key={item.key}
-              style={styles.menuCard}
-              activeOpacity={0.85}
-              onPress={() => navigation.navigate(item.key)}
-              accessibilityRole="button"
-              accessibilityLabel={item.title}>
-              <View style={styles.menuIconWrap}>
-                <Icon size={20} color={colors.primary} strokeWidth={2.15} />
-              </View>
-              <View style={styles.menuText}>
-                <Text style={styles.menuTitle}>{item.title}</Text>
-                <Text style={styles.menuDescription}>{item.description}</Text>
-              </View>
-              <View style={styles.chevronWrap}>
-                <Text style={styles.chevron}>›</Text>
-              </View>
-            </TouchableOpacity>
+            <SurfaceCard key={item.key} elevation="default" style={styles.menuCard}>
+              <TouchableOpacity
+                style={styles.menuPressable}
+                activeOpacity={0.85}
+                onPress={() => navigation.navigate(item.key)}
+                accessibilityRole="button"
+                accessibilityLabel={item.title}>
+                <View style={styles.menuIconWrap}>
+                  <Icon size={20} color={colors.primary} strokeWidth={2.15} />
+                </View>
+                <View style={styles.menuText}>
+                  <Text style={styles.menuTitle}>{item.title}</Text>
+                  <Text style={styles.menuDescription}>{item.description}</Text>
+                </View>
+                <View style={styles.chevronWrap}>
+                  <Text style={styles.chevron}>›</Text>
+                </View>
+              </TouchableOpacity>
+            </SurfaceCard>
           );
         })}
       </View>
@@ -190,13 +190,9 @@ function AdminDashboard() {
 
 const styles = StyleSheet.create({
   heroCard: {
-    backgroundColor: colors.primaryLight,
-    borderRadius: spacing.cardRadiusLg,
     padding: 20,
     marginBottom: spacing.sectionGap,
-    ...glassBorder,
     borderColor: colors.primaryMuted,
-    ...cardShadow,
   },
   heroTitle: {
     ...typography.sectionTitle,
@@ -212,13 +208,12 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   menuCard: {
+    borderColor: colors.border,
+  },
+  menuPressable: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: spacing.cardRadiusLg,
     padding: 16,
-    ...glassBorder,
-    ...cardShadow,
   },
   menuIconWrap: {
     width: 44,

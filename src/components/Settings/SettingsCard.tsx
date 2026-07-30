@@ -1,30 +1,23 @@
 import React from 'react';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { type StyleProp, type ViewStyle } from 'react-native';
 
-import {
-  cardShadow,
-  colors,
-  glassBorder,
-  spacing,
-} from '../../constants/theme';
+import SurfaceCard from '../ui/SurfaceCard';
 
 type SettingsCardProps = {
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
 };
 
+/**
+ * Settings section surface — uses SurfaceCard so elevation follows rounded
+ * corners and padding never creates a rectangular shadow frame.
+ */
 function SettingsCard({ children, style }: SettingsCardProps) {
-  return <View style={[styles.card, style]}>{children}</View>;
+  return (
+    <SurfaceCard elevation="default" style={style}>
+      {children}
+    </SurfaceCard>
+  );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: spacing.cardRadiusLg,
-    overflow: 'hidden',
-    ...glassBorder,
-    ...cardShadow,
-  },
-});
 
 export default SettingsCard;

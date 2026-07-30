@@ -151,8 +151,9 @@ function LoginScreen() {
             />
           </View>
 
+          <Text style={styles.brandLabel}>Sign In</Text>
+
           <SurfaceCard elevation="default" style={styles.card}>
-            <Text style={styles.brandLabel}>Login</Text>
             <Text style={styles.welcomeText}>Welcome Back!</Text>
             <Text style={styles.subText}>
               Sign in to continue your journey with Evolve Robotics.
@@ -166,6 +167,7 @@ function LoginScreen() {
               onChangeText={handleEmailChange}
               keyboardType="email-address"
               autoCapitalize="none"
+              autoCorrect={false}
               style={[styles.input, emailError ? styles.inputError : null]}
             />
             {emailError ? (
@@ -214,13 +216,18 @@ function LoginScreen() {
               disabled={isBusy}
             />
 
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>or</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
             <AppButton
               title="Continue with Google"
               onPress={handleGoogleSignIn}
               variant="secondary"
               loading={googleLoading}
               disabled={isBusy}
-              buttonStyle={styles.googleButton}
             />
 
             <View style={styles.signupContainer}>
@@ -247,20 +254,17 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: spacing.screenHorizontal,
-    paddingVertical: 24,
+    paddingTop: 16,
+    paddingBottom: 32,
+    justifyContent: 'center',
   },
   logoView: {
     alignItems: 'center',
-    marginBottom: 24,
-    marginTop: 16,
+    marginBottom: 8,
   },
   logo: {
     height: 72,
     width: 72,
-  },
-  card: {
-    padding: 20,
-    gap: 4,
   },
   brandLabel: {
     ...typography.label,
@@ -270,17 +274,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     letterSpacing: 0.8,
     textTransform: 'uppercase',
-    marginBottom: 8,
+    marginBottom: 16,
+  },
+  card: {
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 20,
   },
   welcomeText: {
     ...typography.screenTitle,
+    fontSize: 22,
     textAlign: 'center',
     marginBottom: 8,
   },
   subText: {
     ...typography.screenSubtitle,
     textAlign: 'center',
-    marginBottom: 28,
+    marginBottom: 24,
   },
   label: {
     ...typography.label,
@@ -290,7 +300,7 @@ const styles = StyleSheet.create({
   },
   forgotPasswordButton: {
     alignSelf: 'flex-end',
-    marginBottom: 24,
+    marginBottom: 20,
     minHeight: 44,
     justifyContent: 'center',
   },
@@ -326,8 +336,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  googleButton: {
-    marginTop: 12,
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginVertical: 16,
+  },
+  dividerLine: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.border,
+  },
+  dividerText: {
+    ...typography.bodySecondary,
+    color: colors.textMuted,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    fontSize: 12,
   },
   signupContainer: {
     flexDirection: 'row',

@@ -17,8 +17,9 @@ import {
 } from 'lucide-react-native';
 
 import type { UserRole } from '../../store/user/types/role.types';
-import { colors, cardShadow } from '../../constants/theme';
+import { colors } from '../../constants/theme';
 import { roleDisplayLabel } from '../../utils/role/normalizeUserRole';
+import SurfaceCard from '../ui/SurfaceCard';
 import AdminIconButton from './AdminIconButton';
 
 type RoleAssignmentTarget = 'admin';
@@ -75,7 +76,7 @@ function AdminUserListRow({
     : 'Grant admin access';
 
   return (
-    <View style={styles.card}>
+    <SurfaceCard elevation="default" style={styles.card}>
       <View style={styles.nameRow}>
         <View style={styles.iconWrap}>
           <User size={18} color={colors.primary} strokeWidth={2} />
@@ -158,20 +159,16 @@ function AdminUserListRow({
           </Text>
         </View>
       ) : null}
-    </View>
+    </SurfaceCard>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
     padding: 14,
     marginBottom: 10,
-    borderWidth: 1,
     borderColor: colors.border,
     gap: 8,
-    ...cardShadow,
   },
   nameRow: {
     flexDirection: 'row',

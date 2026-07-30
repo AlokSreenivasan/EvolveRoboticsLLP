@@ -8,15 +8,10 @@ import {
 } from 'react-native';
 import { Bell, CheckCheck } from 'lucide-react-native';
 
-import {
-  cardShadow,
-  colors,
-  glassBorder,
-  spacing,
-  typography,
-} from '../../constants/theme';
+import { colors, spacing, typography } from '../../constants/theme';
 import type { LearnerNotification } from '../../store/content/types/notifications.types';
 import { formatNotificationTimestamp } from '../../utils/formatNotificationTimestamp';
+import SurfaceCard from '../ui/SurfaceCard';
 
 type NotificationItemCardProps = {
   notification: Pick<
@@ -57,7 +52,9 @@ function NotificationItemCard({
   }, [canMarkRead, marking, notification.id, onMarkRead]);
 
   return (
-    <View
+    <SurfaceCard
+      elevation="default"
+      clipped
       style={[
         styles.card,
         isList && styles.cardList,
@@ -151,18 +148,14 @@ function NotificationItemCard({
           )}
         </Pressable>
       ) : null}
-    </View>
+    </SurfaceCard>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: spacing.cardRadiusLg,
     padding: 16,
     paddingLeft: 20,
-    overflow: 'hidden',
-    ...glassBorder,
-    ...cardShadow,
   },
   cardList: {
     paddingVertical: 18,

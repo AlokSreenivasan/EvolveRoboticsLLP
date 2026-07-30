@@ -11,10 +11,9 @@ import {
 import type { LucideIcon } from 'lucide-react-native';
 
 import AppButton from '../AppButton';
+import SurfaceCard from '../ui/SurfaceCard';
 import {
-  cardShadowElevated,
   colors,
-  glassBorder,
   spacing,
   typography,
 } from '../../constants/theme';
@@ -140,9 +139,11 @@ export function QuizModalShell({
       animationType="fade"
       onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose}>
-        <Pressable style={styles.card} onPress={event => event.stopPropagation()}>
-          {children}
-        </Pressable>
+        <SurfaceCard elevation="elevated" clipped style={styles.card}>
+          <Pressable onPress={event => event.stopPropagation()}>
+            {children}
+          </Pressable>
+        </SurfaceCard>
       </Pressable>
     </Modal>
   );
@@ -370,10 +371,6 @@ export const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: colors.surface,
-    borderRadius: spacing.cardRadiusXl,
-    overflow: 'hidden',
-    ...glassBorder,
-    ...cardShadowElevated,
   },
   hero: {
     alignItems: 'center',

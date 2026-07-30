@@ -11,6 +11,7 @@ import AdminContentVisibilityFields from '../../../components/Admin/AdminContent
 import AdminPublishedSwitch from '../../../components/Admin/AdminPublishedSwitch';
 import AdminSectionCard from '../../../components/Admin/AdminSectionCard';
 import EventDateBlock from '../../../components/Home/EventDateBlock';
+import SurfaceCard from '../../../components/ui/SurfaceCard';
 import { adminStyles } from '../../../components/Admin/adminStyles';
 import { useUpcomingEvents } from '../../hooks/useUpcomingEvents';
 import { useSchools } from '../../hooks/useSchools';
@@ -302,7 +303,7 @@ function ManageUpcomingEvents() {
 
   const renderEvent = useCallback(
     ({ item: event, index }: { item: UpcomingEvent; index: number }) => (
-      <View style={adminStyles.listRowCard}>
+      <SurfaceCard elevation="elevated" style={adminStyles.listRowCard}>
         <View style={adminStyles.listRowTop}>
           <View style={adminStyles.listRowMeta}>
             <EventDateBlock
@@ -350,7 +351,7 @@ function ManageUpcomingEvents() {
             onDelete={() => confirmDeleteEvent(event)}
           />
         </View>
-      </View>
+      </SurfaceCard>
     ),
     [events.length, handleMove, openEditEditor, reorderingId, schools],
   );
