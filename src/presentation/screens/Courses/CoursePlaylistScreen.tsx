@@ -4,7 +4,6 @@ import {
   SafeAreaView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
@@ -13,6 +12,7 @@ import CourseLessonRow from '../../../components/Courses/CourseLessonRow';
 import ScreenHeader from '../../../components/ui/ScreenHeader';
 import ScreenStateCard from '../../../components/ui/ScreenStateCard';
 import SurfaceCard from '../../../components/ui/SurfaceCard';
+import TactileButton from '../../../components/ui/TactileButton';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import {
   colors,
@@ -159,13 +159,13 @@ function CoursePlaylistScreen() {
             variant="error"
             title="Could not load playlist"
             message={error}>
-            <TouchableOpacity
+            <TactileButton
+              variant="secondary"
               onPress={reload}
               style={styles.retryButton}
-              accessibilityRole="button"
               accessibilityLabel="Try again">
               <Text style={styles.retryText}>Try again</Text>
-            </TouchableOpacity>
+            </TactileButton>
           </ScreenStateCard>
         </View>
       ) : (

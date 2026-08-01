@@ -5,7 +5,6 @@ import {
   SafeAreaView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -15,6 +14,7 @@ import NotificationItemCard from '../../../components/Home/NotificationItemCard'
 import ScreenHeader from '../../../components/ui/ScreenHeader';
 import ScreenStateCard from '../../../components/ui/ScreenStateCard';
 import SurfaceCard from '../../../components/ui/SurfaceCard';
+import TactileButton from '../../../components/ui/TactileButton';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import {
   colors,
@@ -119,17 +119,16 @@ function NotificationsListScreen() {
         }
         ListFooterComponent={
           !loading ? (
-            <TouchableOpacity
+            <TactileButton
+              variant="secondary"
               style={styles.settingsLink}
-              activeOpacity={0.85}
               onPress={() => navigation.navigate('NotificationPreferences')}
-              accessibilityRole="button"
               accessibilityLabel="Notification settings">
               <Settings2 size={18} color={colors.primary} strokeWidth={2} />
               <Text style={styles.settingsLinkText}>
                 Notification settings
               </Text>
-            </TouchableOpacity>
+            </TactileButton>
           ) : null
         }
         ListEmptyComponent={listEmpty}
@@ -207,16 +206,10 @@ const styles = StyleSheet.create({
     height: 12,
   },
   settingsLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
     gap: 8,
     marginTop: 20,
     paddingVertical: 14,
     borderRadius: spacing.buttonRadius,
-    backgroundColor: colors.surface,
-    borderWidth: 1.5,
-    borderColor: colors.primaryMuted,
   },
   settingsLinkText: {
     fontSize: 14,

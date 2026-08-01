@@ -12,7 +12,13 @@ import AdminListSectionHeader from '../../../components/Admin/AdminListSectionHe
 import AdminPublishedSwitch from '../../../components/Admin/AdminPublishedSwitch';
 import AdminContentVisibilityFields from '../../../components/Admin/AdminContentVisibilityFields';
 import { adminStyles } from '../../../components/Admin/adminStyles';
-import { colors, glassBorder, spacing } from '../../../constants/theme';
+import TactileButton from '../../../components/ui/TactileButton';
+import {
+  buttonVariants,
+  colors,
+  glassBorder,
+  spacing,
+} from '../../../constants/theme';
 import { useQuizCompetitions } from '../../hooks/useQuizCompetitions';
 import { useSchools } from '../../hooks/useSchools';
 import { useAdminSchoolAudienceForm } from '../../hooks/admin/useAdminSchoolAudienceForm';
@@ -537,14 +543,17 @@ function ManageQuizCompetitions() {
 
             <View style={styles.questionsHeader}>
               <Text style={styles.questionsTitle}>Questions</Text>
-              <TouchableOpacity
+              <TactileButton
                 style={styles.addQuestionButton}
                 onPress={openCreateQuestionEditor}
-                accessibilityRole="button"
                 accessibilityLabel="Add question">
-                <Plus size={16} color={colors.surface} strokeWidth={2.5} />
+                <Plus
+                  size={16}
+                  color={buttonVariants.primary.text}
+                  strokeWidth={2.5}
+                />
                 <Text style={styles.addQuestionText}>Add</Text>
-              </TouchableOpacity>
+              </TactileButton>
             </View>
             <Text style={styles.questionsSubtitle}>{questionCountLabel}</Text>
 
@@ -632,16 +641,13 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   addQuestionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 6,
-    backgroundColor: colors.primary,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: spacing.buttonRadius,
   },
   addQuestionText: {
-    color: colors.surface,
+    color: buttonVariants.primary.text,
     fontWeight: '700',
     fontSize: 13,
   },

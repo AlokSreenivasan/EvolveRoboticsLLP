@@ -1,7 +1,9 @@
 import React from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { Plus } from 'lucide-react-native';
 
+import { buttonVariants } from '../../constants/theme';
+import TactileButton from '../ui/TactileButton';
 import { adminStyles } from './adminStyles';
 
 type AdminListSectionHeaderProps = {
@@ -23,14 +25,17 @@ function AdminListSectionHeader({
         !title && adminStyles.listSectionHeaderAddOnly,
       ]}>
       {title ? <Text style={adminStyles.blockTitle}>{title}</Text> : null}
-      <TouchableOpacity
+      <TactileButton
         style={adminStyles.addButton}
         onPress={onAdd}
-        accessibilityRole="button"
         accessibilityLabel={addLabel}>
-        <Plus size={18} color="#fff" strokeWidth={2.5} />
+        <Plus
+          size={18}
+          color={buttonVariants.primary.text}
+          strokeWidth={2.5}
+        />
         <Text style={adminStyles.addButtonText}>{addLabel}</Text>
-      </TouchableOpacity>
+      </TactileButton>
     </View>
   );
 }

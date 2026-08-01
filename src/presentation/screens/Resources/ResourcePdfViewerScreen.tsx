@@ -15,6 +15,7 @@ import { WebView } from 'react-native-webview';
 
 import ScreenHeader from '../../../components/ui/ScreenHeader';
 import ScreenStateCard from '../../../components/ui/ScreenStateCard';
+import TactileButton from '../../../components/ui/TactileButton';
 import { appAlertButtons, appAlertCopy } from '../../../constants/appAlertCopy';
 import {
   colors,
@@ -129,14 +130,13 @@ function ResourcePdfViewerScreen() {
             }
             Icon={FileWarning}
             style={styles.errorCard}>
-            <TouchableOpacity
+            <TactileButton
+              variant="secondary"
               onPress={retryViewer}
               style={styles.retryButton}
-              activeOpacity={0.85}
-              accessibilityRole="button"
               accessibilityLabel="Try again">
               <Text style={styles.retryText}>{appAlertButtons.tryAgain}</Text>
-            </TouchableOpacity>
+            </TactileButton>
             {showOpenInBrowser ? (
               <TouchableOpacity
                 onPress={openExternally}

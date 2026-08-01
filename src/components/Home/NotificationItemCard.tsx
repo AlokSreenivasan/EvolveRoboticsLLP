@@ -12,6 +12,7 @@ import { colors, spacing, typography } from '../../constants/theme';
 import type { LearnerNotification } from '../../store/content/types/notifications.types';
 import { formatNotificationTimestamp } from '../../utils/formatNotificationTimestamp';
 import SurfaceCard from '../ui/SurfaceCard';
+import TactileButton from '../ui/TactileButton';
 
 type NotificationItemCardProps = {
   notification: Pick<
@@ -128,16 +129,14 @@ function NotificationItemCard({
       </Pressable>
 
       {isList && canMarkRead ? (
-        <Pressable
-          accessibilityRole="button"
+        <TactileButton
+          variant="ghost"
           accessibilityLabel="Mark as read"
           onPress={markRead}
           disabled={marking}
+          busy={marking}
           hitSlop={8}
-          style={({ pressed }) => [
-            styles.markReadButton,
-            pressed && styles.markReadButtonPressed,
-          ]}>
+          style={styles.markReadButton}>
           {marking ? (
             <ActivityIndicator size="small" color={colors.primary} />
           ) : (
@@ -146,7 +145,7 @@ function NotificationItemCard({
               <Text style={styles.markReadButtonText}>Mark as read</Text>
             </>
           )}
-        </Pressable>
+        </TactileButton>
       ) : null}
     </SurfaceCard>
   );
@@ -275,22 +274,13 @@ const styles = StyleSheet.create({
   },
   markReadButton: {
     alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 6,
     marginTop: 12,
     marginLeft: 62,
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: spacing.chipRadius,
-    backgroundColor: colors.primaryLight,
-    borderWidth: 1,
-    borderColor: colors.primaryMuted,
     minHeight: 34,
-  },
-  markReadButtonPressed: {
-    opacity: 0.85,
-    backgroundColor: colors.primaryMuted,
   },
   markReadButtonText: {
     fontSize: 13,

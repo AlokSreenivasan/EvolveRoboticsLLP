@@ -1,5 +1,7 @@
 import { Platform, type TextStyle, type ViewStyle } from 'react-native';
 
+import { softenColor } from '../utils/ui/softenColor';
+
 /** Shared Evolve app design tokens — Home redesign is the source of truth. */
 export const colors = {
   primary: '#a42a8b',
@@ -18,6 +20,7 @@ export const colors = {
   accentGreen: '#4CAF50',
   accentBlue: '#4A90E2',
   danger: '#F44336',
+  dangerDark: '#C62828',
   heroOverlay: 'rgba(122, 31, 102, 0.72)',
   heroHighlight: '#eecdf4',
   noticeBackground: '#FAF2FF',
@@ -149,27 +152,62 @@ export const inputFieldStyle: ViewStyle = {
   ...glassBorder,
 };
 
-/** Primary CTA fill. */
-export const primaryButtonStyle: ViewStyle = {
-  backgroundColor: colors.primary,
-  borderRadius: spacing.buttonRadius,
-  paddingVertical: 14,
-  paddingHorizontal: 18,
-  alignItems: 'center',
-  justifyContent: 'center',
-  minHeight: 52,
-  ...cardShadowLight,
+/**
+ * Height of the raised bottom edge under every button. The edge sits inside the
+ * button's own footprint, so adding it never changes a button's layout size.
+ */
+export const buttonDepth = 3;
+
+export type ButtonVariantName = 'primary' | 'secondary' | 'ghost' | 'danger';
+
+export type ButtonPalette = {
+  /** Opaque fill of the pressable face. */
+  face: string;
+  /** Darker edge revealed under the face until it is pressed. */
+  edge: string;
+  border: string;
+  text: string;
 };
 
-/** Secondary / outline CTA. */
-export const secondaryButtonStyle: ViewStyle = {
-  backgroundColor: colors.surface,
+/** Tinted, bordered CTA palettes — the face lifts off a darker bottom edge. */
+export const buttonVariants: Record<ButtonVariantName, ButtonPalette> = {
+  primary: {
+    face: softenColor(colors.primary, 0.18),
+    edge: softenColor(colors.primary, 0.58),
+    border: softenColor(colors.primary, 0.45),
+    text: colors.primaryDark,
+  },
+  secondary: {
+    face: colors.surface,
+    edge: softenColor(colors.primary, 0.32),
+    border: colors.primaryMuted,
+    text: colors.primary,
+  },
+  ghost: {
+    face: colors.primaryLight,
+    edge: softenColor(colors.primary, 0.24),
+    border: colors.primaryMuted,
+    text: colors.primary,
+  },
+  danger: {
+    face: softenColor(colors.danger, 0.14),
+    edge: softenColor(colors.danger, 0.55),
+    border: softenColor(colors.danger, 0.42),
+    text: colors.dangerDark,
+  },
+};
+
+/** Primary CTA sizing — pair with `buttonVariants.primary` for the fill. */
+export const primaryButtonStyle: ViewStyle = {
   borderRadius: spacing.buttonRadius,
   paddingVertical: 14,
   paddingHorizontal: 18,
   alignItems: 'center',
   justifyContent: 'center',
   minHeight: 52,
-  borderWidth: 1.5,
-  borderColor: colors.primaryMuted,
+};
+
+/** Secondary CTA sizing — pair with `buttonVariants.secondary` for the fill. */
+export const secondaryButtonStyle: ViewStyle = {
+  ...primaryButtonStyle,
 };

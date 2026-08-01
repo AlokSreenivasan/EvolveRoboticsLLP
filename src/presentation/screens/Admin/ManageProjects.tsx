@@ -24,6 +24,7 @@ import AdminListSectionHeader from '../../../components/Admin/AdminListSectionHe
 import AdminPublishedSwitch from '../../../components/Admin/AdminPublishedSwitch';
 import AdminSectionCard from '../../../components/Admin/AdminSectionCard';
 import { adminStyles } from '../../../components/Admin/adminStyles';
+import TactileButton from '../../../components/ui/TactileButton';
 import { colors } from '../../../constants/theme';
 import { useProjects } from '../../hooks/useProjects';
 import { useSchools } from '../../hooks/useSchools';
@@ -404,11 +405,11 @@ function ManageProjects() {
         <Text style={adminStyles.fieldLabel}>
           Project images (up to {PROJECT_MAX_IMAGES})
         </Text>
-        <TouchableOpacity
+        <TactileButton
+          variant="ghost"
           style={adminStyles.pickImageButton}
           onPress={gallery.handlePickImages}
           disabled={formBusy || !gallery.canAddMore}
-          accessibilityRole="button"
           accessibilityLabel="Choose project images from gallery">
           <ImagePlus size={18} color={colors.primary} strokeWidth={2} />
           <Text style={adminStyles.pickImageText}>
@@ -416,7 +417,7 @@ function ManageProjects() {
               ? 'Add from gallery'
               : `Maximum ${PROJECT_MAX_IMAGES} images`}
           </Text>
-        </TouchableOpacity>
+        </TactileButton>
         <Text style={adminStyles.pdfHint}>{gallery.statusLabel}</Text>
         {gallery.items.length > 0 ? (
           <ScrollView
@@ -447,12 +448,11 @@ function ManageProjects() {
         ) : null}
 
         <Text style={adminStyles.fieldLabel}>Markdown page (optional)</Text>
-        <TouchableOpacity
+        <TactileButton
+          variant="ghost"
           style={adminStyles.pdfPicker}
           onPress={markdownPicker.handlePickMarkdown}
           disabled={formBusy || markdownPicker.pickingMarkdown}
-          activeOpacity={0.85}
-          accessibilityRole="button"
           accessibilityLabel="Choose Markdown file">
           <FileUp size={20} color={colors.primary} strokeWidth={2} />
           <Text style={adminStyles.pdfPickerText}>
@@ -460,7 +460,7 @@ function ManageProjects() {
               ? 'Opening files…'
               : 'Attach .md file'}
           </Text>
-        </TouchableOpacity>
+        </TactileButton>
         <Text style={adminStyles.pdfHint}>{markdownPicker.markdownStatusLabel}</Text>
         {markdownPicker.hasMarkdown ? (
           <TouchableOpacity

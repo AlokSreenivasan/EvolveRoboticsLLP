@@ -4,7 +4,6 @@ import {
   InteractionManager,
   Keyboard,
   Text,
-  TouchableOpacity,
 } from 'react-native';
 import {
   collection,
@@ -21,6 +20,7 @@ import AdminListLayout from '../../../components/Admin/AdminListLayout';
 import AdminListSectionHeader from '../../../components/Admin/AdminListSectionHeader';
 import AdminPublishedSwitch from '../../../components/Admin/AdminPublishedSwitch';
 import { adminStyles } from '../../../components/Admin/adminStyles';
+import TactileButton from '../../../components/ui/TactileButton';
 import { colors } from '../../../constants/theme';
 import { useCourses } from '../../hooks/useCourses';
 import { useSchools } from '../../hooks/useSchools';
@@ -341,15 +341,15 @@ function ManageCourses() {
           multiline
         />
         <Text style={adminStyles.fieldLabel}>Thumbnail</Text>
-        <TouchableOpacity
+        <TactileButton
+          variant="ghost"
           style={adminStyles.pickImageButton}
           onPress={imagePicker.handlePickImage}
           disabled={formBusy}
-          accessibilityRole="button"
           accessibilityLabel="Choose thumbnail from gallery">
           <ImagePlus size={18} color={colors.primary} strokeWidth={2} />
           <Text style={adminStyles.pickImageText}>Choose from gallery</Text>
-        </TouchableOpacity>
+        </TactileButton>
         <AdminFormField
           label="Thumbnail URL (optional)"
           value={imagePicker.remoteUri}

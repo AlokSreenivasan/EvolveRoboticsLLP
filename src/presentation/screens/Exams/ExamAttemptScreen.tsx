@@ -369,11 +369,7 @@ function ExamAttemptScreen() {
           onPress={handleSubmit}
           disabled={!canSubmit || submitting || submittedRef.current}
           variant="primary"
-          buttonStyle={[
-            styles.submitButton,
-            (!canSubmit || submitting || submittedRef.current) &&
-              styles.submitButtonDisabled,
-          ]}
+          buttonStyle={styles.submitButton}
         />
       </View>
     </SafeAreaView>
@@ -525,9 +521,6 @@ const styles = StyleSheet.create({
     ...cardShadowElevated,
   },
   submitButton: {},
-  submitButtonDisabled: {
-    opacity: 0.55,
-  },
 });
 
 export default ExamAttemptScreen;

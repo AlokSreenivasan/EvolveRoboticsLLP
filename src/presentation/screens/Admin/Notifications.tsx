@@ -290,6 +290,7 @@ function AdminNotifications() {
               title={isSending ? 'Sending…' : 'Send live notification'}
               onPress={() => handleSendLiveNotification(notification)}
               disabled={isSending || sendingLiveId != null}
+              variant="ghost"
               buttonStyle={adminStyles.sendLiveButton}
               textStyle={adminStyles.sendLiveButtonText}
             />
@@ -384,6 +385,7 @@ function AdminNotifications() {
               title={editorSendingLive ? 'Sending…' : 'Send live notification'}
               onPress={() => handleSendLiveNotification(editingNotification)}
               disabled={saving || editorSendingLive || sendingLiveId != null}
+              variant="ghost"
               buttonStyle={adminStyles.sendLiveButton}
               textStyle={adminStyles.sendLiveButtonText}
             />

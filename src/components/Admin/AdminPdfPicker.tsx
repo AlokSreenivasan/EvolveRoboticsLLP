@@ -1,8 +1,9 @@
 import React from 'react';
-import { Text, TouchableOpacity } from 'react-native';
+import { Text } from 'react-native';
 import { FileUp } from 'lucide-react-native';
 
 import { colors } from '../../constants/theme';
+import TactileButton from '../ui/TactileButton';
 import { adminStyles } from './adminStyles';
 
 type AdminPdfPickerProps = {
@@ -15,16 +16,17 @@ function AdminPdfPicker({ statusLabel, picking, onPick }: AdminPdfPickerProps) {
   return (
     <>
       <Text style={adminStyles.fieldLabel}>PDF file</Text>
-      <TouchableOpacity
+      <TactileButton
+        variant="ghost"
         style={adminStyles.pdfPicker}
         onPress={onPick}
         disabled={picking}
-        activeOpacity={0.85}>
+        accessibilityLabel="Choose PDF">
         <FileUp size={20} color={colors.primary} strokeWidth={2} />
         <Text style={adminStyles.pdfPickerText}>
           {picking ? 'Opening files…' : 'Choose PDF'}
         </Text>
-      </TouchableOpacity>
+      </TactileButton>
       <Text style={adminStyles.pdfHint}>{statusLabel}</Text>
     </>
   );

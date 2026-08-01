@@ -10,8 +10,9 @@ import {
 import { ArrowRight } from 'lucide-react-native';
 import Svg, { Path } from 'react-native-svg';
 
-import { colors, spacing } from '../../constants/theme';
+import { buttonVariants, colors, spacing } from '../../constants/theme';
 import CardShadowShell from '../ui/CardShadowShell';
+import TactileButton from '../ui/TactileButton';
 
 export type HomeFeaturePanelProps = {
   badgeLabel: string;
@@ -146,17 +147,14 @@ function HomeFeaturePanel({
       </TouchableOpacity>
 
       <View style={styles.footer}>
-        <TouchableOpacity
-          style={[
-            styles.cta,
-            ctaDisabled ? styles.ctaDisabled : styles.ctaActive,
-          ]}
-          activeOpacity={ctaDisabled ? 1 : 0.85}
+        <TactileButton
+          style={[styles.cta, ctaDisabled && styles.ctaDisabled]}
+          faceColor={ctaDisabled ? colors.background : undefined}
+          edgeColor={ctaDisabled ? colors.border : undefined}
+          borderColor={ctaDisabled ? colors.border : undefined}
           onPress={onCtaPress}
           disabled={!onCtaPress || ctaDisabled}
-          accessibilityRole="button"
-          accessibilityLabel={ctaLabel}
-          accessibilityState={{ disabled: ctaDisabled }}>
+          accessibilityLabel={ctaLabel}>
           <Text
             style={[
               styles.ctaText,
@@ -166,9 +164,13 @@ function HomeFeaturePanel({
             {ctaLabel}
           </Text>
           {!ctaDisabled ? (
-            <ArrowRight size={16} color="#fff" strokeWidth={2.5} />
+            <ArrowRight
+              size={16}
+              color={buttonVariants.primary.text}
+              strokeWidth={2.5}
+            />
           ) : null}
-        </TouchableOpacity>
+        </TactileButton>
       </View>
     </CardShadowShell>
   );
@@ -297,21 +299,13 @@ const styles = StyleSheet.create({
   },
   cta: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
     gap: 6,
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderRadius: 16,
   },
-  ctaActive: {
-    backgroundColor: colors.primary,
-  },
   ctaDisabled: {
-    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: colors.border,
   },
   ctaText: {
     fontSize: 14,
@@ -319,7 +313,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.15,
   },
   ctaTextActive: {
-    color: '#fff',
+    color: buttonVariants.primary.text,
   },
   ctaTextDisabled: {
     color: colors.textMuted,

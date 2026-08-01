@@ -1,6 +1,6 @@
 import { Pencil, Plus, Trash2 } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import AdminEntityForm from '../../../components/Admin/AdminEntityForm';
 import AdminFormField from '../../../components/Admin/AdminFormField';
@@ -10,7 +10,8 @@ import AdminListRow from '../../../components/Admin/AdminListRow';
 import AdminSectionCard from '../../../components/Admin/AdminSectionCard';
 import { adminStyles } from '../../../components/Admin/adminStyles';
 import BackButton from '../../../components/BackButton';
-import { colors, spacing } from '../../../constants/theme';
+import TactileButton from '../../../components/ui/TactileButton';
+import { buttonVariants, colors, spacing } from '../../../constants/theme';
 import { useAdminReorder } from '../../hooks/admin/useAdminReorder';
 import { useSchools } from '../../hooks/useSchools';
 import {
@@ -264,14 +265,17 @@ function ManageSchools() {
     <View style={forAdd ? styles.addGradesWrap : undefined}>
       <View style={styles.gradesHeader}>
         <Text style={styles.gradesTitle}>Grades</Text>
-        <TouchableOpacity
+        <TactileButton
           style={styles.addGradeButton}
           onPress={() => openCreateGradeEditor(forAdd)}
-          accessibilityRole="button"
           accessibilityLabel="Add grade">
-          <Plus size={16} color={colors.surface} strokeWidth={2.5} />
+          <Plus
+            size={16}
+            color={buttonVariants.primary.text}
+            strokeWidth={2.5}
+          />
           <Text style={styles.addGradeText}>Add</Text>
-        </TouchableOpacity>
+        </TactileButton>
       </View>
       <Text style={styles.gradesSubtitle}>
         {grades.length === 0
@@ -486,16 +490,13 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   addGradeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 6,
-    backgroundColor: colors.primary,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: spacing.buttonRadius,
   },
   addGradeText: {
-    color: colors.surface,
+    color: buttonVariants.primary.text,
     fontWeight: '700',
     fontSize: 13,
   },

@@ -5,6 +5,7 @@ import { ClipboardCheck, FileText } from 'lucide-react-native';
 
 import ListScreen from '../../../components/ui/ListScreen';
 import SurfaceCard from '../../../components/ui/SurfaceCard';
+import TactileButton from '../../../components/ui/TactileButton';
 import {
   colors,
   spacing,
@@ -56,15 +57,14 @@ function ExamsScreen() {
   const keyExtractor = useCallback((item: Exam) => item.id, []);
 
   const resultsButton = (
-    <TouchableOpacity
+    <TactileButton
+      variant="ghost"
       style={styles.resultsButton}
-      activeOpacity={0.85}
       onPress={() => navigation.navigate('ExamAttempts')}
-      accessibilityRole="button"
       accessibilityLabel="View my exam results">
       <ClipboardCheck size={16} color={colors.primary} strokeWidth={2.5} />
       <Text style={styles.resultsButtonText}>Results</Text>
-    </TouchableOpacity>
+    </TactileButton>
   );
 
   return (
@@ -87,15 +87,10 @@ function ExamsScreen() {
 
 const styles = StyleSheet.create({
   resultsButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 6,
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderRadius: spacing.chipRadius,
-    borderWidth: 1,
-    borderColor: colors.primaryMuted,
-    backgroundColor: colors.primaryLight,
   },
   resultsButtonText: {
     fontSize: 13,

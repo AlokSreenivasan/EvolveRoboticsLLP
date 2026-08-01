@@ -6,18 +6,16 @@ import {
   StyleSheet,
   Text,
   TextStyle,
-  TouchableOpacity,
   ViewStyle,
 } from 'react-native';
 
 import {
-  colors,
+  buttonVariants,
   primaryButtonStyle,
-  secondaryButtonStyle,
   typography,
+  type ButtonVariantName,
 } from '../constants/theme';
-
-type AppButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
+import TactileButton from './ui/TactileButton';
 
 interface AppButtonProps {
   title: string;
@@ -26,7 +24,7 @@ interface AppButtonProps {
   textStyle?: StyleProp<TextStyle>;
   disabled?: boolean;
   loading?: boolean;
-  variant?: AppButtonVariant;
+  variant?: ButtonVariantName;
   accessibilityLabel?: string;
 }
 
@@ -41,84 +39,35 @@ const AppButton: React.FC<AppButtonProps> = ({
   accessibilityLabel,
 }) => {
   const isDisabled = disabled || loading;
+  const palette = buttonVariants[variant];
 
   return (
-    <TouchableOpacity
-      style={[
-        styles.base,
-        variant === 'primary' && styles.primary,
-        variant === 'secondary' && styles.secondary,
-        variant === 'danger' && styles.danger,
-        variant === 'ghost' && styles.ghost,
-        buttonStyle,
-        isDisabled && styles.disabled,
-      ]}
+    <TactileButton
+      variant={variant}
+      style={[styles.base, buttonStyle]}
       onPress={onPress}
       disabled={isDisabled}
-      activeOpacity={0.85}
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel ?? title}
-      accessibilityState={{ disabled: isDisabled, busy: loading }}>
+      busy={loading}
+      accessibilityLabel={accessibilityLabel ?? title}>
       {loading ? (
-        <ActivityIndicator
-          color={variant === 'secondary' || variant === 'ghost' ? colors.primary : '#fff'}
-        />
+        <ActivityIndicator color={palette.text} />
       ) : (
-        <Text
-          style={[
-            styles.text,
-            variant === 'secondary' && styles.textSecondary,
-            variant === 'ghost' && styles.textGhost,
-            variant === 'danger' && styles.textDanger,
-            textStyle,
-          ]}>
+        <Text style={[styles.text, { color: palette.text }, textStyle]}>
           {title}
         </Text>
       )}
-    </TouchableOpacity>
+    </TactileButton>
   );
 };
 
 const styles = StyleSheet.create({
   base: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  primary: {
     ...primaryButtonStyle,
-  },
-  secondary: {
-    ...secondaryButtonStyle,
-  },
-  danger: {
-    ...primaryButtonStyle,
-    backgroundColor: colors.danger,
-  },
-  ghost: {
-    backgroundColor: colors.primaryLight,
-    borderRadius: 16,
-    paddingVertical: 14,
-    paddingHorizontal: 18,
-    minHeight: 52,
-    borderWidth: 1,
-    borderColor: colors.primaryMuted,
   },
   text: {
     ...typography.button,
-    color: '#fff',
     textAlign: 'center',
-  },
-  textSecondary: {
-    color: colors.primary,
-  },
-  textGhost: {
-    color: colors.primary,
-  },
-  textDanger: {
-    color: '#fff',
-  },
-  disabled: {
-    opacity: 0.55,
+    flexShrink: 1,
   },
 });
 

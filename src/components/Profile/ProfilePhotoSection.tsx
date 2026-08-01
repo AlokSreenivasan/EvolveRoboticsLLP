@@ -9,6 +9,7 @@ import {
   spacing,
   typography,
 } from '../../constants/theme';
+import TactileButton from '../ui/TactileButton';
 
 type ProfilePhotoSectionProps = {
   photoUri: string | null;
@@ -36,16 +37,17 @@ function ProfilePhotoSection({
           </View>
         )}
       </TouchableOpacity>
-      <TouchableOpacity
+      <TactileButton
+        variant="secondary"
         style={styles.changeButton}
         onPress={onChangePhotoPress}
-        activeOpacity={0.8}
         disabled={!onChangePhotoPress}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        accessibilityLabel={hasPhoto ? 'Change Photo' : 'Choose Photo'}>
         <Text style={styles.changeButtonText}>
           {hasPhoto ? 'Change Photo' : 'Choose Photo'}
         </Text>
-      </TouchableOpacity>
+      </TactileButton>
       <Text style={styles.hint}>
         {hasPhoto
           ? 'Tap to choose a different photo from your gallery'
@@ -90,11 +92,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     borderRadius: spacing.buttonRadius,
     minHeight: 44,
-    justifyContent: 'center',
-    backgroundColor: colors.surface,
-    borderWidth: 1.5,
-    borderColor: colors.primaryMuted,
-    ...cardShadowLight,
   },
   changeButtonText: {
     ...typography.label,

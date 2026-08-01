@@ -1,6 +1,7 @@
 import { StyleSheet } from 'react-native';
 
 import {
+  buttonVariants,
   colors,
   cardShadowElevated,
   cardShadowLight,
@@ -57,36 +58,26 @@ export const adminStyles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   primaryButton: {
-    backgroundColor: colors.primary,
     flex: 1,
     borderRadius: spacing.buttonRadius,
     minHeight: 48,
   },
   primaryButtonText: {
-    color: '#fff',
     fontWeight: '800',
   },
   secondaryButton: {
     flex: 1,
-    borderWidth: 1.5,
-    borderColor: colors.primaryMuted,
-    backgroundColor: colors.surface,
     borderRadius: spacing.buttonRadius,
     minHeight: 48,
   },
   secondaryButtonText: {
-    color: colors.primary,
     fontWeight: '700',
   },
   sendLiveButton: {
-    backgroundColor: colors.primaryLight,
-    borderWidth: 1,
-    borderColor: colors.primaryMuted,
     borderRadius: spacing.buttonRadius,
     paddingVertical: 12,
   },
   sendLiveButtonText: {
-    color: colors.primary,
     fontWeight: '700',
     fontSize: 14,
   },
@@ -109,16 +100,13 @@ export const adminStyles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 6,
-    backgroundColor: colors.primary,
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
   },
   addButtonText: {
-    color: '#fff',
+    color: buttonVariants.primary.text,
     fontWeight: '600',
     fontSize: 14,
   },
@@ -222,14 +210,9 @@ export const adminStyles = StyleSheet.create({
     paddingBottom: 16,
   },
   pdfPicker: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 10,
-    borderWidth: 1,
-    borderColor: colors.primaryMuted,
     borderRadius: spacing.inputRadius,
     padding: 14,
-    backgroundColor: colors.primaryLight,
     marginBottom: 6,
   },
   pdfPickerText: {
@@ -243,16 +226,11 @@ export const adminStyles = StyleSheet.create({
     marginBottom: 14,
   },
   pickImageButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 8,
     alignSelf: 'flex-start',
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderRadius: spacing.chipRadius,
-    borderWidth: 1,
-    borderColor: colors.primaryMuted,
-    backgroundColor: colors.primaryLight,
     marginBottom: 14,
   },
   pickImageText: {

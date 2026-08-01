@@ -9,7 +9,9 @@ import {
 import { Check, Zap } from 'lucide-react-native';
 
 import { colors } from '../../constants/theme';
+import { softenColor } from '../../utils/ui/softenColor';
 import CardShadowShell from '../ui/CardShadowShell';
+import TactileButton from '../ui/TactileButton';
 
 export type DailyMissionCardProps = {
   icon: React.ReactNode;
@@ -36,6 +38,9 @@ function DailyMissionCard({
 }: DailyMissionCardProps) {
   const progressPercent = isDone ? 100 : 0;
   const actionLabel = isDone ? 'Done' : 'Start';
+  const faceColor = softenColor(accentColor, isDone ? 0.06 : 0.13);
+  const faceBorderColor = softenColor(accentColor, isDone ? 0.26 : 0.42);
+  const edgeColor = softenColor(accentColor, isDone ? 0.22 : 0.36);
 
   return (
     <CardShadowShell
@@ -102,30 +107,18 @@ function DailyMissionCard({
         />
       </View>
 
-      <TouchableOpacity
-        style={[
-          styles.startButton,
-          isDone
-            ? {
-                backgroundColor: accentBackground,
-                ...styles.startButtonDone,
-                borderColor: accentBorder,
-              }
-            : { backgroundColor: accentColor },
-        ]}
-        activeOpacity={0.88}
+      <TactileButton
+        style={styles.startButton}
+        faceColor={faceColor}
+        edgeColor={edgeColor}
+        borderColor={faceBorderColor}
         onPress={onStartPress}
         disabled={!onStartPress}
-        accessibilityRole="button"
         accessibilityLabel={`${actionLabel} ${title}`}>
-        <Text
-          style={[
-            styles.startButtonText,
-            isDone && { color: accentColor },
-          ]}>
+        <Text style={[styles.startButtonText, { color: accentColor }]}>
           {actionLabel}
         </Text>
-      </TouchableOpacity>
+      </TactileButton>
       </TouchableOpacity>
     </CardShadowShell>
   );
@@ -201,19 +194,13 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   startButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 11,
+    paddingVertical: 10,
     borderRadius: 999,
-  },
-  startButtonDone: {
-    borderWidth: 1,
   },
   startButtonText: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#fff',
-    letterSpacing: 0.2,
+    letterSpacing: 0.3,
   },
 });
 

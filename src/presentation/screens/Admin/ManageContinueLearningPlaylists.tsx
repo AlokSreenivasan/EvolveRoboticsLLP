@@ -32,8 +32,10 @@ import AdminCourseTrackPicker from '../../../components/Admin/AdminCourseTrackPi
 import AdminSchoolAudiencePicker from '../../../components/Admin/AdminSchoolAudiencePicker';
 import AppSwitch from '../../../components/AppSwitch';
 import AppButton from '../../../components/AppButton';
+import TactileButton from '../../../components/ui/TactileButton';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import {
+  buttonVariants,
   cardShadow,
   colors,
   glassBorder,
@@ -374,14 +376,17 @@ function ManageContinueLearningPlaylists() {
       <>
         <View style={styles.headerRow}>
           <Text style={styles.blockTitle}>YouTube playlists</Text>
-          <TouchableOpacity
+          <TactileButton
             style={styles.addButton}
             onPress={openCreateEditor}
-            accessibilityRole="button"
             accessibilityLabel="Add playlist">
-            <Plus size={18} color={colors.surface} strokeWidth={2.5} />
+            <Plus
+              size={18}
+              color={buttonVariants.primary.text}
+              strokeWidth={2.5}
+            />
             <Text style={styles.addButtonText}>Add</Text>
-          </TouchableOpacity>
+          </TactileButton>
         </View>
         <Text style={styles.hint}>
           Add a YouTube playlist link, title, and subtitle. Choose a thumbnail
@@ -541,15 +546,15 @@ function ManageContinueLearningPlaylists() {
               keyboardType="number-pad"
             />
             <Text style={styles.fieldLabel}>Thumbnail</Text>
-            <TouchableOpacity
+            <TactileButton
+              variant="ghost"
               style={styles.pickImageButton}
               onPress={handlePickThumbnail}
               disabled={saving}
-              accessibilityRole="button"
               accessibilityLabel="Choose thumbnail image">
               <ImagePlus size={18} color={colors.primary} strokeWidth={2} />
               <Text style={styles.pickImageText}>Choose image from gallery</Text>
-            </TouchableOpacity>
+            </TactileButton>
             <FormField
               label="Or paste thumbnail URL"
               value={form.imageUri}
@@ -607,6 +612,7 @@ function ManageContinueLearningPlaylists() {
             <AppButton
               title="Cancel"
               onPress={closeEditor}
+              variant="secondary"
               buttonStyle={styles.secondaryButton}
               textStyle={styles.secondaryButtonText}
             />
@@ -620,6 +626,7 @@ function ManageContinueLearningPlaylists() {
               }
               onPress={handleSave}
               disabled={saving}
+              variant="primary"
               buttonStyle={styles.primaryButton}
               textStyle={styles.primaryButtonText}
             />
@@ -717,16 +724,13 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 6,
-    backgroundColor: colors.primary,
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: spacing.buttonRadius,
   },
   addButtonText: {
-    color: colors.surface,
+    color: buttonVariants.primary.text,
     fontWeight: '600',
     fontSize: 14,
   },
@@ -813,16 +817,11 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   pickImageButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 8,
     alignSelf: 'flex-start',
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderRadius: spacing.inputRadius,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    backgroundColor: colors.primaryLight,
     marginBottom: 14,
   },
   pickImageText: {
@@ -857,21 +856,15 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   primaryButton: {
-    backgroundColor: colors.primary,
     flex: 1,
   },
   primaryButtonText: {
-    color: colors.surface,
     fontWeight: '600',
   },
   secondaryButton: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    backgroundColor: colors.surface,
   },
   secondaryButtonText: {
-    color: colors.primary,
     fontWeight: '600',
   },
   modalContainer: {

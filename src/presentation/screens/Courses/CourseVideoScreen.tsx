@@ -1,17 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 
 import CourseVideoPlayer from '../../../components/Courses/CourseVideoPlayer';
 import ScreenHeader from '../../../components/ui/ScreenHeader';
 import SurfaceCard from '../../../components/ui/SurfaceCard';
+import TactileButton from '../../../components/ui/TactileButton';
 import {
+  buttonVariants,
   colors,
   primaryButtonStyle,
   spacing,
@@ -138,16 +134,13 @@ function CourseVideoScreen() {
           <Text style={styles.playingTitle}>{videoTitle}</Text>
 
           {hasNextVideo ? (
-            <TouchableOpacity
-              style={[
-                styles.nextButton,
-                !canGoNext && styles.nextButtonDisabled,
-              ]}
+            <TactileButton
+              style={styles.nextButton}
+              faceColor={canGoNext ? undefined : colors.primaryLight}
+              edgeColor={canGoNext ? undefined : colors.primaryMuted}
+              borderColor={canGoNext ? undefined : colors.primaryMuted}
               onPress={handleNextVideo}
               disabled={!canGoNext}
-              activeOpacity={0.85}
-              accessibilityRole="button"
-              accessibilityState={{ disabled: !canGoNext }}
               accessibilityLabel={
                 canGoNext
                   ? `Next video: ${nextVideo?.title ?? 'Next lesson'}`
@@ -169,7 +162,7 @@ function CourseVideoScreen() {
                   {nextVideo?.title}
                 </Text>
               )}
-            </TouchableOpacity>
+            </TactileButton>
           ) : null}
         </SurfaceCard>
       </View>
@@ -207,15 +200,14 @@ const styles = StyleSheet.create({
   },
   nextButton: {
     ...primaryButtonStyle,
+    flexDirection: 'column',
+    gap: 0,
     marginTop: 18,
     minHeight: 56,
   },
-  nextButtonDisabled: {
-    backgroundColor: colors.primaryMuted,
-  },
   nextButtonText: {
     ...typography.button,
-    color: colors.surface,
+    color: buttonVariants.primary.text,
   },
   nextButtonTextDisabled: {
     color: colors.textSecondary,
