@@ -161,6 +161,10 @@ export function getGoogleSignInErrorMessage(error: unknown): string {
   const code = String(maybe?.code ?? '');
   const message = maybe?.message ?? '';
 
+  if (__DEV__) {
+    console.warn(`Google Sign-In error [code=${code || 'none'}]: ${message}`);
+  }
+
   if (code === statusCodes.SIGN_IN_CANCELLED) {
     return 'Google Sign-In was cancelled.';
   }
@@ -170,7 +174,10 @@ export function getGoogleSignInErrorMessage(error: unknown): string {
   if (code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
     return 'Google Play Services is required for Google Sign-In on this device.';
   }
-  // Android DEVELOPER_ERROR (often ApiException: 10) — SHA / OAuth misconfig.
+  // Android DEVELOPER_ERROR (ApiException: 10). Play Services returns this both for a
+  // genuine OAuth/SHA-1 mismatch and as a catch-all when it cannot complete sign-in at
+  // all (e.g. no Google account on the device, or outdated Play Services), so the copy
+  // must not assert a specific cause.
   if (
     code === '10' ||
     code === 'DEVELOPER_ERROR' ||
@@ -178,9 +185,10 @@ export function getGoogleSignInErrorMessage(error: unknown): string {
     /DEVELOPER_ERROR/i.test(message)
   ) {
     return (
-      'Google Sign-In is misconfigured for this build. ' +
-      'Ensure the signing SHA-1 is registered in Firebase for package com.evolve, ' +
-      'then rebuild the app.'
+      'Google Sign-In could not be completed on this device. ' +
+      'Make sure a Google account is added to the device and Google Play Services is up to date. ' +
+      'If this persists on every device, the build may be signed with a certificate ' +
+      'that is not registered in Firebase.'
     );
   }
   if (code.startsWith('auth/')) {
