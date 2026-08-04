@@ -164,7 +164,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     ...inputFieldStyle,
-    marginBottom: 4,
     minHeight: 48,
   },
   fieldError: {

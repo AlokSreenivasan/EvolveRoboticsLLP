@@ -152,8 +152,9 @@ function TactileButton({
 
 const styles = StyleSheet.create({
   face: {
-    // Fills the footprint minus the edge, so the edge stays exactly `depth` tall.
-    flexGrow: 1,
+    // Fill the footprint minus the edge, without stealing width from parents
+    // that center-align the button (flexGrow alone can collapse to ~0 width).
+    alignSelf: 'stretch',
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',

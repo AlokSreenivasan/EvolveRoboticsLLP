@@ -79,7 +79,6 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 4,
   },
   option: {
     flex: 1,
@@ -107,6 +106,7 @@ const styles = StyleSheet.create({
     ...typography.body,
     fontWeight: '600',
     color: colors.textSecondary,
+    textAlign: 'center',
   },
   optionLabelSelected: {
     color: colors.primary,

@@ -19,6 +19,7 @@ import AppButton from '../../../components/AppButton.tsx';
 import SurfaceCard from '../../../components/ui/SurfaceCard';
 import { isValidEmail } from '../../../domain/Auth/validation/isValidEmail.ts';
 import { useAuthFlow } from '../../context/AuthFlowContext';
+import { useAuth } from '../../context/AuthContext';
 import { appAlert, appAlertCopy } from '../../../utils/alert/appAlert';
 import {
   getGoogleSignInErrorMessage,
@@ -52,6 +53,7 @@ function getAuthErrorMessage(error: { code?: string; message?: string }) {
 function LoginScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const { notifyAuthSuccess } = useAuthFlow();
+  const { establishSessionProfile } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -102,10 +104,11 @@ function LoginScreen() {
 
     setGoogleLoading(true);
     try {
-      await signInWithGoogle();
-      if (!googleSignInMountedRef.current) {
-        return;
-      }
+      const profile = await signInWithGoogle();
+      // Seed session before nav/hydration races so Profile completion is populated.
+      establishSessionProfile(profile);
+      // Always clear the intro auth gate — Auth may already be unmounted while
+      // splash covers profile hydration after Firebase creates the session.
       notifyAuthSuccess();
     } catch (error) {
       if (!googleSignInMountedRef.current) {

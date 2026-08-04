@@ -69,12 +69,12 @@ export function userProfileToFormProfile(profile: UserProfile | null): Profile {
   }
 
   return {
-    fullName: profile.fullName,
-    contactNumber: profile.phoneNumber,
-    photoUri: profile.profileImage,
-    schoolId: profile.schoolId,
-    grade: profile.grade,
-    track: profile.track,
+    fullName: profile.fullName ?? '',
+    contactNumber: profile.phoneNumber ?? '',
+    photoUri: profile.profileImage?.trim() || null,
+    schoolId: profile.schoolId ?? null,
+    grade: profile.grade ?? null,
+    track: profile.track ?? null,
   };
 }
 

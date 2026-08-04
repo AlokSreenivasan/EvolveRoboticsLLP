@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Camera } from 'lucide-react-native';
 
@@ -9,18 +9,27 @@ import {
   spacing,
   typography,
 } from '../../constants/theme';
-import TactileButton from '../ui/TactileButton';
 
 type ProfilePhotoSectionProps = {
   photoUri: string | null;
   onChangePhotoPress?: () => void;
 };
 
+/**
+ * Avatar + change-photo control. Uses TouchableOpacity (not TactileButton) so
+ * flexGrow on the tactile face cannot collapse width / stretch height in forms.
+ */
 function ProfilePhotoSection({
   photoUri,
   onChangePhotoPress,
 }: ProfilePhotoSectionProps) {
-  const hasPhoto = Boolean(photoUri);
+  const trimmedUri = photoUri?.trim() || null;
+  const [failedUri, setFailedUri] = useState<string | null>(null);
+  const hasPhoto = Boolean(trimmedUri) && trimmedUri !== failedUri;
+
+  useEffect(() => {
+    setFailedUri(null);
+  }, [trimmedUri]);
 
   return (
     <View style={styles.container}>
@@ -28,26 +37,38 @@ function ProfilePhotoSection({
         style={styles.photoFrame}
         onPress={onChangePhotoPress}
         activeOpacity={0.85}
-        disabled={!onChangePhotoPress}>
+        disabled={!onChangePhotoPress}
+        accessibilityRole="button"
+        accessibilityLabel={hasPhoto ? 'Change photo' : 'Choose photo'}>
         {hasPhoto ? (
-          <Image source={{ uri: photoUri! }} style={styles.photo} />
+          <Image
+            source={{ uri: trimmedUri! }}
+            style={styles.photo}
+            onError={() => setFailedUri(trimmedUri)}
+          />
         ) : (
           <View style={styles.placeholder}>
-            <Camera size={36} color={colors.primary} strokeWidth={2} opacity={0.45} />
+            <Camera size={36} color={colors.primary} strokeWidth={2} />
           </View>
         )}
       </TouchableOpacity>
-      <TactileButton
-        variant="secondary"
-        style={styles.changeButton}
+
+      <TouchableOpacity
+        style={[
+          styles.changeButton,
+          !onChangePhotoPress ? styles.changeButtonDisabled : null,
+        ]}
         onPress={onChangePhotoPress}
         disabled={!onChangePhotoPress}
+        activeOpacity={0.8}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        accessibilityRole="button"
         accessibilityLabel={hasPhoto ? 'Change Photo' : 'Choose Photo'}>
         <Text style={styles.changeButtonText}>
           {hasPhoto ? 'Change Photo' : 'Choose Photo'}
         </Text>
-      </TactileButton>
+      </TouchableOpacity>
+
       <Text style={styles.hint}>
         {hasPhoto
           ? 'Tap to choose a different photo from your gallery'
@@ -62,7 +83,7 @@ const PHOTO_SIZE = 120;
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    paddingVertical: 8,
+    marginBottom: 8,
   },
   photoFrame: {
     width: PHOTO_SIZE,
@@ -92,18 +113,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     borderRadius: spacing.buttonRadius,
     minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1.5,
+    borderColor: colors.primaryMuted,
+  },
+  changeButtonDisabled: {
+    opacity: 0.55,
   },
   changeButtonText: {
     ...typography.label,
     color: colors.primary,
     fontWeight: '700',
+    textAlign: 'center',
   },
   hint: {
     ...typography.bodySecondary,
     fontSize: 12,
     marginTop: 8,
     textAlign: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: 12,
   },
 });
 

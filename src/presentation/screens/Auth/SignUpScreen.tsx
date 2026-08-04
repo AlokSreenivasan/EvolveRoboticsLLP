@@ -158,10 +158,10 @@ const SignUpScreen = () => {
 
     setGoogleLoading(true);
     try {
-      await signInWithGoogle();
-      if (!googleSignInMountedRef.current) {
-        return;
-      }
+      const profile = await signInWithGoogle();
+      establishSessionProfile(profile);
+      // Always clear the intro auth gate — Auth may already be unmounted while
+      // splash covers profile hydration after Firebase creates the session.
       notifyAuthSuccess();
     } catch (error) {
       if (!googleSignInMountedRef.current) {

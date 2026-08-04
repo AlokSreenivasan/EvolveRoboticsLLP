@@ -43,12 +43,16 @@ function AppNavigation() {
    */
   const [awaitingAuthFromIntro, setAwaitingAuthFromIntro] = useState(false);
 
-  const { user, initializing, profileLoading } = useAuth();
+  const { user, initializing, profileLoading, roleLoading } = useAuth();
   const hadUserRef = useRef(false);
 
   useEffect(() => {
     if (hadUserRef.current && !user) {
       setAuthInitialRoute('Login');
+      setAwaitingAuthFromIntro(false);
+    } else if (!hadUserRef.current && user) {
+      // Firebase session established (email/Google). Clear the intro gate even
+      // if Auth UI unmounted during profile hydration before notifyAuthSuccess.
       setAwaitingAuthFromIntro(false);
     }
     hadUserRef.current = Boolean(user);
@@ -108,10 +112,12 @@ function AppNavigation() {
   const showSplash =
     !bootstrapComplete ||
     initializing ||
-    (Boolean(user) && profileLoading);
+    (Boolean(user) && (profileLoading || roleLoading));
 
   const navigationReady =
-    bootstrapComplete && !initializing && (!user || !profileLoading);
+    bootstrapComplete &&
+    !initializing &&
+    (!user || (!profileLoading && !roleLoading));
 
   const rootScreen = useMemo(() => {
     if (showIntro) {

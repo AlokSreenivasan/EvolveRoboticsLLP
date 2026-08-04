@@ -1,15 +1,16 @@
 import React, { useEffect } from 'react';
 import {
+  ActivityIndicator,
   BackHandler,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
@@ -82,6 +83,8 @@ function ProfileScreen() {
   const schoolAndGradeLocked = isSchoolLocked || isGradeLocked;
   const selectedSchool = schools.find(school => school.id === profile.schoolId);
   const gradeOptions = resolveGradeOptionsForSchool(selectedSchool);
+  const showHydrating =
+    (isLoading || roleLoading) && !profile.fullName && !userEmail;
 
   useEffect(() => {
     if (!requireCompletion || profileLoading) {
@@ -107,7 +110,10 @@ function ProfileScreen() {
       return undefined;
     }
 
-    const subscription = BackHandler.addEventListener('hardwareBackPress', () => true);
+    const subscription = BackHandler.addEventListener(
+      'hardwareBackPress',
+      () => true,
+    );
     return () => subscription.remove();
   }, [requireCompletion]);
 
@@ -159,10 +165,11 @@ function ProfileScreen() {
     : 'Update your personal details below.';
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.container}>
-      <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.flex}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
         <ScreenHeader
           title="Profile"
           subtitle={subtitle}
@@ -171,134 +178,143 @@ function ProfileScreen() {
           compact
         />
 
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}>
-          <SurfaceCard elevation="light" tinted style={styles.photoCard}>
-            <ProfilePhotoSection
-              photoUri={profile.photoUri}
-              onChangePhotoPress={isFormDisabled ? undefined : handleChangePhoto}
-            />
-          </SurfaceCard>
+        {showHydrating ? (
+          <View style={styles.loadingState}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={styles.loadingText}>Loading your profile…</Text>
+          </View>
+        ) : (
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator
+            nestedScrollEnabled>
+            <SurfaceCard elevation="default" style={styles.card}>
+              <ProfilePhotoSection
+                photoUri={profile.photoUri}
+                onChangePhotoPress={
+                  isFormDisabled ? undefined : handleChangePhoto
+                }
+              />
 
-          <SurfaceCard elevation="default" style={styles.formCard}>
-            <Text style={styles.sectionTitle}>Personal Details</Text>
+              <Text style={styles.sectionTitle}>Personal Details</Text>
 
-            <Text style={styles.label}>Full Name</Text>
-            <TextInput
-              style={[styles.input, errors.fullName ? styles.inputError : null]}
-              placeholder="Enter your full name"
-              placeholderTextColor={colors.textMuted}
-              value={profile.fullName}
-              onChangeText={setFullName}
-              autoCapitalize="words"
-              editable={!isFormDisabled}
-            />
-            {errors.fullName ? (
-              <Text style={styles.errorText}>{errors.fullName}</Text>
-            ) : null}
+              <Text style={styles.label}>Full Name</Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  errors.fullName ? styles.inputError : null,
+                ]}
+                placeholder="Enter your full name"
+                placeholderTextColor={colors.textMuted}
+                value={profile.fullName ?? ''}
+                onChangeText={setFullName}
+                autoCapitalize="words"
+                editable={!isFormDisabled}
+              />
+              {errors.fullName ? (
+                <Text style={styles.errorText}>{errors.fullName}</Text>
+              ) : null}
 
-            <View style={styles.labelRow}>
-              <Text style={styles.labelInRow}>Email</Text>
-              <Text style={styles.readOnlyBadge}>Read only</Text>
-            </View>
-            <View style={styles.readOnlyField}>
-              <Text style={styles.readOnlyText} numberOfLines={2}>
-                {userEmail || '—'}
-              </Text>
-            </View>
+              <View style={styles.labelRow}>
+                <Text style={[styles.label, styles.labelInRow]}>Email</Text>
+                <Text style={styles.readOnlyBadge}>Read only</Text>
+              </View>
+              <View style={styles.readOnlyField}>
+                <Text style={styles.readOnlyText} numberOfLines={2}>
+                  {userEmail || '—'}
+                </Text>
+              </View>
 
-            <Text style={styles.label}>Contact Number</Text>
-            <TextInput
-              style={[
-                styles.input,
-                errors.contactNumber ? styles.inputError : null,
-              ]}
-              placeholder="Enter 10-digit contact number"
-              placeholderTextColor={colors.textMuted}
-              value={profile.contactNumber}
-              onChangeText={setContactNumber}
-              keyboardType="number-pad"
-              maxLength={CONTACT_NUMBER_MAX_LENGTH}
-              inputMode="numeric"
-              editable={!isFormDisabled}
-            />
-            {errors.contactNumber ? (
-              <Text style={styles.errorText}>{errors.contactNumber}</Text>
-            ) : null}
+              <Text style={styles.label}>Contact Number</Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  errors.contactNumber ? styles.inputError : null,
+                ]}
+                placeholder="Enter 10-digit contact number"
+                placeholderTextColor={colors.textMuted}
+                value={profile.contactNumber ?? ''}
+                onChangeText={setContactNumber}
+                keyboardType="number-pad"
+                maxLength={CONTACT_NUMBER_MAX_LENGTH}
+                editable={!isFormDisabled}
+              />
+              {errors.contactNumber ? (
+                <Text style={styles.errorText}>{errors.contactNumber}</Text>
+              ) : null}
 
-            {requireLearningTrack ? (
-              <>
-                <ProfileTrackPicker
-                  selectedTrack={profile.track}
-                  onSelectTrack={setTrack}
-                  disabled={isFormDisabled}
-                  hasError={Boolean(errors.track)}
-                />
-                {errors.track ? (
-                  <Text style={styles.errorText}>{errors.track}</Text>
-                ) : null}
-              </>
-            ) : null}
+              {requireLearningTrack ? (
+                <>
+                  <ProfileTrackPicker
+                    selectedTrack={profile.track}
+                    onSelectTrack={setTrack}
+                    disabled={isFormDisabled}
+                    hasError={Boolean(errors.track)}
+                  />
+                  {errors.track ? (
+                    <Text style={styles.errorText}>{errors.track}</Text>
+                  ) : null}
+                </>
+              ) : null}
 
-            {showSchoolAndGrade ? (
-              <>
-                <Text style={styles.label}>School</Text>
-                <SchoolPicker
-                  schools={schools}
-                  selectedSchoolId={profile.schoolId}
-                  onSelectSchool={setSchoolId}
-                  loading={schoolsLoading}
-                  error={schoolsError}
-                  disabled={isFormDisabled || isSchoolLocked}
-                  hasError={Boolean(errors.schoolId)}
-                />
-                {errors.schoolId ? (
-                  <Text style={styles.errorText}>{errors.schoolId}</Text>
-                ) : null}
+              {showSchoolAndGrade ? (
+                <>
+                  <Text style={styles.label}>School</Text>
+                  <SchoolPicker
+                    schools={schools}
+                    selectedSchoolId={profile.schoolId}
+                    onSelectSchool={setSchoolId}
+                    loading={schoolsLoading}
+                    error={schoolsError}
+                    disabled={isFormDisabled || isSchoolLocked}
+                    hasError={Boolean(errors.schoolId)}
+                  />
+                  {errors.schoolId ? (
+                    <Text style={styles.errorText}>{errors.schoolId}</Text>
+                  ) : null}
 
-                <Text style={styles.label}>Grade</Text>
-                <GradePicker
-                  selectedGrade={profile.grade}
-                  onSelectGrade={setGrade}
-                  options={gradeOptions}
-                  disabled={
-                    isFormDisabled || isGradeLocked || !profile.schoolId
-                  }
-                  hasError={Boolean(errors.grade)}
-                />
-                {errors.grade ? (
-                  <Text style={styles.errorText}>{errors.grade}</Text>
-                ) : null}
-                {schoolAndGradeLocked ? (
-                  <Text style={styles.helperText}>
-                    School and grade cannot be changed once saved.
-                  </Text>
-                ) : null}
-              </>
-            ) : null}
+                  <Text style={styles.label}>Grade</Text>
+                  <GradePicker
+                    selectedGrade={profile.grade}
+                    onSelectGrade={setGrade}
+                    options={gradeOptions}
+                    disabled={
+                      isFormDisabled || isGradeLocked || !profile.schoolId
+                    }
+                    hasError={Boolean(errors.grade)}
+                  />
+                  {errors.grade ? (
+                    <Text style={styles.errorText}>{errors.grade}</Text>
+                  ) : null}
+                  {schoolAndGradeLocked ? (
+                    <Text style={styles.helperText}>
+                      School and grade cannot be changed once saved.
+                    </Text>
+                  ) : null}
+                </>
+              ) : null}
 
-            {saveError && !isSaving ? (
-              <Text style={styles.errorText}>{saveError}</Text>
-            ) : null}
+              {saveError && !isSaving ? (
+                <Text style={styles.errorText}>{saveError}</Text>
+              ) : null}
 
-            <AppButton
-              title={
-                requireCompletion
-                  ? 'Save & Continue'
-                  : 'Save Changes'
-              }
-              onPress={handleSave}
-              variant="primary"
-              loading={isSaving}
-              disabled={isFormDisabled}
-              buttonStyle={styles.saveButton}
-            />
-          </SurfaceCard>
-        </ScrollView>
-      </SafeAreaView>
-    </KeyboardAvoidingView>
+              <AppButton
+                title={
+                  requireCompletion ? 'Save & Continue' : 'Save Changes'
+                }
+                onPress={handleSave}
+                variant="primary"
+                loading={isSaving}
+                disabled={isFormDisabled}
+                buttonStyle={styles.saveButton}
+              />
+            </SurfaceCard>
+          </ScrollView>
+        )}
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
@@ -307,30 +323,49 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  flex: {
+    flex: 1,
+  },
+  scroll: {
+    flex: 1,
+  },
   scrollContent: {
-    padding: spacing.screenHorizontal,
-    paddingBottom: 32,
-    gap: 16,
+    paddingHorizontal: spacing.screenHorizontal,
+    paddingTop: 16,
+    paddingBottom: 40,
   },
-  photoCard: {
-    paddingVertical: 8,
+  loadingState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.screenHorizontal,
   },
-  formCard: {
-    padding: 16,
+  loadingText: {
+    ...typography.bodySecondary,
+    color: colors.textSecondary,
+    marginTop: 12,
+  },
+  card: {
+    padding: 20,
   },
   sectionTitle: {
     ...typography.sectionTitle,
     color: colors.primary,
-    paddingBottom: 12,
+    marginTop: 8,
     marginBottom: 4,
-    borderBottomWidth: 1,
+    paddingBottom: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.primaryMuted,
   },
   label: {
     ...typography.label,
     color: colors.primary,
-    marginBottom: 8,
     marginTop: 12,
+    marginBottom: 8,
+  },
+  labelInRow: {
+    marginTop: 0,
+    marginBottom: 0,
   },
   labelRow: {
     flexDirection: 'row',
@@ -338,10 +373,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 12,
     marginBottom: 8,
-  },
-  labelInRow: {
-    ...typography.label,
-    color: colors.primary,
   },
   readOnlyBadge: {
     fontSize: 11,
@@ -357,18 +388,21 @@ const styles = StyleSheet.create({
   },
   readOnlyField: {
     ...inputFieldStyle,
+    minHeight: 48,
+    justifyContent: 'center',
     backgroundColor: colors.primaryLight,
-    marginBottom: 4,
   },
   readOnlyText: {
-    ...typography.body,
+    fontSize: 16,
+    fontWeight: '500',
+    lineHeight: 22,
     color: colors.textSecondary,
   },
   input: {
     ...inputFieldStyle,
+    minHeight: 48,
     fontSize: 16,
     color: colors.textPrimary,
-    marginBottom: 4,
   },
   inputError: {
     borderColor: colors.danger,
@@ -376,12 +410,11 @@ const styles = StyleSheet.create({
   errorText: {
     color: colors.danger,
     fontSize: 13,
-    marginBottom: 8,
+    marginTop: 6,
   },
   helperText: {
     ...typography.bodySecondary,
-    marginTop: 4,
-    marginBottom: 8,
+    marginTop: 8,
   },
   saveButton: {
     marginTop: 20,

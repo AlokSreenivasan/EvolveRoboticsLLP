@@ -41,6 +41,8 @@ function ScreenHeader({
   style,
   compact = false,
 }: ScreenHeaderProps) {
+  const centerTitle = !showBack && !rightSlot;
+
   return (
     <View style={[styles.header, compact && styles.headerCompact, style]}>
       {showBack ? (
@@ -51,12 +53,19 @@ function ScreenHeader({
         />
       ) : null}
 
-      <View style={styles.titleRow}>
-        <View style={styles.titleBlock}>
-          <Text style={styles.title} accessibilityRole="header">
+      <View style={[styles.titleRow, centerTitle && styles.titleRowCentered]}>
+        <View
+          style={centerTitle ? styles.titleBlockCentered : styles.titleBlock}>
+          <Text
+            style={[styles.title, centerTitle && styles.textCentered]}
+            accessibilityRole="header">
             {title}
           </Text>
-          {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+          {subtitle ? (
+            <Text style={[styles.subtitle, centerTitle && styles.textCentered]}>
+              {subtitle}
+            </Text>
+          ) : null}
         </View>
         {rightSlot ? <View style={styles.rightSlot}>{rightSlot}</View> : null}
       </View>
@@ -84,9 +93,17 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 12,
   },
+  titleRowCentered: {
+    justifyContent: 'center',
+  },
   titleBlock: {
     flex: 1,
     minWidth: 0,
+    gap: 4,
+  },
+  titleBlockCentered: {
+    width: '100%',
+    alignItems: 'center',
     gap: 4,
   },
   title: {
@@ -94,6 +111,9 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     ...typography.screenSubtitle,
+  },
+  textCentered: {
+    textAlign: 'center',
   },
   rightSlot: {
     paddingTop: 2,

@@ -67,7 +67,7 @@ describe('isGoogleAccountProvider', () => {
 
 describe('signInWithGoogle', () => {
   it('exchanges the Google idToken for a Firebase credential', async () => {
-    await signInWithGoogle();
+    const profile = await signInWithGoogle();
 
     expect(googleMock.GoogleSignin.hasPlayServices).toHaveBeenCalled();
     expect(googleMock.GoogleSignin.signIn).toHaveBeenCalled();
@@ -81,6 +81,11 @@ describe('signInWithGoogle', () => {
       phoneNumber: '',
       profileImage: 'https://example.com/photo.jpg',
     });
+    expect(profile).toMatchObject({
+      uid: 'test-uid',
+      fullName: 'Test User',
+      email: 'test@example.com',
+    });
   });
 
   it('still completes sign-in if Firestore profile creation fails', async () => {
@@ -88,8 +93,14 @@ describe('signInWithGoogle', () => {
       new Error('permission-denied'),
     );
 
-    await expect(signInWithGoogle()).resolves.toBeUndefined();
+    const profile = await signInWithGoogle();
     expect(authMock.signInWithCredential).toHaveBeenCalled();
+    expect(profile).toMatchObject({
+      uid: 'test-uid',
+      fullName: 'Test User',
+      email: 'test@example.com',
+      profileImage: 'https://example.com/photo.jpg',
+    });
   });
 
   it('throws a cancellation error when the user dismisses the dialog', async () => {

@@ -16,6 +16,8 @@ import {
   GOOGLE_IOS_CLIENT_ID,
   GOOGLE_WEB_CLIENT_ID,
 } from '../../config/googleSignIn';
+import type { UserProfile } from '../../store/user/types';
+import { DEFAULT_USER_ROLE } from '../../store/user/types/role.types';
 import { createUserProfileIfNotExists } from '../firebase/userService';
 
 const firebaseAuth = getAuth();
@@ -82,9 +84,32 @@ export async function signOutGoogleSdk(): Promise<void> {
   }
 }
 
-export async function signInWithGoogle(): Promise<void> {
+function buildAuthDerivedProfile(user: FirebaseAuthTypes.User): UserProfile {
+  return {
+    uid: user.uid,
+    fullName:
+      user.displayName?.trim() || user.email?.split('@')[0] || 'User',
+    email: user.email?.trim() || '',
+    phoneNumber: user.phoneNumber?.trim() || '',
+    profileImage: user.photoURL?.trim() || null,
+    schoolId: null,
+    grade: null,
+    track: null,
+    role: DEFAULT_USER_ROLE,
+    createdAt: null,
+    updatedAt: null,
+  };
+}
+
+/**
+ * Completes Google Sign-In and ensures a Firestore users/{uid} document exists.
+ * Returns the profile so callers can seed AuthContext before navigation.
+ */
+export async function signInWithGoogle(): Promise<UserProfile> {
   if (signInInProgress) {
-    return;
+    throw Object.assign(new Error('Google Sign-In is already in progress.'), {
+      code: statusCodes.IN_PROGRESS,
+    });
   }
 
   ensureConfigured();
@@ -119,15 +144,16 @@ export async function signInWithGoogle(): Promise<void> {
 
     const credential = GoogleAuthProvider.credential(idToken);
     const { user } = await signInWithCredential(firebaseAuth, credential);
+    const authDerived = buildAuthDerivedProfile(user);
 
     // Ensure users/{uid} exists for first-time Google sign-in (email signup already does this).
-    // Non-fatal: Auth session is already established; AuthContext can hydrate a fallback.
+    // Always return a profile the UI can show — never leave Profile completion empty.
     try {
-      await createUserProfileIfNotExists(user.uid, {
-        fullName: user.displayName?.trim() || user.email?.split('@')[0] || 'User',
-        email: user.email?.trim() || '',
-        phoneNumber: user.phoneNumber?.trim() || '',
-        profileImage: user.photoURL?.trim() || null,
+      return await createUserProfileIfNotExists(user.uid, {
+        fullName: authDerived.fullName,
+        email: authDerived.email,
+        phoneNumber: authDerived.phoneNumber,
+        profileImage: authDerived.profileImage,
       });
     } catch (profileError) {
       if (__DEV__) {
@@ -136,6 +162,7 @@ export async function signInWithGoogle(): Promise<void> {
           profileError,
         );
       }
+      return authDerived;
     }
   } finally {
     signInInProgress = false;

@@ -273,7 +273,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               cachedProfile,
             );
           } else if (mountedRef.current) {
-            applyRoleResolution(null);
+            // Fetch failed — still seed a fallback so Profile/Home are not empty.
+            applyProfileIfRicher(buildFallbackUserProfile(firebaseUser));
+            applyRoleResolution('profile_document_missing');
           }
         } finally {
           if (mountedRef.current) {
