@@ -96,6 +96,7 @@ function mapEvent(id: string, data: UpcomingEventDocument): UpcomingEvent {
     title: data.title?.trim() ?? '',
     dateRange: data.dateRange?.trim() ?? '',
     timeRange: data.timeRange?.trim() ?? '',
+    location: data.location?.trim() ?? '',
     daysLeftLabel: data.daysLeftLabel?.trim() ?? '',
     track: mapContentTrack(data),
     sortOrder: typeof data.sortOrder === 'number' ? data.sortOrder : 0,
@@ -227,6 +228,7 @@ export async function createUpcomingEvent(
       title: input.title.trim(),
       dateRange: input.dateRange.trim(),
       timeRange: input.timeRange.trim(),
+      location: input.location.trim(),
       daysLeftLabel: input.daysLeftLabel.trim(),
       track: input.track,
       sortOrder,
@@ -274,6 +276,9 @@ export async function updateUpcomingEvent(
     }
     if (input.timeRange !== undefined) {
       updates.timeRange = input.timeRange.trim();
+    }
+    if (input.location !== undefined) {
+      updates.location = input.location.trim();
     }
     if (input.daysLeftLabel !== undefined) {
       updates.daysLeftLabel = input.daysLeftLabel.trim();

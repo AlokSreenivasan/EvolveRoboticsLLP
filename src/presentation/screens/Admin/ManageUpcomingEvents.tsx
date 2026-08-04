@@ -54,6 +54,7 @@ type EventFormState = {
   title: string;
   dateRange: string;
   timeRange: string;
+  location: string;
   daysLeftLabel: string;
   track: CourseTrack | null;
   isPublished: boolean;
@@ -66,6 +67,7 @@ const EMPTY_EVENT_FORM: EventFormState = {
   title: '',
   dateRange: '',
   timeRange: '',
+  location: '',
   daysLeftLabel: '',
   track: null,
   isPublished: true,
@@ -128,6 +130,7 @@ function ManageUpcomingEvents() {
         title: event.title,
         dateRange: event.dateRange,
         timeRange: event.timeRange,
+        location: event.location,
         daysLeftLabel: event.daysLeftLabel,
         track: event.track,
         isPublished: event.isPublished,
@@ -230,6 +233,7 @@ function ManageUpcomingEvents() {
         title: eventForm.title,
         dateRange: eventForm.dateRange,
         timeRange: eventForm.timeRange,
+        location: eventForm.location,
         daysLeftLabel,
         isPublished: eventForm.isPublished,
         ...visibilityPayload,
@@ -318,6 +322,9 @@ function ManageUpcomingEvents() {
             ) : null}
             {event.timeRange ? (
               <Text style={adminStyles.listRowSubtitle}>{event.timeRange}</Text>
+            ) : null}
+            {event.location ? (
+              <Text style={adminStyles.listRowSubtitle}>{event.location}</Text>
             ) : null}
             <Text style={adminStyles.listRowSubtitle}>
               {formatContentVisibilitySummary(event.track, event, schools)}
@@ -414,6 +421,14 @@ function ManageUpcomingEvents() {
             setEventForm(prev => ({ ...prev, timeRange }))
           }
           placeholder="10:00 AM – 1:00 PM"
+        />
+        <AdminFormField
+          label="Location"
+          value={eventForm.location}
+          onChangeText={location =>
+            setEventForm(prev => ({ ...prev, location }))
+          }
+          placeholder="Evolve Campus, Hall A"
         />
         <AdminPublishedSwitch
           label="Published on home"

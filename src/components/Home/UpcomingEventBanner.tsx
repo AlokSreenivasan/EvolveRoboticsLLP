@@ -32,6 +32,12 @@ function UpcomingEventBanner({ event, onPress }: UpcomingEventBannerProps) {
         {event.timeRange ? (
           <Text style={styles.meta}>{event.timeRange}</Text>
         ) : null}
+        {event.location ? (
+          <Text style={styles.meta}>
+            <Text style={styles.venueLabel}>Venue: </Text>
+            {event.location}
+          </Text>
+        ) : null}
       </View>
 
       {daysLeftLabel ? (
@@ -88,6 +94,10 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: colors.textSecondary,
     lineHeight: 17,
+  },
+  venueLabel: {
+    fontWeight: '700',
+    color: colors.textPrimary,
   },
   badge: {
     backgroundColor: colors.primaryLight,

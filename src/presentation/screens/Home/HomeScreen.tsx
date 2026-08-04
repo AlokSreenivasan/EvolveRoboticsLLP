@@ -1,13 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   FlatList,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
   RefreshControl,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import ContinueLearningCard from '../../../components/Home/ContinueLearningCard';
@@ -39,6 +41,9 @@ import { isPlaylistInProgress } from '../../../utils/continueLearning/formatVide
 
 const TAB_BAR_HEIGHT = 78;
 
+/** Survives Home remounts so back from Resources/etc. can restore offset. */
+let persistedHomeScrollY = 0;
+
 function HomeScreen() {
   useHomeFeedFocus();
   const { refresh, refreshing } = useHomeFeedRefresh();
@@ -55,6 +60,34 @@ function HomeScreen() {
     loading: progressLoading,
   } = useContinueLearningProgress();
   const scrollRef = useRef<ScrollView>(null);
+
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      persistedHomeScrollY = event.nativeEvent.contentOffset.y;
+    },
+    [],
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      const y = persistedHomeScrollY;
+      if (y <= 0) {
+        return undefined;
+      }
+
+      const restore = () => {
+        scrollRef.current?.scrollTo({ y, animated: false });
+      };
+
+      const frame = requestAnimationFrame(restore);
+      // Second pass after layout in case the first scroll was clamped.
+      const timeout = setTimeout(restore, 50);
+      return () => {
+        cancelAnimationFrame(frame);
+        clearTimeout(timeout);
+      };
+    }, []),
+  );
 
   const resumePlaylists = useMemo(
     () =>
@@ -97,6 +130,7 @@ function HomeScreen() {
         break;
       case 'home':
       default:
+        persistedHomeScrollY = 0;
         scrollRef.current?.scrollTo({ y: 0, animated: true });
         break;
     }
@@ -127,6 +161,8 @@ function HomeScreen() {
       <ScrollView
         ref={scrollRef}
         showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

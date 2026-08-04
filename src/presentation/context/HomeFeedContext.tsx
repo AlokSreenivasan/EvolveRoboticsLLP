@@ -250,10 +250,8 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
     let eventsSectionReady = false;
     let eventsReady = false;
 
-    setPlaylistsLoading(true);
-    setImportantLoading(true);
-    setEventsLoading(true);
-    setNotificationsLoading(true);
+    // Keep prior data visible on Home blur→focus / pull-to-refresh. Flipping
+    // loading back to true collapses sections and resets ScrollView offset.
     setPlaylistsError(null);
     setImportantError(null);
     setEventsError(null);
@@ -378,7 +376,8 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
       return;
     }
 
-    setProgressLoading(true);
+    // Do not set progressLoading true on re-subscribe — Continue Learning
+    // would unmount and jump the Home ScrollView to the top.
     setProgressError(null);
     const unsub = subscribeContinueLearningProgress(
       next => {
@@ -407,7 +406,6 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
       return;
     }
 
-    setReadsLoading(true);
     const unsub = subscribeNotificationReads(
       next => {
         setReadByNotificationId(next);

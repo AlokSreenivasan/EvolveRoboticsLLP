@@ -29,6 +29,7 @@ export interface UpcomingEventDocument extends SchoolAudienceDocument {
   title: string;
   dateRange: string;
   timeRange: string;
+  location: string;
   daysLeftLabel: string;
   track: CourseTrack;
   sortOrder: number;
@@ -45,6 +46,7 @@ export interface UpcomingEvent extends SchoolAudienceFields {
   title: string;
   dateRange: string;
   timeRange: string;
+  location: string;
   daysLeftLabel: string;
   track: CourseTrack | null;
   sortOrder: number;
@@ -60,6 +62,7 @@ export type CreateUpcomingEventInput = {
   title: string;
   dateRange: string;
   timeRange: string;
+  location: string;
   daysLeftLabel: string;
   track: CourseTrack;
   isPublished?: boolean;

@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.screenHorizontal,
-    paddingTop: 8,
+    paddingTop: 18,
     paddingBottom: 14,
     backgroundColor: colors.background,
     gap: 14,
@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: colors.textPrimary,
     letterSpacing: -0.5,
-    marginBottom: 4,
+    marginBottom: 8,
   },
   tagline: {
     fontSize: 13,
