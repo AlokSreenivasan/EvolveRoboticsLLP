@@ -26,6 +26,7 @@ type AdminSchoolAudiencePickerProps = {
   schoolsError?: string | null;
   label?: string;
   hint?: string;
+  error?: boolean;
   onAudienceChange: (audience: SchoolAudience) => void;
   onToggleSchool: (schoolId: string) => void;
   onSchoolGradeModeChange: (schoolId: string, mode: 'all' | 'grades') => void;
@@ -42,6 +43,7 @@ function AdminSchoolAudiencePicker({
   schoolsError = null,
   label = 'Audience',
   hint = 'Send to all schools, specific schools, or limit grades within each school.',
+  error = false,
   onAudienceChange,
   onToggleSchool,
   onSchoolGradeModeChange,
@@ -49,15 +51,21 @@ function AdminSchoolAudiencePicker({
   getSchoolGradeMode,
 }: AdminSchoolAudiencePickerProps) {
   return (
-    <View style={styles.wrap}>
+    <View style={[styles.wrap, error ? adminStyles.sectionError : null]}>
       <Text style={adminStyles.fieldLabel}>{label}</Text>
       <Text style={adminStyles.sectionHint}>{hint}</Text>
+      {error ? (
+        <Text style={adminStyles.fieldErrorHint}>
+          Complete school visibility before saving.
+        </Text>
+      ) : null}
 
       <View style={styles.modeRow}>
         <Pressable
           style={[
             styles.modeChip,
             audience === 'all' ? styles.modeChipActive : null,
+            error ? styles.modeChipError : null,
           ]}
           onPress={() => onAudienceChange('all')}
           accessibilityRole="button"
@@ -74,6 +82,7 @@ function AdminSchoolAudiencePicker({
           style={[
             styles.modeChip,
             audience === 'schools' ? styles.modeChipActive : null,
+            error ? styles.modeChipError : null,
           ]}
           onPress={() => onAudienceChange('schools')}
           accessibilityRole="button"
@@ -243,6 +252,9 @@ const styles = StyleSheet.create({
   modeChipActive: {
     borderColor: colors.primary,
     backgroundColor: colors.primaryLight,
+  },
+  modeChipError: {
+    borderColor: colors.danger,
   },
   modeChipText: {
     fontSize: 14,

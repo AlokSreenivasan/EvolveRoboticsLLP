@@ -53,9 +53,27 @@ export const adminStyles = StyleSheet.create({
     backgroundColor: colors.surface,
     ...cardShadowLight,
   },
+  inputError: {
+    borderColor: colors.danger,
+    backgroundColor: colors.dangerLight,
+  },
   inputMultiline: {
     minHeight: 88,
     textAlignVertical: 'top',
+  },
+  fieldErrorHint: {
+    marginTop: 6,
+    marginBottom: 8,
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.danger,
+  },
+  sectionError: {
+    borderWidth: 1,
+    borderColor: colors.danger,
+    backgroundColor: colors.dangerLight,
+    borderRadius: spacing.inputRadius,
+    padding: 12,
   },
   primaryButton: {
     flex: 1,

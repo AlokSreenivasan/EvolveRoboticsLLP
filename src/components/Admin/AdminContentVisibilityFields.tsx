@@ -25,6 +25,8 @@ type AdminContentVisibilityFieldsProps = {
   onToggleSchoolGrade: (schoolId: string, gradeId: string) => void;
   getSchoolGradeMode: (schoolId: string) => 'all' | 'grades';
   trackHint?: string;
+  trackError?: boolean;
+  audienceError?: boolean;
 };
 
 function AdminContentVisibilityFields({
@@ -43,6 +45,8 @@ function AdminContentVisibilityFields({
   onToggleSchoolGrade,
   getSchoolGradeMode,
   trackHint = 'Required. Choose whether this is shown to kids or professionals.',
+  trackError = false,
+  audienceError = false,
 }: AdminContentVisibilityFieldsProps) {
   return (
     <>
@@ -56,6 +60,7 @@ function AdminContentVisibilityFields({
         }}
         label="Visibility *"
         hint={trackHint}
+        error={trackError}
       />
       {track === 'kids' ? (
         <AdminSchoolAudiencePicker
@@ -67,6 +72,7 @@ function AdminContentVisibilityFields({
           schools={schools}
           schoolsLoading={schoolsLoading}
           schoolsError={schoolsError}
+          error={audienceError}
           onAudienceChange={onAudienceChange}
           onToggleSchool={onToggleSchool}
           onSchoolGradeModeChange={onSchoolGradeModeChange}

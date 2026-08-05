@@ -13,6 +13,7 @@ type AdminCourseTrackPickerProps = {
   onChange: (track: CourseTrack) => void;
   label?: string;
   hint?: string;
+  error?: boolean;
 };
 
 function AdminCourseTrackPicker({
@@ -20,11 +21,15 @@ function AdminCourseTrackPicker({
   onChange,
   label = 'Course track *',
   hint = 'Required. Choose whether this course is listed under For Kids or For Professionals.',
+  error = false,
 }: AdminCourseTrackPickerProps) {
   return (
-    <View style={styles.wrap}>
+    <View style={[styles.wrap, error ? adminStyles.sectionError : null]}>
       <Text style={adminStyles.fieldLabel}>{label}</Text>
       <Text style={adminStyles.sectionHint}>{hint}</Text>
+      {error ? (
+        <Text style={adminStyles.fieldErrorHint}>Select kids or professionals.</Text>
+      ) : null}
 
       <View style={styles.optionList}>
         {COURSE_TRACK_OPTIONS.map(option => {
@@ -32,7 +37,11 @@ function AdminCourseTrackPicker({
           return (
             <Pressable
               key={option.value}
-              style={[styles.option, selected ? styles.optionSelected : null]}
+              style={[
+                styles.option,
+                selected ? styles.optionSelected : null,
+                error && !selected ? styles.optionError : null,
+              ]}
               onPress={() => onChange(option.value)}
               accessibilityRole="radio"
               accessibilityState={{ selected }}>
@@ -70,6 +79,9 @@ const styles = StyleSheet.create({
   optionSelected: {
     borderColor: colors.primary,
     backgroundColor: colors.primaryLight,
+  },
+  optionError: {
+    borderColor: colors.danger,
   },
   optionLabel: {
     fontSize: 14,

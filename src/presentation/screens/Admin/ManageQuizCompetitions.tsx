@@ -27,6 +27,7 @@ import {
   buildContentVisibilityPayload,
   formatContentVisibilitySummary,
   validateContentVisibility,
+  validateContentVisibilityTrack,
 } from '../../../utils/admin/contentVisibility';
 import {
   createQuizCompetition,
@@ -58,6 +59,20 @@ type QuestionDraft = {
   correctChoiceIndex: number;
 };
 
+type QuizFieldErrors = {
+  title?: boolean;
+  timerMinutes?: boolean;
+  xpValue?: boolean;
+  questions?: boolean;
+  track?: boolean;
+  audience?: boolean;
+};
+
+type QuestionFieldErrors = {
+  prompt?: boolean;
+  choices?: [boolean, boolean, boolean, boolean];
+};
+
 const EMPTY_QUIZ_FORM: QuizFormState = {
   title: '',
   description: '',
@@ -75,6 +90,9 @@ const EMPTY_QUESTION_DRAFT: QuestionDraft = {
   choices: ['', '', '', ''],
   correctChoiceIndex: 0,
 };
+
+const EMPTY_QUIZ_FIELD_ERRORS: QuizFieldErrors = {};
+const EMPTY_QUESTION_FIELD_ERRORS: QuestionFieldErrors = {};
 
 function newId(prefix: string) {
   return `${prefix}_${Date.now().toString(36)}_${Math.random()
@@ -149,12 +167,27 @@ function ManageQuizCompetitions() {
   const [editorVisible, setEditorVisible] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<QuizFormState>(EMPTY_QUIZ_FORM);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] =
+    useState<QuizFieldErrors>(EMPTY_QUIZ_FIELD_ERRORS);
   const [saving, setSaving] = useState(false);
 
   const [questionEditorVisible, setQuestionEditorVisible] = useState(false);
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
   const [questionDraft, setQuestionDraft] =
     useState<QuestionDraft>(EMPTY_QUESTION_DRAFT);
+  const [questionFieldErrors, setQuestionFieldErrors] =
+    useState<QuestionFieldErrors>(EMPTY_QUESTION_FIELD_ERRORS);
+
+  const clearQuizErrors = () => {
+    setFormError(null);
+    setFieldErrors(EMPTY_QUIZ_FIELD_ERRORS);
+  };
+
+  const clearQuestionErrors = () => {
+    setFormError(null);
+    setQuestionFieldErrors(EMPTY_QUESTION_FIELD_ERRORS);
+  };
 
   const questionCountLabel = useMemo(() => {
     const count = form.questions.length;
@@ -165,6 +198,8 @@ function ManageQuizCompetitions() {
     setEditingId(null);
     setForm(EMPTY_QUIZ_FORM);
     audienceForm.resetAudience();
+    clearQuizErrors();
+    clearQuestionErrors();
     setEditorVisible(true);
   };
 
@@ -186,6 +221,9 @@ function ManageQuizCompetitions() {
         schoolIds: quiz.schoolIds,
         schoolGradeIds: quiz.schoolGradeIds,
       });
+      setFormError(null);
+      setFieldErrors(EMPTY_QUIZ_FIELD_ERRORS);
+      setQuestionFieldErrors(EMPTY_QUESTION_FIELD_ERRORS);
       setEditorVisible(true);
     },
     [resetAudience],
@@ -196,6 +234,7 @@ function ManageQuizCompetitions() {
     setEditingId(null);
     setForm(EMPTY_QUIZ_FORM);
     audienceForm.resetAudience();
+    clearQuizErrors();
     closeQuestionEditor();
   };
 
@@ -203,12 +242,16 @@ function ManageQuizCompetitions() {
     const id = newId('q');
     setEditingQuestionId(null);
     setQuestionDraft({ ...EMPTY_QUESTION_DRAFT, id });
+    clearQuestionErrors();
+    clearQuizErrors();
     setQuestionEditorVisible(true);
   };
 
   const openEditQuestionEditor = (question: ExamQuestion) => {
     setEditingQuestionId(question.id);
     setQuestionDraft(fromQuestion(question));
+    clearQuestionErrors();
+    clearQuizErrors();
     setQuestionEditorVisible(true);
   };
 
@@ -216,25 +259,32 @@ function ManageQuizCompetitions() {
     setQuestionEditorVisible(false);
     setEditingQuestionId(null);
     setQuestionDraft(EMPTY_QUESTION_DRAFT);
+    clearQuestionErrors();
   };
 
   const upsertQuestion = () => {
+    const nextErrors: QuestionFieldErrors = {};
+    const messages: string[] = [];
+
     if (!questionDraft.prompt.trim()) {
-      appAlert(
-        appAlertCopy.admin.questionRequiredTitle,
-        appAlertCopy.admin.questionRequired,
-      );
-      return;
+      nextErrors.prompt = true;
+      messages.push(appAlertCopy.admin.questionRequired);
     }
 
-    const missingChoiceIndex = questionDraft.choices.findIndex(
-      choice => !choice.trim(),
-    );
-    if (missingChoiceIndex >= 0) {
-      appAlert(
-        appAlertCopy.admin.choicesRequiredTitle,
-        appAlertCopy.admin.allChoicesRequired(4, 'options'),
-      );
+    const choiceErrors: [boolean, boolean, boolean, boolean] = [
+      !questionDraft.choices[0].trim(),
+      !questionDraft.choices[1].trim(),
+      !questionDraft.choices[2].trim(),
+      !questionDraft.choices[3].trim(),
+    ];
+    if (choiceErrors.some(Boolean)) {
+      nextErrors.choices = choiceErrors;
+      messages.push(appAlertCopy.admin.allChoicesRequired(4, 'options'));
+    }
+
+    if (messages.length > 0) {
+      setQuestionFieldErrors(nextErrors);
+      setFormError(messages[0] ?? 'Fill in the highlighted fields.');
       return;
     }
 
@@ -249,6 +299,7 @@ function ManageQuizCompetitions() {
       updated[index] = nextQuestion;
       return { ...prev, questions: updated };
     });
+    setFieldErrors(prev => ({ ...prev, questions: undefined }));
     closeQuestionEditor();
   };
 
@@ -272,33 +323,33 @@ function ManageQuizCompetitions() {
     );
   };
 
-  const validateQuiz = (): string | null => {
+  const validateQuiz = (): {
+    message: string | null;
+    fields: QuizFieldErrors;
+  } => {
+    const fields: QuizFieldErrors = {};
+    const messages: string[] = [];
+
     if (!form.title.trim()) {
-      return 'Enter a quiz title.';
+      fields.title = true;
+      messages.push('Enter a quiz title.');
     }
 
     const timerSeconds = toTimerSeconds(form.timerMinutes);
     if (timerSeconds <= 0) {
-      return 'Enter a timer (minutes) greater than 0.';
+      fields.timerMinutes = true;
+      messages.push('Enter a timer (minutes) greater than 0.');
     }
 
     const xpValue = toXpValue(form.xpValue);
     if (xpValue <= 0) {
-      return 'Enter an XP value greater than 0.';
+      fields.xpValue = true;
+      messages.push('Enter an XP value greater than 0.');
     }
 
     if (form.questions.length === 0) {
-      return 'Add at least 1 question.';
-    }
-
-    return null;
-  };
-
-  const handleSaveQuiz = async () => {
-    const validationError = validateQuiz();
-    if (validationError) {
-      appAlert(appAlertCopy.admin.cannotSaveTitle('quiz'), validationError);
-      return;
+      fields.questions = true;
+      messages.push('Add at least 1 question.');
     }
 
     const visibilityError = validateContentVisibility(
@@ -306,7 +357,25 @@ function ManageQuizCompetitions() {
       audienceForm.validate,
     );
     if (visibilityError) {
-      appAlert(appAlertCopy.admin.visibilityRequiredTitle, visibilityError);
+      if (validateContentVisibilityTrack(form.track)) {
+        fields.track = true;
+      } else {
+        fields.audience = true;
+      }
+      messages.push(visibilityError);
+    }
+
+    return {
+      message: messages[0] ?? null,
+      fields,
+    };
+  };
+
+  const handleSaveQuiz = async () => {
+    const { message: validationError, fields } = validateQuiz();
+    if (validationError) {
+      setFieldErrors(fields);
+      setFormError(validationError);
       return;
     }
 
@@ -326,6 +395,7 @@ function ManageQuizCompetitions() {
     };
 
     setSaving(true);
+    clearQuizErrors();
     try {
       if (editingId) {
         await updateQuizCompetition(editingId, payload);
@@ -334,7 +404,7 @@ function ManageQuizCompetitions() {
       }
       closeEditor();
     } catch (error) {
-      appAlert(appAlertCopy.admin.saveFailedTitle, toAdminWriteErrorMessage(error));
+      setFormError(toAdminWriteErrorMessage(error));
     } finally {
       setSaving(false);
     }
@@ -433,6 +503,7 @@ function ManageQuizCompetitions() {
             : 'Save quiz'
         }
         saving={questionEditorVisible ? false : saving}
+        error={formError}
         onClose={closeEditor}
         onSave={questionEditorVisible ? upsertQuestion : handleSaveQuiz}>
         {questionEditorVisible ? (
@@ -446,11 +517,14 @@ function ManageQuizCompetitions() {
             <AdminFormField
               label="Question"
               value={questionDraft.prompt}
-              onChangeText={prompt =>
-                setQuestionDraft(prev => ({ ...prev, prompt }))
-              }
+              onChangeText={prompt => {
+                setQuestionDraft(prev => ({ ...prev, prompt }));
+                setQuestionFieldErrors(prev => ({ ...prev, prompt: undefined }));
+                setFormError(null);
+              }}
               placeholder="Which sensor detects distance using sound waves?"
               multiline
+              error={questionFieldErrors.prompt}
             />
 
             <Text style={styles.correctHeading}>Options (tap to mark correct)</Text>
@@ -458,12 +532,14 @@ function ManageQuizCompetitions() {
               {questionDraft.choices.map((choice, idx) => {
                 const selected = questionDraft.correctChoiceIndex === idx;
                 const Icon = selected ? CheckCircle2 : Circle;
+                const choiceError = questionFieldErrors.choices?.[idx] === true;
                 return (
                   <TouchableOpacity
                     key={idx}
                     style={[
                       styles.choiceRow,
                       selected && styles.choiceRowSelected,
+                      choiceError && styles.choiceRowError,
                     ]}
                     activeOpacity={0.85}
                     onPress={() =>
@@ -483,16 +559,36 @@ function ManageQuizCompetitions() {
                       <AdminFormField
                         label={`Option ${String.fromCharCode(65 + idx)}`}
                         value={choice}
-                        onChangeText={text =>
+                        onChangeText={text => {
                           setQuestionDraft(prev => {
                             const next = [
                               ...prev.choices,
                             ] as QuestionDraft['choices'];
                             next[idx] = text;
                             return { ...prev, choices: next };
-                          })
-                        }
+                          });
+                          setQuestionFieldErrors(prev => {
+                            if (!prev.choices) {
+                              return prev;
+                            }
+                            const nextChoices = [...prev.choices] as [
+                              boolean,
+                              boolean,
+                              boolean,
+                              boolean,
+                            ];
+                            nextChoices[idx] = false;
+                            return {
+                              ...prev,
+                              choices: nextChoices.some(Boolean)
+                                ? nextChoices
+                                : undefined,
+                            };
+                          });
+                          setFormError(null);
+                        }}
                         placeholder={idx === 0 ? 'Ultrasonic sensor' : undefined}
+                        error={choiceError}
                       />
                     </View>
                   </TouchableOpacity>
@@ -505,8 +601,13 @@ function ManageQuizCompetitions() {
             <AdminFormField
               label="Quiz title"
               value={form.title}
-              onChangeText={title => setForm(prev => ({ ...prev, title }))}
+              onChangeText={title => {
+                setForm(prev => ({ ...prev, title }));
+                setFieldErrors(prev => ({ ...prev, title: undefined }));
+                setFormError(null);
+              }}
               placeholder="Robotics basics — round 1"
+              error={fieldErrors.title}
             />
             <AdminFormField
               label="Description (optional)"
@@ -520,18 +621,26 @@ function ManageQuizCompetitions() {
             <AdminFormField
               label="Timer (minutes)"
               value={form.timerMinutes}
-              onChangeText={timerMinutes =>
-                setForm(prev => ({ ...prev, timerMinutes }))
-              }
+              onChangeText={timerMinutes => {
+                setForm(prev => ({ ...prev, timerMinutes }));
+                setFieldErrors(prev => ({ ...prev, timerMinutes: undefined }));
+                setFormError(null);
+              }}
               placeholder="15"
               keyboardType="number-pad"
+              error={fieldErrors.timerMinutes}
             />
             <AdminFormField
               label="XP reward"
               value={form.xpValue}
-              onChangeText={xpValue => setForm(prev => ({ ...prev, xpValue }))}
+              onChangeText={xpValue => {
+                setForm(prev => ({ ...prev, xpValue }));
+                setFieldErrors(prev => ({ ...prev, xpValue: undefined }));
+                setFormError(null);
+              }}
               placeholder="20"
               keyboardType="number-pad"
+              error={fieldErrors.xpValue}
             />
             <AdminPublishedSwitch
               label="Allow retry after completion"
@@ -541,7 +650,11 @@ function ManageQuizCompetitions() {
               }
             />
 
-            <View style={styles.questionsHeader}>
+            <View
+              style={[
+                styles.questionsHeader,
+                fieldErrors.questions ? styles.questionsSectionError : null,
+              ]}>
               <Text style={styles.questionsTitle}>Questions</Text>
               <TactileButton
                 style={styles.addQuestionButton}
@@ -555,10 +668,24 @@ function ManageQuizCompetitions() {
                 <Text style={styles.addQuestionText}>Add</Text>
               </TactileButton>
             </View>
-            <Text style={styles.questionsSubtitle}>{questionCountLabel}</Text>
+            <Text
+              style={[
+                styles.questionsSubtitle,
+                fieldErrors.questions ? styles.questionsErrorHint : null,
+              ]}>
+              {fieldErrors.questions
+                ? 'Add at least 1 question.'
+                : questionCountLabel}
+            </Text>
 
             {form.questions.length === 0 ? (
-              <Text style={styles.emptyQuestions}>No questions yet.</Text>
+              <Text
+                style={[
+                  styles.emptyQuestions,
+                  fieldErrors.questions ? styles.emptyQuestionsError : null,
+                ]}>
+                No questions yet.
+              </Text>
             ) : (
               <View style={styles.questionList}>
                 {form.questions.map((question, index) => (
@@ -600,7 +727,15 @@ function ManageQuizCompetitions() {
             />
             <AdminContentVisibilityFields
               track={form.track}
-              onTrackChange={track => setForm(prev => ({ ...prev, track }))}
+              onTrackChange={track => {
+                setForm(prev => ({ ...prev, track }));
+                setFieldErrors(prev => ({
+                  ...prev,
+                  track: undefined,
+                  audience: undefined,
+                }));
+                setFormError(null);
+              }}
               onProfessionalsTrackSelected={() => audienceForm.resetAudience()}
               audience={audienceForm.audience}
               selectedSchoolIds={audienceForm.schoolIds}
@@ -608,12 +743,30 @@ function ManageQuizCompetitions() {
               schools={schools}
               schoolsLoading={schoolsLoading}
               schoolsError={schoolsError}
-              onAudienceChange={audienceForm.setAudienceMode}
-              onToggleSchool={audienceForm.toggleSchoolId}
-              onSchoolGradeModeChange={audienceForm.setSchoolGradeMode}
-              onToggleSchoolGrade={audienceForm.toggleSchoolGrade}
+              onAudienceChange={next => {
+                audienceForm.setAudienceMode(next);
+                setFieldErrors(prev => ({ ...prev, audience: undefined }));
+                setFormError(null);
+              }}
+              onToggleSchool={schoolId => {
+                audienceForm.toggleSchoolId(schoolId);
+                setFieldErrors(prev => ({ ...prev, audience: undefined }));
+                setFormError(null);
+              }}
+              onSchoolGradeModeChange={(schoolId, mode) => {
+                audienceForm.setSchoolGradeMode(schoolId, mode);
+                setFieldErrors(prev => ({ ...prev, audience: undefined }));
+                setFormError(null);
+              }}
+              onToggleSchoolGrade={(schoolId, gradeId) => {
+                audienceForm.toggleSchoolGrade(schoolId, gradeId);
+                setFieldErrors(prev => ({ ...prev, audience: undefined }));
+                setFormError(null);
+              }}
               getSchoolGradeMode={audienceForm.getSchoolGradeMode}
               trackHint="Required. Choose whether this quiz is visible to kids or professionals."
+              trackError={fieldErrors.track}
+              audienceError={fieldErrors.audience}
             />
           </>
         )}
@@ -634,6 +787,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  questionsSectionError: {
+    borderWidth: 1,
+    borderColor: colors.danger,
+    backgroundColor: colors.dangerLight,
+    borderRadius: spacing.inputRadius,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
   questionsTitle: {
     fontSize: 16,
@@ -657,10 +818,18 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginBottom: 10,
   },
+  questionsErrorHint: {
+    color: colors.danger,
+    fontWeight: '600',
+  },
   emptyQuestions: {
     fontSize: 13,
     color: colors.textMuted,
     marginBottom: 14,
+  },
+  emptyQuestionsError: {
+    color: colors.danger,
+    fontWeight: '600',
   },
   questionList: {
     gap: 10,
@@ -725,6 +894,10 @@ const styles = StyleSheet.create({
   choiceRowSelected: {
     borderColor: colors.primaryMuted,
     backgroundColor: colors.primaryLight,
+  },
+  choiceRowError: {
+    borderColor: colors.danger,
+    backgroundColor: colors.dangerLight,
   },
   choiceIcon: {
     paddingTop: 22,
