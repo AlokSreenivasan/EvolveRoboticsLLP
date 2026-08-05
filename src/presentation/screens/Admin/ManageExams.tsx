@@ -26,6 +26,7 @@ import {
   buildContentVisibilityPayload,
   formatContentVisibilitySummary,
   validateContentVisibility,
+  validateContentVisibilityTrack,
 } from '../../../utils/admin/contentVisibility';
 import {
   createExam,
@@ -55,6 +56,19 @@ type QuestionDraft = {
   correctChoiceIndex: number;
 };
 
+type ExamFieldErrors = {
+  title?: boolean;
+  timerMinutes?: boolean;
+  questions?: boolean;
+  track?: boolean;
+  audience?: boolean;
+};
+
+type QuestionFieldErrors = {
+  prompt?: boolean;
+  choices?: [boolean, boolean, boolean, boolean];
+};
+
 const EMPTY_EXAM_FORM: ExamFormState = {
   title: '',
   description: '',
@@ -63,6 +77,16 @@ const EMPTY_EXAM_FORM: ExamFormState = {
   isPublished: true,
   questions: [],
 };
+
+const EMPTY_QUESTION_DRAFT: QuestionDraft = {
+  id: '',
+  prompt: '',
+  choices: ['', '', '', ''],
+  correctChoiceIndex: 0,
+};
+
+const EMPTY_EXAM_FIELD_ERRORS: ExamFieldErrors = {};
+const EMPTY_QUESTION_FIELD_ERRORS: QuestionFieldErrors = {};
 
 function newId(prefix: string) {
   return `${prefix}_${Date.now().toString(36)}_${Math.random()
@@ -119,13 +143,6 @@ function toQuestion(draft: QuestionDraft): ExamQuestion {
   };
 }
 
-const EMPTY_QUESTION_DRAFT: QuestionDraft = {
-  id: '',
-  prompt: '',
-  choices: ['', '', '', ''],
-  correctChoiceIndex: 0,
-};
-
 function ManageExams() {
   const { exams, loading } = useExams({ includeUnpublished: true });
   const { schools, loading: schoolsLoading, error: schoolsError } = useSchools();
@@ -136,12 +153,27 @@ function ManageExams() {
   const [editorVisible, setEditorVisible] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<ExamFormState>(EMPTY_EXAM_FORM);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] =
+    useState<ExamFieldErrors>(EMPTY_EXAM_FIELD_ERRORS);
   const [saving, setSaving] = useState(false);
 
   const [questionEditorVisible, setQuestionEditorVisible] = useState(false);
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
   const [questionDraft, setQuestionDraft] =
     useState<QuestionDraft>(EMPTY_QUESTION_DRAFT);
+  const [questionFieldErrors, setQuestionFieldErrors] =
+    useState<QuestionFieldErrors>(EMPTY_QUESTION_FIELD_ERRORS);
+
+  const clearExamErrors = () => {
+    setFormError(null);
+    setFieldErrors(EMPTY_EXAM_FIELD_ERRORS);
+  };
+
+  const clearQuestionErrors = () => {
+    setFormError(null);
+    setQuestionFieldErrors(EMPTY_QUESTION_FIELD_ERRORS);
+  };
 
   const questionCountLabel = useMemo(() => {
     const count = form.questions.length;
@@ -152,6 +184,8 @@ function ManageExams() {
     setEditingId(null);
     setForm(EMPTY_EXAM_FORM);
     audienceForm.resetAudience();
+    clearExamErrors();
+    clearQuestionErrors();
     setEditorVisible(true);
   };
 
@@ -171,6 +205,9 @@ function ManageExams() {
         schoolIds: exam.schoolIds,
         schoolGradeIds: exam.schoolGradeIds,
       });
+      setFormError(null);
+      setFieldErrors(EMPTY_EXAM_FIELD_ERRORS);
+      setQuestionFieldErrors(EMPTY_QUESTION_FIELD_ERRORS);
       setEditorVisible(true);
     },
     [resetAudience],
@@ -181,6 +218,7 @@ function ManageExams() {
     setEditingId(null);
     setForm(EMPTY_EXAM_FORM);
     audienceForm.resetAudience();
+    clearExamErrors();
     closeQuestionEditor();
   };
 
@@ -188,12 +226,16 @@ function ManageExams() {
     const id = newId('q');
     setEditingQuestionId(null);
     setQuestionDraft({ ...EMPTY_QUESTION_DRAFT, id });
+    clearQuestionErrors();
+    clearExamErrors();
     setQuestionEditorVisible(true);
   };
 
   const openEditQuestionEditor = (question: ExamQuestion) => {
     setEditingQuestionId(question.id);
     setQuestionDraft(fromQuestion(question));
+    clearQuestionErrors();
+    clearExamErrors();
     setQuestionEditorVisible(true);
   };
 
@@ -201,25 +243,32 @@ function ManageExams() {
     setQuestionEditorVisible(false);
     setEditingQuestionId(null);
     setQuestionDraft(EMPTY_QUESTION_DRAFT);
+    clearQuestionErrors();
   };
 
   const upsertQuestion = () => {
+    const nextErrors: QuestionFieldErrors = {};
+    const messages: string[] = [];
+
     if (!questionDraft.prompt.trim()) {
-      appAlert(
-        appAlertCopy.admin.questionRequiredTitle,
-        appAlertCopy.admin.questionRequired,
-      );
-      return;
+      nextErrors.prompt = true;
+      messages.push(appAlertCopy.admin.questionRequired);
     }
 
-    const missingChoiceIndex = questionDraft.choices.findIndex(
-      choice => !choice.trim(),
-    );
-    if (missingChoiceIndex >= 0) {
-      appAlert(
-        appAlertCopy.admin.choicesRequiredTitle,
-        appAlertCopy.admin.allChoicesRequired(4, 'choices'),
-      );
+    const choiceErrors: [boolean, boolean, boolean, boolean] = [
+      !questionDraft.choices[0].trim(),
+      !questionDraft.choices[1].trim(),
+      !questionDraft.choices[2].trim(),
+      !questionDraft.choices[3].trim(),
+    ];
+    if (choiceErrors.some(Boolean)) {
+      nextErrors.choices = choiceErrors;
+      messages.push(appAlertCopy.admin.allChoicesRequired(4, 'choices'));
+    }
+
+    if (messages.length > 0) {
+      setQuestionFieldErrors(nextErrors);
+      setFormError(messages[0] ?? 'Fill in the highlighted fields.');
       return;
     }
 
@@ -234,6 +283,7 @@ function ManageExams() {
       updated[index] = nextQuestion;
       return { ...prev, questions: updated };
     });
+    setFieldErrors(prev => ({ ...prev, questions: undefined }));
     closeQuestionEditor();
   };
 
@@ -257,28 +307,27 @@ function ManageExams() {
     );
   };
 
-  const validateExam = (): string | null => {
+  const validateExam = (): {
+    message: string | null;
+    fields: ExamFieldErrors;
+  } => {
+    const fields: ExamFieldErrors = {};
+    const messages: string[] = [];
+
     if (!form.title.trim()) {
-      return 'Enter an exam title.';
+      fields.title = true;
+      messages.push('Enter an exam title.');
     }
 
     const timerSeconds = toTimerSeconds(form.timerMinutes);
     if (timerSeconds <= 0) {
-      return 'Enter a timer (minutes) greater than 0.';
+      fields.timerMinutes = true;
+      messages.push('Enter a timer (minutes) greater than 0.');
     }
 
     if (form.questions.length === 0) {
-      return 'Add at least 1 question.';
-    }
-
-    return null;
-  };
-
-  const handleSaveExam = async () => {
-    const validationError = validateExam();
-    if (validationError) {
-      appAlert(appAlertCopy.admin.cannotSaveTitle('exam'), validationError);
-      return;
+      fields.questions = true;
+      messages.push('Add at least 1 question.');
     }
 
     const visibilityError = validateContentVisibility(
@@ -286,7 +335,25 @@ function ManageExams() {
       audienceForm.validate,
     );
     if (visibilityError) {
-      appAlert(appAlertCopy.admin.visibilityRequiredTitle, visibilityError);
+      if (validateContentVisibilityTrack(form.track)) {
+        fields.track = true;
+      } else {
+        fields.audience = true;
+      }
+      messages.push(visibilityError);
+    }
+
+    return {
+      message: messages[0] ?? null,
+      fields,
+    };
+  };
+
+  const handleSaveExam = async () => {
+    const { message: validationError, fields } = validateExam();
+    if (validationError) {
+      setFieldErrors(fields);
+      setFormError(validationError);
       return;
     }
 
@@ -304,6 +371,7 @@ function ManageExams() {
     };
 
     setSaving(true);
+    clearExamErrors();
     try {
       if (editingId) {
         await updateExam(editingId, payload);
@@ -312,7 +380,7 @@ function ManageExams() {
       }
       closeEditor();
     } catch (error) {
-      appAlert(appAlertCopy.admin.saveFailedTitle, toAdminWriteErrorMessage(error));
+      setFormError(toAdminWriteErrorMessage(error));
     } finally {
       setSaving(false);
     }
@@ -415,6 +483,7 @@ function ManageExams() {
             : 'Save exam'
         }
         saving={questionEditorVisible ? false : saving}
+        error={formError}
         onClose={closeEditor}
         onSave={questionEditorVisible ? upsertQuestion : handleSaveExam}>
         {questionEditorVisible ? (
@@ -428,11 +497,14 @@ function ManageExams() {
             <AdminFormField
               label="Question"
               value={questionDraft.prompt}
-              onChangeText={prompt =>
-                setQuestionDraft(prev => ({ ...prev, prompt }))
-              }
+              onChangeText={prompt => {
+                setQuestionDraft(prev => ({ ...prev, prompt }));
+                setQuestionFieldErrors(prev => ({ ...prev, prompt: undefined }));
+                setFormError(null);
+              }}
               placeholder="What is the SI unit of force?"
               multiline
+              error={questionFieldErrors.prompt}
             />
 
             <Text style={styles.correctHeading}>Choices (tap to mark correct)</Text>
@@ -440,12 +512,14 @@ function ManageExams() {
               {questionDraft.choices.map((choice, idx) => {
                 const selected = questionDraft.correctChoiceIndex === idx;
                 const Icon = selected ? CheckCircle2 : Circle;
+                const choiceError = questionFieldErrors.choices?.[idx] === true;
                 return (
                   <TouchableOpacity
                     key={idx}
                     style={[
                       styles.choiceRow,
                       selected && styles.choiceRowSelected,
+                      choiceError && styles.choiceRowError,
                     ]}
                     activeOpacity={0.85}
                     onPress={() =>
@@ -465,16 +539,36 @@ function ManageExams() {
                       <AdminFormField
                         label={`Choice ${String.fromCharCode(65 + idx)}`}
                         value={choice}
-                        onChangeText={text =>
+                        onChangeText={text => {
                           setQuestionDraft(prev => {
                             const next = [
                               ...prev.choices,
                             ] as QuestionDraft['choices'];
                             next[idx] = text;
                             return { ...prev, choices: next };
-                          })
-                        }
+                          });
+                          setQuestionFieldErrors(prev => {
+                            if (!prev.choices) {
+                              return prev;
+                            }
+                            const nextChoices = [...prev.choices] as [
+                              boolean,
+                              boolean,
+                              boolean,
+                              boolean,
+                            ];
+                            nextChoices[idx] = false;
+                            return {
+                              ...prev,
+                              choices: nextChoices.some(Boolean)
+                                ? nextChoices
+                                : undefined,
+                            };
+                          });
+                          setFormError(null);
+                        }}
                         placeholder={idx === 0 ? 'Newton (N)' : undefined}
+                        error={choiceError}
                       />
                     </View>
                   </TouchableOpacity>
@@ -487,8 +581,13 @@ function ManageExams() {
             <AdminFormField
               label="Exam title"
               value={form.title}
-              onChangeText={title => setForm(prev => ({ ...prev, title }))}
+              onChangeText={title => {
+                setForm(prev => ({ ...prev, title }));
+                setFieldErrors(prev => ({ ...prev, title: undefined }));
+                setFormError(null);
+              }}
               placeholder="Physics — Unit test 1"
+              error={fieldErrors.title}
             />
             <AdminFormField
               label="Description (optional)"
@@ -502,14 +601,21 @@ function ManageExams() {
             <AdminFormField
               label="Timer (minutes)"
               value={form.timerMinutes}
-              onChangeText={timerMinutes =>
-                setForm(prev => ({ ...prev, timerMinutes }))
-              }
+              onChangeText={timerMinutes => {
+                setForm(prev => ({ ...prev, timerMinutes }));
+                setFieldErrors(prev => ({ ...prev, timerMinutes: undefined }));
+                setFormError(null);
+              }}
               placeholder="30"
               keyboardType="number-pad"
+              error={fieldErrors.timerMinutes}
             />
 
-            <View style={styles.questionsHeader}>
+            <View
+              style={[
+                styles.questionsHeader,
+                fieldErrors.questions ? styles.questionsSectionError : null,
+              ]}>
               <Text style={styles.questionsTitle}>Questions</Text>
               <TactileButton
                 style={styles.addQuestionButton}
@@ -523,10 +629,24 @@ function ManageExams() {
                 <Text style={styles.addQuestionText}>Add</Text>
               </TactileButton>
             </View>
-            <Text style={styles.questionsSubtitle}>{questionCountLabel}</Text>
+            <Text
+              style={[
+                styles.questionsSubtitle,
+                fieldErrors.questions ? styles.questionsErrorHint : null,
+              ]}>
+              {fieldErrors.questions
+                ? 'Add at least 1 question.'
+                : questionCountLabel}
+            </Text>
 
             {form.questions.length === 0 ? (
-              <Text style={styles.emptyQuestions}>No questions yet.</Text>
+              <Text
+                style={[
+                  styles.emptyQuestions,
+                  fieldErrors.questions ? styles.emptyQuestionsError : null,
+                ]}>
+                No questions yet.
+              </Text>
             ) : (
               <View style={styles.questionList}>
                 {form.questions.map((question, index) => (
@@ -568,7 +688,15 @@ function ManageExams() {
             />
             <AdminContentVisibilityFields
               track={form.track}
-              onTrackChange={track => setForm(prev => ({ ...prev, track }))}
+              onTrackChange={track => {
+                setForm(prev => ({ ...prev, track }));
+                setFieldErrors(prev => ({
+                  ...prev,
+                  track: undefined,
+                  audience: undefined,
+                }));
+                setFormError(null);
+              }}
               onProfessionalsTrackSelected={() => audienceForm.resetAudience()}
               audience={audienceForm.audience}
               selectedSchoolIds={audienceForm.schoolIds}
@@ -576,12 +704,30 @@ function ManageExams() {
               schools={schools}
               schoolsLoading={schoolsLoading}
               schoolsError={schoolsError}
-              onAudienceChange={audienceForm.setAudienceMode}
-              onToggleSchool={audienceForm.toggleSchoolId}
-              onSchoolGradeModeChange={audienceForm.setSchoolGradeMode}
-              onToggleSchoolGrade={audienceForm.toggleSchoolGrade}
+              onAudienceChange={next => {
+                audienceForm.setAudienceMode(next);
+                setFieldErrors(prev => ({ ...prev, audience: undefined }));
+                setFormError(null);
+              }}
+              onToggleSchool={schoolId => {
+                audienceForm.toggleSchoolId(schoolId);
+                setFieldErrors(prev => ({ ...prev, audience: undefined }));
+                setFormError(null);
+              }}
+              onSchoolGradeModeChange={(schoolId, mode) => {
+                audienceForm.setSchoolGradeMode(schoolId, mode);
+                setFieldErrors(prev => ({ ...prev, audience: undefined }));
+                setFormError(null);
+              }}
+              onToggleSchoolGrade={(schoolId, gradeId) => {
+                audienceForm.toggleSchoolGrade(schoolId, gradeId);
+                setFieldErrors(prev => ({ ...prev, audience: undefined }));
+                setFormError(null);
+              }}
               getSchoolGradeMode={audienceForm.getSchoolGradeMode}
               trackHint="Required. Choose whether this exam is visible to kids or professionals."
+              trackError={fieldErrors.track}
+              audienceError={fieldErrors.audience}
             />
           </>
         )}
@@ -602,6 +748,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  questionsSectionError: {
+    borderWidth: 1,
+    borderColor: colors.danger,
+    backgroundColor: colors.dangerLight,
+    borderRadius: spacing.inputRadius,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
   questionsTitle: {
     fontSize: 16,
@@ -625,10 +779,18 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginBottom: 10,
   },
+  questionsErrorHint: {
+    color: colors.danger,
+    fontWeight: '600',
+  },
   emptyQuestions: {
     fontSize: 13,
     color: colors.textMuted,
     marginBottom: 14,
+  },
+  emptyQuestionsError: {
+    color: colors.danger,
+    fontWeight: '600',
   },
   questionList: {
     gap: 10,
@@ -693,6 +855,10 @@ const styles = StyleSheet.create({
   choiceRowSelected: {
     borderColor: colors.primaryMuted,
     backgroundColor: colors.primaryLight,
+  },
+  choiceRowError: {
+    borderColor: colors.danger,
+    backgroundColor: colors.dangerLight,
   },
   choiceIcon: {
     paddingTop: 22,
