@@ -46,6 +46,8 @@ export type CourseDocument = SchoolAudienceDocument & {
   imageUri: string;
   durationLabel: string;
   description: string;
+  /** Optional syllabus PDF download URL for learners. */
+  syllabusPdfUrl: string;
   /** Required: segregates catalog into kids vs professionals. */
   track: CourseTrack;
   sortOrder: number;
@@ -61,6 +63,7 @@ export type Course = SchoolAudienceFields & {
   imageUri: string;
   durationLabel: string;
   description: string;
+  syllabusPdfUrl: string;
   track: CourseTrack | null;
   sortOrder: number;
   isPublished: boolean;
@@ -74,6 +77,7 @@ export type CreateCourseInput = {
   imageUri: string;
   durationLabel: string;
   description: string;
+  syllabusPdfUrl?: string;
   track: CourseTrack;
   isPublished?: boolean;
 } & SchoolAudienceInput;

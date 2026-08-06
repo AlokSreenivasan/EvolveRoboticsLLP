@@ -7,15 +7,21 @@ import TactileButton from '../ui/TactileButton';
 import { adminStyles } from './adminStyles';
 
 type AdminPdfPickerProps = {
+  label?: string;
   statusLabel: string;
   picking: boolean;
   onPick: () => void;
 };
 
-function AdminPdfPicker({ statusLabel, picking, onPick }: AdminPdfPickerProps) {
+function AdminPdfPicker({
+  label = 'PDF file',
+  statusLabel,
+  picking,
+  onPick,
+}: AdminPdfPickerProps) {
   return (
     <>
-      <Text style={adminStyles.fieldLabel}>PDF file</Text>
+      <Text style={adminStyles.fieldLabel}>{label}</Text>
       <TactileButton
         variant="ghost"
         style={adminStyles.pdfPicker}

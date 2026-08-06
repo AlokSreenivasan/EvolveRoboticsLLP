@@ -7,8 +7,10 @@ import {
   Text,
   View,
 } from 'react-native';
-import { RouteProp, useRoute } from '@react-navigation/native';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { FileText } from 'lucide-react-native';
 
+import PdfContentCard from '../../../components/Content/PdfContentCard';
 import ScreenHeader from '../../../components/ui/ScreenHeader';
 import SurfaceCard from '../../../components/ui/SurfaceCard';
 import {
@@ -17,11 +19,15 @@ import {
   typography,
 } from '../../../constants/theme';
 import { courseTrackLabel } from '../../../store/content/types/courses.types';
-import type { RootStackParamList } from '../../../types/navigation';
+import type {
+  LoginScreenNavigationProp,
+  RootStackParamList,
+} from '../../../types/navigation';
 
 type CourseDetailRouteProp = RouteProp<RootStackParamList, 'CourseDetail'>;
 
 function CourseDetailScreen() {
+  const navigation = useNavigation<LoginScreenNavigationProp>();
   const route = useRoute<CourseDetailRouteProp>();
   const { course } = route.params;
 
@@ -29,6 +35,7 @@ function CourseDetailScreen() {
   const subtitle = course.subtitle?.trim();
   const duration = course.durationLabel?.trim();
   const description = course.description?.trim();
+  const syllabusPdfUrl = course.syllabusPdfUrl?.trim();
   const trackLabel = course.track ? courseTrackLabel(course.track) : null;
 
   return (
@@ -74,6 +81,24 @@ function CourseDetailScreen() {
               </Text>
             )}
           </SurfaceCard>
+
+          {syllabusPdfUrl ? (
+            <View style={styles.syllabusSection}>
+              <PdfContentCard
+                title="Syllabus"
+                subtitle="View the course outline and topics covered."
+                Icon={FileText}
+                ctaLabel="Open syllabus"
+                accessibilityLabel="Open syllabus PDF"
+                onPress={() =>
+                  navigation.navigate('ResourcePdfViewer', {
+                    title: 'Syllabus',
+                    pdfUrl: syllabusPdfUrl,
+                  })
+                }
+              />
+            </View>
+          ) : null}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -157,6 +182,9 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     lineHeight: 22,
     fontStyle: 'italic',
+  },
+  syllabusSection: {
+    marginTop: 8,
   },
 });
 

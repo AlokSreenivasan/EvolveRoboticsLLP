@@ -62,6 +62,7 @@ function mapCourse(
     imageUri: data?.imageUri?.trim() ?? '',
     durationLabel: data?.durationLabel?.trim() ?? '',
     description: data?.description?.trim() ?? '',
+    syllabusPdfUrl: data?.syllabusPdfUrl?.trim() ?? '',
     track: mapContentTrack(data),
     sortOrder: typeof data?.sortOrder === 'number' ? data.sortOrder : 0,
     isPublished: data?.isPublished === true,
@@ -141,6 +142,7 @@ export async function createCourse(
       imageUri: input.imageUri.trim(),
       durationLabel: input.durationLabel.trim(),
       description: input.description.trim(),
+      syllabusPdfUrl: input.syllabusPdfUrl?.trim() ?? '',
       track: input.track,
       sortOrder,
       isPublished: input.isPublished ?? true,
@@ -180,6 +182,7 @@ export async function updateCourse(
       imageUri: string;
       durationLabel: string;
       description: string;
+      syllabusPdfUrl: string;
       track?: CourseTrack;
       sortOrder: number;
       isPublished: boolean;
@@ -201,6 +204,10 @@ export async function updateCourse(
         input.description !== undefined
           ? input.description.trim()
           : current.description,
+      syllabusPdfUrl:
+        input.syllabusPdfUrl !== undefined
+          ? input.syllabusPdfUrl.trim()
+          : current.syllabusPdfUrl,
       sortOrder:
         input.sortOrder !== undefined ? input.sortOrder : current.sortOrder,
       isPublished:

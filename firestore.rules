@@ -374,6 +374,13 @@ function isValidCourseFields(data) {
     && data.durationLabel.size() <= 40
     && data.description is string
     && data.description.size() <= 600
+    && (
+      !('syllabusPdfUrl' in data)
+      || (
+        data.syllabusPdfUrl is string
+        && data.syllabusPdfUrl.size() <= 8192
+      )
+    )
     && data.sortOrder is number
     && data.sortOrder >= 0
     && data.isPublished is bool

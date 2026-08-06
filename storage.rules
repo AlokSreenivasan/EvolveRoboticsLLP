@@ -67,6 +67,18 @@ service firebase.storage {
       allow delete: if isSuperAdmin() && request.auth.uid == uid;
     }
 
+    match /courseSyllabi/{uid}/{pdfFile} {
+      allow read: if isAuthenticated();
+
+      allow write: if isSuperAdmin()
+        && request.auth.uid == uid
+        && pdfFile.matches('^[A-Za-z0-9_-]+\\.pdf$')
+        && request.resource.size < 25 * 1024 * 1024
+        && isPdfUpload();
+
+      allow delete: if isSuperAdmin();
+    }
+
     // Gallery images: {projectId}_{slot}_{unique}.ext (also legacy {projectId}.ext)
     match /projectImages/{uid}/{imageFile} {
       allow read: if isAuthenticated();

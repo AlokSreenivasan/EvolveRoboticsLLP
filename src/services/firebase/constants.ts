@@ -38,6 +38,9 @@ export const STORAGE_PATHS = {
   ) => `continueLearningThumbnails/${uid}/${playlistId}${extension}`,
   courseThumbnail: (uid: string, courseId: string, extension = '.jpg') =>
     `courseThumbnails/${uid}/${courseId}${extension}`,
+  /** courseSyllabi/{uid}/{courseId}.pdf */
+  courseSyllabusPdf: (uid: string, courseId: string) =>
+    `courseSyllabi/${uid}/${courseId}.pdf`,
   resourceNotePdf: (uid: string, noteId: string) =>
     `resourceNotes/${uid}/${noteId}.pdf`,
   assignmentPdf: (uid: string, assignmentId: string) =>

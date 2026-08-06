@@ -78,6 +78,10 @@ function buildCourseThumbnailRef(
   );
 }
 
+function buildCourseSyllabusPdfRef(uid: string, courseId: string) {
+  return ref(firebaseStorage, STORAGE_PATHS.courseSyllabusPdf(uid, courseId));
+}
+
 function buildProjectImageRef(
   uid: string,
   projectId: string,
@@ -350,6 +354,59 @@ export async function deleteCourseThumbnailByUrlSafe(
     }
     logFirebaseOperationError(
       'deleteCourseThumbnailByUrlSafe',
+      'deleteByUrl',
+      error,
+    );
+  }
+}
+
+/** Uploads a course syllabus PDF; requires Storage rules for courseSyllabi. */
+export async function uploadCourseSyllabusPdf(
+  courseId: string,
+  localFileUri: string,
+): Promise<string> {
+  try {
+    const trimmedUri = localFileUri.trim();
+    if (!trimmedUri) {
+      throw new Error('A valid local PDF URI is required.');
+    }
+    if (!courseId.trim()) {
+      throw new Error('A course id is required.');
+    }
+
+    const uid = await syncFirestoreAuthSession();
+
+    const reference = buildCourseSyllabusPdfRef(uid, courseId.trim());
+    await putFile(reference, trimmedUri, {
+      contentType: 'application/pdf',
+    });
+    return getDownloadURL(reference);
+  } catch (error) {
+    throw wrapFirebaseError(
+      error,
+      'UPLOAD_FAILED',
+      'Failed to upload course syllabus PDF.',
+    );
+  }
+}
+
+/** Deletes a course syllabus PDF by download URL. Ignores missing objects. */
+export async function deleteCourseSyllabusPdfByUrlSafe(
+  pdfUrl: string | null | undefined,
+): Promise<void> {
+  if (!isFirebaseStorageUrl(pdfUrl)) {
+    return;
+  }
+
+  try {
+    await deleteObject(refFromURL(firebaseStorage, pdfUrl!.trim()));
+  } catch (error) {
+    const { code } = extractFirebaseErrorDetails(error);
+    if (isFirebaseNotFoundError(code)) {
+      return;
+    }
+    logFirebaseOperationError(
+      'deleteCourseSyllabusPdfByUrlSafe',
       'deleteByUrl',
       error,
     );

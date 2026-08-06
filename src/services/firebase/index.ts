@@ -19,10 +19,12 @@ export type { ProfileEditPayload } from './profileUpdateService';
 export {
   deleteAllUserProfileImages,
   deleteContinueLearningThumbnailByUrlSafe,
+  deleteCourseSyllabusPdfByUrlSafe,
   deleteCourseThumbnailByUrlSafe,
   deleteProfileImage,
   deleteProfileImageByUrlSafe,
   uploadContinueLearningThumbnail,
+  uploadCourseSyllabusPdf,
   uploadCourseThumbnail,
   uploadCurrentUserProfileImage,
   uploadProfileImage,

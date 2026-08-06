@@ -18,6 +18,7 @@ import AdminEntityForm from '../../../components/Admin/AdminEntityForm';
 import AdminFormField from '../../../components/Admin/AdminFormField';
 import AdminListLayout from '../../../components/Admin/AdminListLayout';
 import AdminListSectionHeader from '../../../components/Admin/AdminListSectionHeader';
+import AdminPdfPicker from '../../../components/Admin/AdminPdfPicker';
 import AdminPublishedSwitch from '../../../components/Admin/AdminPublishedSwitch';
 import { adminStyles } from '../../../components/Admin/adminStyles';
 import TactileButton from '../../../components/ui/TactileButton';
@@ -25,6 +26,7 @@ import { colors } from '../../../constants/theme';
 import { useCourses } from '../../hooks/useCourses';
 import { useSchools } from '../../hooks/useSchools';
 import { useAdminImagePicker } from '../../hooks/admin/useAdminImagePicker';
+import { useAdminPdfPicker } from '../../hooks/admin/useAdminPdfPicker';
 import { useAdminSchoolAudienceForm } from '../../hooks/admin/useAdminSchoolAudienceForm';
 import { useAdminReorder } from '../../hooks/admin/useAdminReorder';
 import { FIRESTORE_COLLECTIONS } from '../../../services/firebase/constants';
@@ -35,7 +37,9 @@ import {
   updateCourse,
 } from '../../../services/firebase/coursesService';
 import {
+  deleteCourseSyllabusPdfByUrlSafe,
   deleteCourseThumbnailByUrlSafe,
+  uploadCourseSyllabusPdf,
   uploadCourseThumbnail,
 } from '../../../services/firebase/storageService';
 import type {
@@ -47,6 +51,7 @@ import { appAlert, appAlertButtons, appAlertCopy } from '../../../utils/alert/ap
 import {
   buildContentVisibilityPayload,
   validateContentVisibility,
+  validateContentVisibilityTrack,
 } from '../../../utils/admin/contentVisibility';
 
 type CourseFormState = {
@@ -56,6 +61,13 @@ type CourseFormState = {
   description: string;
   track: CourseTrack | null;
   isPublished: boolean;
+};
+
+type CourseFieldErrors = {
+  title?: boolean;
+  durationLabel?: boolean;
+  track?: boolean;
+  audience?: boolean;
 };
 
 const EMPTY_FORM: CourseFormState = {
@@ -75,13 +87,18 @@ function ManageCourses() {
   const [editorVisible, setEditorVisible] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<CourseFormState>(EMPTY_FORM);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<CourseFieldErrors>({});
   const [saving, setSaving] = useState(false);
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
+  const [uploadingSyllabus, setUploadingSyllabus] = useState(false);
   const [previousImageUri, setPreviousImageUri] = useState<string | null>(null);
   const formRef = useRef(form);
   const imagePicker = useAdminImagePicker();
+  const pdfPicker = useAdminPdfPicker();
   const { resetAudience } = audienceForm;
   const { loadExistingImage } = imagePicker;
+  const { loadExistingPdf } = pdfPicker;
 
   const { reorderingId, handleMove } = useAdminReorder(courses, moveCourse);
 
@@ -89,12 +106,19 @@ function ManageCourses() {
     formRef.current = form;
   }, [form]);
 
+  const clearCourseErrors = () => {
+    setFormError(null);
+    setFieldErrors({});
+  };
+
   const openCreateEditor = () => {
     setEditingId(null);
     setForm(EMPTY_FORM);
     setPreviousImageUri(null);
+    clearCourseErrors();
     audienceForm.resetAudience();
     imagePicker.resetImageState();
+    pdfPicker.resetPdfState();
     setEditorVisible(true);
   };
 
@@ -109,7 +133,9 @@ function ManageCourses() {
         track: course.track,
         isPublished: course.isPublished,
       });
+      clearCourseErrors();
       loadExistingImage(course.imageUri);
+      loadExistingPdf(course.syllabusPdfUrl);
       setPreviousImageUri(course.imageUri.trim() || null);
       resetAudience({
         audience: course.audience,
@@ -118,7 +144,7 @@ function ManageCourses() {
       });
       setEditorVisible(true);
     },
-    [loadExistingImage, resetAudience],
+    [loadExistingImage, loadExistingPdf, resetAudience],
   );
 
   const closeEditor = () => {
@@ -126,26 +152,26 @@ function ManageCourses() {
     setEditingId(null);
     setForm(EMPTY_FORM);
     setPreviousImageUri(null);
+    clearCourseErrors();
     audienceForm.resetAudience();
     imagePicker.resetImageState();
+    pdfPicker.resetPdfState();
   };
 
-  const performSave = async () => {
-    const current = formRef.current;
-    const title = current.title.trim();
+  const validateCourse = (
+    current: CourseFormState,
+  ): { message: string | null; fields: CourseFieldErrors } => {
+    const fields: CourseFieldErrors = {};
+    const messages: string[] = [];
 
-    if (!title) {
-      appAlert(appAlertCopy.admin.titleNeeded, appAlertCopy.admin.titleRequired('course'));
-      return;
+    if (!current.title.trim()) {
+      fields.title = true;
+      messages.push(appAlertCopy.admin.titleRequired('course'));
     }
 
-    const durationLabel = current.durationLabel.trim();
-    if (!durationLabel) {
-      appAlert(
-        appAlertCopy.admin.durationRequiredTitle,
-        appAlertCopy.admin.durationRequired,
-      );
-      return;
+    if (!current.durationLabel.trim()) {
+      fields.durationLabel = true;
+      messages.push(appAlertCopy.admin.durationRequired);
     }
 
     const visibilityError = validateContentVisibility(
@@ -153,9 +179,31 @@ function ManageCourses() {
       audienceForm.validate,
     );
     if (visibilityError) {
-      appAlert(appAlertCopy.admin.visibilityRequiredTitle, visibilityError);
+      if (validateContentVisibilityTrack(current.track)) {
+        fields.track = true;
+      } else {
+        fields.audience = true;
+      }
+      messages.push(visibilityError);
+    }
+
+    return {
+      message: messages[0] ?? null,
+      fields,
+    };
+  };
+
+  const performSave = async () => {
+    const current = formRef.current;
+    const { message: validationError, fields } = validateCourse(current);
+    if (validationError) {
+      setFieldErrors(fields);
+      setFormError(validationError);
       return;
     }
+
+    const title = current.title.trim();
+    const durationLabel = current.durationLabel.trim();
 
     const visibilityPayload = buildContentVisibilityPayload(
       current.track!,
@@ -168,12 +216,23 @@ function ManageCourses() {
 
     let imageUri = imagePicker.remoteUri.trim();
     const pendingLocalThumbnail = imagePicker.pendingLocalUri();
+    let syllabusPdfUrl = pdfPicker.existingPdfUrl.trim();
+    const pendingSyllabusPdf = pdfPicker.pendingPdfUri;
 
     setSaving(true);
+    clearCourseErrors();
     try {
       if (pendingLocalThumbnail) {
         setUploadingThumbnail(true);
         imageUri = await uploadCourseThumbnail(courseId, pendingLocalThumbnail);
+      }
+
+      if (pendingSyllabusPdf) {
+        setUploadingSyllabus(true);
+        syllabusPdfUrl = await uploadCourseSyllabusPdf(
+          courseId,
+          pendingSyllabusPdf,
+        );
       }
 
       const payload = {
@@ -182,6 +241,7 @@ function ManageCourses() {
         imageUri,
         durationLabel,
         description: current.description.trim(),
+        syllabusPdfUrl,
         isPublished: current.isPublished,
         ...visibilityPayload,
       };
@@ -200,11 +260,21 @@ function ManageCourses() {
         await deleteCourseThumbnailByUrlSafe(previousImageUri);
       }
 
+      const previousSyllabusUrl = pdfPicker.existingPdfUrl.trim();
+      const replacedSyllabus =
+        pendingSyllabusPdf &&
+        previousSyllabusUrl &&
+        previousSyllabusUrl !== syllabusPdfUrl;
+      if (replacedSyllabus) {
+        await deleteCourseSyllabusPdfByUrlSafe(previousSyllabusUrl);
+      }
+
       closeEditor();
     } catch (error) {
-      appAlert(appAlertCopy.admin.saveFailedTitle, toAdminWriteErrorMessage(error));
+      setFormError(toAdminWriteErrorMessage(error));
     } finally {
       setUploadingThumbnail(false);
+      setUploadingSyllabus(false);
       setSaving(false);
     }
   };
@@ -225,6 +295,7 @@ function ManageCourses() {
         onPress: async () => {
           try {
             await deleteCourseThumbnailByUrlSafe(course.imageUri);
+            await deleteCourseSyllabusPdfByUrlSafe(course.syllabusPdfUrl);
             await deleteCourse(course.id);
           } catch (error) {
             appAlert(appAlertCopy.admin.deleteFailedTitle, toAdminWriteErrorMessage(error));
@@ -265,10 +336,12 @@ function ManageCourses() {
 
   const keyExtractor = useCallback((item: Course) => item.id, []);
 
-  const formBusy = saving || uploadingThumbnail;
+  const formBusy = saving || uploadingThumbnail || uploadingSyllabus;
   const savingLabel = uploadingThumbnail
     ? 'Uploading thumbnail…'
-    : 'Saving…';
+    : uploadingSyllabus
+      ? 'Uploading syllabus…'
+      : 'Saving…';
 
   return (
     <>
@@ -291,17 +364,31 @@ function ManageCourses() {
         saveLabel="Save course"
         savingLabel={savingLabel}
         saving={formBusy}
+        error={formError}
         onClose={closeEditor}
         onSave={handleSave}>
         <AdminFormField
-          label="Title"
+          label="Title *"
           value={form.title}
-          onChangeText={title => setForm(prev => ({ ...prev, title }))}
+          onChangeText={title => {
+            setFormError(null);
+            setFieldErrors(prev => ({ ...prev, title: undefined }));
+            setForm(prev => ({ ...prev, title }));
+          }}
           placeholder="Introduction to Robotics"
+          error={fieldErrors.title}
         />
         <AdminContentVisibilityFields
           track={form.track}
-          onTrackChange={track => setForm(prev => ({ ...prev, track }))}
+          onTrackChange={track => {
+            setFormError(null);
+            setFieldErrors(prev => ({
+              ...prev,
+              track: undefined,
+              audience: undefined,
+            }));
+            setForm(prev => ({ ...prev, track }));
+          }}
           onProfessionalsTrackSelected={() => audienceForm.resetAudience()}
           audience={audienceForm.audience}
           selectedSchoolIds={audienceForm.schoolIds}
@@ -309,12 +396,30 @@ function ManageCourses() {
           schools={schools}
           schoolsLoading={schoolsLoading}
           schoolsError={schoolsError}
-          onAudienceChange={audienceForm.setAudienceMode}
-          onToggleSchool={audienceForm.toggleSchoolId}
-          onSchoolGradeModeChange={audienceForm.setSchoolGradeMode}
-          onToggleSchoolGrade={audienceForm.toggleSchoolGrade}
+          onAudienceChange={audience => {
+            setFormError(null);
+            setFieldErrors(prev => ({ ...prev, audience: undefined }));
+            audienceForm.setAudienceMode(audience);
+          }}
+          onToggleSchool={schoolId => {
+            setFormError(null);
+            setFieldErrors(prev => ({ ...prev, audience: undefined }));
+            audienceForm.toggleSchoolId(schoolId);
+          }}
+          onSchoolGradeModeChange={(schoolId, mode) => {
+            setFormError(null);
+            setFieldErrors(prev => ({ ...prev, audience: undefined }));
+            audienceForm.setSchoolGradeMode(schoolId, mode);
+          }}
+          onToggleSchoolGrade={(schoolId, gradeId) => {
+            setFormError(null);
+            setFieldErrors(prev => ({ ...prev, audience: undefined }));
+            audienceForm.toggleSchoolGrade(schoolId, gradeId);
+          }}
           getSchoolGradeMode={audienceForm.getSchoolGradeMode}
           trackHint="Required. Choose whether this course is shown to kids or professionals."
+          trackError={fieldErrors.track}
+          audienceError={fieldErrors.audience}
         />
         <AdminFormField
           label="Subtitle (optional)"
@@ -324,12 +429,15 @@ function ManageCourses() {
           multiline
         />
         <AdminFormField
-          label="Duration"
+          label="Duration *"
           value={form.durationLabel}
-          onChangeText={durationLabel =>
-            setForm(prev => ({ ...prev, durationLabel }))
-          }
+          onChangeText={durationLabel => {
+            setFormError(null);
+            setFieldErrors(prev => ({ ...prev, durationLabel: undefined }));
+            setForm(prev => ({ ...prev, durationLabel }));
+          }}
           placeholder="2h 30m"
+          error={fieldErrors.durationLabel}
         />
         <AdminFormField
           label="Description (optional)"
@@ -339,6 +447,20 @@ function ManageCourses() {
           }
           placeholder="What learners will cover in this course"
           multiline
+        />
+        <AdminPdfPicker
+          label="Syllabus PDF (optional)"
+          statusLabel={
+            pdfPicker.pdfStatusLabel === 'No PDF selected'
+              ? 'No syllabus attached'
+              : pdfPicker.pdfStatusLabel
+          }
+          picking={pdfPicker.pickingPdf}
+          onPick={() => {
+            pdfPicker.handlePickPdf().catch(() => {
+              // Errors are surfaced by the picker hook.
+            });
+          }}
         />
         <Text style={adminStyles.fieldLabel}>Thumbnail</Text>
         <TactileButton
