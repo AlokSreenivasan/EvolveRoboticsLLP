@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 
+import { subscribeForegroundPushDisplay } from '../../services/firebase/fcmForegroundService';
 import {
   registerDeviceForPushNotifications,
   subscribeFcmTokenRefresh,
@@ -8,7 +9,8 @@ import { hydrateNotificationPreferences } from '../../services/notificationPrefe
 import { useAuth } from '../context/AuthContext';
 
 /**
- * Registers the signed-in user's device for FCM when push is enabled.
+ * Registers the signed-in user's device for FCM when push is enabled,
+ * and displays push alerts while the app is in the foreground.
  */
 export function usePushRegistration() {
   const { user } = useAuth();
@@ -20,6 +22,7 @@ export function usePushRegistration() {
 
     let unsubRefresh: (() => void) | undefined;
     let cancelled = false;
+    const unsubForeground = subscribeForegroundPushDisplay();
 
     hydrateNotificationPreferences(user.uid).then(preferences => {
       if (cancelled || !preferences.pushNotifications) {
@@ -33,6 +36,7 @@ export function usePushRegistration() {
     return () => {
       cancelled = true;
       unsubRefresh?.();
+      unsubForeground();
     };
   }, [user?.uid]);
 }

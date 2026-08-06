@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 
+import AppButton from '../../../components/AppButton';
 import AdminEntityForm from '../../../components/Admin/AdminEntityForm';
 import AdminEventDateScrollPicker from '../../../components/Admin/AdminEventDateScrollPicker';
 import AdminFormField from '../../../components/Admin/AdminFormField';
@@ -13,6 +14,7 @@ import AdminSectionCard from '../../../components/Admin/AdminSectionCard';
 import EventDateBlock from '../../../components/Home/EventDateBlock';
 import SurfaceCard from '../../../components/ui/SurfaceCard';
 import { adminStyles } from '../../../components/Admin/adminStyles';
+import { getNotificationCategoryLabel } from '../../../constants/notificationCategories';
 import { useUpcomingEvents } from '../../hooks/useUpcomingEvents';
 import { useSchools } from '../../hooks/useSchools';
 import { useAdminReorder } from '../../hooks/admin/useAdminReorder';
@@ -21,8 +23,11 @@ import {
   buildContentVisibilityPayload,
   formatContentVisibilitySummary,
   validateContentVisibility,
+  validateContentVisibilityTrack,
 } from '../../../utils/admin/contentVisibility';
 import { useAdminSectionDefaults } from '../../hooks/admin/useAdminSectionDefaults';
+import { sendLiveNotificationToUsers } from '../../../services/firebase/liveNotificationService';
+import { createNotification } from '../../../services/firebase/notificationsService';
 import {
   createUpcomingEvent,
   deleteUpcomingEvent,
@@ -38,6 +43,7 @@ import type {
 import type { CourseTrack } from '../../../store/content/types/courses.types';
 import { toAdminWriteErrorMessage } from '../../../utils/admin/adminWriteErrorMessage';
 import { appAlert, appAlertButtons, appAlertCopy } from '../../../utils/alert/appAlert';
+import { getErrorMessage } from '../../../utils/firebase/errors';
 import {
   EVENT_YEAR_MAX,
   computeDaysLeftLabel,
@@ -46,6 +52,22 @@ import {
   parseStoredEventYear,
   resolveUpcomingEventDate,
 } from '../../../utils/upcomingEventDate';
+
+const EVENT_NOTIFICATION_CATEGORY = 'events_workshops' as const;
+
+function buildEventNotificationBody(event: UpcomingEvent): string {
+  const lines = [
+    event.dateRange.trim(),
+    event.timeRange.trim(),
+    event.location.trim(),
+  ].filter(Boolean);
+
+  if (lines.length === 0) {
+    return `Don't miss ${event.title.trim()}.`;
+  }
+
+  return lines.join('\n');
+}
 
 type EventFormState = {
   month: string;
@@ -87,6 +109,7 @@ function ManageUpcomingEvents() {
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [eventForm, setEventForm] = useState<EventFormState>(EMPTY_EVENT_FORM);
   const [savingEvent, setSavingEvent] = useState(false);
+  const [sendingLiveId, setSendingLiveId] = useState<string | null>(null);
 
   const { schools, loading: schoolsLoading, error: schoolsError } = useSchools();
   const audienceForm = useAdminSchoolAudienceForm();
@@ -275,6 +298,110 @@ function ManageUpcomingEvents() {
     );
   };
 
+  const performSendEventNotification = useCallback(
+    async (event: UpcomingEvent) => {
+      const trackError = validateContentVisibilityTrack(event.track);
+      if (trackError || !event.track) {
+        appAlert(
+          appAlertCopy.admin.visibilityRequiredTitle,
+          trackError ?? 'Select whether this is visible to kids or professionals.',
+        );
+        return;
+      }
+
+      const title = event.title.trim();
+      const body = buildEventNotificationBody(event);
+      if (!title) {
+        appAlert(
+          appAlertCopy.admin.cannotSendTitle,
+          appAlertCopy.admin.cannotSendNotification,
+        );
+        return;
+      }
+
+      setSendingLiveId(event.id);
+      try {
+        const visibilityPayload = buildContentVisibilityPayload(event.track, {
+          audience: event.audience,
+          schoolIds: event.schoolIds,
+          schoolGradeIds: event.schoolGradeIds,
+        });
+        const notification = await createNotification({
+          title,
+          body,
+          category: EVENT_NOTIFICATION_CATEGORY,
+          isPublished: true,
+          ...visibilityPayload,
+        });
+        const result = await sendLiveNotificationToUsers({
+          notificationId: notification.id,
+          title: notification.title,
+          body: notification.body,
+        });
+
+        appAlert(
+          appAlertCopy.admin.liveSentTitle,
+          appAlertCopy.admin.liveNotificationSent(
+            result.successCount,
+            result.recipientCount,
+            result.failureCount,
+          ),
+        );
+      } catch (error) {
+        appAlert(appAlertCopy.admin.sendFailedTitle, getErrorMessage(error));
+      } finally {
+        setSendingLiveId(null);
+      }
+    },
+    [],
+  );
+
+  const handleSendEventNotification = useCallback(
+    (event: UpcomingEvent) => {
+      if (!event.title.trim()) {
+        appAlert(
+          appAlertCopy.admin.cannotSendTitle,
+          appAlertCopy.admin.cannotSendNotification,
+        );
+        return;
+      }
+
+      const trackError = validateContentVisibilityTrack(event.track);
+      if (trackError || !event.track) {
+        appAlert(
+          appAlertCopy.admin.visibilityRequiredTitle,
+          trackError ?? 'Select whether this is visible to kids or professionals.',
+        );
+        return;
+      }
+
+      const audienceLabel = formatContentVisibilitySummary(
+        event.track,
+        event,
+        schools,
+      );
+      const categoryLabel = getNotificationCategoryLabel(
+        EVENT_NOTIFICATION_CATEGORY,
+      );
+      appAlert(
+        appAlertCopy.admin.sendLiveTitle,
+        appAlertCopy.admin.sendLiveConfirm(
+          event.title.trim(),
+          categoryLabel,
+          audienceLabel,
+        ),
+        [
+          { text: appAlertButtons.cancel, style: 'cancel' },
+          {
+            text: appAlertButtons.send,
+            onPress: () => performSendEventNotification(event),
+          },
+        ],
+      );
+    },
+    [performSendEventNotification, schools],
+  );
+
   const listHeader = (
     <>
       <Text style={adminStyles.blockTitle}>Section headings</Text>
@@ -306,61 +433,82 @@ function ManageUpcomingEvents() {
   );
 
   const renderEvent = useCallback(
-    ({ item: event, index }: { item: UpcomingEvent; index: number }) => (
-      <SurfaceCard elevation="elevated" style={adminStyles.listRowCard}>
-        <View style={adminStyles.listRowTop}>
-          <View style={adminStyles.listRowMeta}>
-            <EventDateBlock
-              month={event.month}
-              day={event.day}
-              size="compact"
-              style={adminStyles.listRowDateBlock}
-            />
-            <Text style={adminStyles.listRowTitle}>{event.title}</Text>
-            {event.dateRange ? (
-              <Text style={adminStyles.listRowSubtitle}>{event.dateRange}</Text>
-            ) : null}
-            {event.timeRange ? (
-              <Text style={adminStyles.listRowSubtitle}>{event.timeRange}</Text>
-            ) : null}
-            {event.location ? (
-              <Text style={adminStyles.listRowSubtitle}>{event.location}</Text>
-            ) : null}
-            <Text style={adminStyles.listRowSubtitle}>
-              {formatContentVisibilitySummary(event.track, event, schools)}
-            </Text>
-            {getDisplayDaysLeftLabel(
-              event.month,
-              event.day,
-              event.daysLeftLabel,
-              event.year ?? undefined,
-            ) ? (
-              <Text style={adminStyles.badgePreview}>
-                {getDisplayDaysLeftLabel(
-                  event.month,
-                  event.day,
-                  event.daysLeftLabel,
-                  event.year ?? undefined,
-                )}
+    ({ item: event, index }: { item: UpcomingEvent; index: number }) => {
+      const isSending = sendingLiveId === event.id;
+      return (
+        <SurfaceCard elevation="elevated" style={adminStyles.listRowCard}>
+          <View style={adminStyles.listRowTop}>
+            <View style={adminStyles.listRowMeta}>
+              <EventDateBlock
+                month={event.month}
+                day={event.day}
+                size="compact"
+                style={adminStyles.listRowDateBlock}
+              />
+              <Text style={adminStyles.listRowTitle}>{event.title}</Text>
+              {event.dateRange ? (
+                <Text style={adminStyles.listRowSubtitle}>{event.dateRange}</Text>
+              ) : null}
+              {event.timeRange ? (
+                <Text style={adminStyles.listRowSubtitle}>{event.timeRange}</Text>
+              ) : null}
+              {event.location ? (
+                <Text style={adminStyles.listRowSubtitle}>{event.location}</Text>
+              ) : null}
+              <Text style={adminStyles.listRowSubtitle}>
+                {formatContentVisibilitySummary(event.track, event, schools)}
               </Text>
-            ) : null}
-            {!event.isPublished ? (
-              <Text style={adminStyles.draftBadge}>Draft</Text>
-            ) : null}
+              {getDisplayDaysLeftLabel(
+                event.month,
+                event.day,
+                event.daysLeftLabel,
+                event.year ?? undefined,
+              ) ? (
+                <Text style={adminStyles.badgePreview}>
+                  {getDisplayDaysLeftLabel(
+                    event.month,
+                    event.day,
+                    event.daysLeftLabel,
+                    event.year ?? undefined,
+                  )}
+                </Text>
+              ) : null}
+              {!event.isPublished ? (
+                <Text style={adminStyles.draftBadge}>Draft</Text>
+              ) : null}
+            </View>
+            <AdminListRowActions
+              index={index}
+              itemCount={events.length}
+              reordering={reorderingId === event.id}
+              onMoveUp={() => handleMove(event.id, 'up')}
+              onMoveDown={() => handleMove(event.id, 'down')}
+              onEdit={() => openEditEditor(event)}
+              onDelete={() => confirmDeleteEvent(event)}
+            />
           </View>
-          <AdminListRowActions
-            index={index}
-            itemCount={events.length}
-            reordering={reorderingId === event.id}
-            onMoveUp={() => handleMove(event.id, 'up')}
-            onMoveDown={() => handleMove(event.id, 'down')}
-            onEdit={() => openEditEditor(event)}
-            onDelete={() => confirmDeleteEvent(event)}
-          />
-        </View>
-      </SurfaceCard>
-    ),
-    [events.length, handleMove, openEditEditor, reorderingId, schools],
+          <View style={adminStyles.listRowFooter}>
+            <AppButton
+              title={isSending ? 'Sending…' : 'Send notification'}
+              onPress={() => handleSendEventNotification(event)}
+              disabled={isSending || sendingLiveId != null}
+              variant="ghost"
+              buttonStyle={adminStyles.sendLiveButton}
+              textStyle={adminStyles.sendLiveButtonText}
+            />
+          </View>
+        </SurfaceCard>
+      );
+    },
+    [
+      events.length,
+      handleMove,
+      handleSendEventNotification,
+      openEditEditor,
+      reorderingId,
+      schools,
+      sendingLiveId,
+    ],
   );
 
   const keyExtractor = useCallback((item: UpcomingEvent) => item.id, []);
