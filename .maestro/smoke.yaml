@@ -1,0 +1,7 @@
+appId: com.evolve
+---
+- launchApp
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Explore the Future of Robotics"
+    timeout: 30000

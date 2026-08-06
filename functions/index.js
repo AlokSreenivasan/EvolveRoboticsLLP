@@ -35,6 +35,13 @@ initializeApp();
 
 const FCM_BATCH_SIZE = 500;
 
+// invoker: 'public' lets Cloud Run accept the request; Firebase Auth is still
+// enforced via request.auth. App Check rejects requests from non-attested clients.
+const CALLABLE_OPTS = {
+  invoker: 'public',
+  enforceAppCheck: true,
+};
+
 async function loadNotificationPreferencesByUser(db) {
   const byUser = new Map();
   const prefsSnap = await db.collectionGroup('notificationPreferences').get();
@@ -104,9 +111,7 @@ async function loadAllowedUserIdsByTrack(db, targetTrack) {
  * kids / professionals track targeting.
  * Expects { notificationId, title, body }.
  */
-// invoker: 'public' lets Cloud Run accept the request; Firebase Auth is
-// still enforced by the request.auth check below.
-exports.sendLiveNotification = onCall({ invoker: 'public' }, async request => {
+exports.sendLiveNotification = onCall(CALLABLE_OPTS, async request => {
   if (!request.auth) {
     throw new HttpsError('unauthenticated', 'You must be signed in.');
   }
@@ -246,9 +251,7 @@ const FIRESTORE_BATCH_LIMIT = 500;
  * Deletes all documents in users/{targetUserId}/quizAttempts.
  * Expects { targetUserId }.
  */
-// invoker: 'public' lets Cloud Run accept the request; Firebase Auth is
-// still enforced by the request.auth check below.
-exports.resetUserQuizProgress = onCall({ invoker: 'public' }, async request => {
+exports.resetUserQuizProgress = onCall(CALLABLE_OPTS, async request => {
   if (!request.auth) {
     throw new HttpsError('unauthenticated', 'You must be signed in.');
   }
@@ -303,9 +306,7 @@ exports.resetUserQuizProgress = onCall({ invoker: 'public' }, async request => {
  * notificationPreferences, notificationReads) — the client cannot delete
  * some of these itself because security rules restrict them to the Admin SDK.
  */
-// invoker: 'public' lets Cloud Run accept the request; Firebase Auth is
-// still enforced by the request.auth check below.
-exports.deleteMyAccountData = onCall({ invoker: 'public' }, async request => {
+exports.deleteMyAccountData = onCall(CALLABLE_OPTS, async request => {
   if (!request.auth) {
     throw new HttpsError('unauthenticated', 'You must be signed in.');
   }
@@ -334,9 +335,7 @@ exports.onAuthUserDeleted = functionsV1.auth.user().onDelete(async user => {
  * Callable: grade and persist an exam attempt server-side.
  * Expects { examId, answers: { [questionId]: 0|1|2|3 } }.
  */
-// invoker: 'public' lets Cloud Run accept the request; Firebase Auth is
-// still enforced by the request.auth check below.
-exports.submitExamAttempt = onCall({ invoker: 'public' }, async request => {
+exports.submitExamAttempt = onCall(CALLABLE_OPTS, async request => {
   if (!request.auth) {
     throw new HttpsError('unauthenticated', 'You must be signed in.');
   }
@@ -420,9 +419,7 @@ exports.submitExamAttempt = onCall({ invoker: 'public' }, async request => {
  * Callable: grade and persist a quiz attempt server-side.
  * Expects { quizId, answers: { [questionId]: 0|1|2|3 } }.
  */
-// invoker: 'public' lets Cloud Run accept the request; Firebase Auth is
-// still enforced by the request.auth check below.
-exports.submitQuizAttempt = onCall({ invoker: 'public' }, async request => {
+exports.submitQuizAttempt = onCall(CALLABLE_OPTS, async request => {
   if (!request.auth) {
     throw new HttpsError('unauthenticated', 'You must be signed in.');
   }
@@ -529,9 +526,7 @@ exports.submitQuizAttempt = onCall({ invoker: 'public' }, async request => {
  * Callable: admin one-time migration — move embedded answer keys into
  * examAnswerKeys / quizAnswerKeys and strip them from public docs.
  */
-// invoker: 'public' lets Cloud Run accept the request; Firebase Auth is
-// still enforced by the request.auth check below.
-exports.migrateAnswerKeys = onCall({ invoker: 'public' }, async request => {
+exports.migrateAnswerKeys = onCall(CALLABLE_OPTS, async request => {
   if (!request.auth) {
     throw new HttpsError('unauthenticated', 'You must be signed in.');
   }
