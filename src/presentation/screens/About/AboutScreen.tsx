@@ -11,6 +11,7 @@ import { Bot, Sparkles } from 'lucide-react-native';
 
 import ScreenHeader from '../../../components/ui/ScreenHeader';
 import SurfaceCard from '../../../components/ui/SurfaceCard';
+import { APP_VERSION } from '../../../constants/appVersion';
 import {
   colors,
   spacing,
@@ -65,7 +66,7 @@ function AboutScreen() {
           </Text>
         </SurfaceCard>
 
-        <Text style={styles.version}>Version 0.0.1</Text>
+        <Text style={styles.version}>Version {APP_VERSION}</Text>
       </ScrollView>
     </SafeAreaView>
   );

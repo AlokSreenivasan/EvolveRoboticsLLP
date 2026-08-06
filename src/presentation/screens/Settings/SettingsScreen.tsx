@@ -26,6 +26,7 @@ import SettingsCard from '../../../components/Settings/SettingsCard';
 import SettingsLinkRow from '../../../components/Settings/SettingsLinkRow';
 import SettingsScreenLayout from '../../../components/Settings/SettingsScreenLayout';
 import SettingsSectionHeader from '../../../components/Settings/SettingsSectionHeader';
+import { APP_VERSION } from '../../../constants/appVersion';
 import { colors, spacing, typography } from '../../../constants/theme';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
 import { useAuth } from '../../context/AuthContext';
@@ -181,7 +182,7 @@ function SettingsScreen() {
       <View style={styles.sectionBlock}>
         <SettingsSectionHeader title="App Information" />
         <SettingsCard>
-          <SettingsLinkRow title="Version" subtitle="2.1.1" />
+          <SettingsLinkRow title="Version" subtitle={APP_VERSION} />
           <SettingsLinkRow
             icon={FileText}
             iconColor={colors.primary}
