@@ -156,7 +156,7 @@ function ChatbotScreen() {
           <View style={styles.chatContainer}>
             <View style={styles.watermarkWrap} pointerEvents="none">
               <Image
-                source={require('../../../assets/chat-assistant.png')}
+                source={require('../../../assets/chat-assistant.webp')}
                 style={styles.watermark}
                 resizeMode="contain"
                 accessibilityLabel=""
@@ -186,7 +186,7 @@ function ChatbotScreen() {
             <View style={styles.content}>
               <View style={styles.mascotGlow} />
               <Image
-                source={require('../../../assets/chat-assistant.png')}
+                source={require('../../../assets/chat-assistant.webp')}
                 style={styles.mascot}
                 resizeMode="contain"
                 accessibilityLabel="Chat assistant"

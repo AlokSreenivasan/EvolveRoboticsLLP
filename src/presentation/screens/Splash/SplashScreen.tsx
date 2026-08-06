@@ -7,7 +7,7 @@ const SplashScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <Image
-        source={require('../../../assets/LOGO__.png')}
+        source={require('../../../assets/LOGO__.webp')}
         style={styles.logo}
         resizeMode="contain"
       />

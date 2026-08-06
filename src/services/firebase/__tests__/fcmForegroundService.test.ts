@@ -35,7 +35,7 @@ describe('displayForegroundPushNotification', () => {
     const remoteMessage = {
       notification: { title: 'Workshop', body: 'Tomorrow at 10 AM' },
       data: { notificationId: 'n1', type: 'live_notification' },
-    } as FirebaseMessagingTypes.RemoteMessage;
+    } as unknown as FirebaseMessagingTypes.RemoteMessage;
 
     await displayForegroundPushNotification(remoteMessage);
 
@@ -51,7 +51,7 @@ describe('displayForegroundPushNotification', () => {
     await displayForegroundPushNotification({
       notification: { title: 'Skip', body: 'Me' },
       data: {},
-    } as FirebaseMessagingTypes.RemoteMessage);
+    } as unknown as FirebaseMessagingTypes.RemoteMessage);
 
     expect(appAlert).not.toHaveBeenCalled();
   });
@@ -59,7 +59,7 @@ describe('displayForegroundPushNotification', () => {
   it('skips display when title and body are missing', async () => {
     await displayForegroundPushNotification({
       data: { type: 'live_notification' },
-    } as FirebaseMessagingTypes.RemoteMessage);
+    } as unknown as FirebaseMessagingTypes.RemoteMessage);
 
     expect(appAlert).not.toHaveBeenCalled();
   });

@@ -90,7 +90,7 @@ function FloatingChatAssistant({ onPress, style }: FloatingChatAssistantProps) {
         accessibilityLabel="Open chat assistant"
         style={styles.pressable}>
         <Image
-          source={require('../../assets/chat-assistant.png')}
+          source={require('../../assets/chat-assistant.webp')}
           style={styles.image}
           resizeMode="contain"
         />

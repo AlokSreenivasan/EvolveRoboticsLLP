@@ -22,17 +22,17 @@ const slides = [
   {
     id: 1,
     title: 'Explore the Future of Robotics',
-    image: require('../../../assets/swipeScreenImages/swipe1.png'),
+    image: require('../../../assets/swipeScreenImages/swipe1.webp'),
   },
   {
     id: 2,
     title: 'Smart Automation for Everyone',
-    image: require('../../../assets/swipeScreenImages/swipe2.png'),
+    image: require('../../../assets/swipeScreenImages/swipe2.webp'),
   },
   {
     id: 3,
     title: 'Innovating Tomorrow, Today',
-    image: require('../../../assets/swipeScreenImages/swipe4.png'),
+    image: require('../../../assets/swipeScreenImages/swipe4.webp'),
   },
 ];
 
