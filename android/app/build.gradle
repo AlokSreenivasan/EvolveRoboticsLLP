@@ -142,3 +142,16 @@ dependencies {
         implementation jscFlavor
     }
 }
+
+// RN 0.80: ensure library codegen JNI dirs exist before CMake configure
+// (https://github.com/facebook/react-native/issues/52955)
+afterEvaluate {
+    tasks.matching { it.name.startsWith("configureCMake") }.configureEach { cmakeTask ->
+        rootProject.allprojects.each { project ->
+            def codegenTask = project.tasks.findByName("generateCodegenArtifactsFromSchema")
+            if (codegenTask != null) {
+                cmakeTask.dependsOn(codegenTask)
+            }
+        }
+    }
+}
