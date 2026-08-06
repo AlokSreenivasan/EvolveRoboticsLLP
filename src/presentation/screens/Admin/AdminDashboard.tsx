@@ -36,7 +36,6 @@ type AdminNav = NativeStackNavigationProp<AdminStackParamList, 'AdminDashboard'>
 type AdminMenuItem = {
   key: keyof AdminStackParamList;
   title: string;
-  description: string;
   icon: typeof LayoutDashboard;
   /** When true, only superadmins see this tile (also enforced via route guard). */
   superadminOnly?: boolean;
@@ -46,86 +45,72 @@ const MENU_ITEMS: AdminMenuItem[] = [
   {
     key: 'ManageContinueLearningPlaylists',
     title: 'Lessons',
-    description: 'Add YouTube lesson playlists for Home and To Do',
     icon: PlayCircle,
   },
   {
     key: 'ManageImportantUpdates',
     title: 'Important Updates',
-    description: 'Edit home notices, titles, and section order',
     icon: Megaphone,
   },
   {
     key: 'ManageUpcomingEvents',
     title: 'Upcoming Events',
-    description: 'Create and manage home event cards',
     icon: Calendar,
   },
   {
     key: 'ManageResources',
     title: 'Resources',
-    description: 'Upload PDF notes with headings for Quick Access',
     icon: FolderOpen,
   },
   {
     key: 'ManageAssignments',
     title: 'Assignments',
-    description: 'Publish PDF assignments with headings and due dates',
     icon: ClipboardList,
   },
   {
     key: 'ManageExams',
     title: 'Exams',
-    description: 'Create timed exams with multiple-choice questions',
     icon: ClipboardCheck,
   },
   {
     key: 'ManageQuizCompetitions',
     title: 'Quiz Competition',
-    description: 'Create timed quizzes with multiple-choice questions',
     icon: Trophy,
   },
   {
     key: 'ManageCourses',
     title: 'Manage Courses',
-    description: 'Create, edit, and publish learning content',
     icon: BookOpen,
   },
   {
     key: 'ManageProjects',
     title: 'Projects',
-    description: 'Create projects with visibility for the To Do screen',
     icon: FolderKanban,
   },
   {
     key: 'ManageRoles',
     title: 'Roles',
-    description: 'Promote users to admin or revoke admin access',
     icon: Shield,
     superadminOnly: true,
   },
   {
     key: 'ManageUsers',
     title: 'Manage Users',
-    description: 'View accounts and reset quiz progress',
     icon: Users,
   },
   {
     key: 'ManageSchools',
     title: 'Add Schools',
-    description: 'Register partner schools and manage the list',
     icon: School,
   },
   {
     key: 'ManageChatKeywords',
     title: 'Chat Keywords',
-    description: 'Configure quick-reply options for the chat assistant',
     icon: MessageSquare,
   },
   {
     key: 'AdminNotifications',
     title: 'Notifications',
-    description: 'Send announcements and push campaigns',
     icon: Bell,
   },
 ];
@@ -141,13 +126,7 @@ function AdminDashboard() {
   });
 
   return (
-    <AdminScreenLayout
-      title="Admin"
-      subtitle={
-        isSuperAdmin
-          ? 'Manage app content, users, and communications'
-          : 'Manage Resources, Assignments, Exams, and Quiz Competition'
-      }>
+    <AdminScreenLayout title="Admin">
       <SurfaceCard elevation="default" tinted style={styles.heroCard}>
         <LayoutDashboard size={28} color={colors.primary} strokeWidth={2.15} />
         <Text style={styles.heroTitle}>Administrator dashboard</Text>
@@ -174,7 +153,6 @@ function AdminDashboard() {
                 </View>
                 <View style={styles.menuText}>
                   <Text style={styles.menuTitle}>{item.title}</Text>
-                  <Text style={styles.menuDescription}>{item.description}</Text>
                 </View>
                 <View style={styles.chevronWrap}>
                   <Text style={styles.chevron}>›</Text>
@@ -233,12 +211,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: colors.textPrimary,
     letterSpacing: -0.2,
-    marginBottom: 4,
-  },
-  menuDescription: {
-    fontSize: 13,
-    lineHeight: 18,
-    color: colors.textSecondary,
   },
   chevronWrap: {
     width: 28,

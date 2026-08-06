@@ -474,7 +474,6 @@ function ManageQuizCompetitions() {
     <>
       <AdminListLayout
         title="Quiz competition"
-        subtitle="Create, edit, and publish competition quizzes"
         data={quizzes}
         loading={loading}
         reorderingId={reorderingId}

@@ -487,7 +487,6 @@ function ManageContinueLearningPlaylists() {
   return (
     <AdminScreenLayout
       title="Lessons"
-      subtitle="Manage lesson playlists shown on Home and in To Do"
       scrollable={false}>
       <FlatList
         data={playlists}

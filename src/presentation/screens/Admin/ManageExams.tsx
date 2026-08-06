@@ -454,7 +454,6 @@ function ManageExams() {
     <>
       <AdminListLayout
         title="Exams"
-        subtitle="Create, edit, and publish timed exams"
         data={exams}
         loading={loading}
         reorderingId={reorderingId}

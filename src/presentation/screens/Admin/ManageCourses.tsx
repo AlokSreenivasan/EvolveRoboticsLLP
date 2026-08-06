@@ -347,7 +347,6 @@ function ManageCourses() {
     <>
       <AdminListLayout
         title="Manage Courses"
-        subtitle="Create courses shown in the Courses tab"
         data={courses}
         loading={loading}
         error={error}

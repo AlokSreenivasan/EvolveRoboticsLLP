@@ -280,7 +280,6 @@ function ManageRoles() {
   return (
     <AdminScreenLayout
       title="Roles"
-      subtitle="Assign admin access"
       scrollable={false}>
       <FlatList
         data={loading && users.length === 0 ? [] : users}

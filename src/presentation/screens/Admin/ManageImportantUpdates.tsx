@@ -280,7 +280,6 @@ function ManageImportantUpdates() {
     <>
       <AdminListLayout
         title="Important Updates"
-        subtitle="Edit home section titles and notices"
         data={notices}
         loading={loading}
         reorderingId={reorderingId}

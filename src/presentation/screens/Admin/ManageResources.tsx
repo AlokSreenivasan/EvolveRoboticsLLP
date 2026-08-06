@@ -282,7 +282,6 @@ function ManageResources() {
     <>
       <AdminListLayout
         title="Resources"
-        subtitle="Add PDF study notes with headings for the Resources screen"
         data={notes}
         loading={loading}
         reorderingId={reorderingId}

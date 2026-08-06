@@ -517,7 +517,6 @@ function ManageUpcomingEvents() {
     <>
       <AdminListLayout
         title="Upcoming Events"
-        subtitle="Edit home section titles and event cards"
         data={events}
         loading={loading}
         reorderingId={reorderingId}

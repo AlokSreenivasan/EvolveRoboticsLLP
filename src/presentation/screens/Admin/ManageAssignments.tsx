@@ -292,7 +292,6 @@ function ManageAssignments() {
     <>
       <AdminListLayout
         title="Assignments"
-        subtitle="Add PDF assignments with due dates for the Assignments screen"
         data={assignments}
         loading={loading}
         reorderingId={reorderingId}

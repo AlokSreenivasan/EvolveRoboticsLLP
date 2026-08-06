@@ -195,7 +195,6 @@ function ManageChatKeywords() {
     <>
       <AdminListLayout
         title="Chat Keywords"
-        subtitle="Configure quick-reply options for the chat assistant"
         data={keywords}
         loading={loading}
         reorderingId={reorderingId}

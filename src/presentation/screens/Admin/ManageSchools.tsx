@@ -379,7 +379,6 @@ function ManageSchools() {
     <>
       <AdminListLayout
         title="Add Schools"
-        subtitle="Register partner schools for the Evolve platform"
         data={schools}
         loading={loading}
         error={error}

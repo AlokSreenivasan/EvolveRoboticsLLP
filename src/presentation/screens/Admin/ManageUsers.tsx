@@ -193,7 +193,6 @@ function ManageUsers() {
   return (
     <AdminScreenLayout
       title="Manage Users"
-      subtitle="Accounts registered in the app"
       scrollable={false}>
       <FlatList
         data={loading && users.length === 0 ? [] : users}

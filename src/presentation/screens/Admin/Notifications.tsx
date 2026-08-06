@@ -321,7 +321,6 @@ function AdminNotifications() {
     <>
       <AdminListLayout
         title="Notifications"
-        subtitle="Create notifications and send push alerts"
         data={notifications}
         loading={loading}
         reorderingId={reorderingId}

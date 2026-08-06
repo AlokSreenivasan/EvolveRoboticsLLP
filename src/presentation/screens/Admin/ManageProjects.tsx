@@ -361,7 +361,6 @@ function ManageProjects() {
     <>
       <AdminListLayout
         title="Projects"
-        subtitle="Create and manage projects for the To Do screen"
         data={projects}
         loading={loading}
         reorderingId={reorderingId}
