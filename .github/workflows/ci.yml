@@ -39,6 +39,9 @@ jobs:
       - name: Firestore rules tests
         run: npm run test:rules
 
+      - name: Functions unit tests
+        run: npm run test:functions
+
   android-release:
     name: Android Release Artifact
     runs-on: ubuntu-latest
@@ -88,6 +91,45 @@ jobs:
           path: android/app/build/outputs/apk/release/*.apk
           if-no-files-found: error
           retention-days: 14
+
+  ios-build:
+    name: iOS Simulator Build
+    runs-on: macos-14
+    timeout-minutes: 90
+    needs: quality-gate
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install JS dependencies
+        run: npm ci
+
+      - name: Install CocoaPods dependencies
+        working-directory: ios
+        run: |
+          gem install cocoapods -N
+          pod install --repo-update
+
+      - name: Build iOS (simulator, unsigned)
+        working-directory: ios
+        run: |
+          xcodebuild \
+            -workspace Evolve.xcworkspace \
+            -scheme Evolve \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build
 
   android-e2e-smoke:
     name: Android Maestro Smoke

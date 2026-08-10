@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 12,
     fontWeight: '500',
-    color: 'rgba(255,255,255,0.85)',
+    color: colors.primary,
     textAlign: 'center',
   },
 });

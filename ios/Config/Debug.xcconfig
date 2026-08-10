@@ -1,0 +1,4 @@
+#include? "../Pods/Target Support Files/Pods-Evolve/Pods-Evolve.debug.xcconfig"
+#include? "Team.xcconfig"
+
+CODE_SIGN_STYLE = Automatic

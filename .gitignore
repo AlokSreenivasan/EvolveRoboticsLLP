@@ -3,6 +3,8 @@
 .env
 .env.*
 !.env.example
+!functions/.env.example
+!**/.env.example
 
 # OSX
 #
@@ -27,6 +29,9 @@ DerivedData
 *.ipa
 *.xcuserstate
 **/.xcode.env.local
+
+# Local Apple Team ID (copy from ios/Config/Team.xcconfig.example)
+ios/Config/Team.xcconfig
 
 # Android/IntelliJ
 #

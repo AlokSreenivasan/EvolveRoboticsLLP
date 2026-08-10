@@ -1,0 +1,7 @@
+// Copy to Team.xcconfig (gitignored) and set your Apple Team ID:
+//   cp ios/Config/Team.xcconfig.example ios/Config/Team.xcconfig
+//
+// Find the ID at https://developer.apple.com/account → Membership details
+// (10 characters, e.g. A1B2C3D4E5).
+
+DEVELOPMENT_TEAM = YOUR_TEAM_ID

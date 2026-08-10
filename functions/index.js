@@ -30,17 +30,16 @@ const {
   extractAnswerKeyFromQuestions,
   questionHasEmbeddedKey,
 } = require('./gradingHelpers');
+const { buildCallableOpts } = require('./callableOpts');
 
 initializeApp();
 
 const FCM_BATCH_SIZE = 500;
 
 // invoker: 'public' lets Cloud Run accept the request; Firebase Auth is still
-// enforced via request.auth. App Check rejects requests from non-attested clients.
-const CALLABLE_OPTS = {
-  invoker: 'public',
-  enforceAppCheck: true,
-};
+// enforced via request.auth. App Check rejects non-attested clients when enabled
+// (ENFORCE_APP_CHECK=true after Console providers are live).
+const CALLABLE_OPTS = buildCallableOpts();
 
 async function loadNotificationPreferencesByUser(db) {
   const byUser = new Map();
