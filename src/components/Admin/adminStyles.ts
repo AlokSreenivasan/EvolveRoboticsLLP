@@ -114,8 +114,18 @@ export const adminStyles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 10,
   },
+  listSectionHeaderTitle: {
+    ...typography.sectionTitle,
+    flex: 1,
+    marginRight: 8,
+  },
   listSectionHeaderAddOnly: {
     justifyContent: 'flex-end',
+  },
+  listSectionHeaderActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   addButton: {
     gap: 6,

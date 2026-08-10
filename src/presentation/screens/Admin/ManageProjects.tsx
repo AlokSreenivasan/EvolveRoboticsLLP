@@ -22,7 +22,6 @@ import AdminListLayout from '../../../components/Admin/AdminListLayout';
 import AdminListRow from '../../../components/Admin/AdminListRow';
 import AdminListSectionHeader from '../../../components/Admin/AdminListSectionHeader';
 import AdminPublishedSwitch from '../../../components/Admin/AdminPublishedSwitch';
-import AdminSectionCard from '../../../components/Admin/AdminSectionCard';
 import { adminStyles } from '../../../components/Admin/adminStyles';
 import TactileButton from '../../../components/ui/TactileButton';
 import { colors } from '../../../constants/theme';
@@ -81,6 +80,8 @@ function ManageProjects() {
 
   const [sectionTitle, setSectionTitle] = useState('');
   const [sectionSubtitle, setSectionSubtitle] = useState('');
+  const [sectionEditorVisible, setSectionEditorVisible] = useState(false);
+  const [sectionFormError, setSectionFormError] = useState<string | null>(null);
   const [savingSection, setSavingSection] = useState(false);
 
   const [editorVisible, setEditorVisible] = useState(false);
@@ -105,6 +106,20 @@ function ManageProjects() {
     setSectionTitle(section.sectionTitle);
     setSectionSubtitle(section.sectionSubtitle);
   }, [section]);
+
+  const openSectionEditor = () => {
+    setSectionTitle(section.sectionTitle);
+    setSectionSubtitle(section.sectionSubtitle);
+    setSectionFormError(null);
+    setSectionEditorVisible(true);
+  };
+
+  const closeSectionEditor = () => {
+    setSectionEditorVisible(false);
+    setSectionFormError(null);
+    setSectionTitle(section.sectionTitle);
+    setSectionSubtitle(section.sectionSubtitle);
+  };
 
   const openCreateEditor = () => {
     setEditingProjectId(null);
@@ -156,22 +171,17 @@ function ManageProjects() {
     };
 
     if (!payload.sectionTitle) {
-      appAlert(
-        appAlertCopy.admin.screenTitleNeeded,
-        appAlertCopy.admin.screenTitleRequired('Projects'),
-      );
+      setSectionFormError(appAlertCopy.admin.screenTitleRequired('Projects'));
       return;
     }
 
     setSavingSection(true);
+    setSectionFormError(null);
     try {
       await updateProjectsSection(payload);
-      appAlert(
-        appAlertCopy.admin.savedTitle,
-        appAlertCopy.admin.screenHeadingsSaved('Projects'),
-      );
+      setSectionEditorVisible(false);
     } catch (error) {
-      appAlert(appAlertCopy.admin.saveFailedTitle, toAdminWriteErrorMessage(error));
+      setSectionFormError(toAdminWriteErrorMessage(error));
     } finally {
       setSavingSection(false);
     }
@@ -303,24 +313,12 @@ function ManageProjects() {
   const savingLabel = uploadingMedia ? 'Uploading media…' : 'Save project';
 
   const listHeader = (
-    <>
-      <Text style={adminStyles.blockTitle}>Screen headings</Text>
-      <AdminSectionCard saving={savingSection} onSave={handleSaveSection}>
-        <AdminFormField
-          label="Screen title"
-          value={sectionTitle}
-          onChangeText={setSectionTitle}
-          placeholder="Projects"
-        />
-        <AdminFormField
-          label="Screen subtitle"
-          value={sectionSubtitle}
-          onChangeText={setSectionSubtitle}
-          placeholder="Hands-on builds and guided project work"
-        />
-      </AdminSectionCard>
-      <AdminListSectionHeader title="Projects" onAdd={openCreateEditor} />
-    </>
+    <AdminListSectionHeader
+      title="Projects"
+      onAdd={openCreateEditor}
+      onSettingsPress={openSectionEditor}
+      settingsAccessibilityLabel="Edit screen headings"
+    />
   );
 
   const renderProject = useCallback(
@@ -369,6 +367,31 @@ function ManageProjects() {
         listHeader={listHeader}
         emptyMessage="No projects yet. Add one for students to see in To Do."
       />
+
+      <AdminEntityForm
+        visible={sectionEditorVisible}
+        title="Screen headings"
+        saveLabel="Save headings"
+        saving={savingSection}
+        error={sectionFormError}
+        onClose={closeSectionEditor}
+        onSave={handleSaveSection}>
+        <AdminFormField
+          label="Screen title"
+          value={sectionTitle}
+          onChangeText={value => {
+            setSectionFormError(null);
+            setSectionTitle(value);
+          }}
+          placeholder="Projects"
+        />
+        <AdminFormField
+          label="Screen subtitle"
+          value={sectionSubtitle}
+          onChangeText={setSectionSubtitle}
+          placeholder="Hands-on builds and guided project work"
+        />
+      </AdminEntityForm>
 
       <AdminEntityForm
         visible={editorVisible}

@@ -1,13 +1,11 @@
 import React, { useCallback, useState } from 'react';
-import { Text } from 'react-native';
 
 import AdminEntityForm from '../../../components/Admin/AdminEntityForm';
 import AdminFormField from '../../../components/Admin/AdminFormField';
 import AdminListLayout from '../../../components/Admin/AdminListLayout';
 import AdminListRow from '../../../components/Admin/AdminListRow';
+import AdminListSectionHeader from '../../../components/Admin/AdminListSectionHeader';
 import AdminPublishedSwitch from '../../../components/Admin/AdminPublishedSwitch';
-import AdminSectionCard from '../../../components/Admin/AdminSectionCard';
-import { adminStyles } from '../../../components/Admin/adminStyles';
 import { useAdminReorder } from '../../hooks/admin/useAdminReorder';
 import { useChatKeywords } from '../../hooks/useChatKeywords';
 import {
@@ -35,40 +33,19 @@ const EMPTY_FORM: KeywordFormState = {
 function ManageChatKeywords() {
   const { keywords, loading } = useChatKeywords({ includeUnpublished: true });
 
-  const [addLabel, setAddLabel] = useState('');
-  const [addResponse, setAddResponse] = useState('');
-  const [addPublished, setAddPublished] = useState(true);
-  const [adding, setAdding] = useState(false);
-
   const [editorVisible, setEditorVisible] = useState(false);
   const [editingKeywordId, setEditingKeywordId] = useState<string | null>(null);
   const [keywordForm, setKeywordForm] = useState<KeywordFormState>(EMPTY_FORM);
+  const [formError, setFormError] = useState<string | null>(null);
   const [savingKeyword, setSavingKeyword] = useState(false);
 
   const { reorderingId, handleMove } = useAdminReorder(keywords, moveChatKeyword);
 
-  const handleAddKeyword = async () => {
-    const label = addLabel.trim();
-    if (!label) {
-      appAlert(appAlertCopy.admin.keywordNeeded, appAlertCopy.admin.keywordRequired);
-      return;
-    }
-
-    setAdding(true);
-    try {
-      await createChatKeyword({
-        label,
-        response: addResponse,
-        isPublished: addPublished,
-      });
-      setAddLabel('');
-      setAddResponse('');
-      setAddPublished(true);
-    } catch (error) {
-      appAlert(appAlertCopy.admin.addFailedTitle, toAdminWriteErrorMessage(error));
-    } finally {
-      setAdding(false);
-    }
+  const openCreateEditor = () => {
+    setEditingKeywordId(null);
+    setKeywordForm(EMPTY_FORM);
+    setFormError(null);
+    setEditorVisible(true);
   };
 
   const openEditEditor = (keyword: ChatKeyword) => {
@@ -78,6 +55,7 @@ function ManageChatKeywords() {
       response: keyword.response,
       isPublished: keyword.isPublished,
     });
+    setFormError(null);
     setEditorVisible(true);
   };
 
@@ -85,28 +63,34 @@ function ManageChatKeywords() {
     setEditorVisible(false);
     setEditingKeywordId(null);
     setKeywordForm(EMPTY_FORM);
+    setFormError(null);
   };
 
   const handleSaveKeyword = async () => {
     if (!keywordForm.label.trim()) {
-      appAlert(appAlertCopy.admin.keywordNeeded, appAlertCopy.admin.keywordRequired);
-      return;
-    }
-
-    if (!editingKeywordId) {
+      setFormError(appAlertCopy.admin.keywordRequired);
       return;
     }
 
     setSavingKeyword(true);
+    setFormError(null);
     try {
-      await updateChatKeyword(editingKeywordId, {
-        label: keywordForm.label,
-        response: keywordForm.response,
-        isPublished: keywordForm.isPublished,
-      });
+      if (editingKeywordId) {
+        await updateChatKeyword(editingKeywordId, {
+          label: keywordForm.label,
+          response: keywordForm.response,
+          isPublished: keywordForm.isPublished,
+        });
+      } else {
+        await createChatKeyword({
+          label: keywordForm.label.trim(),
+          response: keywordForm.response,
+          isPublished: keywordForm.isPublished,
+        });
+      }
       closeEditor();
     } catch (error) {
-      appAlert(appAlertCopy.admin.saveFailedTitle, toAdminWriteErrorMessage(error));
+      setFormError(toAdminWriteErrorMessage(error));
     } finally {
       setSavingKeyword(false);
     }
@@ -137,38 +121,10 @@ function ManageChatKeywords() {
   };
 
   const listHeader = (
-    <>
-      <Text style={adminStyles.blockTitle}>Add a keyword option</Text>
-      <Text style={adminStyles.sectionHint}>
-        These appear as quick-reply chips on the chat screen. Learners can tap
-        a chip to send the keyword and receive the configured response.
-      </Text>
-      <AdminSectionCard
-        saving={adding}
-        saveLabel="Add keyword"
-        onSave={handleAddKeyword}>
-        <AdminFormField
-          label="Keyword label"
-          value={addLabel}
-          onChangeText={setAddLabel}
-          placeholder="e.g. Courses"
-          autoCapitalize="sentences"
-        />
-        <AdminFormField
-          label="Assistant response"
-          value={addResponse}
-          onChangeText={setAddResponse}
-          placeholder="Reply shown when this keyword is used"
-          multiline
-        />
-        <AdminPublishedSwitch
-          label="Published"
-          value={addPublished}
-          onValueChange={setAddPublished}
-        />
-      </AdminSectionCard>
-      <Text style={adminStyles.blockTitle}>Keyword options</Text>
-    </>
+    <AdminListSectionHeader
+      title="Keyword options"
+      onAdd={openCreateEditor}
+    />
   );
 
   const renderKeyword = useCallback(
@@ -201,21 +157,25 @@ function ManageChatKeywords() {
         keyExtractor={keyExtractor}
         renderItem={renderKeyword}
         listHeader={listHeader}
-        emptyMessage="No keywords yet. Add one using the form above."
+        emptyMessage="No keywords yet. Tap Add to create a quick-reply chip."
       />
 
       <AdminEntityForm
         visible={editorVisible}
-        title="Edit keyword"
+        title={editingKeywordId ? 'Edit keyword' : 'New keyword'}
         saveLabel="Save keyword"
         saving={savingKeyword}
+        error={formError}
         onClose={closeEditor}
         onSave={handleSaveKeyword}>
         <AdminFormField
           label="Keyword label"
           value={keywordForm.label}
-          onChangeText={label => setKeywordForm(prev => ({ ...prev, label }))}
-          placeholder="Keyword label"
+          onChangeText={label => {
+            setFormError(null);
+            setKeywordForm(prev => ({ ...prev, label }));
+          }}
+          placeholder="e.g. Courses"
           autoCapitalize="sentences"
         />
         <AdminFormField

@@ -10,6 +10,7 @@ type AdminIconButtonProps = {
   onPress: () => void;
   disabled?: boolean;
   danger?: boolean;
+  accessibilityLabel?: string;
 };
 
 function AdminIconButton({
@@ -17,13 +18,16 @@ function AdminIconButton({
   onPress,
   disabled,
   danger,
+  accessibilityLabel,
 }: AdminIconButtonProps) {
   return (
     <TouchableOpacity
       style={[adminStyles.iconButton, disabled && adminStyles.iconButtonDisabled]}
       onPress={onPress}
       disabled={disabled}
-      hitSlop={6}>
+      hitSlop={6}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="button">
       <Icon
         size={18}
         color={danger ? colors.danger : colors.primary}

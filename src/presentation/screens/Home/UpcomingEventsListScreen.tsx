@@ -12,9 +12,8 @@ import { Calendar } from 'lucide-react-native';
 import UpcomingEventBanner from '../../../components/Home/UpcomingEventBanner';
 import ScreenHeader from '../../../components/ui/ScreenHeader';
 import ScreenStateCard from '../../../components/ui/ScreenStateCard';
-import SurfaceCard from '../../../components/ui/SurfaceCard';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
-import { colors, spacing, typography } from '../../../constants/theme';
+import { colors, spacing } from '../../../constants/theme';
 import type { UpcomingEvent } from '../../../store/content/types/upcomingEvents.types';
 import {
   useHomeFeedFocus,
@@ -65,40 +64,17 @@ function UpcomingEventsListScreen() {
       ? `${displayEvents.length} event${displayEvents.length === 1 ? '' : 's'}`
       : null;
 
-  const headerSubtitle =
-    section.sectionSubtitle?.trim() ||
-    'Workshops, webinars, and dates from your learning team.';
-
   return (
     <SafeAreaView style={styles.container}>
-      <ScreenHeader title={section.sectionTitle} subtitle={headerSubtitle} />
+      <ScreenHeader title={section.sectionTitle} />
 
       <FlatList
         data={loading || error ? [] : displayEvents}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
         ListHeaderComponent={
-          !loading && !error ? (
-            <>
-              {countLabel ? (
-                <Text style={styles.countBadge}>{countLabel}</Text>
-              ) : null}
-              <SurfaceCard tinted elevation="default" style={styles.infoCard}>
-                <View style={styles.infoIconWrap}>
-                  <Calendar
-                    size={22}
-                    color={colors.primary}
-                    strokeWidth={2}
-                  />
-                </View>
-                <View style={styles.infoTextWrap}>
-                  <Text style={styles.infoTitle}>Event calendar</Text>
-                  <Text style={styles.infoDescription}>
-                    Upcoming sessions filtered for your track and school.
-                  </Text>
-                </View>
-              </SurfaceCard>
-            </>
+          !loading && !error && countLabel ? (
+            <Text style={styles.countBadge}>{countLabel}</Text>
           ) : null
         }
         ListEmptyComponent={listEmpty}
@@ -145,32 +121,6 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 32,
     flexGrow: 1,
-  },
-  infoCard: {
-    flexDirection: 'row',
-    padding: 16,
-    marginBottom: 16,
-  },
-  infoIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: spacing.iconTileRadius,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
-  },
-  infoTextWrap: {
-    flex: 1,
-  },
-  infoTitle: {
-    ...typography.cardTitle,
-    fontSize: 15,
-    marginBottom: 4,
-  },
-  infoDescription: {
-    ...typography.bodySecondary,
-    lineHeight: 19,
   },
   separator: {
     height: 14,

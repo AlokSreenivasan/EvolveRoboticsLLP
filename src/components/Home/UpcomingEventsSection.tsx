@@ -27,9 +27,9 @@ function UpcomingEventsSection() {
 
   const renderEvent = useCallback(
     ({ item }: { item: UpcomingEvent }) => (
-      <UpcomingEventBanner event={item} onPress={openList} />
+      <UpcomingEventBanner event={item} />
     ),
-    [openList],
+    [],
   );
 
   const keyExtractor = useCallback((item: UpcomingEvent) => item.id, []);

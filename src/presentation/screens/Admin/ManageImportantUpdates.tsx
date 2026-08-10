@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Text } from 'react-native';
 
 import AdminContentVisibilityFields from '../../../components/Admin/AdminContentVisibilityFields';
 import AdminEntityForm from '../../../components/Admin/AdminEntityForm';
@@ -8,8 +7,6 @@ import AdminListLayout from '../../../components/Admin/AdminListLayout';
 import AdminListRow from '../../../components/Admin/AdminListRow';
 import AdminListSectionHeader from '../../../components/Admin/AdminListSectionHeader';
 import AdminPublishedSwitch from '../../../components/Admin/AdminPublishedSwitch';
-import AdminSectionCard from '../../../components/Admin/AdminSectionCard';
-import { adminStyles } from '../../../components/Admin/adminStyles';
 import { useImportantUpdates } from '../../hooks/useImportantUpdates';
 import { useSchools } from '../../hooks/useSchools';
 import { useAdminReorder } from '../../hooks/admin/useAdminReorder';
@@ -62,6 +59,8 @@ function ManageImportantUpdates() {
   const [sectionTitle, setSectionTitle] = useState('');
   const [sectionSubtitle, setSectionSubtitle] = useState('');
   const [actionLabel, setActionLabel] = useState('');
+  const [sectionEditorVisible, setSectionEditorVisible] = useState(false);
+  const [sectionFormError, setSectionFormError] = useState<string | null>(null);
   const [savingSection, setSavingSection] = useState(false);
 
   const [editorVisible, setEditorVisible] = useState(false);
@@ -84,6 +83,22 @@ function ManageImportantUpdates() {
     setSectionSubtitle(section.sectionSubtitle);
     setActionLabel(section.actionLabel);
   }, [section]);
+
+  const openSectionEditor = () => {
+    setSectionTitle(section.sectionTitle);
+    setSectionSubtitle(section.sectionSubtitle);
+    setActionLabel(section.actionLabel);
+    setSectionFormError(null);
+    setSectionEditorVisible(true);
+  };
+
+  const closeSectionEditor = () => {
+    setSectionEditorVisible(false);
+    setSectionFormError(null);
+    setSectionTitle(section.sectionTitle);
+    setSectionSubtitle(section.sectionSubtitle);
+    setActionLabel(section.actionLabel);
+  };
 
   const openCreateEditor = () => {
     setEditingNoticeId(null);
@@ -128,19 +143,17 @@ function ManageImportantUpdates() {
     };
 
     if (!payload.sectionTitle) {
-      appAlert(
-        appAlertCopy.admin.sectionTitleRequiredTitle,
-        appAlertCopy.admin.sectionTitleRequired,
-      );
+      setSectionFormError(appAlertCopy.admin.sectionTitleRequired);
       return;
     }
 
     setSavingSection(true);
+    setSectionFormError(null);
     try {
       await updateImportantUpdatesSection(payload);
-      appAlert(appAlertCopy.admin.savedTitle, appAlertCopy.admin.sectionSaved);
+      setSectionEditorVisible(false);
     } catch (error) {
-      appAlert(appAlertCopy.admin.saveFailedTitle, toAdminWriteErrorMessage(error));
+      setSectionFormError(toAdminWriteErrorMessage(error));
     } finally {
       setSavingSection(false);
     }
@@ -219,33 +232,12 @@ function ManageImportantUpdates() {
   };
 
   const listHeader = (
-    <>
-      <Text style={adminStyles.blockTitle}>Section headings</Text>
-      <AdminSectionCard
-        saving={savingSection}
-        saveLabel="Save section"
-        onSave={handleSaveSection}>
-        <AdminFormField
-          label="Section title"
-          value={sectionTitle}
-          onChangeText={setSectionTitle}
-          placeholder="Important Updates"
-        />
-        <AdminFormField
-          label="Section subtitle"
-          value={sectionSubtitle}
-          onChangeText={setSectionSubtitle}
-          placeholder="Optional line under the title"
-        />
-        <AdminFormField
-          label="Action label"
-          value={actionLabel}
-          onChangeText={setActionLabel}
-          placeholder="View All"
-        />
-      </AdminSectionCard>
-      <AdminListSectionHeader title="Notices" onAdd={openCreateEditor} />
-    </>
+    <AdminListSectionHeader
+      title="Notices"
+      onAdd={openCreateEditor}
+      onSettingsPress={openSectionEditor}
+      settingsAccessibilityLabel="Edit section headings"
+    />
   );
 
   const renderNotice = useCallback(
@@ -288,6 +280,37 @@ function ManageImportantUpdates() {
         listHeader={listHeader}
         emptyMessage="No notices yet. Add one to show on the home screen."
       />
+
+      <AdminEntityForm
+        visible={sectionEditorVisible}
+        title="Section headings"
+        saveLabel="Save section"
+        saving={savingSection}
+        error={sectionFormError}
+        onClose={closeSectionEditor}
+        onSave={handleSaveSection}>
+        <AdminFormField
+          label="Section title"
+          value={sectionTitle}
+          onChangeText={value => {
+            setSectionFormError(null);
+            setSectionTitle(value);
+          }}
+          placeholder="Important Updates"
+        />
+        <AdminFormField
+          label="Section subtitle"
+          value={sectionSubtitle}
+          onChangeText={setSectionSubtitle}
+          placeholder="Optional line under the title"
+        />
+        <AdminFormField
+          label="Action label"
+          value={actionLabel}
+          onChangeText={setActionLabel}
+          placeholder="View All"
+        />
+      </AdminEntityForm>
 
       <AdminEntityForm
         visible={editorVisible}

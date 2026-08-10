@@ -10,7 +10,6 @@ import AdminListRowActions from '../../../components/Admin/AdminListRowActions';
 import AdminListSectionHeader from '../../../components/Admin/AdminListSectionHeader';
 import AdminContentVisibilityFields from '../../../components/Admin/AdminContentVisibilityFields';
 import AdminPublishedSwitch from '../../../components/Admin/AdminPublishedSwitch';
-import AdminSectionCard from '../../../components/Admin/AdminSectionCard';
 import EventDateBlock from '../../../components/Home/EventDateBlock';
 import SurfaceCard from '../../../components/ui/SurfaceCard';
 import { adminStyles } from '../../../components/Admin/adminStyles';
@@ -103,6 +102,8 @@ function ManageUpcomingEvents() {
   const [sectionTitle, setSectionTitle] = useState('');
   const [sectionSubtitle, setSectionSubtitle] = useState('');
   const [actionLabel, setActionLabel] = useState('');
+  const [sectionEditorVisible, setSectionEditorVisible] = useState(false);
+  const [sectionFormError, setSectionFormError] = useState<string | null>(null);
   const [savingSection, setSavingSection] = useState(false);
 
   const [editorVisible, setEditorVisible] = useState(false);
@@ -123,6 +124,22 @@ function ManageUpcomingEvents() {
     setSectionSubtitle(section.sectionSubtitle);
     setActionLabel(section.actionLabel);
   }, [section]);
+
+  const openSectionEditor = () => {
+    setSectionTitle(section.sectionTitle);
+    setSectionSubtitle(section.sectionSubtitle);
+    setActionLabel(section.actionLabel);
+    setSectionFormError(null);
+    setSectionEditorVisible(true);
+  };
+
+  const closeSectionEditor = () => {
+    setSectionEditorVisible(false);
+    setSectionFormError(null);
+    setSectionTitle(section.sectionTitle);
+    setSectionSubtitle(section.sectionSubtitle);
+    setActionLabel(section.actionLabel);
+  };
 
   const openCreateEditor = () => {
     const today = new Date();
@@ -183,19 +200,17 @@ function ManageUpcomingEvents() {
     };
 
     if (!payload.sectionTitle) {
-      appAlert(
-        appAlertCopy.admin.sectionTitleRequiredTitle,
-        appAlertCopy.admin.sectionTitleRequired,
-      );
+      setSectionFormError(appAlertCopy.admin.sectionTitleRequired);
       return;
     }
 
     setSavingSection(true);
+    setSectionFormError(null);
     try {
       await updateUpcomingEventsSection(payload);
-      appAlert(appAlertCopy.admin.savedTitle, appAlertCopy.admin.sectionSaved);
+      setSectionEditorVisible(false);
     } catch (error) {
-      appAlert(appAlertCopy.admin.saveFailedTitle, toAdminWriteErrorMessage(error));
+      setSectionFormError(toAdminWriteErrorMessage(error));
     } finally {
       setSavingSection(false);
     }
@@ -403,33 +418,12 @@ function ManageUpcomingEvents() {
   );
 
   const listHeader = (
-    <>
-      <Text style={adminStyles.blockTitle}>Section headings</Text>
-      <AdminSectionCard
-        saving={savingSection}
-        saveLabel="Save section"
-        onSave={handleSaveSection}>
-        <AdminFormField
-          label="Section title"
-          value={sectionTitle}
-          onChangeText={setSectionTitle}
-          placeholder="Upcoming Events"
-        />
-        <AdminFormField
-          label="Section subtitle"
-          value={sectionSubtitle}
-          onChangeText={setSectionSubtitle}
-          placeholder="Optional line under the title"
-        />
-        <AdminFormField
-          label="Action label"
-          value={actionLabel}
-          onChangeText={setActionLabel}
-          placeholder="View Calendar"
-        />
-      </AdminSectionCard>
-      <AdminListSectionHeader title="Events" onAdd={openCreateEditor} />
-    </>
+    <AdminListSectionHeader
+      title="Events"
+      onAdd={openCreateEditor}
+      onSettingsPress={openSectionEditor}
+      settingsAccessibilityLabel="Edit section headings"
+    />
   );
 
   const renderEvent = useCallback(
@@ -525,6 +519,37 @@ function ManageUpcomingEvents() {
         listHeader={listHeader}
         emptyMessage="No events yet. Add one to show on the home screen."
       />
+
+      <AdminEntityForm
+        visible={sectionEditorVisible}
+        title="Section headings"
+        saveLabel="Save section"
+        saving={savingSection}
+        error={sectionFormError}
+        onClose={closeSectionEditor}
+        onSave={handleSaveSection}>
+        <AdminFormField
+          label="Section title"
+          value={sectionTitle}
+          onChangeText={value => {
+            setSectionFormError(null);
+            setSectionTitle(value);
+          }}
+          placeholder="Upcoming Events"
+        />
+        <AdminFormField
+          label="Section subtitle"
+          value={sectionSubtitle}
+          onChangeText={setSectionSubtitle}
+          placeholder="Optional line under the title"
+        />
+        <AdminFormField
+          label="Action label"
+          value={actionLabel}
+          onChangeText={setActionLabel}
+          placeholder="View Calendar"
+        />
+      </AdminEntityForm>
 
       <AdminEntityForm
         visible={editorVisible}

@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Text } from 'react-native';
 
 import AdminEntityForm from '../../../components/Admin/AdminEntityForm';
 import AdminFormField from '../../../components/Admin/AdminFormField';
@@ -9,8 +8,6 @@ import AdminListSectionHeader from '../../../components/Admin/AdminListSectionHe
 import AdminPdfPicker from '../../../components/Admin/AdminPdfPicker';
 import AdminContentVisibilityFields from '../../../components/Admin/AdminContentVisibilityFields';
 import AdminPublishedSwitch from '../../../components/Admin/AdminPublishedSwitch';
-import AdminSectionCard from '../../../components/Admin/AdminSectionCard';
-import { adminStyles } from '../../../components/Admin/adminStyles';
 import { useResources } from '../../hooks/useResources';
 import { useSchools } from '../../hooks/useSchools';
 import { useAdminPdfPicker } from '../../hooks/admin/useAdminPdfPicker';
@@ -62,6 +59,8 @@ function ManageResources() {
 
   const [sectionTitle, setSectionTitle] = useState('');
   const [sectionSubtitle, setSectionSubtitle] = useState('');
+  const [sectionEditorVisible, setSectionEditorVisible] = useState(false);
+  const [sectionFormError, setSectionFormError] = useState<string | null>(null);
   const [savingSection, setSavingSection] = useState(false);
 
   const [editorVisible, setEditorVisible] = useState(false);
@@ -83,6 +82,20 @@ function ManageResources() {
     setSectionTitle(section.sectionTitle);
     setSectionSubtitle(section.sectionSubtitle);
   }, [section]);
+
+  const openSectionEditor = () => {
+    setSectionTitle(section.sectionTitle);
+    setSectionSubtitle(section.sectionSubtitle);
+    setSectionFormError(null);
+    setSectionEditorVisible(true);
+  };
+
+  const closeSectionEditor = () => {
+    setSectionEditorVisible(false);
+    setSectionFormError(null);
+    setSectionTitle(section.sectionTitle);
+    setSectionSubtitle(section.sectionSubtitle);
+  };
 
   const openCreateEditor = () => {
     setEditingNoteId(null);
@@ -130,22 +143,17 @@ function ManageResources() {
     };
 
     if (!payload.sectionTitle) {
-      appAlert(
-        appAlertCopy.admin.screenTitleNeeded,
-        appAlertCopy.admin.screenTitleRequired('Resources'),
-      );
+      setSectionFormError(appAlertCopy.admin.screenTitleRequired('Resources'));
       return;
     }
 
     setSavingSection(true);
+    setSectionFormError(null);
     try {
       await updateResourcesSection(payload);
-      appAlert(
-        appAlertCopy.admin.savedTitle,
-        appAlertCopy.admin.screenHeadingsSaved('Resources'),
-      );
+      setSectionEditorVisible(false);
     } catch (error) {
-      appAlert(appAlertCopy.admin.saveFailedTitle, toAdminWriteErrorMessage(error));
+      setSectionFormError(toAdminWriteErrorMessage(error));
     } finally {
       setSavingSection(false);
     }
@@ -237,24 +245,12 @@ function ManageResources() {
   };
 
   const listHeader = (
-    <>
-      <Text style={adminStyles.blockTitle}>Screen headings</Text>
-      <AdminSectionCard saving={savingSection} onSave={handleSaveSection}>
-        <AdminFormField
-          label="Screen title"
-          value={sectionTitle}
-          onChangeText={setSectionTitle}
-          placeholder="Resources"
-        />
-        <AdminFormField
-          label="Screen subtitle"
-          value={sectionSubtitle}
-          onChangeText={setSectionSubtitle}
-          placeholder="Study notes from your instructors"
-        />
-      </AdminSectionCard>
-      <AdminListSectionHeader title="PDF notes" onAdd={openCreateEditor} />
-    </>
+    <AdminListSectionHeader
+      title="PDF notes"
+      onAdd={openCreateEditor}
+      onSettingsPress={openSectionEditor}
+      settingsAccessibilityLabel="Edit screen headings"
+    />
   );
 
   const renderNote = useCallback(
@@ -290,6 +286,31 @@ function ManageResources() {
         listHeader={listHeader}
         emptyMessage="No notes yet. Add a PDF note for students to open from Quick Access."
       />
+
+      <AdminEntityForm
+        visible={sectionEditorVisible}
+        title="Screen headings"
+        saveLabel="Save headings"
+        saving={savingSection}
+        error={sectionFormError}
+        onClose={closeSectionEditor}
+        onSave={handleSaveSection}>
+        <AdminFormField
+          label="Screen title"
+          value={sectionTitle}
+          onChangeText={value => {
+            setSectionFormError(null);
+            setSectionTitle(value);
+          }}
+          placeholder="Resources"
+        />
+        <AdminFormField
+          label="Screen subtitle"
+          value={sectionSubtitle}
+          onChangeText={setSectionSubtitle}
+          placeholder="Study notes from your instructors"
+        />
+      </AdminEntityForm>
 
       <AdminEntityForm
         visible={editorVisible}
