@@ -35,6 +35,71 @@ export const colors = {
   overlayScrim: 'rgba(26, 26, 46, 0.48)',
 };
 
+/**
+ * Student-friendly Home accents — section hues drawn from brand magenta.
+ * Home panels import this; keep in sync with `colors` above.
+ */
+export const homeAccents = {
+  screen: {
+    background: colors.background,
+  },
+  greeting: {
+    highlight: colors.primary,
+    soft: colors.primaryLight,
+    bell: colors.primary,
+    bellSoft: colors.primaryLight,
+  },
+  streak: {
+    top: colors.primary,
+    bottom: colors.primaryDark,
+    wave: colors.primarySoft,
+    waveDeep: colors.primaryDark,
+    gold: colors.accentOrange,
+    mint: colors.primaryMuted,
+    pink: colors.primarySoft,
+    highlight: colors.primaryMuted,
+  },
+  quiz: {
+    accent: colors.primary,
+    accentDark: colors.primaryDark,
+    soft: colors.primaryLight,
+    muted: colors.primaryMuted,
+    glow: 'rgba(238, 205, 244, 0.55)',
+  },
+  missions: {
+    header: colors.primary,
+    lessons: {
+      accent: colors.primaryDark,
+      soft: colors.primaryLight,
+      muted: colors.primaryMuted,
+    },
+    quiz: {
+      accent: colors.primary,
+      soft: colors.primaryLight,
+      muted: colors.primarySoft,
+    },
+  },
+  continueLearning: {
+    accent: colors.primary,
+    soft: colors.primaryLight,
+    muted: colors.primaryMuted,
+  },
+  updates: {
+    accent: colors.primary,
+    soft: colors.primaryLight,
+    muted: colors.primaryMuted,
+  },
+  events: {
+    accent: colors.primaryDark,
+    soft: colors.primaryLight,
+    muted: colors.primaryMuted,
+  },
+  sectionAction: {
+    soft: colors.primaryLight,
+    text: colors.primary,
+  },
+} as const;
+
 export const spacing = {
   screenHorizontal: 16,
   sectionGap: 24,

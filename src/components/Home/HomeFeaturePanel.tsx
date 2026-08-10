@@ -10,7 +10,7 @@ import {
 import { ArrowRight } from 'lucide-react-native';
 import Svg, { Path } from 'react-native-svg';
 
-import { buttonVariants, colors, spacing } from '../../constants/theme';
+import { colors, homeAccents, spacing } from '../../constants/theme';
 import CardShadowShell from '../ui/CardShadowShell';
 import TactileButton from '../ui/TactileButton';
 
@@ -44,12 +44,12 @@ function CardWaveBackdrop({ width }: { width: number }) {
       <Svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
         <Path
           d={`M0 ${height * 0.52} C${width * 0.18} ${height * 0.22} ${width * 0.32} ${height * 0.72} ${width * 0.48} ${height * 0.42} C${width * 0.64} ${height * 0.16} ${width * 0.78} ${height * 0.58} ${width} ${height * 0.34} L${width} ${height} L0 ${height} Z`}
-          fill={colors.primaryMuted}
-          opacity="0.4"
+          fill={homeAccents.quiz.muted}
+          opacity="0.45"
         />
         <Path
           d={`M0 ${height * 0.68} C${width * 0.2} ${height * 0.42} ${width * 0.36} ${height * 0.82} ${width * 0.52} ${height * 0.56} C${width * 0.7} ${height * 0.32} ${width * 0.84} ${height * 0.7} ${width} ${height * 0.52} L${width} ${height} L0 ${height} Z`}
-          fill={colors.primaryLight}
+          fill={homeAccents.quiz.soft}
           opacity="0.95"
         />
       </Svg>
@@ -79,6 +79,8 @@ function HomeFeaturePanel({
     const nextWidth = event.nativeEvent.layout.width;
     setCardWidth(prev => (prev === nextWidth ? prev : nextWidth));
   }, []);
+
+  const ctaInactive = !onCtaPress || ctaDisabled;
 
   return (
     <CardShadowShell
@@ -148,27 +150,31 @@ function HomeFeaturePanel({
 
       <View style={styles.footer}>
         <TactileButton
-          style={[styles.cta, ctaDisabled && styles.ctaDisabled]}
-          faceColor={ctaDisabled ? colors.background : undefined}
-          edgeColor={ctaDisabled ? colors.border : undefined}
-          borderColor={ctaDisabled ? colors.border : undefined}
+          style={styles.cta}
+          faceColor={
+            ctaInactive ? homeAccents.quiz.soft : homeAccents.quiz.accent
+          }
+          edgeColor={
+            ctaInactive
+              ? homeAccents.quiz.muted
+              : homeAccents.quiz.accentDark
+          }
+          borderColor="transparent"
           onPress={onCtaPress}
-          disabled={!onCtaPress || ctaDisabled}
+          disabled={ctaInactive}
           accessibilityLabel={ctaLabel}>
           <Text
             style={[
               styles.ctaText,
-              ctaDisabled ? styles.ctaTextDisabled : styles.ctaTextActive,
+              ctaInactive ? styles.ctaTextDisabled : styles.ctaTextFilled,
             ]}
             numberOfLines={1}>
             {ctaLabel}
           </Text>
-          {!ctaDisabled ? (
-            <ArrowRight
-              size={16}
-              color={buttonVariants.primary.text}
-              strokeWidth={2.5}
-            />
+          {!ctaInactive ? (
+            <View style={styles.ctaIconWrap}>
+              <ArrowRight size={18} color={colors.surface} strokeWidth={2.4} />
+            </View>
           ) : null}
         </TactileButton>
       </View>
@@ -179,7 +185,7 @@ function HomeFeaturePanel({
 const styles = StyleSheet.create({
   cardInner: {
     padding: 16,
-    borderColor: colors.primaryMuted,
+    borderColor: homeAccents.quiz.muted,
   },
   waveWrap: {
     position: 'absolute',
@@ -198,7 +204,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: 'rgba(238, 205, 244, 0.45)',
+    backgroundColor: homeAccents.quiz.glow,
   },
   row: {
     flexDirection: 'row',
@@ -210,9 +216,9 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 16,
     overflow: 'hidden',
-    backgroundColor: colors.primaryLight,
+    backgroundColor: homeAccents.quiz.soft,
     borderWidth: 1,
-    borderColor: colors.primaryMuted,
+    borderColor: homeAccents.quiz.muted,
   },
   thumbnailImage: {
     width: '100%',
@@ -221,7 +227,7 @@ const styles = StyleSheet.create({
   },
   thumbnailPlaceholder: {
     flex: 1,
-    backgroundColor: colors.primaryMuted,
+    backgroundColor: homeAccents.quiz.muted,
   },
   body: {
     flex: 1,
@@ -242,17 +248,17 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   badge: {
-    backgroundColor: colors.primaryLight,
+    backgroundColor: homeAccents.quiz.soft,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: colors.primaryMuted,
+    borderColor: homeAccents.quiz.muted,
   },
   badgeText: {
     fontSize: 10,
     fontWeight: '800',
-    color: colors.primary,
+    color: homeAccents.quiz.accent,
     letterSpacing: 0.4,
     textTransform: 'uppercase',
   },
@@ -299,24 +305,33 @@ const styles = StyleSheet.create({
   },
   cta: {
     flex: 1,
-    gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 16,
+    minHeight: 48,
+    gap: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 24,
   },
-  ctaDisabled: {
-    borderWidth: 1,
+  ctaIconWrap: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: 'rgba(255, 255, 255, 0.22)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   ctaText: {
     fontSize: 14,
-    fontWeight: '800',
-    letterSpacing: 0.15,
+    fontWeight: '700',
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
   },
-  ctaTextActive: {
-    color: buttonVariants.primary.text,
+  ctaTextFilled: {
+    color: colors.surface,
   },
   ctaTextDisabled: {
     color: colors.textMuted,
+    textTransform: 'none',
+    letterSpacing: 0.15,
   },
 });
 

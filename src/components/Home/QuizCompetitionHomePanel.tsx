@@ -11,7 +11,7 @@ import HomeFeaturePanel from './HomeFeaturePanel';
 import HomeSectionHeader from './HomeSectionHeader';
 import QuizCompetitionIcon from './icons/QuizCompetitionIcon';
 import QuizRobotIllustration from './icons/QuizRobotIllustration';
-import { colors } from '../../constants/theme';
+import { colors, homeAccents } from '../../constants/theme';
 import type { QuizCompetition } from '../../store/content/types/quizCompetitions.types';
 import type { LoginScreenNavigationProp } from '../../types/navigation';
 import { getQuizAccessStatus } from '../../utils/quizAccess';
@@ -99,13 +99,13 @@ function QuizCompetitionHomePanel({
       case 'locked':
         return 'Locked';
       case 'completed':
-        return 'Done';
+        return 'Completed';
       case 'retryable':
-        return 'Retry';
+        return 'Try again';
       case 'available':
-        return attempt ? 'Resume' : 'Join Now';
+        return attempt ? 'Continue' : 'Start quiz';
       default:
-        return 'Join Now';
+        return 'Start quiz';
     }
   }, [attempt, status]);
 
@@ -153,7 +153,7 @@ function QuizCompetitionHomePanel({
   if (loading || attemptsLoading) {
     return (
       <ActivityIndicator
-        color={colors.primary}
+        color={homeAccents.quiz.accent}
         style={[styles.loader, embedded && styles.loaderEmbedded]}
       />
     );
@@ -166,7 +166,11 @@ function QuizCompetitionHomePanel({
   return (
     <View style={embedded ? styles.embeddedWrap : undefined}>
       {embedded ? (
-        <HomeSectionHeader title="Quiz competition" />
+        <HomeSectionHeader
+          title="Quiz competition"
+          actionColor={homeAccents.quiz.accent}
+          actionBackground={homeAccents.quiz.soft}
+        />
       ) : null}
       <HomeFeaturePanel
         badgeLabel={`Quiz ${featuredIndex + 1}`}
@@ -188,7 +192,7 @@ function QuizCompetitionHomePanel({
           <View style={styles.iconWrap}>
             <QuizCompetitionIcon
               size={26}
-              color={colors.primary}
+              color={homeAccents.quiz.accent}
               strokeWidth={2.25}
             />
           </View>
@@ -230,7 +234,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primaryLight,
+    backgroundColor: homeAccents.quiz.soft,
   },
 });
 
