@@ -2,7 +2,6 @@ import React from 'react';
 import {
   Pressable,
   StyleSheet,
-  View,
   type GestureResponderEvent,
   type PressableProps,
   type StyleProp,
@@ -10,7 +9,6 @@ import {
 } from 'react-native';
 
 import {
-  buttonDepth,
   buttonVariants,
   spacing,
   type ButtonVariantName,
@@ -27,9 +25,11 @@ export type TactileButtonProps = {
    */
   style?: StyleProp<ViewStyle>;
   faceColor?: string;
+  /** Used as the pressed fill. Kept for call-site compatibility. */
   edgeColor?: string;
   borderColor?: string;
   borderRadius?: number;
+  /** @deprecated Flat buttons ignore depth; kept for call-site compatibility. */
   depth?: number;
   disabled?: boolean;
   accessibilityLabel?: string;
@@ -39,48 +39,9 @@ export type TactileButtonProps = {
   testID?: string;
 };
 
-const DEFAULT_FACE_PADDING_VERTICAL = 12;
-
-function resolvePadding(...values: ViewStyle[keyof ViewStyle][]): number {
-  const match = values.find(value => typeof value === 'number');
-  return typeof match === 'number' ? match : DEFAULT_FACE_PADDING_VERTICAL;
-}
-
 /**
- * Buttons sized by their own content grow by the edge's height unless the face
- * gives that space back, so trim it off the face's vertical padding. Buttons
- * with an explicit height already absorb the edge and are left alone.
- */
-function faceHeightCompensation(
-  footprint: ViewStyle,
-  content: ViewStyle,
-  depth: number,
-): ViewStyle | null {
-  if (footprint.minHeight !== undefined || footprint.height !== undefined) {
-    return null;
-  }
-
-  const top = resolvePadding(
-    content.paddingTop,
-    content.paddingVertical,
-    content.padding,
-  );
-  const bottom = resolvePadding(
-    content.paddingBottom,
-    content.paddingVertical,
-    content.padding,
-  );
-
-  return {
-    paddingTop: Math.max(0, top - depth / 2),
-    paddingBottom: Math.max(0, bottom - depth / 2),
-  };
-}
-
-/**
- * Button whose face rests on a darker bottom edge and drops onto it when
- * pressed. The edge is carved out of the button's own height rather than added
- * to it, so swapping a flat button for this one never shifts layout.
+ * Flat pressable button with ripple / fill feedback.
+ * `faceColor` / `edgeColor` map to idle and pressed fills.
  */
 function TactileButton({
   children,
@@ -91,7 +52,6 @@ function TactileButton({
   edgeColor,
   borderColor,
   borderRadius,
-  depth = buttonDepth,
   disabled = false,
   accessibilityLabel,
   accessibilityHint,
@@ -101,59 +61,56 @@ function TactileButton({
 }: TactileButtonProps) {
   const palette = buttonVariants[variant];
   const { shell, content } = splitSurfaceStyle(style);
-  // splitSurfaceStyle mirrors backgroundColor onto the shell for shadow fills;
-  // here the shell has to stay the edge color.
-  const footprint: ViewStyle = { ...shell };
-  delete footprint.backgroundColor;
   const radius =
     borderRadius ??
     (typeof content.borderRadius === 'number'
       ? content.borderRadius
       : spacing.buttonRadius);
+  const idleFill =
+    faceColor ??
+    (typeof content.backgroundColor === 'string'
+      ? content.backgroundColor
+      : undefined) ??
+    palette.face;
+  const pressedFill = edgeColor ?? palette.edge;
+  const resolvedBorder = borderColor ?? palette.border;
 
   return (
     <Pressable
-      style={[
-        footprint,
+      style={({ pressed }) => [
+        styles.base,
+        shell,
+        content,
         {
           borderRadius: radius,
-          paddingBottom: depth,
-          backgroundColor: edgeColor ?? palette.edge,
+          backgroundColor: pressed && !disabled ? pressedFill : idleFill,
+          borderColor: resolvedBorder,
         },
         disabled && styles.disabled,
       ]}
       onPress={onPress}
       disabled={disabled}
       hitSlop={hitSlop}
+      android_ripple={
+        disabled
+          ? undefined
+          : {
+              color: 'rgba(0, 0, 0, 0.1)',
+              borderless: false,
+            }
+      }
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}
       accessibilityState={{ disabled, busy }}
       testID={testID}>
-      {({ pressed }) => (
-        <View
-          style={[
-            styles.face,
-            {
-              borderRadius: radius,
-              backgroundColor: faceColor ?? palette.face,
-              borderColor: borderColor ?? palette.border,
-            },
-            content,
-            faceHeightCompensation(footprint, content, depth),
-            pressed && { transform: [{ translateY: depth }] },
-          ]}>
-          {children}
-        </View>
-      )}
+      {children}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  face: {
-    // Fill the footprint minus the edge, without stealing width from parents
-    // that center-align the button (flexGrow alone can collapse to ~0 width).
+  base: {
     alignSelf: 'stretch',
     alignItems: 'center',
     justifyContent: 'center',
@@ -162,6 +119,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderWidth: 1.5,
+    overflow: 'hidden',
   },
   disabled: {
     opacity: 0.55,

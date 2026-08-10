@@ -217,24 +217,21 @@ export const inputFieldStyle: ViewStyle = {
   ...glassBorder,
 };
 
-/**
- * Height of the raised bottom edge under every button. The edge sits inside the
- * button's own footprint, so adding it never changes a button's layout size.
- */
-export const buttonDepth = 3;
+/** @deprecated Flat buttons no longer use a raised edge; kept for compatibility. */
+export const buttonDepth = 0;
 
 export type ButtonVariantName = 'primary' | 'secondary' | 'ghost' | 'danger';
 
 export type ButtonPalette = {
-  /** Opaque fill of the pressable face. */
+  /** Idle fill. */
   face: string;
-  /** Darker edge revealed under the face until it is pressed. */
+  /** Pressed fill. */
   edge: string;
   border: string;
   text: string;
 };
 
-/** Tinted, bordered CTA palettes — the face lifts off a darker bottom edge. */
+/** Tinted, bordered CTA palettes — idle `face`, pressed `edge`. */
 export const buttonVariants: Record<ButtonVariantName, ButtonPalette> = {
   primary: {
     face: softenColor(colors.primary, 0.18),

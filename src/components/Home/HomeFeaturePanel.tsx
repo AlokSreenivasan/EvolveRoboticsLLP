@@ -2,6 +2,7 @@ import React, { useCallback, useState } from 'react';
 import {
   Image,
   LayoutChangeEvent,
+  Pressable,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -12,7 +13,6 @@ import Svg, { Path } from 'react-native-svg';
 
 import { colors, homeAccents, spacing } from '../../constants/theme';
 import CardShadowShell from '../ui/CardShadowShell';
-import TactileButton from '../ui/TactileButton';
 
 export type HomeFeaturePanelProps = {
   badgeLabel: string;
@@ -149,20 +149,25 @@ function HomeFeaturePanel({
       </TouchableOpacity>
 
       <View style={styles.footer}>
-        <TactileButton
-          style={styles.cta}
-          faceColor={
-            ctaInactive ? homeAccents.quiz.soft : homeAccents.quiz.accent
-          }
-          edgeColor={
-            ctaInactive
-              ? homeAccents.quiz.muted
-              : homeAccents.quiz.accentDark
-          }
-          borderColor="transparent"
+        <Pressable
+          style={({ pressed }) => [
+            styles.cta,
+            ctaInactive ? styles.ctaDisabled : styles.ctaActive,
+            pressed && !ctaInactive && styles.ctaPressed,
+          ]}
           onPress={onCtaPress}
           disabled={ctaInactive}
-          accessibilityLabel={ctaLabel}>
+          android_ripple={
+            ctaInactive
+              ? undefined
+              : {
+                  color: 'rgba(255, 255, 255, 0.22)',
+                  borderless: false,
+                }
+          }
+          accessibilityRole="button"
+          accessibilityLabel={ctaLabel}
+          accessibilityState={{ disabled: ctaInactive }}>
           <Text
             style={[
               styles.ctaText,
@@ -172,11 +177,9 @@ function HomeFeaturePanel({
             {ctaLabel}
           </Text>
           {!ctaInactive ? (
-            <View style={styles.ctaIconWrap}>
-              <ArrowRight size={18} color={colors.surface} strokeWidth={2.4} />
-            </View>
+            <ArrowRight size={18} color={colors.surface} strokeWidth={2.25} />
           ) : null}
-        </TactileButton>
+        </Pressable>
       </View>
     </CardShadowShell>
   );
@@ -306,32 +309,35 @@ const styles = StyleSheet.create({
   cta: {
     flex: 1,
     minHeight: 48,
-    gap: 8,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 24,
-  },
-  ctaIconWrap: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: 'rgba(255, 255, 255, 0.22)',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: spacing.buttonRadius,
+    overflow: 'hidden',
+  },
+  ctaActive: {
+    backgroundColor: homeAccents.quiz.accent,
+  },
+  ctaDisabled: {
+    backgroundColor: homeAccents.quiz.soft,
+  },
+  ctaPressed: {
+    backgroundColor: homeAccents.quiz.accentDark,
   },
   ctaText: {
-    fontSize: 14,
-    fontWeight: '700',
-    letterSpacing: 0.4,
-    textTransform: 'uppercase',
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: '600',
+    letterSpacing: 0.15,
   },
   ctaTextFilled: {
     color: colors.surface,
   },
   ctaTextDisabled: {
     color: colors.textMuted,
-    textTransform: 'none',
-    letterSpacing: 0.15,
   },
 });
 

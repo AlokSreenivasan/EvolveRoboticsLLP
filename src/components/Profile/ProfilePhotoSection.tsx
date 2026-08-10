@@ -16,8 +16,8 @@ type ProfilePhotoSectionProps = {
 };
 
 /**
- * Avatar + change-photo control. Uses TouchableOpacity (not TactileButton) so
- * flexGrow on the tactile face cannot collapse width / stretch height in forms.
+ * Avatar + change-photo control. Uses TouchableOpacity so layout stays stable
+ * inside profile forms.
  */
 function ProfilePhotoSection({
   photoUri,
