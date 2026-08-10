@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "477024087655-od9g2gs2qfo1mfjiedlfeak13ag0o6cu.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.evolve",
+            "certificate_hash": "bdb04042c781a3222cfb07479db9821d72e84a5e"
+          }
+        },
+        {
           "client_id": "477024087655-9peisb2667es17p6jq9t8t089dm2517r.apps.googleusercontent.com",
           "client_type": 3
         }
