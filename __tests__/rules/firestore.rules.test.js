@@ -963,6 +963,111 @@ describe('classForumChannels', () => {
       }),
     );
   });
+
+  test('students can delete their own message within 15 seconds', async () => {
+    await testEnv.withSecurityRulesDisabled(async context => {
+      const adminDb = context.firestore();
+      await setDoc(doc(adminDb, 'classForumChannels', channelId), {
+        ...validChannel,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      await setDoc(
+        doc(adminDb, 'classForumChannels', channelId, 'messages', 'm-delete-ok'),
+        {
+          text: 'Fresh message',
+          senderId: OWNER_UID,
+          senderName: 'Owner',
+          senderRole: 'user',
+          isPinned: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      );
+    });
+
+    await assertSucceeds(
+      deleteDoc(
+        doc(
+          db(OWNER_UID),
+          'classForumChannels',
+          channelId,
+          'messages',
+          'm-delete-ok',
+        ),
+      ),
+    );
+  });
+
+  test('students cannot delete their own message after 15 seconds', async () => {
+    await testEnv.withSecurityRulesDisabled(async context => {
+      const adminDb = context.firestore();
+      await setDoc(doc(adminDb, 'classForumChannels', channelId), {
+        ...validChannel,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      await setDoc(
+        doc(adminDb, 'classForumChannels', channelId, 'messages', 'm-delete-late'),
+        {
+          text: 'Old message',
+          senderId: OWNER_UID,
+          senderName: 'Owner',
+          senderRole: 'user',
+          isPinned: false,
+          createdAt: new Date(Date.now() - 20_000),
+          updatedAt: new Date(Date.now() - 20_000),
+        },
+      );
+    });
+
+    await assertFails(
+      deleteDoc(
+        doc(
+          db(OWNER_UID),
+          'classForumChannels',
+          channelId,
+          'messages',
+          'm-delete-late',
+        ),
+      ),
+    );
+  });
+
+  test('admins can delete any message after 15 seconds', async () => {
+    await testEnv.withSecurityRulesDisabled(async context => {
+      const adminDb = context.firestore();
+      await setDoc(doc(adminDb, 'classForumChannels', channelId), {
+        ...validChannel,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      await setDoc(
+        doc(adminDb, 'classForumChannels', channelId, 'messages', 'm-admin-delete'),
+        {
+          text: 'Old student message',
+          senderId: OWNER_UID,
+          senderName: 'Owner',
+          senderRole: 'user',
+          isPinned: false,
+          createdAt: new Date(Date.now() - 60_000),
+          updatedAt: new Date(Date.now() - 60_000),
+        },
+      );
+    });
+
+    await assertSucceeds(
+      deleteDoc(
+        doc(
+          db(ADMIN_UID),
+          'classForumChannels',
+          channelId,
+          'messages',
+          'm-admin-delete',
+        ),
+      ),
+    );
+  });
 });
 
 describe('unmatched paths', () => {

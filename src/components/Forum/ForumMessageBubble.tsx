@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Flag, Pin, Trash2 } from 'lucide-react-native';
 
@@ -11,6 +11,8 @@ import {
 import type { ClassForumMessage } from '../../store/content/types/classForum.types';
 import type { UserRole } from '../../store/user/types/role.types';
 import {
+  CLASS_FORUM_OWN_DELETE_WINDOW_MS,
+  canDeleteAnyClassForumMessage,
   canDeleteOwnClassForumMessage,
   canPinClassForumMessage,
   forumRoleLabel,
@@ -50,13 +52,45 @@ function ForumMessageBubble({
   onTogglePin,
 }: ForumMessageBubbleProps) {
   const isMine = message.senderId === currentUserId;
+  const [nowMs, setNowMs] = useState(() => Date.now());
   const canDelete = canDeleteOwnClassForumMessage(
     currentRole,
     message.senderId,
     currentUserId,
+    message.createdAt,
+    nowMs,
   );
   const canPin = canPinClassForumMessage(currentRole);
   const canReport = Boolean(currentUserId) && !isMine;
+
+  useEffect(() => {
+    if (canDeleteAnyClassForumMessage(currentRole)) {
+      return;
+    }
+    if (!isMine || !message.createdAt) {
+      return;
+    }
+
+    let createdMs: number;
+    try {
+      createdMs = message.createdAt.toMillis();
+    } catch {
+      return;
+    }
+
+    const remainingMs =
+      createdMs + CLASS_FORUM_OWN_DELETE_WINDOW_MS - Date.now();
+    if (remainingMs <= 0) {
+      setNowMs(Date.now());
+      return;
+    }
+
+    const timerId = setTimeout(() => {
+      setNowMs(Date.now());
+    }, remainingMs);
+
+    return () => clearTimeout(timerId);
+  }, [currentRole, isMine, message.createdAt, message.id]);
 
   const roleLabel = useMemo(
     () => forumRoleLabel(message.senderRole),

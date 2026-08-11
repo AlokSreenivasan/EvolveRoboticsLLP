@@ -1047,6 +1047,8 @@ function canDeleteClassForumMessage(database) {
     || (
       isAuthenticated()
       && resource.data.senderId == request.auth.uid
+      && resource.data.createdAt is timestamp
+      && request.time < resource.data.createdAt + duration.value(15, 's')
     );
 }
 
