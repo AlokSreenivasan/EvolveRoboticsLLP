@@ -770,6 +770,201 @@ describe('chatKeywords', () => {
   });
 });
 
+describe('classForumChannels', () => {
+  const schoolId = 'school-a';
+  const grade = '7';
+  const channelId = `${schoolId}__${grade}`;
+
+  const validChannel = {
+    schoolId,
+    grade,
+    schoolName: 'Test School',
+    title: 'Test School · Grade 7',
+    isLocked: false,
+    messageCount: 0,
+    lastMessagePreview: '',
+    lastMessageAt: null,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  };
+
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async context => {
+      const adminDb = context.firestore();
+      await setDoc(doc(adminDb, 'users', OWNER_UID), {
+        fullName: 'Owner',
+        email: 'owner@example.com',
+        phoneNumber: '9876543210',
+        profileImage: '',
+        schoolId,
+        grade,
+        track: 'kids',
+        role: 'user',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      await setDoc(doc(adminDb, 'users', OTHER_UID), {
+        fullName: 'Other',
+        email: 'other@example.com',
+        phoneNumber: '9876543211',
+        profileImage: '',
+        schoolId: 'school-b',
+        grade: '8',
+        track: 'kids',
+        role: 'user',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    });
+  });
+
+  test('students can create and read their own class channel', async () => {
+    const database = db(OWNER_UID);
+    await assertSucceeds(
+      setDoc(doc(database, 'classForumChannels', channelId), validChannel),
+    );
+    await assertSucceeds(
+      getDoc(doc(database, 'classForumChannels', channelId)),
+    );
+  });
+
+  test('students cannot read another class channel', async () => {
+    await testEnv.withSecurityRulesDisabled(async context => {
+      await setDoc(
+        doc(context.firestore(), 'classForumChannels', channelId),
+        {
+          ...validChannel,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      );
+    });
+
+    await assertFails(
+      getDoc(doc(db(OTHER_UID), 'classForumChannels', channelId)),
+    );
+  });
+
+  test('global admins can read any class channel', async () => {
+    await testEnv.withSecurityRulesDisabled(async context => {
+      await setDoc(
+        doc(context.firestore(), 'classForumChannels', channelId),
+        {
+          ...validChannel,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      );
+    });
+
+    await assertSucceeds(
+      getDoc(doc(db(ADMIN_UID), 'classForumChannels', channelId)),
+    );
+  });
+
+  test('students can post messages in their unlocked class channel', async () => {
+    await testEnv.withSecurityRulesDisabled(async context => {
+      await setDoc(
+        doc(context.firestore(), 'classForumChannels', channelId),
+        {
+          ...validChannel,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      );
+    });
+
+    await assertSucceeds(
+      setDoc(doc(db(OWNER_UID), 'classForumChannels', channelId, 'messages', 'm1'), {
+        text: 'Hello class',
+        senderId: OWNER_UID,
+        senderName: 'Owner',
+        senderRole: 'user',
+        isPinned: false,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      }),
+    );
+  });
+
+  test('students cannot post when the channel is locked', async () => {
+    await testEnv.withSecurityRulesDisabled(async context => {
+      await setDoc(
+        doc(context.firestore(), 'classForumChannels', channelId),
+        {
+          ...validChannel,
+          isLocked: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      );
+    });
+
+    await assertFails(
+      setDoc(doc(db(OWNER_UID), 'classForumChannels', channelId, 'messages', 'm2'), {
+        text: 'Should fail',
+        senderId: OWNER_UID,
+        senderName: 'Owner',
+        senderRole: 'user',
+        isPinned: false,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      }),
+    );
+  });
+
+  test('admins can post in a locked channel', async () => {
+    await testEnv.withSecurityRulesDisabled(async context => {
+      await setDoc(
+        doc(context.firestore(), 'classForumChannels', channelId),
+        {
+          ...validChannel,
+          isLocked: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      );
+    });
+
+    await assertSucceeds(
+      setDoc(doc(db(ADMIN_UID), 'classForumChannels', channelId, 'messages', 'm3'), {
+        text: 'Facilitator note',
+        senderId: ADMIN_UID,
+        senderName: 'Admin',
+        senderRole: 'admin',
+        isPinned: false,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      }),
+    );
+  });
+
+  test('students can report messages in their class', async () => {
+    await testEnv.withSecurityRulesDisabled(async context => {
+      await setDoc(
+        doc(context.firestore(), 'classForumChannels', channelId),
+        {
+          ...validChannel,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      );
+    });
+
+    await assertSucceeds(
+      setDoc(doc(db(OWNER_UID), 'classForumChannels', channelId, 'reports', 'r1'), {
+        messageId: 'm1',
+        messageText: 'bad',
+        reportedSenderId: OTHER_UID,
+        reporterId: OWNER_UID,
+        reporterName: 'Owner',
+        reason: 'Inappropriate',
+        createdAt: serverTimestamp(),
+      }),
+    );
+  });
+});
+
 describe('unmatched paths', () => {
   test('reads and writes to unknown collections are denied', async () => {
     const database = db(SUPERADMIN_UID);

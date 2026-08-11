@@ -29,6 +29,8 @@ import PrivacySettingsScreen from '../presentation/screens/Settings/PrivacySetti
 import NotificationPreferencesScreen from '../presentation/screens/Settings/NotificationPreferencesScreen';
 import SupportScreen from '../presentation/screens/Settings/SupportScreen';
 import ChatbotScreen from '../presentation/screens/Chatbot/ChatbotScreen';
+import ChatForumScreen from '../presentation/screens/Forum/ChatForumScreen';
+import ChatForumChannelScreen from '../presentation/screens/Forum/ChatForumChannelScreen';
 import { HomeFeedProvider } from '../presentation/context/HomeFeedContext';
 import { useUserRole } from '../presentation/hooks/useUserRole';
 
@@ -105,6 +107,11 @@ function MainStack() {
         }
       />
       <Stack.Screen name="About" component={AboutScreen} />
+      <Stack.Screen name="ChatForum" component={ChatForumScreen} />
+      <Stack.Screen
+        name="ChatForumChannel"
+        component={ChatForumChannelScreen}
+      />
       <Stack.Screen name="ChatbotScreen" component={ChatbotScreen} />
       <Stack.Screen name="Unauthorized" component={UnauthorizedRoute} />
       {showAdminStack ? (

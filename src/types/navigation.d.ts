@@ -69,6 +69,10 @@ export type RootStackParamList = {
   Assignments: undefined;
   /** Timed exams from Quick Access → Exams. */
   Exams: undefined;
+  /** Class forum hub — students auto-enter their school+grade; admins browse all. */
+  ChatForum: undefined;
+  /** Live class forum channel thread. */
+  ChatForumChannel: { channelId: string; title?: string };
   /** Quiz competitions from Quick Access → Quiz Competition. */
   QuizCompetitions: undefined;
   /** Single quiz attempt screen. */

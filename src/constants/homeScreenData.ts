@@ -10,7 +10,8 @@ export type QuickAccessItem = {
     | 'file'
     | 'folder'
     | 'grid'
-    | 'quiz-competition';
+    | 'quiz-competition'
+    | 'chat-forum';
   iconColor: string;
   backgroundColor: string;
 };
@@ -89,6 +90,13 @@ export const QUICK_ACCESS_ITEMS: QuickAccessItem[] = [
     iconName: 'folder',
     iconColor: colors.primaryDark,
     backgroundColor: colors.primaryLight,
+  },
+  {
+    id: 'chat-forum',
+    label: 'Chat Forum',
+    iconName: 'chat-forum',
+    iconColor: '#00ACC1',
+    backgroundColor: '#E0F7FA',
   },
   {
     id: 'more',

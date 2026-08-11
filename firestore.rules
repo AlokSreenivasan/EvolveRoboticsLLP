@@ -189,6 +189,27 @@ service cloud.firestore {
       allow delete: if isSuperAdmin(database);
     }
 
+    // Class forum — school+grade channels. Admins/superadmins are global facilitators.
+    match /classForumChannels/{channelId} {
+      allow read: if canReadClassForumChannel(database);
+      allow create: if canCreateClassForumChannel(database);
+      allow update: if canUpdateClassForumChannel(database);
+      allow delete: if isSuperAdmin(database);
+
+      match /messages/{messageId} {
+        allow read: if canAccessClassForumChannelId(database, channelId);
+        allow create: if canCreateClassForumMessage(database, channelId);
+        allow update: if isAdmin(database) && isValidClassForumMessagePinUpdate();
+        allow delete: if canDeleteClassForumMessage(database);
+      }
+
+      match /reports/{reportId} {
+        allow read: if isAdmin(database);
+        allow create: if canCreateClassForumReport(database, channelId);
+        allow update, delete: if isSuperAdmin(database);
+      }
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
@@ -862,6 +883,216 @@ function schoolAndGradeImmutableOnceSet() {
 function isOptionalUserTrack(value) {
   return value == null
     || value in ['kids', 'professionals'];
+}
+
+function signedInUserData(database) {
+  return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+}
+
+function hasClassForumMembership(database, schoolId, grade) {
+  return isAuthenticated()
+    && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+    && signedInUserData(database).schoolId == schoolId
+    && signedInUserData(database).grade == grade;
+}
+
+function canReadClassForumChannel(database) {
+  return isAdmin(database)
+    || (
+      resource.data.keys().hasAll(['schoolId', 'grade'])
+      && hasClassForumMembership(
+        database,
+        resource.data.schoolId,
+        resource.data.grade,
+      )
+    );
+}
+
+function canAccessClassForumChannelId(database, channelId) {
+  return isAdmin(database)
+    || (
+      exists(/databases/$(database)/documents/classForumChannels/$(channelId))
+      && hasClassForumMembership(
+        database,
+        get(/databases/$(database)/documents/classForumChannels/$(channelId)).data.schoolId,
+        get(/databases/$(database)/documents/classForumChannels/$(channelId)).data.grade,
+      )
+    );
+}
+
+function isValidClassForumChannelFields(data) {
+  return data.schoolId is string
+    && data.schoolId.size() > 0
+    && data.schoolId.size() <= 128
+    && data.grade is string
+    && data.grade.size() > 0
+    && data.grade.size() <= 32
+    && data.schoolName is string
+    && data.schoolName.size() > 0
+    && data.schoolName.size() <= 200
+    && data.title is string
+    && data.title.size() > 0
+    && data.title.size() <= 240
+    && data.isLocked is bool
+    && data.messageCount is number
+    && data.messageCount >= 0
+    && data.messageCount <= 1000000
+    && data.lastMessagePreview is string
+    && data.lastMessagePreview.size() <= 200
+    && (!('lastMessageAt' in data) || data.lastMessageAt == null || data.lastMessageAt is timestamp);
+}
+
+function canCreateClassForumChannel(database) {
+  let data = request.resource.data;
+  return isAuthenticated()
+    && data.keys().hasAll([
+      'schoolId',
+      'grade',
+      'schoolName',
+      'title',
+      'isLocked',
+      'messageCount',
+      'lastMessagePreview',
+      'createdAt',
+      'updatedAt',
+    ])
+    && isValidClassForumChannelFields(data)
+    && data.isLocked == false
+    && data.messageCount == 0
+    && data.lastMessagePreview == ''
+    && (
+      isAdmin(database)
+      || hasClassForumMembership(database, data.schoolId, data.grade)
+    );
+}
+
+function onlyClassForumActivityFieldsChanged() {
+  return request.resource.data.diff(resource.data).affectedKeys()
+    .hasOnly([
+      'lastMessageAt',
+      'lastMessagePreview',
+      'messageCount',
+      'updatedAt',
+    ]);
+}
+
+function onlyClassForumLockFieldsChanged() {
+  return request.resource.data.diff(resource.data).affectedKeys()
+    .hasOnly(['isLocked', 'updatedAt']);
+}
+
+function canUpdateClassForumChannel(database) {
+  let after = request.resource.data;
+  return isValidClassForumChannelFields(after)
+    && after.schoolId == resource.data.schoolId
+    && after.grade == resource.data.grade
+    && (
+      (
+        isAdmin(database)
+        && (
+          onlyClassForumLockFieldsChanged()
+          || onlyClassForumActivityFieldsChanged()
+        )
+      )
+      || (
+        hasClassForumMembership(
+          database,
+          resource.data.schoolId,
+          resource.data.grade,
+        )
+        && onlyClassForumActivityFieldsChanged()
+        && after.isLocked == resource.data.isLocked
+      )
+    );
+}
+
+function isValidClassForumMessageCreate(data) {
+  return data.keys().hasAll([
+      'text',
+      'senderId',
+      'senderName',
+      'senderRole',
+      'isPinned',
+      'createdAt',
+      'updatedAt',
+    ])
+    && data.text is string
+    && data.text.size() > 0
+    && data.text.size() <= 1000
+    && data.senderId == request.auth.uid
+    && data.senderName is string
+    && data.senderName.size() > 0
+    && data.senderName.size() <= 120
+    && isValidUserRole(data.senderRole)
+    && data.isPinned == false;
+}
+
+function canCreateClassForumMessage(database, channelId) {
+  let channel = get(/databases/$(database)/documents/classForumChannels/$(channelId)).data;
+  return isAuthenticated()
+    && exists(/databases/$(database)/documents/classForumChannels/$(channelId))
+    && isValidClassForumMessageCreate(request.resource.data)
+    && (
+      isAdmin(database)
+      || (
+        hasClassForumMembership(database, channel.schoolId, channel.grade)
+        && channel.isLocked == false
+        && request.resource.data.senderRole == 'user'
+      )
+    );
+}
+
+function canDeleteClassForumMessage(database) {
+  return isAdmin(database)
+    || (
+      isAuthenticated()
+      && resource.data.senderId == request.auth.uid
+    );
+}
+
+function isValidClassForumMessagePinUpdate() {
+  return request.resource.data.diff(resource.data).affectedKeys()
+      .hasOnly(['isPinned', 'updatedAt'])
+    && request.resource.data.isPinned is bool
+    && request.resource.data.text == resource.data.text
+    && request.resource.data.senderId == resource.data.senderId
+    && request.resource.data.senderName == resource.data.senderName
+    && request.resource.data.senderRole == resource.data.senderRole;
+}
+
+function canCreateClassForumReport(database, channelId) {
+  let data = request.resource.data;
+  let channel = get(/databases/$(database)/documents/classForumChannels/$(channelId)).data;
+  return isAuthenticated()
+    && exists(/databases/$(database)/documents/classForumChannels/$(channelId))
+    && data.keys().hasAll([
+      'messageId',
+      'messageText',
+      'reportedSenderId',
+      'reporterId',
+      'reporterName',
+      'reason',
+      'createdAt',
+    ])
+    && data.reporterId == request.auth.uid
+    && data.messageId is string
+    && data.messageId.size() > 0
+    && data.messageId.size() <= 128
+    && data.messageText is string
+    && data.messageText.size() <= 1000
+    && data.reportedSenderId is string
+    && data.reportedSenderId.size() > 0
+    && data.reportedSenderId.size() <= 128
+    && data.reporterName is string
+    && data.reporterName.size() > 0
+    && data.reporterName.size() <= 120
+    && data.reason is string
+    && data.reason.size() > 0
+    && data.reason.size() <= 300
+    && (
+      isAdmin(database)
+      || hasClassForumMembership(database, channel.schoolId, channel.grade)
+    );
 }
   }
 }

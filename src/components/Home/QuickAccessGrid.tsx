@@ -24,6 +24,7 @@ import {
 import { colors } from '../../constants/theme';
 import CardShadowShell from '../ui/CardShadowShell';
 import type { LoginScreenNavigationProp } from '../../types/navigation';
+import ChatForumIcon from './icons/ChatForumIcon';
 
 function QuickAccessIcon({
   item,
@@ -47,6 +48,8 @@ function QuickAccessIcon({
       return <FolderOpen size={size} color={color} strokeWidth={stroke} />;
     case 'grid':
       return <Grid3x3 size={size} color={color} strokeWidth={stroke} />;
+    case 'chat-forum':
+      return <ChatForumIcon size={size} color={color} strokeWidth={stroke} />;
     default:
       return null;
   }
@@ -62,6 +65,8 @@ function QuickAccessGrid() {
       navigation.navigate('Assignments');
     } else if (itemId === 'exams') {
       navigation.navigate('Exams');
+    } else if (itemId === 'chat-forum') {
+      navigation.navigate('ChatForum');
     }
   };
 

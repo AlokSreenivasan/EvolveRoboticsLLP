@@ -9,6 +9,7 @@ export {
   getDoc,
   getDocFromServer,
   getDocs,
+  increment,
   limit,
   onSnapshot,
   orderBy,

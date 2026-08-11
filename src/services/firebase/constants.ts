@@ -15,6 +15,7 @@ export const FIRESTORE_COLLECTIONS = {
   schools: 'schools',
   chatKeywords: 'chatKeywords',
   projects: 'projects',
+  classForumChannels: 'classForumChannels',
 } as const;
 
 /** Document IDs inside {@link FIRESTORE_COLLECTIONS.appContent}. */
