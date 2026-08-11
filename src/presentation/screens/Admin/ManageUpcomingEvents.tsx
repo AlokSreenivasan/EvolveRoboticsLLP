@@ -547,7 +547,7 @@ function ManageUpcomingEvents() {
           label="Action label"
           value={actionLabel}
           onChangeText={setActionLabel}
-          placeholder="View Calendar"
+          placeholder="Events Calendar"
         />
       </AdminEntityForm>
 

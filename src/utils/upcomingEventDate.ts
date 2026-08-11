@@ -206,8 +206,36 @@ export function getDisplayDaysLeftLabel(
   return storedLabel.trim();
 }
 
-function startOfLocalDay(date: Date): Date {
+export function startOfLocalDay(date: Date): Date {
   const copy = new Date(date);
   copy.setHours(0, 0, 0, 0);
   return copy;
+}
+
+/** Stable local YYYY-MM-DD key for calendar day lookup. */
+export function toLocalDateKey(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+export function isSameLocalDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+export function addMonths(date: Date, delta: number): Date {
+  const next = startOfLocalDay(date);
+  next.setDate(1);
+  next.setMonth(next.getMonth() + delta);
+  return next;
+}
+
+/** First day of the month containing `date`. */
+export function startOfMonth(date: Date): Date {
+  return startOfLocalDay(new Date(date.getFullYear(), date.getMonth(), 1));
 }

@@ -3,6 +3,6 @@ import type { UpcomingEventsSection } from '../store/content/types/upcomingEvent
 export const DEFAULT_UPCOMING_EVENTS_SECTION: UpcomingEventsSection = {
   sectionTitle: 'Upcoming Events',
   sectionSubtitle: '',
-  actionLabel: 'View Calendar',
+  actionLabel: 'Events Calendar',
   updatedAt: null,
 };

@@ -37,11 +37,7 @@ function UpcomingEventsSection() {
   return (
     <HomeFeedSection
         title={section.sectionTitle}
-        actionLabel={
-          hasEvents
-            ? section.actionLabel?.trim() || 'View Calendar'
-            : undefined
-        }
+        actionLabel={hasEvents ? 'Events Calendar' : undefined}
         onActionPress={hasEvents ? openList : undefined}
         subtitle={section.sectionSubtitle?.trim() || undefined}
         loading={loading}
