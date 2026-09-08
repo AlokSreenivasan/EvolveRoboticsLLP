@@ -202,7 +202,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -e\n\nWITH_ENVIRONMENT=\"$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"$REACT_NATIVE_PATH/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"$WITH_ENVIRONMENT $REACT_NATIVE_XCODE\"\n";
+			shellScript = "set -e\n\nWITH_ENVIRONMENT=\"$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"$REACT_NATIVE_PATH/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"$WITH_ENVIRONMENT $REACT_NATIVE_XCODE\"\n\n# Physical devices cannot use localhost; RCTBundleURLProvider reads ip.txt from the app bundle.\nif [ \"${PLATFORM_NAME}\" = \"iphoneos\" ]; then\n  DEST=\"${BUILT_PRODUCTS_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ip.txt\"\n  IP=\"$(ipconfig getifaddr en0 2>/dev/null || true)\"\n  if [ -z \"$IP\" ]; then IP=\"$(ipconfig getifaddr en1 2>/dev/null || true)\"; fi\n  if [ -n \"$IP\" ]; then\n    echo \"$IP\" > \"$DEST\"\n    echo \"Metro packager IP written to ip.txt: $IP\"\n  fi\nfi\n";
 		};
 		1941C6851D94954DA4B7EDA2 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;

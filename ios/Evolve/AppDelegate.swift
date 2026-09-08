@@ -43,9 +43,14 @@ class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {
 
   override func bundleURL() -> URL? {
 #if DEBUG
-    RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: "index")
+    let settings = RCTBundleURLProvider.sharedSettings()
+#if targetEnvironment(simulator)
+    // Avoid `localhost` → IPv6 (::1), which breaks Metro's HMR WebSocket on some simulators.
+    settings.jsLocation = "127.0.0.1"
+#endif
+    return settings.jsBundleURL(forBundleRoot: "index")
 #else
-    Bundle.main.url(forResource: "main", withExtension: "jsbundle")
+    return Bundle.main.url(forResource: "main", withExtension: "jsbundle")
 #endif
   }
 }

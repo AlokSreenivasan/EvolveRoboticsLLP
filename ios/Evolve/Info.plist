@@ -41,7 +41,26 @@
 		<false/>
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>localhost</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
+			<key>127.0.0.1</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
+		</dict>
 	</dict>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_metro._tcp</string>
+	</array>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Evolve uses the local network to load JavaScript from the Metro bundler during development.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Evolve needs access to your photo library so you can choose a profile picture.</string>
 	<key>UIBackgroundModes</key>
