@@ -5,7 +5,14 @@ apply plugin: "com.google.gms.google-services"
 apply plugin: "com.google.firebase.crashlytics"
 
 // Expose root `.env` keys (e.g. YOUTUBE_API_KEY) to JS via react-native-config.
-apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle"
+// Resolve from this repo (not autolink projectDir), so a moved checkout still builds.
+def dotenvGradle = file("${rootProject.projectDir}/../node_modules/react-native-config/android/dotenv.gradle")
+if (!dotenvGradle.exists()) {
+    throw new GradleException(
+        "react-native-config dotenv.gradle not found at ${dotenvGradle.canonicalPath}. Run npm install."
+    )
+}
+apply from: dotenvGradle
 
 
 /**

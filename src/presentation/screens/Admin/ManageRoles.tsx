@@ -21,6 +21,7 @@ import { useAdminUsersList } from '../../hooks/admin/useAdminUsersList';
 import { useSchools } from '../../hooks/useSchools';
 import {
   fetchPrivilegedUsers,
+  purgeOrphanedUsers,
   setUserRole,
 } from '../../../services/firebase/adminUsersService';
 import { isSuperAdmin } from '../../../services/firebase/roleService';
@@ -75,6 +76,11 @@ function ManageRoles() {
     setPrivilegedLoading(true);
     setPrivilegedError(null);
     try {
+      try {
+        await purgeOrphanedUsers();
+      } catch {
+        // Still show the current privileged list if Auth sync is unavailable.
+      }
       setPrivilegedUsers(await fetchPrivilegedUsers());
     } catch (auditError) {
       setPrivilegedUsers([]);

@@ -1,6 +1,9 @@
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
+const { onDocumentCreated } = require('firebase-functions/v2/firestore');
+const { onSchedule } = require('firebase-functions/v2/scheduler');
 const functionsV1 = require('firebase-functions/v1');
 const { initializeApp } = require('firebase-admin/app');
+const { getAuth } = require('firebase-admin/auth');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const { getMessaging } = require('firebase-admin/messaging');
 
@@ -15,6 +18,9 @@ const {
   resolveUserPreferences,
   collectEligibleTokens,
   buildMulticastMessage,
+  buildForumNotificationCopy,
+  buildForumMulticastMessage,
+  FORUM_NOTIFICATION_CATEGORY,
   sendMulticastBatches,
 } = require('./notificationHelpers');
 const {
@@ -31,6 +37,10 @@ const {
   questionHasEmbeddedKey,
 } = require('./gradingHelpers');
 const { buildCallableOpts } = require('./callableOpts');
+const {
+  deleteUserFirestoreData,
+  purgeOrphanedUserProfiles,
+} = require('./userDeletionHelpers');
 
 initializeApp();
 
@@ -243,6 +253,126 @@ exports.sendLiveNotification = onCall(CALLABLE_OPTS, async request => {
   };
 });
 
+/**
+ * Loads user ids matching a single school + grade (class forum audience).
+ */
+async function loadUserIdsForSchoolGrade(db, schoolId, grade) {
+  const allowed = new Set();
+  const snapshot = await db
+    .collection('users')
+    .where('schoolId', '==', schoolId)
+    .get();
+
+  snapshot.docs.forEach(doc => {
+    const userData = doc.data() ?? {};
+    const userGrade =
+      typeof userData.grade === 'string' ? userData.grade.trim() : '';
+    if (userGrade === grade) {
+      allowed.add(doc.id);
+    }
+  });
+
+  return allowed;
+}
+
+/**
+ * Firestore trigger: push classmates when a new class forum message is posted.
+ * Targets users in the channel's school + grade, excludes the sender, and
+ * respects push + classForumMessages preferences.
+ */
+exports.onClassForumMessageCreated = onDocumentCreated(
+  'classForumChannels/{channelId}/messages/{messageId}',
+  async event => {
+    const snapshot = event.data;
+    if (!snapshot) {
+      return null;
+    }
+
+    const channelId = event.params.channelId;
+    const messageId = event.params.messageId;
+    const messageData = snapshot.data() ?? {};
+    const senderId =
+      typeof messageData.senderId === 'string' ? messageData.senderId.trim() : '';
+    const senderName =
+      typeof messageData.senderName === 'string'
+        ? messageData.senderName.trim()
+        : 'Member';
+    const text = typeof messageData.text === 'string' ? messageData.text : '';
+
+    if (!text.trim()) {
+      return null;
+    }
+
+    const db = getFirestore();
+    const channelSnap = await db.doc(`classForumChannels/${channelId}`).get();
+    if (!channelSnap.exists) {
+      return null;
+    }
+
+    const channelData = channelSnap.data() ?? {};
+    const schoolId =
+      typeof channelData.schoolId === 'string' ? channelData.schoolId.trim() : '';
+    const grade =
+      typeof channelData.grade === 'string' ? channelData.grade.trim() : '';
+    const channelTitle =
+      typeof channelData.title === 'string' ? channelData.title.trim() : '';
+
+    if (!schoolId || !grade) {
+      return null;
+    }
+
+    const allowedUserIds = await loadUserIdsForSchoolGrade(db, schoolId, grade);
+    if (senderId) {
+      allowedUserIds.delete(senderId);
+    }
+
+    if (allowedUserIds.size === 0) {
+      return null;
+    }
+
+    const preferencesByUser = await loadNotificationPreferencesByUser(db);
+    const tokenSnap = await db.collectionGroup('fcmTokens').get();
+    const { withSound, silent } = collectEligibleTokens(
+      tokenSnap,
+      preferencesByUser,
+      FORUM_NOTIFICATION_CATEGORY,
+      allowedUserIds,
+    );
+
+    if (withSound.length + silent.length === 0) {
+      return null;
+    }
+
+    const { title, body } = buildForumNotificationCopy(
+      senderName,
+      text,
+      channelTitle,
+    );
+    const messaging = getMessaging();
+    const soundMessage = buildForumMulticastMessage(
+      title,
+      body,
+      channelId,
+      messageId,
+      true,
+    );
+    const silentMessage = buildForumMulticastMessage(
+      title,
+      body,
+      channelId,
+      messageId,
+      false,
+    );
+
+    await Promise.all([
+      sendMulticastBatches(messaging, withSound, soundMessage, FCM_BATCH_SIZE),
+      sendMulticastBatches(messaging, silent, silentMessage, FCM_BATCH_SIZE),
+    ]);
+
+    return null;
+  },
+);
+
 const FIRESTORE_BATCH_LIMIT = 500;
 
 /**
@@ -310,25 +440,69 @@ exports.deleteMyAccountData = onCall(CALLABLE_OPTS, async request => {
     throw new HttpsError('unauthenticated', 'You must be signed in.');
   }
 
-  const db = getFirestore();
-  await db.recursiveDelete(db.doc(`users/${request.auth.uid}`));
+  await deleteUserFirestoreData(getFirestore(), request.auth.uid);
 
   return { ok: true };
 });
 
 /**
  * Auth trigger: whenever a Firebase Auth user is deleted (in-app deletion,
- * Firebase console, or Admin SDK), recursively remove users/{uid} and every
- * subcollection (continueLearningProgress, examAttempts, quizAttempts,
- * fcmTokens, notificationPreferences, notificationReads). This is the safety
- * net that guarantees no orphaned Firestore data survives account deletion,
- * even if the deleteMyAccountData callable was skipped or failed.
+ * Firebase console, or Admin SDK), remove users/{uid} and subcollections.
+ * Manage Users / Manage Roles read that Firestore doc (including `role`),
+ * so this is what keeps those lists in sync with Authentication.
  * Uses the v1 API because auth.user().onDelete has no v2 equivalent yet.
  */
-exports.onAuthUserDeleted = functionsV1.auth.user().onDelete(async user => {
-  const db = getFirestore();
-  await db.recursiveDelete(db.doc(`users/${user.uid}`));
-});
+exports.onAuthUserDeleted = functionsV1
+  .runWith({ timeoutSeconds: 300, memory: '256MB' })
+  .auth.user()
+  .onDelete(async user => {
+    console.log(`onAuthUserDeleted: removing Firestore profile for ${user.uid}`);
+    await deleteUserFirestoreData(getFirestore(), user.uid);
+  });
+
+async function requireSuperAdmin(request) {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'You must be signed in.');
+  }
+
+  const adminSnap = await getFirestore().doc(`users/${request.auth.uid}`).get();
+  if (!adminSnap.exists || adminSnap.data().role !== 'superadmin') {
+    throw new HttpsError(
+      'permission-denied',
+      'Only superadmins can sync deleted users.',
+    );
+  }
+}
+
+/**
+ * Callable: superadmin removes Firestore profiles (and roles) for Auth
+ * accounts that were already deleted. Covers bulk Auth deletes, a missed
+ * onDelete trigger, and leftover ghosts from before the trigger was deployed.
+ */
+exports.purgeOrphanedUsers = onCall(
+  { ...CALLABLE_OPTS, timeoutSeconds: 540 },
+  async request => {
+    await requireSuperAdmin(request);
+    return purgeOrphanedUserProfiles(getFirestore(), getAuth());
+  },
+);
+
+/**
+ * Periodic safety net: Auth onDelete does not fire for admin.auth().deleteUsers
+ * bulk deletes, and console deletes leave ghosts if the trigger failed.
+ */
+exports.purgeOrphanedAuthUsers = onSchedule(
+  {
+    schedule: 'every 15 minutes',
+    timeZone: 'UTC',
+    timeoutSeconds: 540,
+  },
+  async () => {
+    const result = await purgeOrphanedUserProfiles(getFirestore(), getAuth());
+    console.log('purgeOrphanedAuthUsers', result);
+    return result;
+  },
+);
 
 /**
  * Callable: grade and persist an exam attempt server-side.

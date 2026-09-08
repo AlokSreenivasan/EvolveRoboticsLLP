@@ -1,4 +1,5 @@
 import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+import { getFunctions, httpsCallable } from '@react-native-firebase/functions';
 
 import type {
   AdminUserListFilters,
@@ -219,6 +220,48 @@ export async function setUserRole(
       'Failed to update user role.',
     );
   }
+}
+
+export type PurgeOrphanedUsersResult = {
+  scanned: number;
+  purged: number;
+};
+
+let orphanPurgeInFlight: Promise<PurgeOrphanedUsersResult> | null = null;
+
+/**
+ * Removes Firestore users/{uid} docs (including role) whose Firebase Auth
+ * account no longer exists. Coalesces concurrent calls so Manage Users and
+ * Manage Roles can both wait on one sync.
+ */
+export async function purgeOrphanedUsers(): Promise<PurgeOrphanedUsersResult> {
+  if (orphanPurgeInFlight) {
+    return orphanPurgeInFlight;
+  }
+
+  orphanPurgeInFlight = (async () => {
+    try {
+      const callable = httpsCallable<void, PurgeOrphanedUsersResult>(
+        getFunctions(),
+        'purgeOrphanedUsers',
+      );
+      const response = await callable();
+      return {
+        scanned: response.data?.scanned ?? 0,
+        purged: response.data?.purged ?? 0,
+      };
+    } catch (error) {
+      throw wrapFirebaseError(
+        error,
+        'FUNCTIONS_ERROR',
+        'Failed to sync deleted Firebase accounts.',
+      );
+    } finally {
+      orphanPurgeInFlight = null;
+    }
+  })();
+
+  return orphanPurgeInFlight;
 }
 
 /** Lists admin + superadmin accounts for privileged-access audits. */

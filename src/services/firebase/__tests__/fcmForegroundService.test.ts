@@ -28,6 +28,7 @@ describe('displayForegroundPushNotification', () => {
     loadNotificationPreferences.mockResolvedValue({
       pushNotifications: true,
       soundAndVibration: true,
+      classForumMessages: true,
     });
   });
 
@@ -46,11 +47,26 @@ describe('displayForegroundPushNotification', () => {
     loadNotificationPreferences.mockResolvedValue({
       pushNotifications: false,
       soundAndVibration: false,
+      classForumMessages: true,
     });
-
     await displayForegroundPushNotification({
       notification: { title: 'Skip', body: 'Me' },
       data: {},
+    } as unknown as FirebaseMessagingTypes.RemoteMessage);
+
+    expect(appAlert).not.toHaveBeenCalled();
+  });
+
+  it('skips class forum alerts when that preference is off', async () => {
+    loadNotificationPreferences.mockResolvedValue({
+      pushNotifications: true,
+      soundAndVibration: true,
+      classForumMessages: false,
+    });
+
+    await displayForegroundPushNotification({
+      notification: { title: 'Forum', body: 'Ada: hello' },
+      data: { type: 'class_forum_message' },
     } as unknown as FirebaseMessagingTypes.RemoteMessage);
 
     expect(appAlert).not.toHaveBeenCalled();

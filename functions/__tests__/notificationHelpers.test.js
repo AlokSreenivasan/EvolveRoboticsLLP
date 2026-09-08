@@ -2,6 +2,8 @@ const {
   ANDROID_CHANNEL_DEFAULT,
   ANDROID_CHANNEL_SILENT,
   DEFAULT_NOTIFICATION_PREFERENCES,
+  FORUM_NOTIFICATION_CATEGORY,
+  FORUM_NOTIFICATION_TYPE,
   normalizeAudience,
   normalizeContentTrack,
   normalizeSchoolIds,
@@ -13,6 +15,9 @@ const {
   isCategoryEnabledForUser,
   collectEligibleTokens,
   buildMulticastMessage,
+  buildForumMessagePreview,
+  buildForumNotificationCopy,
+  buildForumMulticastMessage,
   sendMulticastBatches,
 } = require('../notificationHelpers');
 
@@ -116,6 +121,9 @@ describe('normalizeContentTrack / userMatchesTrackTarget', () => {
 describe('normalizeNotificationCategory', () => {
   it('keeps known categories and falls back to general', () => {
     expect(normalizeNotificationCategory('course_updates')).toBe('course_updates');
+    expect(normalizeNotificationCategory('class_forum_messages')).toBe(
+      'class_forum_messages',
+    );
     expect(normalizeNotificationCategory('unknown')).toBe('general');
     expect(normalizeNotificationCategory(undefined)).toBe('general');
   });
@@ -137,6 +145,14 @@ describe('resolveUserPreferences / isCategoryEnabledForUser', () => {
     const prefs = resolveUserPreferences({ courseUpdates: false });
     expect(isCategoryEnabledForUser(prefs, 'course_updates')).toBe(false);
     expect(isCategoryEnabledForUser(prefs, 'security_alerts')).toBe(true);
+  });
+
+  it('respects class forum message opt-out', () => {
+    const prefs = resolveUserPreferences({ classForumMessages: false });
+    expect(isCategoryEnabledForUser(prefs, 'class_forum_messages')).toBe(false);
+    expect(
+      isCategoryEnabledForUser(DEFAULT_NOTIFICATION_PREFERENCES, 'class_forum_messages'),
+    ).toBe(true);
   });
 
   it('defaults promotional offers and app updates to off', () => {
@@ -226,6 +242,54 @@ describe('buildMulticastMessage', () => {
     const message = buildMulticastMessage('T', 'B', 'n1', 'general', false);
     expect(message.android.notification.channelId).toBe(ANDROID_CHANNEL_SILENT);
     expect(message.apns).toBeUndefined();
+  });
+
+  it('accepts a custom type and extra data fields', () => {
+    const message = buildMulticastMessage('T', 'B', 'n1', 'class_forum_messages', true, {
+      type: 'class_forum_message',
+      data: { channelId: 'ch1', messageId: 'm1', empty: '' },
+    });
+    expect(message.data).toEqual({
+      notificationId: 'n1',
+      type: 'class_forum_message',
+      category: 'class_forum_messages',
+      channelId: 'ch1',
+      messageId: 'm1',
+    });
+  });
+});
+
+describe('buildForumNotification helpers', () => {
+  it('truncates long message previews', () => {
+    const long = 'a'.repeat(130);
+    expect(buildForumMessagePreview(long)).toHaveLength(120);
+    expect(buildForumMessagePreview(long).endsWith('…')).toBe(true);
+  });
+
+  it('builds notification copy from sender and channel', () => {
+    expect(
+      buildForumNotificationCopy(' Ada ', ' Hello class ', ' School · Grade 6 '),
+    ).toEqual({
+      title: 'School · Grade 6',
+      body: 'Ada: Hello class',
+    });
+  });
+
+  it('builds a forum multicast payload', () => {
+    const message = buildForumMulticastMessage(
+      'Forum',
+      'Ada: hi',
+      'school__g6',
+      'msg1',
+      true,
+    );
+    expect(message.data).toEqual({
+      notificationId: 'school__g6_msg1',
+      type: FORUM_NOTIFICATION_TYPE,
+      category: FORUM_NOTIFICATION_CATEGORY,
+      channelId: 'school__g6',
+      messageId: 'msg1',
+    });
   });
 });
 

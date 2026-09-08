@@ -10,7 +10,8 @@ export type NotificationCategory =
   | 'account_changes'
   | 'app_updates'
   | 'events_workshops'
-  | 'promotional_offers';
+  | 'promotional_offers'
+  | 'class_forum_messages';
 
 export const DEFAULT_NOTIFICATION_CATEGORY: NotificationCategory = 'general';
 
@@ -62,6 +63,7 @@ const CATEGORY_PREFERENCE_KEYS: Partial<
   app_updates: 'appUpdates',
   events_workshops: 'eventsAndWorkshops',
   promotional_offers: 'promotionalOffers',
+  class_forum_messages: 'classForumMessages',
 };
 
 const CATEGORY_LABELS: Record<NotificationCategory, string> = {
@@ -75,6 +77,7 @@ const CATEGORY_LABELS: Record<NotificationCategory, string> = {
   app_updates: 'App updates & tips',
   events_workshops: 'Events & workshops',
   promotional_offers: 'Promotional offers',
+  class_forum_messages: 'Class forum messages',
 };
 
 export function normalizeNotificationCategory(

@@ -19,6 +19,7 @@ const DEFAULT_NOTIFICATION_PREFERENCES = {
   appUpdates: false,
   promotionalOffers: false,
   eventsAndWorkshops: true,
+  classForumMessages: true,
 };
 
 const CATEGORY_PREFERENCE_KEYS = {
@@ -31,7 +32,12 @@ const CATEGORY_PREFERENCE_KEYS = {
   app_updates: 'appUpdates',
   events_workshops: 'eventsAndWorkshops',
   promotional_offers: 'promotionalOffers',
+  class_forum_messages: 'classForumMessages',
 };
+
+const FORUM_MESSAGE_PREVIEW_MAX = 120;
+const FORUM_NOTIFICATION_TYPE = 'class_forum_message';
+const FORUM_NOTIFICATION_CATEGORY = 'class_forum_messages';
 
 function normalizeAudience(data) {
   return data?.audience === 'schools' ? 'schools' : 'all';
@@ -190,17 +196,43 @@ function collectEligibleTokens(
   return { withSound, silent };
 }
 
-function buildMulticastMessage(title, body, notificationId, category, withSound) {
+function buildMulticastMessage(
+  title,
+  body,
+  notificationId,
+  category,
+  withSound,
+  options,
+) {
+  const type =
+    typeof options?.type === 'string' && options.type.trim().length > 0
+      ? options.type.trim()
+      : 'live_notification';
+  const extraData =
+    options?.data != null &&
+    typeof options.data === 'object' &&
+    !Array.isArray(options.data)
+      ? options.data
+      : {};
+
+  const data = {
+    notificationId: notificationId.trim(),
+    type,
+    category,
+  };
+
+  Object.entries(extraData).forEach(([key, value]) => {
+    if (typeof value === 'string' && value.length > 0) {
+      data[key] = value;
+    }
+  });
+
   const message = {
     notification: {
       title: title.trim(),
       body: body.trim(),
     },
-    data: {
-      notificationId: notificationId.trim(),
-      type: 'live_notification',
-      category,
-    },
+    data,
     android: {
       priority: 'high',
       notification: {
@@ -220,6 +252,59 @@ function buildMulticastMessage(title, body, notificationId, category, withSound)
   }
 
   return message;
+}
+
+function buildForumMessagePreview(text, maxLen = FORUM_MESSAGE_PREVIEW_MAX) {
+  const trimmed = typeof text === 'string' ? text.trim() : '';
+  if (!trimmed) {
+    return '';
+  }
+  if (trimmed.length <= maxLen) {
+    return trimmed;
+  }
+  return `${trimmed.slice(0, Math.max(0, maxLen - 1)).trimEnd()}…`;
+}
+
+function buildForumNotificationCopy(senderName, text, channelTitle) {
+  const name =
+    typeof senderName === 'string' && senderName.trim().length > 0
+      ? senderName.trim()
+      : 'Member';
+  const title =
+    typeof channelTitle === 'string' && channelTitle.trim().length > 0
+      ? channelTitle.trim()
+      : 'Class Forum';
+  const preview = buildForumMessagePreview(text);
+
+  return {
+    title,
+    body: preview
+      ? `${name}: ${preview}`
+      : `${name} posted in the class forum`,
+  };
+}
+
+function buildForumMulticastMessage(
+  title,
+  body,
+  channelId,
+  messageId,
+  withSound,
+) {
+  return buildMulticastMessage(
+    title,
+    body,
+    `${channelId}_${messageId}`,
+    FORUM_NOTIFICATION_CATEGORY,
+    withSound,
+    {
+      type: FORUM_NOTIFICATION_TYPE,
+      data: {
+        channelId,
+        messageId,
+      },
+    },
+  );
 }
 
 async function sendMulticastBatches(messaging, tokens, message, batchSize) {
@@ -244,6 +329,8 @@ module.exports = {
   ANDROID_CHANNEL_SILENT,
   DEFAULT_NOTIFICATION_PREFERENCES,
   CATEGORY_PREFERENCE_KEYS,
+  FORUM_NOTIFICATION_TYPE,
+  FORUM_NOTIFICATION_CATEGORY,
   normalizeAudience,
   normalizeContentTrack,
   normalizeSchoolIds,
@@ -255,5 +342,8 @@ module.exports = {
   isCategoryEnabledForUser,
   collectEligibleTokens,
   buildMulticastMessage,
+  buildForumMessagePreview,
+  buildForumNotificationCopy,
+  buildForumMulticastMessage,
   sendMulticastBatches,
 };

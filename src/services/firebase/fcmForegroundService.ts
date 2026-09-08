@@ -50,6 +50,17 @@ export async function displayForegroundPushNotification(
     return;
   }
 
+  const messageType =
+    typeof remoteMessage.data?.type === 'string'
+      ? remoteMessage.data.type
+      : '';
+  if (
+    messageType === 'class_forum_message' &&
+    preferences.classForumMessages === false
+  ) {
+    return;
+  }
+
   appAlert(copy.title, copy.body || undefined);
 }
 

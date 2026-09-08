@@ -9,7 +9,8 @@ export type NotificationPreferenceKey =
   | 'accountChanges'
   | 'appUpdates'
   | 'promotionalOffers'
-  | 'eventsAndWorkshops';
+  | 'eventsAndWorkshops'
+  | 'classForumMessages';
 
 export type NotificationPreferences = Record<
   NotificationPreferenceKey,
@@ -28,4 +29,5 @@ export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   appUpdates: false,
   promotionalOffers: false,
   eventsAndWorkshops: true,
+  classForumMessages: true,
 };

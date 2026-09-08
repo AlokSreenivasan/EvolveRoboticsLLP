@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ADMIN_USERS_PAGE_SIZE,
   fetchAdminUsersPage,
+  purgeOrphanedUsers,
 } from '../../../services/firebase/adminUsersService';
 import type {
   AdminUserListItem,
@@ -31,6 +32,7 @@ export function useAdminUsersList() {
 
   const cursorRef = useRef<AdminUsersPageCursor | null>(null);
   const requestIdRef = useRef(0);
+  const hasSyncedDeletedUsersRef = useRef(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -58,6 +60,18 @@ export function useAdminUsersList() {
       }
 
       try {
+        if (
+          mode === 'refresh' ||
+          (mode === 'initial' && !hasSyncedDeletedUsersRef.current)
+        ) {
+          hasSyncedDeletedUsersRef.current = true;
+          try {
+            await purgeOrphanedUsers();
+          } catch {
+            // Directory still loads if the sync function is not deployed.
+          }
+        }
+
         const result = await fetchAdminUsersPage({
           searchTerm: search,
           pageSize: ADMIN_USERS_PAGE_SIZE,

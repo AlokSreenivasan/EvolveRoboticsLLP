@@ -150,6 +150,7 @@ export {
   ADMIN_USERS_PAGE_SIZE,
   fetchAdminUsersPage,
   fetchPrivilegedUsers,
+  purgeOrphanedUsers,
   setUserRole,
 } from './adminUsersService';
 export type { UserProfileFetchResult } from './userService';

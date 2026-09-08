@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import {
   Bell,
   CalendarDays,
+  MessagesSquare,
   Megaphone,
   Sparkles,
   Volume2,
@@ -185,6 +186,25 @@ function NotificationPreferencesScreen() {
             value={preferences.soundAndVibration}
             onValueChange={value =>
               handleToggle('soundAndVibration', value)
+            }
+            disabled={!pushEnabled}
+            isLast
+          />
+        </SettingsCard>
+      </View>
+
+      <View style={styles.sectionBlock}>
+        <SettingsSectionHeader title="Class Forum" />
+        <SettingsCard>
+          <NotificationToggleRow
+            icon={MessagesSquare}
+            iconColor={colors.accentBlue}
+            iconBackgroundColor={colors.infoLight}
+            title="Class Forum Messages"
+            subtitle="New posts in your school and grade forum"
+            value={preferences.classForumMessages}
+            onValueChange={value =>
+              handleToggle('classForumMessages', value)
             }
             disabled={!pushEnabled}
             isLast
