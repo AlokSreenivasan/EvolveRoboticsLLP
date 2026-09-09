@@ -4,12 +4,14 @@ import {
   getIdToken,
   onAuthStateChanged as subscribeToAuthStateChanged,
   reload,
+  sendEmailVerification as sendFirebaseEmailVerification,
   sendPasswordResetEmail as sendFirebasePasswordResetEmail,
   signInWithEmailAndPassword as signInWithEmailAndPasswordModular,
   signOut as signOutFirebase,
 } from '@react-native-firebase/auth';
 import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
 
+import { requiresEmailVerification } from '../../domain/Auth/requiresEmailVerification';
 import {
   isGoogleAccountProvider,
   signOutGoogleSdk,
@@ -25,12 +27,68 @@ const firebaseAuth = getAuth();
 export async function signInWithEmailPassword(
   email: string,
   password: string,
-): Promise<void> {
+): Promise<{ needsEmailVerification: boolean }> {
   await signInWithEmailAndPasswordModular(
     firebaseAuth,
     email.trim(),
     password,
   );
+
+  const user = getCurrentUser();
+  if (user) {
+    await reload(user);
+  }
+
+  return {
+    needsEmailVerification: requiresEmailVerification(getCurrentUser()),
+  };
+}
+
+function mapEmailVerificationAuthError(error: {
+  code?: string;
+  message?: string;
+}): string {
+  switch (error.code) {
+    case 'auth/too-many-requests':
+      return 'Too many attempts. Please wait a moment and try again.';
+    case 'auth/network-request-failed':
+      return 'Network error. Check your connection and try again.';
+    default:
+      return error.message ?? 'Could not send the verification email. Please try again.';
+  }
+}
+
+/**
+ * Sends Firebase's verification email for the signed-in email/password user.
+ */
+export async function sendEmailVerificationEmail(): Promise<void> {
+  const user = getCurrentUser();
+  if (!user) {
+    throw new Error('You must be signed in to verify your email.');
+  }
+
+  try {
+    await sendFirebaseEmailVerification(user);
+  } catch (error) {
+    const firebaseAuthError = error as { code?: string; message?: string };
+    if (firebaseAuthError?.code?.startsWith('auth/')) {
+      throw new Error(mapEmailVerificationAuthError(firebaseAuthError));
+    }
+    throw new Error(getErrorMessage(error));
+  }
+}
+
+/**
+ * Reloads the Firebase user so `emailVerified` reflects a clicked inbox link.
+ */
+export async function reloadEmailVerificationStatus(): Promise<boolean> {
+  const user = getCurrentUser();
+  if (!user) {
+    return false;
+  }
+
+  await reload(user);
+  return !requiresEmailVerification(getCurrentUser());
 }
 
 function mapPasswordResetAuthError(error: {

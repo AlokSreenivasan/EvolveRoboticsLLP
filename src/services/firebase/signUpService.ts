@@ -1,6 +1,7 @@
 import {
   createUserWithEmailAndPassword,
   getAuth,
+  sendEmailVerification,
 } from '@react-native-firebase/auth';
 import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
 
@@ -131,6 +132,12 @@ export async function signUpWithProfile(
       phoneNumber,
       profileImage: profileImageUrl,
     });
+
+    try {
+      await sendEmailVerification(credential.user);
+    } catch {
+      // Account is created; the verify-email screen can resend.
+    }
 
     return profile;
   } catch (error) {

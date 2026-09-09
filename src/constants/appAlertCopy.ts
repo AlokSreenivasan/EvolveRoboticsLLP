@@ -139,6 +139,15 @@ export const appAlertCopy = {
       'We could not complete Google sign-in. Please try again.',
     signUpFailedTitle: 'Could not create account',
     signUpFailedMessage: 'Sign up did not complete. Please try again.',
+    verifyEmailInboxMessage:
+      'We sent a verification link to your email. Open it, then come back here to continue.',
+    verifyEmailResentTitle: 'Check your inbox',
+    verifyEmailResentMessage:
+      'We sent another verification link. Check spam if you do not see it.',
+    verifyEmailStillPendingTitle: 'Email not verified yet',
+    verifyEmailStillPendingMessage:
+      'We still do not see a verified email. Open the link we sent, then try again.',
+    verifyEmailResendFailedTitle: 'Could not send verification email',
     resetEmailSentTitle: 'Check your inbox',
     resetEmailSentMessage:
       'If an account exists for this email, you will receive a password reset link shortly. Check spam if you do not see it.',

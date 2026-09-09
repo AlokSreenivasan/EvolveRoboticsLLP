@@ -10,9 +10,11 @@ import React, {
 
 import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
 
+import { requiresEmailVerification } from '../../domain/Auth/requiresEmailVerification';
 import {
   getCurrentUser,
   onAuthStateChanged,
+  reloadEmailVerificationStatus,
 } from '../../services/firebase/authService';
 import {
   buildOptimisticProfileFromEdit,
@@ -75,6 +77,13 @@ export interface AuthContextType {
   /** Apply profile immediately after sign-up (before navigation). */
   establishSessionProfile: (profile: UserProfile) => void;
   updateSessionProfile: (payload: ProfileEditPayload) => Promise<boolean>;
+  /**
+   * True for signed-in email/password users who have not confirmed their inbox.
+   * Google-only sessions are never gated.
+   */
+  needsEmailVerification: boolean;
+  /** Reloads Auth and hydrates the session when the inbox has been confirmed. */
+  completeEmailVerification: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -89,6 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [roleLoading, setRoleLoading] = useState(false);
   const [roleIssue, setRoleIssue] = useState<RoleResolutionIssue | null>(null);
   const [roleResolved, setRoleResolved] = useState(false);
+  const [needsEmailVerification, setNeedsEmailVerification] = useState(false);
 
   const mountedRef = useRef(true);
   const profileRef = useRef<UserProfile | null>(null);
@@ -118,6 +128,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setRoleLoading(false);
     setRoleIssue(null);
     setRoleResolved(false);
+    setNeedsEmailVerification(false);
     await clearCachedUserProfile();
   }, []);
 
@@ -296,6 +307,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     ],
   );
 
+  const completeEmailVerification = useCallback(async (): Promise<boolean> => {
+    const verified = await reloadEmailVerificationStatus();
+    if (!mountedRef.current) {
+      return verified;
+    }
+
+    setNeedsEmailVerification(!verified);
+    if (!verified) {
+      return false;
+    }
+
+    const currentUser = getCurrentUser();
+    if (!currentUser) {
+      return false;
+    }
+
+    setUser(currentUser);
+    await hydrateProfile(currentUser);
+    return true;
+  }, [hydrateProfile]);
+
   const refreshProfile = useCallback(async () => {
     const currentUser = getCurrentUser();
     if (!currentUser) {
@@ -379,6 +411,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      const pendingVerification = requiresEmailVerification(currentUser);
+      setNeedsEmailVerification(pendingVerification);
+      if (pendingVerification) {
+        hydratePromiseRef.current = null;
+        hydratedUidRef.current = null;
+        setProfile(null);
+        setProfileError(null);
+        setProfileLoading(false);
+        setRoleLoading(false);
+        setRoleIssue(null);
+        setRoleResolved(false);
+        setInitializing(false);
+        return;
+      }
+
       try {
         await hydrateProfile(currentUser);
       } finally {
@@ -442,6 +489,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setProfileState,
       establishSessionProfile,
       updateSessionProfile,
+      needsEmailVerification,
+      completeEmailVerification,
     }),
     [
       user,
@@ -463,6 +512,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setProfileState,
       establishSessionProfile,
       updateSessionProfile,
+      needsEmailVerification,
+      completeEmailVerification,
     ],
   );
 

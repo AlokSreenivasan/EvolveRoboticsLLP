@@ -18,6 +18,7 @@ import {
   IntroFlowProvider,
 } from '../presentation/context/IntroFlowContext';
 import { MIN_SPLASH_DURATION_MS } from '../constants/appFlow';
+import { requiresEmailVerification } from '../domain/Auth/requiresEmailVerification';
 import { signOutGoogleSdk } from '../services/auth/googleSignInService';
 import {
   isOnboardingComplete,
@@ -43,7 +44,10 @@ function AppNavigation() {
    */
   const [awaitingAuthFromIntro, setAwaitingAuthFromIntro] = useState(false);
 
-  const { user, initializing, profileLoading, roleLoading } = useAuth();
+  const { user, initializing, profileLoading, roleLoading, needsEmailVerification } =
+    useAuth();
+  const pendingEmailVerification =
+    needsEmailVerification || requiresEmailVerification(user);
   const hadUserRef = useRef(false);
 
   useEffect(() => {
@@ -112,12 +116,16 @@ function AppNavigation() {
   const showSplash =
     !bootstrapComplete ||
     initializing ||
-    (Boolean(user) && (profileLoading || roleLoading));
+    (Boolean(user) &&
+      !pendingEmailVerification &&
+      (profileLoading || roleLoading));
 
   const navigationReady =
     bootstrapComplete &&
     !initializing &&
-    (!user || (!profileLoading && !roleLoading));
+    (!user ||
+      pendingEmailVerification ||
+      (!profileLoading && !roleLoading));
 
   const rootScreen = useMemo(() => {
     if (showIntro) {
@@ -126,11 +134,15 @@ function AppNavigation() {
     if (awaitingAuthFromIntro) {
       return 'auth';
     }
-    if (user) {
+    if (user && !pendingEmailVerification) {
       return 'main';
     }
     return 'auth';
-  }, [showIntro, user, awaitingAuthFromIntro]);
+  }, [showIntro, user, awaitingAuthFromIntro, pendingEmailVerification]);
+
+  const authStackRoute = pendingEmailVerification
+    ? 'VerifyEmail'
+    : authInitialRoute;
 
   return (
     <View style={styles.root}>
@@ -159,7 +171,7 @@ function AppNavigation() {
                     name="AuthStack"
                     options={{ statusBarHidden: false }}
                   >
-                    {() => <AuthStack initialRoute={authInitialRoute} />}
+                    {() => <AuthStack initialRoute={authStackRoute} />}
                   </Stack.Screen>
                 )}
               </Stack.Navigator>

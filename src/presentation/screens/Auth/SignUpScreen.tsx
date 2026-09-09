@@ -130,15 +130,12 @@ const SignUpScreen = () => {
 
     setLoading(true);
     try {
-      const profile = await signUpWithProfile({
+      await signUpWithProfile({
         fullName,
         email,
         password,
         phoneNumber: contactNumber,
       });
-
-      establishSessionProfile(profile);
-      notifyAuthSuccess();
     } catch (error) {
       appAlert(
         appAlertCopy.auth.signUpFailedTitle,

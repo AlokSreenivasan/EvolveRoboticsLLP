@@ -88,8 +88,13 @@ function LoginScreen() {
 
     setLoading(true);
     try {
-      await signInWithEmailPassword(email, password);
-      notifyAuthSuccess();
+      const { needsEmailVerification } = await signInWithEmailPassword(
+        email,
+        password,
+      );
+      if (!needsEmailVerification) {
+        notifyAuthSuccess();
+      }
     } catch (error) {
       appAlert(appAlertCopy.auth.signInFailedTitle, getAuthErrorMessage(error as { code?: string; message?: string }));
     } finally {

@@ -6,6 +6,7 @@ import {
   onAuthStateChanged,
   reauthenticateWithPassword,
   sendPasswordResetEmail,
+  sendEmailVerificationEmail,
   signInWithEmailPassword,
   signOut,
 } from '../authService';
@@ -48,6 +49,26 @@ describe('signInWithEmailPassword', () => {
       'user@example.com',
       'secret',
     );
+  });
+
+  it('reports when an email/password account still needs inbox verification', async () => {
+    const user = authMock.__createMockUser({ emailVerified: false });
+    authMock.__authInstance.currentUser = user;
+
+    await expect(
+      signInWithEmailPassword('user@example.com', 'secret'),
+    ).resolves.toEqual({ needsEmailVerification: true });
+    expect(authMock.reload).toHaveBeenCalledWith(user);
+  });
+
+  it('does not gate a verified email/password account', async () => {
+    authMock.__authInstance.currentUser = authMock.__createMockUser({
+      emailVerified: true,
+    });
+
+    await expect(
+      signInWithEmailPassword('user@example.com', 'secret'),
+    ).resolves.toEqual({ needsEmailVerification: false });
   });
 });
 
@@ -193,6 +214,36 @@ describe('sendPasswordResetEmail', () => {
 
     await expect(sendPasswordResetEmail('bad-email')).rejects.toThrow(
       'Please enter a valid email address.',
+    );
+  });
+});
+
+describe('sendEmailVerificationEmail', () => {
+  it('rejects when signed out', async () => {
+    await expect(sendEmailVerificationEmail()).rejects.toThrow(
+      'You must be signed in to verify your email.',
+    );
+  });
+
+  it('sends a verification email for the current user', async () => {
+    const user = authMock.__createMockUser({ emailVerified: false });
+    authMock.__authInstance.currentUser = user;
+
+    await sendEmailVerificationEmail();
+
+    expect(authMock.sendEmailVerification).toHaveBeenCalledWith(user);
+  });
+
+  it('maps too-many-requests errors', async () => {
+    authMock.__authInstance.currentUser = authMock.__createMockUser({
+      emailVerified: false,
+    });
+    authMock.sendEmailVerification.mockRejectedValueOnce({
+      code: 'auth/too-many-requests',
+    });
+
+    await expect(sendEmailVerificationEmail()).rejects.toThrow(
+      'Too many attempts. Please wait a moment and try again.',
     );
   });
 });

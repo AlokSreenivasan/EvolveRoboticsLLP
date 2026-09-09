@@ -58,6 +58,7 @@ module.exports = {
   updatePassword: jest.fn(() => Promise.resolve()),
   reauthenticateWithCredential: jest.fn(() => Promise.resolve()),
   sendPasswordResetEmail: jest.fn(() => Promise.resolve()),
+  sendEmailVerification: jest.fn(() => Promise.resolve()),
   deleteUser: jest.fn(() => Promise.resolve()),
   EmailAuthProvider: {
     PROVIDER_ID: 'password',

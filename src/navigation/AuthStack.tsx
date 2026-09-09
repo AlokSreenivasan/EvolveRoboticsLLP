@@ -4,13 +4,17 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LoginScreen from '../presentation/screens/Auth/LoginScreen';
 import SignUpScreen from '../presentation/screens/Auth/SignUpScreen';
 import ForgotPasswordScreen from '../presentation/screens/Auth/ForgotPasswordScreen';
+import VerifyEmailScreen from '../presentation/screens/Auth/VerifyEmailScreen';
 
 import { RootStackParamList } from '../types/navigation';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 type AuthStackProps = {
-  initialRoute?: keyof Pick<RootStackParamList, 'Login' | 'SignUp'>;
+  initialRoute?: keyof Pick<
+    RootStackParamList,
+    'Login' | 'SignUp' | 'VerifyEmail'
+  >;
 };
 
 function AuthStack({ initialRoute = 'Login' }: AuthStackProps) {
@@ -25,6 +29,7 @@ function AuthStack({ initialRoute = 'Login' }: AuthStackProps) {
         name="ForgotPassword"
         component={ForgotPasswordScreen}
       />
+      <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} />
     </Stack.Navigator>
   );
 }
