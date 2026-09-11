@@ -35,6 +35,8 @@ import {
   FirebaseServiceError,
   wrapFirebaseError,
 } from '../../utils/firebase/errors';
+import { isUnder13 } from '../../domain/Profile/validation/ageGate';
+import { resolveWritableBirthYear } from '../../utils/profile/birthYearLock';
 import {
   resolveWritableGrade,
   resolveWritableSchoolId,
@@ -71,10 +73,24 @@ function mapDocumentToUserProfile(
     schoolId: data.schoolId ?? null,
     grade: data.grade ?? null,
     track: data.track ?? null,
+    birthYear: Number.isInteger(data.birthYear) ? (data.birthYear as number) : null,
+    parentalConsentAtMs: timestampToMillis(data.parentalConsentAt),
     role,
     createdAt: isTimestamp(data.createdAt) ? data.createdAt : null,
     updatedAt: isTimestamp(data.updatedAt) ? data.updatedAt : null,
   };
+}
+
+function timestampToMillis(value: unknown): number | null {
+  if (
+    value != null &&
+    typeof value === 'object' &&
+    'toMillis' in value &&
+    typeof (value as FirebaseFirestoreTypes.Timestamp).toMillis === 'function'
+  ) {
+    return (value as FirebaseFirestoreTypes.Timestamp).toMillis();
+  }
+  return null;
 }
 
 function isTimestamp(
@@ -120,6 +136,12 @@ function buildProfileCreateInput(
         ? normalizeOptionalString(input.grade)
         : baseProfile.grade,
     track: input.track !== undefined ? input.track : baseProfile.track,
+    birthYear:
+      input.birthYear !== undefined ? input.birthYear : baseProfile.birthYear,
+    parentalConsentAtMs:
+      input.parentalConsentAtMs !== undefined
+        ? input.parentalConsentAtMs
+        : baseProfile.parentalConsentAtMs,
   };
 }
 
@@ -152,6 +174,24 @@ function buildProfileUpdatePayload(
   }
   if (input.track !== undefined) {
     updates.track = input.track;
+  }
+  if (input.birthYear !== undefined) {
+    updates.birthYear = resolveWritableBirthYear(
+      baseProfile.birthYear,
+      input.birthYear,
+    );
+  }
+
+  const nextBirthYear = resolveWritableBirthYear(
+    baseProfile.birthYear,
+    input.birthYear !== undefined ? input.birthYear : baseProfile.birthYear,
+  );
+  if (
+    baseProfile.parentalConsentAtMs == null &&
+    input.parentalConsentAtMs != null &&
+    isUnder13(nextBirthYear)
+  ) {
+    updates.parentalConsentAt = serverTimestamp();
   }
 
   return updates;
@@ -208,6 +248,9 @@ export async function createUserProfile(
   input: CreateUserProfileInput,
 ): Promise<UserProfile> {
   try {
+    const birthYear = input.birthYear ?? null;
+    const recordParentalConsent =
+      isUnder13(birthYear) && input.parentalConsentAtMs != null;
     const payload: UserProfileDocument = {
       fullName: input.fullName.trim(),
       email: input.email.trim(),
@@ -216,6 +259,8 @@ export async function createUserProfile(
       schoolId: input.schoolId ?? null,
       grade: input.grade ?? null,
       track: input.track ?? null,
+      birthYear,
+      parentalConsentAt: recordParentalConsent ? serverTimestamp() : null,
       role: DEFAULT_USER_ROLE,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
@@ -233,6 +278,10 @@ export async function createUserProfile(
       schoolId: payload.schoolId,
       grade: payload.grade ?? null,
       track: payload.track ?? null,
+      birthYear,
+      parentalConsentAtMs: recordParentalConsent
+        ? input.parentalConsentAtMs ?? Date.now()
+        : null,
       role: DEFAULT_USER_ROLE,
       createdAt: null,
       updatedAt: null,
@@ -353,6 +402,20 @@ function mergeUserProfile(
         ? resolveWritableGrade(base.grade, input.grade)
         : base.grade,
     track: input.track !== undefined ? input.track : base.track,
+    birthYear:
+      input.birthYear !== undefined
+        ? resolveWritableBirthYear(base.birthYear, input.birthYear)
+        : base.birthYear,
+    parentalConsentAtMs:
+      base.parentalConsentAtMs ??
+      (input.parentalConsentAtMs != null &&
+      isUnder13(
+        input.birthYear !== undefined
+          ? resolveWritableBirthYear(base.birthYear, input.birthYear)
+          : base.birthYear,
+      )
+        ? input.parentalConsentAtMs
+        : null),
   };
 }
 

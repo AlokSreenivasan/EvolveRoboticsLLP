@@ -21,6 +21,8 @@ export function buildFallbackUserProfile(
     schoolId: null,
     grade: null,
     track: null,
+    birthYear: null,
+    parentalConsentAtMs: null,
     role: DEFAULT_USER_ROLE,
     createdAt: null,
     updatedAt: null,
@@ -65,6 +67,7 @@ export function userProfileToFormProfile(profile: UserProfile | null): Profile {
       schoolId: null,
       grade: null,
       track: null,
+      birthYear: null,
     };
   }
 
@@ -75,6 +78,7 @@ export function userProfileToFormProfile(profile: UserProfile | null): Profile {
     schoolId: profile.schoolId ?? null,
     grade: profile.grade ?? null,
     track: profile.track ?? null,
+    birthYear: profile.birthYear ?? null,
   };
 }
 
@@ -96,7 +100,9 @@ export function isRicherUserProfile(
     (profile.profileImage?.trim() ? 1 : 0) +
     (profile.schoolId?.trim() ? 1 : 0) +
     (profile.grade?.trim() ? 1 : 0) +
-    (profile.track ? 1 : 0);
+    (profile.track ? 1 : 0) +
+    (typeof profile.birthYear === 'number' ? 1 : 0) +
+    (profile.parentalConsentAtMs != null ? 1 : 0);
 
   const candidateScore = score(candidate);
   const baselineScore = score(baseline);

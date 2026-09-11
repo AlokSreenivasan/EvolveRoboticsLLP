@@ -35,6 +35,8 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
@@ -55,12 +57,6 @@
 			</dict>
 		</dict>
 	</dict>
-	<key>NSBonjourServices</key>
-	<array>
-		<string>_metro._tcp</string>
-	</array>
-	<key>NSLocalNetworkUsageDescription</key>
-	<string>Evolve uses the local network to load JavaScript from the Metro bundler during development.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Evolve needs access to your photo library so you can choose a profile picture.</string>
 	<key>UIBackgroundModes</key>

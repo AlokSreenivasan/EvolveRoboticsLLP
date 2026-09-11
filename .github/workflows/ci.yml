@@ -42,8 +42,8 @@ jobs:
       - name: Functions unit tests
         run: npm run test:functions
 
-  android-release:
-    name: Android Release Artifact
+  android-ci-assemble:
+    name: Android CI Assemble (debug keystore — not for Play)
     runs-on: ubuntu-latest
     timeout-minutes: 90
     needs: quality-gate
@@ -70,8 +70,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Configure CI release signing
-        # Verifies the release minify/R8 path without the production upload keystore.
+      - name: Configure CI signing (debug keystore)
+        # Proves minify/R8 compiles. Do NOT upload this APK to Play Console.
         run: |
           printf '%s\n' \
             'storeFile=debug.keystore' \
@@ -80,14 +80,14 @@ jobs:
             'keyPassword=android' \
             > android/keystore.properties
 
-      - name: Assemble release APK
+      - name: Assemble release APK with CI debug keystore
         working-directory: android
         run: ./gradlew assembleRelease --no-daemon
 
-      - name: Upload release APK
+      - name: Upload CI APK (not a Play Store artifact)
         uses: actions/upload-artifact@v4
         with:
-          name: evolve-android-release
+          name: evolve-android-ci-assemble
           path: android/app/build/outputs/apk/release/*.apk
           if-no-files-found: error
           retention-days: 14

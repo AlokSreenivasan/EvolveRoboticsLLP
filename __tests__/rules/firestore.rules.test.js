@@ -251,6 +251,112 @@ describe('users collection', () => {
     );
   });
 
+  test('owners can set birth year once', async () => {
+    const year = new Date().getFullYear() - 18;
+    await assertSucceeds(
+      updateDoc(doc(db(OWNER_UID), 'users', OWNER_UID), {
+        birthYear: year,
+        updatedAt: serverTimestamp(),
+      }),
+    );
+  });
+
+  test('owners cannot change birth year after it is set', async () => {
+    const year = new Date().getFullYear() - 18;
+    await testEnv.withSecurityRulesDisabled(async context => {
+      await updateDoc(doc(context.firestore(), 'users', OWNER_UID), {
+        birthYear: year,
+      });
+    });
+
+    await assertFails(
+      updateDoc(doc(db(OWNER_UID), 'users', OWNER_UID), {
+        birthYear: year - 1,
+        updatedAt: serverTimestamp(),
+      }),
+    );
+  });
+
+  test('under-13 learners with a track need parental consent', async () => {
+    const year = new Date().getFullYear() - 10;
+    await assertFails(
+      updateDoc(doc(db(OWNER_UID), 'users', OWNER_UID), {
+        track: 'professionals',
+        birthYear: year,
+        updatedAt: serverTimestamp(),
+      }),
+    );
+
+    await assertSucceeds(
+      updateDoc(doc(db(OWNER_UID), 'users', OWNER_UID), {
+        track: 'professionals',
+        birthYear: year,
+        parentalConsentAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      }),
+    );
+  });
+
+  test('13+ learners can set a track without parental consent', async () => {
+    const year = new Date().getFullYear() - 18;
+    await assertSucceeds(
+      updateDoc(doc(db(OWNER_UID), 'users', OWNER_UID), {
+        track: 'professionals',
+        birthYear: year,
+        updatedAt: serverTimestamp(),
+      }),
+    );
+  });
+
+  test('setting a track without a birth year is rejected', async () => {
+    await assertFails(
+      updateDoc(doc(db(OWNER_UID), 'users', OWNER_UID), {
+        track: 'kids',
+        updatedAt: serverTimestamp(),
+      }),
+    );
+  });
+
+  test('owners can save a typical profile payload with a whole-number birth year', async () => {
+    const year = new Date().getFullYear() - 18;
+    await assertSucceeds(
+      updateDoc(doc(db(OWNER_UID), 'users', OWNER_UID), {
+        fullName: 'Renamed User',
+        phoneNumber: '9876543210',
+        profileImage: null,
+        schoolId: null,
+        grade: null,
+        track: 'professionals',
+        birthYear: year,
+        updatedAt: serverTimestamp(),
+      }),
+    );
+  });
+
+  test('fractional birth years are rejected', async () => {
+    await assertFails(
+      updateDoc(doc(db(OWNER_UID), 'users', OWNER_UID), {
+        birthYear: new Date().getFullYear() - 18.5,
+        updatedAt: serverTimestamp(),
+      }),
+    );
+  });
+
+  test('admins can update their own profile without a birth year', async () => {
+    await testEnv.withSecurityRulesDisabled(async context => {
+      await updateDoc(doc(context.firestore(), 'users', ADMIN_UID), {
+        track: 'professionals',
+      });
+    });
+
+    await assertSucceeds(
+      updateDoc(doc(db(ADMIN_UID), 'users', ADMIN_UID), {
+        fullName: 'Admin Name',
+        updatedAt: serverTimestamp(),
+      }),
+    );
+  });
+
   test('owners cannot change their own role', async () => {
     await assertFails(
       updateDoc(doc(db(OWNER_UID), 'users', OWNER_UID), {

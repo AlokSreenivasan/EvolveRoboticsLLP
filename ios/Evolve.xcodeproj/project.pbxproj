@@ -27,6 +27,7 @@
 		A1B2C3D4E5F60718293A4B5C /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718293A4B5D /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718293A4B5E /* Evolve.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = Evolve.entitlements; path = Evolve/Evolve.entitlements; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A4B5F /* EvolveRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = EvolveRelease.entitlements; path = Evolve/EvolveRelease.entitlements; sourceTree = "<group>"; };
 		C34B009E6AC3E215628091FC /* Pods-Evolve.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Evolve.release.xcconfig"; path = "Target Support Files/Pods-Evolve/Pods-Evolve.release.xcconfig"; sourceTree = "<group>"; };
 		D4A96E3FFE4D7E37CC017E96 /* Pods-Evolve.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Evolve.debug.xcconfig"; path = "Target Support Files/Pods-Evolve/Pods-Evolve.debug.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
@@ -50,6 +51,7 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				761780EC2CA45674006654EE /* AppDelegate.swift */,
 				A1B2C3D4E5F60718293A4B5E /* Evolve.entitlements */,
+				A1B2C3D4E5F60718293A4B5F /* EvolveRelease.entitlements */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
@@ -152,6 +154,11 @@
 				TargetAttributes = {
 					13B07F861A680F5B00A75B9A = {
 						LastSwiftMigration = 1120;
+						SystemCapabilities = {
+							com.apple.Push = {
+								enabled = 1;
+							};
+						};
 					};
 				};
 			};
@@ -337,7 +344,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = Evolve/Evolve.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Evolve/EvolveRelease.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = Evolve/Info.plist;

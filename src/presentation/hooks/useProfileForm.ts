@@ -10,7 +10,12 @@ import {
 } from '../../domain/Profile/validation/validateProfileForm';
 import type { CourseTrack } from '../../store/content/types/courses.types';
 import { useAuth } from '../context/AuthContext';
+import { isUnder13 } from '../../domain/Profile/validation/ageGate';
 import { userProfileToFormProfile } from '../../utils/profile/mapUserProfile';
+import {
+  isBirthYearLocked,
+  resolveWritableBirthYear,
+} from '../../utils/profile/birthYearLock';
 import {
   isSchoolOrGradeLocked,
   resolveWritableGrade,
@@ -41,8 +46,14 @@ export function useProfileForm() {
     [sessionProfile?.grade],
   );
 
+  const isBirthYearLockedForUser = useMemo(
+    () => isBirthYearLocked(sessionProfile?.birthYear),
+    [sessionProfile?.birthYear],
+  );
+
   /** Admins and superadmins are not learners — skip Learning Track. */
   const requireLearningTrack = !roleLoading && !isAdmin;
+  const requireAgeDeclaration = requireLearningTrack;
 
   useEffect(() => {
     if (!sessionProfile) {
@@ -69,6 +80,9 @@ export function useProfileForm() {
       grade: isSchoolOrGradeLocked(nextForm.grade)
         ? nextForm.grade
         : prev.grade ?? nextForm.grade,
+      birthYear: isBirthYearLocked(nextForm.birthYear)
+        ? nextForm.birthYear
+        : prev.birthYear ?? nextForm.birthYear,
     }));
   }, [sessionProfile]);
 
@@ -138,6 +152,18 @@ export function useProfileForm() {
     [isGradeLocked, markDirty],
   );
 
+  const setBirthYear = useCallback(
+    (birthYear: number) => {
+      if (isBirthYearLockedForUser) {
+        return;
+      }
+      markDirty();
+      setProfileForm(prev => ({ ...prev, birthYear }));
+      setErrors(prev => ({ ...prev, birthYear: undefined }));
+    },
+    [isBirthYearLockedForUser, markDirty],
+  );
+
   const validate = useCallback(
     (options?: { validGradeValues?: string[] }): boolean => {
       const nextErrors = validateProfileForm(
@@ -147,9 +173,11 @@ export function useProfileForm() {
           track: profileForm.track,
           schoolId: profileForm.schoolId,
           grade: profileForm.grade,
+          birthYear: profileForm.birthYear,
         },
         {
           requireTrack: requireLearningTrack,
+          requireAgeDeclaration,
           validGradeValues: options?.validGradeValues,
         },
       );
@@ -158,16 +186,33 @@ export function useProfileForm() {
     },
     [
       requireLearningTrack,
+      requireAgeDeclaration,
       profileForm.contactNumber,
       profileForm.fullName,
       profileForm.track,
       profileForm.schoolId,
       profileForm.grade,
+      profileForm.birthYear,
     ],
   );
 
-  const persistProfile = useCallback(async (): Promise<boolean> => {
+  const persistProfile = useCallback(async (
+    options?: { recordParentalConsent?: boolean },
+  ): Promise<boolean> => {
     const isKidsTrack = profileForm.track === 'kids';
+    const nextBirthYear = requireAgeDeclaration
+      ? resolveWritableBirthYear(
+          sessionProfile?.birthYear,
+          profileForm.birthYear,
+        )
+      : sessionProfile?.birthYear ?? null;
+    const recordParentalConsent =
+      options?.recordParentalConsent === true ||
+      sessionProfile?.parentalConsentAtMs != null;
+    const parentalConsentAtMs = isUnder13(nextBirthYear)
+      ? sessionProfile?.parentalConsentAtMs ??
+        (recordParentalConsent ? Date.now() : null)
+      : sessionProfile?.parentalConsentAtMs ?? null;
 
     const success = await updateSessionProfile({
       fullName: profileForm.fullName,
@@ -182,6 +227,12 @@ export function useProfileForm() {
         sessionProfile?.grade,
         isKidsTrack ? profileForm.grade : null,
       ),
+      ...(requireAgeDeclaration
+        ? {
+            birthYear: nextBirthYear,
+            parentalConsentAtMs,
+          }
+        : {}),
     });
 
     if (success) {
@@ -191,7 +242,10 @@ export function useProfileForm() {
     return success;
   }, [
     profileForm,
+    requireAgeDeclaration,
+    sessionProfile?.birthYear,
     sessionProfile?.grade,
+    sessionProfile?.parentalConsentAtMs,
     sessionProfile?.schoolId,
     updateSessionProfile,
   ]);
@@ -204,7 +258,10 @@ export function useProfileForm() {
     saveError: profileError,
     isSchoolLocked,
     isGradeLocked,
+    isBirthYearLocked: isBirthYearLockedForUser,
     requireLearningTrack,
+    requireAgeDeclaration,
+    hasParentalConsent: sessionProfile?.parentalConsentAtMs != null,
     roleLoading,
     setFullName,
     setContactNumber,
@@ -212,6 +269,7 @@ export function useProfileForm() {
     setPhotoUri,
     setSchoolId,
     setGrade,
+    setBirthYear,
     validate,
     persistProfile,
   };

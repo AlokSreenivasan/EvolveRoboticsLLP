@@ -1,4 +1,5 @@
 import { isCourseTrack } from '../../../store/content/types/courses.types';
+import { isValidBirthYear } from './ageGate';
 import { isValidContactNumber } from './isValidContactNumber';
 
 export type ProfileFormErrors = {
@@ -7,6 +8,7 @@ export type ProfileFormErrors = {
   track?: string;
   schoolId?: string;
   grade?: string;
+  birthYear?: string;
 };
 
 export type ProfileFormInput = {
@@ -15,10 +17,12 @@ export type ProfileFormInput = {
   track: string | null;
   schoolId: string | null;
   grade: string | null;
+  birthYear?: number | null;
 };
 
 export type ProfileFormValidationOptions = {
   requireTrack?: boolean;
+  requireAgeDeclaration?: boolean;
   /**
    * When provided (e.g. grades for the selected school), grade must be one of
    * these values. When omitted, any non-empty grade is accepted so custom
@@ -31,7 +35,11 @@ export function validateProfileForm(
   input: ProfileFormInput,
   options: ProfileFormValidationOptions = {},
 ): ProfileFormErrors {
-  const { requireTrack = true, validGradeValues } = options;
+  const {
+    requireTrack = true,
+    requireAgeDeclaration = true,
+    validGradeValues,
+  } = options;
   const errors: ProfileFormErrors = {};
 
   if (!input.fullName.trim()) {
@@ -50,6 +58,10 @@ export function validateProfileForm(
     } else if (!isCourseTrack(input.track)) {
       errors.track = 'Please select a valid option';
     }
+  }
+
+  if (requireAgeDeclaration && !isValidBirthYear(input.birthYear)) {
+    errors.birthYear = 'Please select your birth year';
   }
 
   if (input.track === 'kids') {

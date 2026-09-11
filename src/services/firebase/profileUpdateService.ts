@@ -17,6 +17,8 @@ export type ProfileEditPayload = {
   photoUri: string | null;
   schoolId: string | null;
   grade: string | null;
+  birthYear?: number | null;
+  parentalConsentAtMs?: number | null;
 };
 
 function buildOptimisticProfile(
@@ -32,6 +34,10 @@ function buildOptimisticProfile(
     profileImage: nextImageUrl,
     schoolId: payload.schoolId,
     grade: payload.grade,
+    ...(payload.birthYear !== undefined ? { birthYear: payload.birthYear } : {}),
+    ...(payload.parentalConsentAtMs !== undefined
+      ? { parentalConsentAtMs: payload.parentalConsentAtMs }
+      : {}),
   };
 }
 
@@ -85,6 +91,12 @@ export async function updateUserProfileWithSync(
         profileImage: nextImageUrl,
         schoolId: payload.schoolId,
         grade: payload.grade,
+        ...(payload.birthYear !== undefined
+          ? { birthYear: payload.birthYear }
+          : {}),
+        ...(payload.parentalConsentAtMs !== undefined
+          ? { parentalConsentAtMs: payload.parentalConsentAtMs }
+          : {}),
       },
       currentProfile,
     );

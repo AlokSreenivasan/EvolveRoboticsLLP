@@ -47,7 +47,7 @@ function MainStack() {
   const { isAdmin, roleLoading } = useUserRole();
   const showAdminStack = !roleLoading && isAdmin;
   // Wait for role so admin/superadmin are not forced through Learning Track
-  // (isProfileComplete already skips track for admin roles).
+  // or the learner age declaration (isProfileComplete skips both for admins).
   const needsProfileCompletion =
     !roleLoading && !isProfileComplete(profile);
 

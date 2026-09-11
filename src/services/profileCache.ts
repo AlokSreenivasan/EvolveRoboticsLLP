@@ -19,6 +19,8 @@ type CachedUserProfilePayload = {
   schoolId?: string | null;
   grade?: string | null;
   track?: string | null;
+  birthYear?: number | null;
+  parentalConsentAtMs?: number | null;
   role?: UserRole;
   cachedAt: number;
 };
@@ -42,6 +44,8 @@ function toCachePayload(profile: UserProfile): CachedUserProfilePayload {
     schoolId: profile.schoolId,
     grade: profile.grade,
     track: profile.track,
+    birthYear: profile.birthYear,
+    parentalConsentAtMs: profile.parentalConsentAtMs,
     role: profile.role,
     cachedAt: Date.now(),
   };
@@ -59,6 +63,11 @@ function fromCachePayload(payload: CachedUserProfilePayload): UserProfile {
     schoolId: payload.schoolId ?? null,
     grade: payload.grade ?? null,
     track: (payload.track as UserProfile['track']) ?? null,
+    birthYear: typeof payload.birthYear === 'number' ? payload.birthYear : null,
+    parentalConsentAtMs:
+      typeof payload.parentalConsentAtMs === 'number'
+        ? payload.parentalConsentAtMs
+        : null,
     role,
     createdAt: null,
     updatedAt: null,

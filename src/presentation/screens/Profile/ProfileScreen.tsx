@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   BackHandler,
@@ -16,6 +16,8 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 
 import AppButton from '../../../components/AppButton.tsx';
+import BirthYearPicker from '../../../components/Profile/BirthYearPicker.tsx';
+import ParentalConsentModal from '../../../components/Profile/ParentalConsentModal.tsx';
 import ProfilePhotoSection from '../../../components/Profile/ProfilePhotoSection.tsx';
 import GradePicker from '../../../components/Profile/GradePicker.tsx';
 import ProfileTrackPicker from '../../../components/Profile/ProfileTrackPicker.tsx';
@@ -25,6 +27,7 @@ import SurfaceCard from '../../../components/ui/SurfaceCard';
 import { resolveGradeOptionsForSchool } from '../../../constants/gradeOptions';
 import { CONTACT_NUMBER_MAX_LENGTH } from '../../../domain/Profile/validation/formatContactNumber';
 import { isProfileComplete } from '../../../domain/Profile/validation/isProfileComplete';
+import { isUnder13 } from '../../../domain/Profile/validation/ageGate';
 import { useAuth } from '../../context/AuthContext';
 import { useProfileForm } from '../../hooks/useProfileForm';
 import { useSchools } from '../../hooks/useSchools';
@@ -52,6 +55,7 @@ function ProfileScreen() {
   const route = useRoute<ProfileScreenRouteProp>();
   const requireCompletion = route.params?.requireCompletion === true;
   const { user, profile: userProfile, profileLoading } = useAuth();
+  const [parentalGateVisible, setParentalGateVisible] = useState(false);
   const userEmail = userProfile?.email ?? user?.email ?? '';
   const {
     profile,
@@ -61,7 +65,10 @@ function ProfileScreen() {
     saveError,
     isSchoolLocked,
     isGradeLocked,
+    isBirthYearLocked,
     requireLearningTrack,
+    requireAgeDeclaration,
+    hasParentalConsent,
     roleLoading,
     setFullName,
     setContactNumber,
@@ -69,6 +76,7 @@ function ProfileScreen() {
     setPhotoUri,
     setSchoolId,
     setGrade,
+    setBirthYear,
     validate,
     persistProfile,
   } = useProfileForm();
@@ -128,9 +136,23 @@ function ProfileScreen() {
       return;
     }
 
-    const success = await persistProfile();
+    if (
+      requireAgeDeclaration &&
+      isUnder13(profile.birthYear) &&
+      !hasParentalConsent
+    ) {
+      setParentalGateVisible(true);
+      return;
+    }
+
+    await finishSave(false);
+  };
+
+  const finishSave = async (recordParentalConsent: boolean) => {
+    const success = await persistProfile({ recordParentalConsent });
 
     if (success) {
+      setParentalGateVisible(false);
       navigation.reset({
         index: 0,
         routes: [{ name: 'Home' }],
@@ -245,6 +267,31 @@ function ProfileScreen() {
                 <Text style={styles.errorText}>{errors.contactNumber}</Text>
               ) : null}
 
+              {requireAgeDeclaration ? (
+                <>
+                  <Text style={styles.label}>Birth year</Text>
+                  <BirthYearPicker
+                    selectedYear={profile.birthYear}
+                    onSelectYear={setBirthYear}
+                    disabled={isFormDisabled || isBirthYearLocked}
+                    hasError={Boolean(errors.birthYear)}
+                  />
+                  {errors.birthYear ? (
+                    <Text style={styles.errorText}>{errors.birthYear}</Text>
+                  ) : null}
+                  <Text style={styles.helperText}>
+                    We only ask for the year you were born. If you are under
+                    13, a parent or guardian will confirm the next step. You
+                    can still use Kids or Professional.
+                  </Text>
+                  {isBirthYearLocked ? (
+                    <Text style={styles.helperText}>
+                      Birth year cannot be changed once saved.
+                    </Text>
+                  ) : null}
+                </>
+              ) : null}
+
               {requireLearningTrack ? (
                 <>
                   <ProfileTrackPicker
@@ -314,6 +361,13 @@ function ProfileScreen() {
           </ScrollView>
         )}
       </KeyboardAvoidingView>
+      <ParentalConsentModal
+        visible={parentalGateVisible}
+        onCancel={() => setParentalGateVisible(false)}
+        onConfirm={() => {
+          void finishSave(true);
+        }}
+      />
     </SafeAreaView>
   );
 }

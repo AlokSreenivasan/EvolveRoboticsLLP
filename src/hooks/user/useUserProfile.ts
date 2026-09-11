@@ -43,6 +43,12 @@ export function useUserProfile(): UseUserProfileResult {
           input.schoolId !== undefined ? input.schoolId : profile.schoolId,
         grade: input.grade !== undefined ? input.grade : profile.grade,
         track: input.track !== undefined ? input.track : profile.track,
+        birthYear:
+          input.birthYear !== undefined ? input.birthYear : profile.birthYear,
+        parentalConsentAtMs:
+          input.parentalConsentAtMs !== undefined
+            ? input.parentalConsentAtMs
+            : profile.parentalConsentAtMs,
       });
 
       if (!success) {
@@ -61,6 +67,12 @@ export function useUserProfile(): UseUserProfileResult {
           input.schoolId !== undefined ? input.schoolId : profile.schoolId,
         grade: input.grade !== undefined ? input.grade : profile.grade,
         track: input.track !== undefined ? input.track : profile.track,
+        birthYear:
+          input.birthYear !== undefined ? input.birthYear : profile.birthYear,
+        parentalConsentAtMs:
+          input.parentalConsentAtMs !== undefined
+            ? input.parentalConsentAtMs
+            : profile.parentalConsentAtMs,
       };
     },
     [profile, updateSessionProfile],

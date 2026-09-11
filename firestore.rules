@@ -16,18 +16,20 @@ service cloud.firestore {
 
       // Owners may edit their own profile fields (not role).
       // Superadmins may update any user, including role (user or admin only).
-      // schoolId and grade are write-once: once set, they cannot change.
+      // schoolId, grade, birthYear, and parental consent are write-once.
       allow update: if (isOwner(userId)
           && onlyProfileFieldsChanged()
           && isValidProfileDataAfterUpdate()
-          && schoolAndGradeImmutableOnceSet())
+          && schoolAndGradeImmutableOnceSet()
+          && birthYearAndConsentImmutableOnceSet())
         || (isSuperAdmin(database)
           && onlyRoleFieldsChanged()
           && isValidSuperAdminRoleAssignment())
         || (isSuperAdmin(database)
           && onlySuperAdminUserFieldsChanged()
           && isValidProfileDataAfterSuperAdminUpdate()
-          && schoolAndGradeImmutableOnceSet());
+          && schoolAndGradeImmutableOnceSet()
+          && birthYearAndConsentImmutableOnceSet());
 
       allow delete: if isOwner(userId) || isSuperAdmin(database);
 
@@ -755,13 +757,26 @@ function isValidProfileData() {
     && isOptionalProfileImage(data.profileImage)
     && isOptionalSchoolId(data.schoolId)
     && isOptionalGrade(data.grade)
-    && isOptionalUserTrack(data.track);
+    && isOptionalUserTrack(data.track)
+    && isOptionalBirthYear(data)
+    && isOptionalParentalConsent(data)
+    && learnerAgeDeclarationHolds(data);
 }
 
 // Updates use .update() with partial fields — validate merged document, not serverTimestamp equality.
 function onlyProfileFieldsChanged() {
   return request.resource.data.diff(resource.data).affectedKeys()
-    .hasOnly(['fullName', 'phoneNumber', 'profileImage', 'schoolId', 'grade', 'track', 'updatedAt']);
+    .hasOnly([
+      'fullName',
+      'phoneNumber',
+      'profileImage',
+      'schoolId',
+      'grade',
+      'track',
+      'birthYear',
+      'parentalConsentAt',
+      'updatedAt',
+    ]);
 }
 
 // Superadmin may change role with a partial update (role + updatedAt only).
@@ -785,6 +800,8 @@ function onlySuperAdminUserFieldsChanged() {
       'schoolId',
       'grade',
       'track',
+      'birthYear',
+      'parentalConsentAt',
       'role',
       'email',
       'updatedAt',
@@ -801,7 +818,10 @@ function isValidProfileDataAfterUpdate() {
     && isOptionalProfileImage(data.profileImage)
     && isOptionalSchoolId(data.schoolId)
     && isOptionalGrade(data.grade)
-    && isOptionalUserTrack(data.track);
+    && isOptionalUserTrack(data.track)
+    && isOptionalBirthYear(data)
+    && isOptionalParentalConsent(data)
+    && learnerAgeDeclarationHolds(data);
 }
 
 function isValidProfileDataAfterSuperAdminUpdate() {
@@ -818,7 +838,9 @@ function isValidProfileDataAfterSuperAdminUpdate() {
     && isOptionalProfileImage(data.profileImage)
     && isOptionalSchoolId(data.schoolId)
     && isOptionalGrade(data.grade)
-    && isOptionalUserTrack(data.track);
+    && isOptionalUserTrack(data.track)
+    && isOptionalBirthYear(data)
+    && isOptionalParentalConsent(data);
 }
 
 function isValidUserRole(value) {
@@ -878,6 +900,65 @@ function schoolAndGradeImmutableOnceSet() {
   let after = request.resource.data;
   return (!hasSetSchoolId(before) || after.schoolId == before.schoolId)
     && (!hasSetGrade(before) || after.grade == before.grade);
+}
+
+// Client SDKs often store whole years as floats, not ints.
+function isValidBirthYearValue(value) {
+  return value is number
+    && value == int(value)
+    && value >= request.time.year() - 80
+    && value <= request.time.year() - 4;
+}
+
+function isOptionalBirthYear(data) {
+  return !('birthYear' in data)
+    || data.birthYear == null
+    || isValidBirthYearValue(data.birthYear);
+}
+
+function isOptionalParentalConsent(data) {
+  return !('parentalConsentAt' in data)
+    || data.parentalConsentAt == null
+    || data.parentalConsentAt is timestamp;
+}
+
+function isUnder13BirthYear(value) {
+  return isValidBirthYearValue(value)
+    && request.time.year() - value < 13;
+}
+
+function isLearnerRole(data) {
+  return !('role' in data) || data.role == null || data.role == 'user';
+}
+
+function learnerAgeDeclarationHolds(data) {
+  let track = data.get('track', null);
+  let birthYear = data.get('birthYear', null);
+  return !isLearnerRole(data)
+    || track == null
+    || (
+      isValidBirthYearValue(birthYear)
+      && (
+        !isUnder13BirthYear(birthYear)
+        || data.get('parentalConsentAt', null) is timestamp
+      )
+    );
+}
+
+function hasSetBirthYear(data) {
+  return 'birthYear' in data && isValidBirthYearValue(data.birthYear);
+}
+
+function hasSetParentalConsent(data) {
+  return 'parentalConsentAt' in data && data.parentalConsentAt is timestamp;
+}
+
+function birthYearAndConsentImmutableOnceSet() {
+  let before = resource.data;
+  let after = request.resource.data;
+  return (!hasSetBirthYear(before) || after.birthYear == before.birthYear)
+    && (!hasSetParentalConsent(before)
+      || after.parentalConsentAt == before.parentalConsentAt);
 }
 
 function isOptionalUserTrack(value) {
