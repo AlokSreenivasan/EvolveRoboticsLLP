@@ -21,17 +21,17 @@ import { useIntroFlow } from '../../context/IntroFlowContext';
 const slides = [
   {
     id: 1,
-    title: 'Explore the Future of Robotics',
+    title: 'Learn Today Build Tomorrow',
     image: require('../../../assets/swipeScreenImages/swipe1.webp'),
   },
   {
     id: 2,
-    title: 'Smart Automation for Everyone',
+    title: 'Real Learning Real Impact',
     image: require('../../../assets/swipeScreenImages/swipe2.webp'),
   },
   {
     id: 3,
-    title: 'Innovating Tomorrow, Today',
+    title: 'Turn Ideas into Real Projects',
     image: require('../../../assets/swipeScreenImages/swipe4.webp'),
   },
 ];
