@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Evolve App Privacy Policy</title>
+    <style>
+      body {
+        font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+        line-height: 1.55;
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 24px 16px 64px;
+        color: #1a1a2e;
+      }
+      h1 {
+        font-size: 1.6rem;
+      }
+      h2 {
+        font-size: 1.15rem;
+        margin-top: 1.6rem;
+      }
+      p {
+        color: #374151;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Evolve App Privacy Policy</h1>
+    <p><strong>Operator:</strong> Evolve Robotics LLP</p>
+    <p><strong>Effective date:</strong> 11 September 2026</p>
+    <p>
+      This privacy policy applies to the Evolve mobile app (Android and iOS),
+      not the company marketing website. Evolve Robotics LLP (“we”) operates the
+      app. Contact:
+      <a href="mailto:evolveroboticsindia@gmail.com"
+        >evolveroboticsindia@gmail.com</a
+      >.
+    </p>
+
+    <h2>What this app collects</h2>
+    <p>
+      <strong>Account and authentication:</strong> Firebase Authentication user
+      ID, email address, and sign-in credentials. You can create an
+      email/password account or sign in with Google. We store email verification
+      status and, for Google sign-in, the Google account identifier needed to
+      authenticate you.
+    </p>
+    <p>
+      <strong>Profile:</strong> full name, phone number, school, grade, learner
+      track (kids or professionals), calendar birth year, and parental-consent
+      timestamp when a guardian completes the under-13 gate. Profiles are stored
+      in Cloud Firestore at users/{your user id}.
+    </p>
+    <p>
+      <strong>Photos:</strong> an optional profile photo you choose from the
+      device. Photos are uploaded to Firebase Storage
+      (profileImages/{your user id}) and the download URL is saved on your
+      profile.
+    </p>
+    <p>
+      <strong>Push notifications (FCM):</strong> if you allow notifications, we
+      collect a Firebase Cloud Messaging device token and platform (Android or
+      iOS) and store it under users/{your user id}/fcmTokens. You can turn push
+      off in Notification Preferences, which removes the device token.
+    </p>
+    <p>
+      <strong>Crash and diagnostics (Crashlytics):</strong> the app uses
+      Firebase Crashlytics to record crash stack traces, app version, device
+      model, and OS version so we can fix failures. Crash reports may be
+      associated with your Firebase user ID.
+    </p>
+    <p>
+      <strong>App activity</strong> needed to run the product: exam and quiz
+      attempts, learning progress, notification preferences, in-app
+      notifications, and similar course activity stored in Firestore and linked
+      to your account.
+    </p>
+    <p>
+      <strong>Local device storage:</strong> session and preference caches (for
+      example notification settings) on the device. These are cleared when you
+      sign out or delete your account.
+    </p>
+
+    <h2>Why we collect it</h2>
+    <p>
+      We use this data only for app functionality: signing you in, showing your
+      profile, delivering courses and assessments, sending the notifications you
+      enable, and diagnosing crashes. We do not sell personal information and we
+      do not use this data for independent advertising or cross-app tracking.
+    </p>
+
+    <h2>Who we share it with</h2>
+    <p>
+      Google Firebase (Authentication, Firestore, Storage, Cloud Functions,
+      Cloud Messaging, Crashlytics, and App Check) processes this data on our
+      behalf to run the app. Google Sign-In receives your Google account
+      interaction when you choose that sign-in method.
+    </p>
+    <p>
+      We do not share your profile, photos, or FCM tokens with unrelated
+      third-party advertisers.
+    </p>
+
+    <h2>Account deletion</h2>
+    <p>
+      You can delete your account in the app: Settings → Privacy Settings →
+      Delete Account. Email/password accounts must confirm with the current
+      password.
+    </p>
+    <p>
+      Deletion removes your Firebase Authentication user, Firestore profile and
+      associated user data (including FCM tokens and learning activity we store
+      for your user id), profile photos in Storage, and local session caches.
+      This cannot be undone.
+    </p>
+    <p>
+      If a server-side cleanup step is temporarily unavailable, remaining user
+      subcollections are removed by our account-deletion process once the
+      Authentication user is deleted.
+    </p>
+    <p>
+      You can also email
+      <a href="mailto:evolveroboticsindia@gmail.com"
+        >evolveroboticsindia@gmail.com</a
+      >
+      to request deletion if you cannot use the in-app control.
+    </p>
+
+    <h2>Children</h2>
+    <p>
+      The app includes a kids learning track. We collect birth year to apply an
+      age gate. Learners under 13 need a parent or guardian to complete in-app
+      parental consent before the profile is treated as complete. We do not use
+      children’s data for advertising.
+    </p>
+
+    <h2>Security and retention</h2>
+    <p>
+      Access to account data requires a signed-in Firebase session. We keep
+      account and profile data until you delete the account or we are required
+      to retain a limited record (for example to complete a deletion request or
+      meet a legal obligation). Crash logs are retained according to Firebase
+      Crashlytics defaults.
+    </p>
+
+    <h2>Your choices</h2>
+    <p>
+      You can edit profile details and photos in Personal details, change
+      notification preferences, sign out, or delete your account. You can also
+      contact us at
+      <a href="mailto:evolveroboticsindia@gmail.com"
+        >evolveroboticsindia@gmail.com</a
+      >
+      about this policy.
+    </p>
+  </body>
+</html>

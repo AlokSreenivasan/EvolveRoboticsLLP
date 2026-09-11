@@ -27,6 +27,7 @@ import SettingsLinkRow from '../../../components/Settings/SettingsLinkRow';
 import SettingsScreenLayout from '../../../components/Settings/SettingsScreenLayout';
 import SettingsSectionHeader from '../../../components/Settings/SettingsSectionHeader';
 import { APP_VERSION } from '../../../constants/appVersion';
+import { TERMS_AND_CONDITIONS_URL } from '../../../constants/legal';
 import { colors, spacing, typography } from '../../../constants/theme';
 import { LoginScreenNavigationProp } from '../../../types/navigation';
 import { useAuth } from '../../context/AuthContext';
@@ -34,10 +35,6 @@ import { useAdminNavigation } from '../../hooks/useAdminNavigation';
 import { useStoredProfileFullName } from '../../hooks/useStoredProfileFullName';
 import { useUserRole } from '../../hooks/useUserRole';
 import { appAlert, appAlertButtons, appAlertCopy } from '../../../utils/alert/appAlert';
-
-const PRIVACY_POLICY_URL = 'https://www.evolveroboticsindia.com/privacy-policy';
-const TERMS_AND_CONDITIONS_URL =
-  'https://www.evolveroboticsindia.com/terms-and-conditions';
 
 async function openExternalUrl(url: string, failureMessage: string) {
   try {
@@ -79,13 +76,6 @@ function SettingsScreen() {
         { text: appAlertButtons.cancel, style: 'cancel' },
         { text: appAlertButtons.logOut, onPress: performLogout },
       ],
-    );
-  };
-
-  const handlePrivacyPolicyPress = () => {
-    openExternalUrl(
-      PRIVACY_POLICY_URL,
-      'Unable to open the privacy policy right now. Please try again shortly.',
     );
   };
 
@@ -189,7 +179,7 @@ function SettingsScreen() {
             iconBackgroundColor={colors.primaryLight}
             title="Privacy Policy"
             variant="link"
-            onPress={handlePrivacyPolicyPress}
+            onPress={() => navigation.navigate('PrivacyPolicy')}
           />
           <SettingsLinkRow
             icon={ScrollText}

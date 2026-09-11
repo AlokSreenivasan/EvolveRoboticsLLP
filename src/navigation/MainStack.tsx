@@ -26,6 +26,7 @@ import ProfileScreen from '../presentation/screens/Profile/ProfileScreen';
 import SettingsScreen from '../presentation/screens/Settings/SettingsScreen';
 import ChangePasswordScreen from '../presentation/screens/Settings/ChangePasswordScreen';
 import PrivacySettingsScreen from '../presentation/screens/Settings/PrivacySettingsScreen';
+import PrivacyPolicyScreen from '../presentation/screens/Settings/PrivacyPolicyScreen';
 import NotificationPreferencesScreen from '../presentation/screens/Settings/NotificationPreferencesScreen';
 import SupportScreen from '../presentation/screens/Settings/SupportScreen';
 import ChatbotScreen from '../presentation/screens/Chatbot/ChatbotScreen';
@@ -94,6 +95,7 @@ function MainStack() {
       <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
       <Stack.Screen name="PrivacySettings" component={PrivacySettingsScreen} />
+      <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
       <Stack.Screen
         name="NotificationPreferences"
         component={NotificationPreferencesScreen}

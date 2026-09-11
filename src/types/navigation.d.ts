@@ -40,6 +40,7 @@ export type RootStackParamList = {
   Settings: undefined;
   ChangePassword: undefined;
   PrivacySettings: undefined;
+  PrivacyPolicy: undefined;
   NotificationPreferences: undefined;
   Support: undefined;
   Profile: { requireCompletion?: boolean } | undefined;
