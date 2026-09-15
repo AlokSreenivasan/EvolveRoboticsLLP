@@ -56,6 +56,58 @@
           ]
         }
       }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:477024087655:android:e2ef4257c11e0b64a8aec2",
+        "android_client_info": {
+          "package_name": "com.evolveroboticsindia.evolve"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "477024087655-36tk5v6mdf3d20joqrlfl8grbeon5s91.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.evolveroboticsindia.evolve",
+            "certificate_hash": "bdb04042c781a3222cfb07479db9821d72e84a5e"
+          }
+        },
+        {
+          "client_id": "477024087655-6lor6ajo2n1qcmtg6se4crtnkt865ik2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.evolveroboticsindia.evolve",
+            "certificate_hash": "9ce028fb7a37ba539b068b43bf98e057dc530db9"
+          }
+        },
+        {
+          "client_id": "477024087655-9peisb2667es17p6jq9t8t089dm2517r.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBV8yQESnjMcyPrDT0-QMZsolo31ZpFfas"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "477024087655-9peisb2667es17p6jq9t8t089dm2517r.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "477024087655-cts6bkc24kcg4mj4261ujpc3o71spars.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.evolve"
+              }
+            }
+          ]
+        }
+      }
     }
   ],
   "configuration_version": "1"

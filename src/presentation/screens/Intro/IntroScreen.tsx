@@ -67,7 +67,13 @@ function IntroScreen() {
         >
           {slides.map(slide => (
             <View style={styles.slide} key={slide.id}>
-              <Image source={slide.image} style={styles.image} resizeMode="cover" />
+              <Image
+                source={slide.image}
+                style={styles.image}
+                resizeMode="cover"
+                resizeMethod="none"
+                fadeDuration={0}
+              />
             </View>
           ))}
         </Swiper>
