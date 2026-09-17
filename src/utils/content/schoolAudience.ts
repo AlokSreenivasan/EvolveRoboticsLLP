@@ -187,8 +187,9 @@ export function filterByViewerTrack<T extends { track?: CourseTrack | null }>(
   items: T[],
   viewerTrack?: CourseTrack,
 ): T[] {
+  // Omit viewerTrack to skip filtering (admin / unpublished lists).
   if (!viewerTrack) {
-    return items.filter(item => item.track == null);
+    return items;
   }
 
   return items.filter(

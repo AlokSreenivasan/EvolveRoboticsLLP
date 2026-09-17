@@ -9,13 +9,19 @@ import { useContentViewerSchoolId } from './useContentViewerSchoolId';
 export function useContentSubscribeOptions(
   includeUnpublished = false,
 ): ContentSubscribeOptions {
-  const { profile } = useAuth();
+  const { profile, isAdmin, roleLoading } = useAuth();
   const viewerSchoolId = useContentViewerSchoolId();
   const viewerGrade = useContentViewerGradeId();
 
   return useMemo(() => {
     if (includeUnpublished) {
       return { includeUnpublished: true };
+    }
+
+    // Admin/superadmin profiles usually have no learner track/school.
+    // Skip audience filters so published CMS items stay visible on learner screens.
+    if (roleLoading || isAdmin) {
+      return { includeUnpublished: false };
     }
 
     const viewerTrack =
@@ -36,7 +42,9 @@ export function useContentSubscribeOptions(
     };
   }, [
     includeUnpublished,
+    isAdmin,
     profile?.track,
+    roleLoading,
     viewerGrade,
     viewerSchoolId,
   ]);

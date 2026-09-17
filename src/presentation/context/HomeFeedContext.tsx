@@ -147,10 +147,15 @@ type HomeFeedProviderProps = {
  * ContinueLearningList. Subscribes only while those routes are focused.
  */
 function buildHomeFeedSubscribeOptions(
+  isAdmin: boolean,
   track: string | null | undefined,
   schoolId: string | null | undefined,
   grade: string | null | undefined,
 ): ContentSubscribeOptions {
+  if (isAdmin) {
+    return { includeUnpublished: false };
+  }
+
   const viewerTrack =
     track === 'kids' || track === 'professionals' ? track : undefined;
   const isKids = viewerTrack === 'kids';
@@ -168,15 +173,16 @@ function buildHomeFeedSubscribeOptions(
 }
 
 export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
-  const { user, profile } = useAuth();
+  const { user, profile, isAdmin, roleLoading } = useAuth();
   const contentSubscribeOptions = useMemo(
     () =>
       buildHomeFeedSubscribeOptions(
+        !roleLoading && isAdmin,
         profile?.track,
         profile?.schoolId,
         profile?.grade,
       ),
-    [profile?.grade, profile?.schoolId, profile?.track],
+    [isAdmin, profile?.grade, profile?.schoolId, profile?.track, roleLoading],
   );
   const playlistSubscribeOptions = contentSubscribeOptions;
   const [focusCount, setFocusCount] = useState(0);
