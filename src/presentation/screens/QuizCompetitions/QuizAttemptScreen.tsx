@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   FlatList,
-  SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -32,6 +31,7 @@ import { useQuizCompetition } from '../../hooks/useQuizCompetition';
 import { useQuizCompetitions } from '../../hooks/useQuizCompetitions';
 import type { ExamQuestion } from '../../../store/content/types/exams.types';
 import type { RootStackParamList } from '../../../types/navigation';
+import ScreenSafeArea from '../../../components/ui/ScreenSafeArea';
 
 type QuizAttemptRoute = RouteProp<RootStackParamList, 'QuizAttempt'>;
 
@@ -284,15 +284,15 @@ function QuizAttemptScreen() {
 
   if (loading || accessLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <ScreenSafeArea style={styles.container}>
         <ActivityIndicator color={colors.primary} style={styles.loader} />
-      </SafeAreaView>
+      </ScreenSafeArea>
     );
   }
 
   if (error || !quiz) {
     return (
-      <SafeAreaView style={styles.container}>
+      <ScreenSafeArea style={styles.container}>
         <View style={styles.header}>
           <BackButton withSpacingBelow />
           <Text style={styles.title}>Quiz</Text>
@@ -303,7 +303,7 @@ function QuizAttemptScreen() {
             {error ?? 'This quiz was not found.'}
           </Text>
         </View>
-      </SafeAreaView>
+      </ScreenSafeArea>
     );
   }
 
@@ -312,7 +312,7 @@ function QuizAttemptScreen() {
 
   if (isAlreadyCompleted && !canRetry && showCompletionGate) {
     return (
-      <SafeAreaView style={styles.container}>
+      <ScreenSafeArea style={styles.container}>
         <View style={styles.header}>
           <BackButton withSpacingBelow />
           <Text style={styles.title}>{quiz.title}</Text>
@@ -332,13 +332,13 @@ function QuizAttemptScreen() {
           xpEarned={existingAttempt?.xpEarned}
           onClose={handleResultClose}
         />
-      </SafeAreaView>
+      </ScreenSafeArea>
     );
   }
 
   if (isAlreadyCompleted && canRetry && !isRetrying && showCompletionGate) {
     return (
-      <SafeAreaView style={styles.container}>
+      <ScreenSafeArea style={styles.container}>
         <View style={styles.header}>
           <BackButton withSpacingBelow />
           <Text style={styles.title}>{quiz.title}</Text>
@@ -357,7 +357,7 @@ function QuizAttemptScreen() {
             buttonStyle={styles.retryButton}
           />
         </View>
-      </SafeAreaView>
+      </ScreenSafeArea>
     );
   }
 
@@ -387,7 +387,7 @@ function QuizAttemptScreen() {
           }.`;
 
     return (
-      <SafeAreaView style={styles.container}>
+      <ScreenSafeArea style={styles.container}>
         <View style={styles.header}>
           <BackButton withSpacingBelow onPress={handleResultClose} />
           <Text style={styles.title}>{quiz.title}</Text>
@@ -410,7 +410,7 @@ function QuizAttemptScreen() {
             resultModal.isPerfect ? handleResultClose : handleResultRetry
           }
         />
-      </SafeAreaView>
+      </ScreenSafeArea>
     );
   }
 
@@ -419,7 +419,7 @@ function QuizAttemptScreen() {
     const previousQuiz = quizIndex > 0 ? quizzes[quizIndex - 1] : null;
 
     return (
-      <SafeAreaView style={styles.container}>
+      <ScreenSafeArea style={styles.container}>
         <View style={styles.header}>
           <BackButton withSpacingBelow />
           <Text style={styles.title}>{quiz.title}</Text>
@@ -435,12 +435,12 @@ function QuizAttemptScreen() {
           }
           onClose={() => navigation.goBack()}
         />
-      </SafeAreaView>
+      </ScreenSafeArea>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenSafeArea style={styles.container}>
       <View style={styles.header}>
         <BackButton withSpacingBelow />
         <Text style={styles.title}>{quiz.title}</Text>
@@ -499,7 +499,7 @@ function QuizAttemptScreen() {
           onClose={handleSubmitErrorClose}
         />
       ) : null}
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }
 

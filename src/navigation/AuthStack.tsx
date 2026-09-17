@@ -22,7 +22,11 @@ function AuthStack({ initialRoute = 'Login' }: AuthStackProps) {
     <Stack.Navigator
       key={initialRoute}
       initialRouteName={initialRoute}
-      screenOptions={{ headerShown: false, animation: 'fade' }}>
+      screenOptions={{
+        headerShown: false,
+        animation: 'fade',
+        statusBarStyle: 'dark',
+      }}>
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="SignUp" component={SignUpScreen} />
       <Stack.Screen

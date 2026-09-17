@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   FlatList,
   RefreshControl,
-  SafeAreaView,
   StyleSheet,
   Text,
   View,
@@ -28,6 +27,7 @@ import {
   useHomeFeedRefresh,
 } from '../../context/HomeFeedContext';
 import { useUpcomingEvents } from '../../hooks/useUpcomingEvents';
+import ScreenSafeArea from '../../../components/ui/ScreenSafeArea';
 
 function UpcomingEventsListScreen() {
   useHomeFeedFocus();
@@ -203,7 +203,7 @@ function UpcomingEventsListScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenSafeArea style={styles.container}>
       <ScreenHeader title="Events Calendar" />
 
       <FlatList
@@ -225,7 +225,7 @@ function UpcomingEventsListScreen() {
         }
         {...VERTICAL_LIST_PERF}
       />
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }
 

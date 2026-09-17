@@ -4,7 +4,6 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   StyleSheet,
   Text,
   View,
@@ -24,6 +23,7 @@ import {
 import { findChatKeywordResponse } from '../../../services/firebase/chatKeywordsService';
 import { useChatKeywords } from '../../hooks/useChatKeywords';
 import type { LoginScreenNavigationProp } from '../../../types/navigation';
+import ScreenSafeArea from '../../../components/ui/ScreenSafeArea';
 
 type ChatMessage = {
   id: string;
@@ -140,7 +140,7 @@ function ChatbotScreen() {
   const keyExtractor = useCallback((item: ChatMessage) => item.id, []);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenSafeArea style={styles.container}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -205,7 +205,7 @@ function ChatbotScreen() {
           </>
         )}
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }
 

@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { Platform, StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import PushRegistrationBootstrap from './components/PushRegistrationBootstrap.tsx';
@@ -14,6 +15,9 @@ function App() {
 
   return (
     <SafeAreaProvider>
+      {Platform.OS === 'android' ? (
+        <StatusBar barStyle="dark-content" />
+      ) : null}
       <AuthProvider>
         <AppAlertProvider>
           <PushRegistrationBootstrap />

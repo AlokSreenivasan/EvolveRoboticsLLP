@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   Image,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -17,10 +16,11 @@ import {
   spacing,
   typography,
 } from '../../../constants/theme';
+import ScreenSafeArea from '../../../components/ui/ScreenSafeArea';
 
 function AboutScreen() {
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenSafeArea style={styles.container}>
       <ScreenHeader
         title="About"
         subtitle="Learn more about Evolve Robotics"
@@ -68,7 +68,7 @@ function AboutScreen() {
 
         <Text style={styles.version}>Version {APP_VERSION}</Text>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }
 

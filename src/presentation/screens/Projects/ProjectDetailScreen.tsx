@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -19,6 +18,7 @@ import {
   typography,
 } from '../../../constants/theme';
 import type { RootStackParamList } from '../../../types/navigation';
+import ScreenSafeArea from '../../../components/ui/ScreenSafeArea';
 
 type ProjectDetailRouteProp = RouteProp<RootStackParamList, 'ProjectDetail'>;
 
@@ -81,7 +81,7 @@ function ProjectDetailScreen() {
   }, [markdownUrl]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenSafeArea style={styles.container}>
       <ScreenHeader
         title={project.title}
         subtitle={project.subtitle ?? undefined}
@@ -170,7 +170,7 @@ function ProjectDetailScreen() {
           ) : null}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }
 

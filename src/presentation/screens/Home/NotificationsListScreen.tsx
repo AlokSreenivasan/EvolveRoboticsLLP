@@ -2,7 +2,6 @@ import React, { useCallback } from 'react';
 import {
   FlatList,
   RefreshControl,
-  SafeAreaView,
   StyleSheet,
   Text,
   View,
@@ -28,6 +27,7 @@ import {
   useHomeFeedRefresh,
 } from '../../context/HomeFeedContext';
 import { useNotifications } from '../../hooks/useNotifications';
+import ScreenSafeArea from '../../../components/ui/ScreenSafeArea';
 
 function NotificationsListScreen() {
   useHomeFeedFocus();
@@ -86,7 +86,7 @@ function NotificationsListScreen() {
       : null;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenSafeArea style={styles.container}>
       <ScreenHeader
         title="Notifications"
         subtitle="Course news and updates from your instructors."
@@ -145,7 +145,7 @@ function NotificationsListScreen() {
         }
         {...VERTICAL_LIST_PERF}
       />
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }
 

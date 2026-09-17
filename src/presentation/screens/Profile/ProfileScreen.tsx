@@ -10,7 +10,6 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
@@ -43,6 +42,7 @@ import {
   spacing,
   typography,
 } from '../../../constants/theme';
+import ScreenSafeArea from '../../../components/ui/ScreenSafeArea';
 
 type ProfileScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -187,7 +187,7 @@ function ProfileScreen() {
     : 'Update your personal details below.';
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <ScreenSafeArea style={styles.container} includeBottomInset={false}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.flex}
@@ -368,7 +368,7 @@ function ProfileScreen() {
           void finishSave(true);
         }}
       />
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }
 

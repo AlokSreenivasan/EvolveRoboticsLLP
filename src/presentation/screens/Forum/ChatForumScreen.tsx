@@ -4,7 +4,6 @@ import {
   FlatList,
   Modal,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -36,6 +35,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useClassForumChannels } from '../../hooks/useClassForumChannels';
 import { useSchools } from '../../hooks/useSchools';
 import { useUserRole } from '../../hooks/useUserRole';
+import ScreenSafeArea from '../../../components/ui/ScreenSafeArea';
 
 function formatPreviewTime(channel: ClassForumChannel): string {
   const stamp = channel.lastMessageAt ?? channel.updatedAt;
@@ -233,7 +233,7 @@ function ChatForumScreen() {
     const missingClass = !profile?.schoolId?.trim() || !profile?.grade?.trim();
 
     return (
-      <SafeAreaView style={styles.container}>
+      <ScreenSafeArea style={styles.container}>
         <ScreenHeader title="Chat Forum" subtitle="Your class discussion" />
         {missingClass ? (
           <ScreenStateCard
@@ -264,12 +264,12 @@ function ChatForumScreen() {
             <Text style={styles.openingText}>Opening your class forum…</Text>
           </View>
         )}
-      </SafeAreaView>
+      </ScreenSafeArea>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenSafeArea style={styles.container}>
       <ScreenHeader
         title="Chat Forum"
         subtitle="Facilitator · all schools"
@@ -418,7 +418,7 @@ function ChatForumScreen() {
           <ActivityIndicator color={colors.primary} />
         </View>
       ) : null}
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }
 

@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   FlatList,
-  SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -29,6 +28,7 @@ import { useExam } from '../../hooks/useExam';
 import type { ExamQuestion } from '../../../store/content/types/exams.types';
 import type { RootStackParamList } from '../../../types/navigation';
 import { appAlert, appAlertButtons, appAlertCopy } from '../../../utils/alert/appAlert';
+import ScreenSafeArea from '../../../components/ui/ScreenSafeArea';
 
 type ExamAttemptRoute = RouteProp<RootStackParamList, 'ExamAttempt'>;
 
@@ -258,15 +258,15 @@ function ExamAttemptScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <ScreenSafeArea style={styles.container}>
         <ActivityIndicator color={colors.primary} style={styles.loader} />
-      </SafeAreaView>
+      </ScreenSafeArea>
     );
   }
 
   if (error || !exam) {
     return (
-      <SafeAreaView style={styles.container}>
+      <ScreenSafeArea style={styles.container}>
         <View style={styles.header}>
           <BackButton withSpacingBelow />
           <Text style={styles.title}>Exam</Text>
@@ -277,7 +277,7 @@ function ExamAttemptScreen() {
             {error ?? 'The exam was not found.'}
           </Text>
         </View>
-      </SafeAreaView>
+      </ScreenSafeArea>
     );
   }
 
@@ -285,7 +285,7 @@ function ExamAttemptScreen() {
     const description = exam.description.trim();
 
     return (
-      <SafeAreaView style={styles.container}>
+      <ScreenSafeArea style={styles.container}>
         <View style={styles.header}>
           <BackButton withSpacingBelow />
           <Text style={styles.title}>{exam.title}</Text>
@@ -320,12 +320,12 @@ function ExamAttemptScreen() {
             buttonStyle={styles.submitButton}
           />
         </View>
-      </SafeAreaView>
+      </ScreenSafeArea>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenSafeArea style={styles.container}>
       <View style={styles.header}>
         <BackButton withSpacingBelow />
         <Text style={styles.title}>{exam.title}</Text>
@@ -372,7 +372,7 @@ function ExamAttemptScreen() {
           buttonStyle={styles.submitButton}
         />
       </View>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }
 

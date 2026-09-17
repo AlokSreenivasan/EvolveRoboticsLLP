@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 
 import CourseVideoPlayer from '../../../components/Courses/CourseVideoPlayer';
@@ -28,6 +28,7 @@ import {
 } from '../../../utils/continueLearning/formatVideoProgress';
 import { useContinueLearningProgress } from '../../hooks/useContinueLearningProgress';
 import { useYouTubePlaylistVideos } from '../../hooks/useYouTubePlaylistVideos';
+import ScreenSafeArea from '../../../components/ui/ScreenSafeArea';
 
 type CourseVideoRouteProp = RouteProp<RootStackParamList, 'CourseVideo'>;
 
@@ -115,7 +116,7 @@ function CourseVideoScreen() {
   }, [canGoNext, navigation, nextVideo, playlistWithCount, videoIndex]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenSafeArea style={styles.container}>
       <ScreenHeader title={playlist.title} compact />
 
       <CourseVideoPlayer
@@ -166,7 +167,7 @@ function CourseVideoScreen() {
           ) : null}
         </SurfaceCard>
       </View>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }
 

@@ -9,7 +9,6 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Eye, EyeOff } from 'lucide-react-native';
@@ -32,6 +31,7 @@ import {
   spacing,
   typography,
 } from '../../../constants/theme';
+import ScreenSafeArea from '../../../components/ui/ScreenSafeArea';
 
 function getAuthErrorMessage(error: { code?: string; message?: string }) {
   switch (error.code) {
@@ -146,7 +146,7 @@ function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.container}
     >
-      <SafeAreaView style={styles.container}>
+      <ScreenSafeArea style={styles.container}>
         <ScrollView
           style={styles.scrollContainer}
           contentContainerStyle={styles.scrollContent}
@@ -246,7 +246,7 @@ function LoginScreen() {
             </View>
           </SurfaceCard>
         </ScrollView>
-      </SafeAreaView>
+      </ScreenSafeArea>
     </KeyboardAvoidingView>
   );
 }

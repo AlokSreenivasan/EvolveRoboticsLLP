@@ -31,6 +31,7 @@ const fadeScreenOptions = {
   headerShown: false,
   animation: 'fade' as const,
   animationDuration: 200,
+  statusBarStyle: 'dark' as const,
 };
 
 function AppNavigation() {

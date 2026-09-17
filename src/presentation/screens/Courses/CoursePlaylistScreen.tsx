@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import {
   FlatList,
-  SafeAreaView,
   StyleSheet,
   Text,
   View,
@@ -33,6 +32,7 @@ import {
 } from '../../../utils/continueLearning/formatVideoProgress';
 import { useContinueLearningProgress } from '../../hooks/useContinueLearningProgress';
 import { useYouTubePlaylistVideos } from '../../hooks/useYouTubePlaylistVideos';
+import ScreenSafeArea from '../../../components/ui/ScreenSafeArea';
 
 type CoursePlaylistRouteProp = RouteProp<RootStackParamList, 'CoursePlaylist'>;
 
@@ -142,7 +142,7 @@ function CoursePlaylistScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenSafeArea style={styles.container}>
       <ScreenHeader
         title={playlist.title}
         subtitle={playlist.subtitle ?? undefined}
@@ -179,7 +179,7 @@ function CoursePlaylistScreen() {
           {...VERTICAL_LIST_PERF}
         />
       )}
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }
 

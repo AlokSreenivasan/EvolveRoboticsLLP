@@ -1,10 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  FlatList,
-  SafeAreaView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import { AlertCircle, BookOpen, FolderKanban } from 'lucide-react-native';
 
@@ -25,6 +20,7 @@ import { useHomeFeedFocus } from '../../context/HomeFeedContext';
 import { useContinueLearningPlaylists } from '../../hooks/useContinueLearningPlaylists';
 import { useContinueLearningProgress } from '../../hooks/useContinueLearningProgress';
 import { useProjects } from '../../hooks/useProjects';
+import ScreenSafeArea from '../../../components/ui/ScreenSafeArea';
 
 type ToDoTab = 'learn' | 'project';
 
@@ -115,7 +111,7 @@ function ToDoScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenSafeArea style={styles.container}>
       <ScreenHeader
         title="To Do"
         subtitle="Lessons and projects in one place."
@@ -144,7 +140,7 @@ function ToDoScreen() {
           {...listProps}
         />
       )}
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }
 

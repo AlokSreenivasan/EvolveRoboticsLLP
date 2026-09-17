@@ -1,15 +1,14 @@
 import React from 'react';
 import {
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   View,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-
 import ScreenHeader from '../ui/ScreenHeader';
 import { colors, spacing } from '../../constants/theme';
+import ScreenSafeArea from '../ui/ScreenSafeArea';
 
 type AdminScreenLayoutProps = {
   title: string;
@@ -37,10 +36,10 @@ function AdminScreenLayout({
   );
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <ScreenSafeArea style={styles.safe}>
       <ScreenHeader title={title} subtitle={subtitle} />
       {body}
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }
 

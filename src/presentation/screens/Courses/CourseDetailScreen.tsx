@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   Image,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -23,6 +22,7 @@ import type {
   LoginScreenNavigationProp,
   RootStackParamList,
 } from '../../../types/navigation';
+import ScreenSafeArea from '../../../components/ui/ScreenSafeArea';
 
 type CourseDetailRouteProp = RouteProp<RootStackParamList, 'CourseDetail'>;
 
@@ -39,7 +39,7 @@ function CourseDetailScreen() {
   const trackLabel = course.track ? courseTrackLabel(course.track) : null;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenSafeArea style={styles.container}>
       <ScreenHeader title={course.title} compact />
 
       <ScrollView
@@ -101,7 +101,7 @@ function CourseDetailScreen() {
           ) : null}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }
 

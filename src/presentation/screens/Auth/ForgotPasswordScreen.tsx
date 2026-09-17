@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -21,6 +20,7 @@ import {
   spacing,
   typography,
 } from '../../../constants/theme';
+import ScreenSafeArea from '../../../components/ui/ScreenSafeArea';
 
 type NavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -73,7 +73,7 @@ function ForgotPasswordScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <ScreenSafeArea style={styles.safe}>
       <ScreenHeader
         title="Forgot Password"
         subtitle="We'll send you a reset link"
@@ -116,7 +116,7 @@ function ForgotPasswordScreen() {
           />
         </SurfaceCard>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }
 

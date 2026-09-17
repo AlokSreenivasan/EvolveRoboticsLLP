@@ -1,17 +1,17 @@
 import React from 'react';
-import { Image, SafeAreaView, StyleSheet } from 'react-native';
-
+import { Image, StyleSheet } from 'react-native';
 import { colors } from '../../../constants/theme';
+import ScreenSafeArea from '../../../components/ui/ScreenSafeArea';
 
 const SplashScreen = () => {
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenSafeArea style={styles.container}>
       <Image
         source={require('../../../assets/LOGO__.webp')}
         style={styles.logo}
         resizeMode="contain"
       />
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 };
 

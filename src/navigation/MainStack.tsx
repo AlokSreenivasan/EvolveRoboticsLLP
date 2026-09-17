@@ -56,7 +56,7 @@ function MainStack() {
     <HomeFeedProvider>
       <Stack.Navigator
         initialRouteName={needsProfileCompletion ? 'Profile' : 'Home'}
-        screenOptions={{ headerShown: false }}>
+        screenOptions={{ headerShown: false, statusBarStyle: 'dark' }}>
         <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="ToDo" component={ToDoScreen} />
       <Stack.Screen name="Projects" component={ProjectsScreen} />

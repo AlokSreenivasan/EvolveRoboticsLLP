@@ -3,14 +3,12 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   View,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-
 import BackButton, { backButtonOverlayStyle } from '../BackButton';
 import Header from '../Header';
 import {
@@ -19,6 +17,7 @@ import {
   glassBorder,
   spacing,
 } from '../../constants/theme';
+import ScreenSafeArea from '../ui/ScreenSafeArea';
 
 type SettingsScreenLayoutProps = {
   title: string;
@@ -42,7 +41,7 @@ function SettingsScreenLayout({
   keyboardShouldPersistTaps,
 }: SettingsScreenLayoutProps) {
   const body = (
-    <SafeAreaView style={styles.container}>
+    <ScreenSafeArea style={styles.container}>
       <View style={styles.screenHeader}>
         <BackButton
           style={backButtonOverlayStyle}
@@ -63,7 +62,7 @@ function SettingsScreenLayout({
           {children}
         </ScrollView>
       )}
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 
   if (!keyboardAvoiding) {

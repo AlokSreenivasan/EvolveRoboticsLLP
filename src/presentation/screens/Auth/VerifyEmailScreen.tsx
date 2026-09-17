@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text } from 'react-native';
-
+import { ScrollView, StyleSheet, Text } from 'react-native';
 import AppButton from '../../../components/AppButton.tsx';
 import ScreenHeader from '../../../components/ui/ScreenHeader';
 import SurfaceCard from '../../../components/ui/SurfaceCard';
@@ -17,6 +16,7 @@ import {
   spacing,
   typography,
 } from '../../../constants/theme';
+import ScreenSafeArea from '../../../components/ui/ScreenSafeArea';
 
 function VerifyEmailScreen() {
   const { completeEmailVerification } = useAuth();
@@ -84,7 +84,7 @@ function VerifyEmailScreen() {
   const isBusy = checking || resending;
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <ScreenSafeArea style={styles.safe}>
       <ScreenHeader
         title="Verify Email"
         subtitle="Confirm the address you signed up with"
@@ -121,7 +121,7 @@ function VerifyEmailScreen() {
           />
         </SurfaceCard>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }
 

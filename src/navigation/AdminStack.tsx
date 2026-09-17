@@ -102,7 +102,8 @@ const GuardedAdminNotifications = withAdminFeatureGuard(
 function AdminStackNavigator() {
   return (
     <AdminRouteGuard>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator
+        screenOptions={{ headerShown: false, statusBarStyle: 'dark' }}>
         <Stack.Screen name="AdminDashboard" component={AdminDashboard} />
         <Stack.Screen
           name="ManageContinueLearningPlaylists"

@@ -1,7 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import {
   FlatList,
-  SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -26,6 +25,7 @@ import type { LoginScreenNavigationProp } from '../../../types/navigation';
 import { getQuizAccessStatus } from '../../../utils/quizAccess';
 import { useQuizAttempts } from '../../hooks/useQuizAttempts';
 import { useQuizCompetitions } from '../../hooks/useQuizCompetitions';
+import ScreenSafeArea from '../../../components/ui/ScreenSafeArea';
 
 function formatMinutes(timerSeconds: number): number {
   if (typeof timerSeconds !== 'number' || !Number.isFinite(timerSeconds)) {
@@ -251,7 +251,7 @@ function QuizCompetitionsScreen() {
   }, [isLoading, loadError]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenSafeArea style={styles.container}>
       <ScreenHeader
         title="Quiz competition"
         subtitle="Complete quizzes in order. Each quiz unlocks only after you score 100% on the previous one. Retry any quiz where you did not score 100%."
@@ -280,7 +280,7 @@ function QuizCompetitionsScreen() {
           onClose={handleAlertClose}
         />
       ) : null}
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }
 

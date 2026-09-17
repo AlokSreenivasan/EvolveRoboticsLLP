@@ -3,7 +3,6 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
@@ -37,6 +36,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useClassForumChannel } from '../../hooks/useClassForumChannel';
 import { useUserRole } from '../../hooks/useUserRole';
+import ScreenSafeArea from '../../../components/ui/ScreenSafeArea';
 
 function ChatForumChannelScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
@@ -233,7 +233,7 @@ function ChatForumChannelScreen() {
   }, [error, loading]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenSafeArea style={styles.container}>
       <ScreenHeader
         title={headerTitle}
         subtitle={isLocked ? 'Locked · facilitators can still post' : 'Class forum'}
@@ -288,7 +288,7 @@ function ChatForumChannelScreen() {
           }
         />
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }
 

@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  SafeAreaView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Eye, EyeOff, Info } from 'lucide-react-native';
@@ -38,6 +37,7 @@ import {
   spacing,
   typography,
 } from '../../../constants/theme';
+import ScreenSafeArea from '../../../components/ui/ScreenSafeArea';
 
 type Errors = {
   fullName?: string;
@@ -180,7 +180,7 @@ const SignUpScreen = () => {
   const isBusy = loading || googleLoading;
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <ScreenSafeArea style={styles.safe}>
       <ScrollView
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
@@ -330,7 +330,7 @@ const SignUpScreen = () => {
           </View>
         </SurfaceCard>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 };
 

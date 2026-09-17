@@ -1,7 +1,6 @@
 import React, { useCallback } from 'react';
 import {
   FlatList,
-  SafeAreaView,
   StyleSheet,
   type ListRenderItem,
   type StyleProp,
@@ -13,6 +12,7 @@ import { VERTICAL_LIST_PERF } from '../../constants/listPerformance';
 import { colors, spacing } from '../../constants/theme';
 import ScreenHeader from './ScreenHeader';
 import ScreenStateCard from './ScreenStateCard';
+import ScreenSafeArea from './ScreenSafeArea';
 
 type ListScreenProps<T> = {
   title: string;
@@ -94,7 +94,7 @@ function ListScreen<T>({
   ]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenSafeArea style={styles.container}>
       <ScreenHeader
         title={title}
         subtitle={subtitle}
@@ -113,7 +113,7 @@ function ListScreen<T>({
         extraData={extraData}
         {...VERTICAL_LIST_PERF}
       />
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }
 

@@ -1,9 +1,10 @@
 import React, { useCallback } from 'react';
-import { ActivityIndicator, SafeAreaView, StyleSheet } from 'react-native';
+import { ActivityIndicator, StyleSheet } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 import { colors } from '../../../constants/theme';
 import type { LoginScreenNavigationProp } from '../../../types/navigation';
+import ScreenSafeArea from '../../../components/ui/ScreenSafeArea';
 
 /** @deprecated Use To Do screen with the Learn tab instead. */
 function ContinueLearningListScreen() {
@@ -16,9 +17,9 @@ function ContinueLearningListScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenSafeArea style={styles.container}>
       <ActivityIndicator color={colors.primary} size="large" />
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }
 

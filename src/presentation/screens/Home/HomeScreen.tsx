@@ -4,7 +4,6 @@ import {
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   RefreshControl,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   View,
@@ -38,6 +37,7 @@ import { useContinueLearningProgress } from '../../hooks/useContinueLearningProg
 import { useStoredProfileFullName } from '../../hooks/useStoredProfileFullName';
 import { useUserRole } from '../../hooks/useUserRole';
 import { isPlaylistInProgress } from '../../../utils/continueLearning/formatVideoProgress';
+import ScreenSafeArea from '../../../components/ui/ScreenSafeArea';
 
 const TAB_BAR_HEIGHT = 78;
 
@@ -155,7 +155,7 @@ function HomeScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenSafeArea style={styles.container} includeBottomInset={false}>
       <HomeHeader displayName={displayName} />
 
       <ScrollView
@@ -221,7 +221,7 @@ function HomeScreen() {
       <FloatingChatAssistant
         onPress={() => navigation.navigate('ChatbotScreen')}
       />
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }
 

@@ -2,7 +2,6 @@ import React, { useCallback } from 'react';
 import {
   FlatList,
   RefreshControl,
-  SafeAreaView,
   StyleSheet,
   Text,
   View,
@@ -21,6 +20,7 @@ import {
   useHomeFeedRefresh,
 } from '../../context/HomeFeedContext';
 import { useImportantUpdates } from '../../hooks/useImportantUpdates';
+import ScreenSafeArea from '../../../components/ui/ScreenSafeArea';
 
 function ImportantUpdatesListScreen() {
   useHomeFeedFocus();
@@ -73,7 +73,7 @@ function ImportantUpdatesListScreen() {
     'Announcements and notices from your learning team.';
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenSafeArea style={styles.container}>
       <ScreenHeader title={section.sectionTitle} subtitle={headerSubtitle} />
 
       <FlatList
@@ -118,7 +118,7 @@ function ImportantUpdatesListScreen() {
         }
         {...VERTICAL_LIST_PERF}
       />
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }
 

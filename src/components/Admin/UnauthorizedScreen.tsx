@@ -1,8 +1,8 @@
 import React from 'react';
-import { SafeAreaView, StyleSheet } from 'react-native';
-
+import { StyleSheet } from 'react-native';
 import AccessDenied from './AccessDenied';
 import { colors } from '../../constants/theme';
+import ScreenSafeArea from '../ui/ScreenSafeArea';
 
 type UnauthorizedScreenProps = {
   title?: string;
@@ -21,14 +21,14 @@ function UnauthorizedScreen({
   onGoHome,
 }: UnauthorizedScreenProps) {
   return (
-    <SafeAreaView style={styles.safe}>
+    <ScreenSafeArea style={styles.safe}>
       <AccessDenied
         title={title}
         description={description}
         actionLabel={actionLabel}
         onActionPress={onGoHome}
       />
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { Modal, ScrollView, Text, View } from 'react-native';
 
 import AppButton from '../AppButton';
+import ScreenSafeArea from '../ui/ScreenSafeArea';
 import { adminStyles } from './adminStyles';
 
 type AdminEntityFormProps = {
@@ -34,7 +35,7 @@ function AdminEntityForm({
       animationType="slide"
       presentationStyle="pageSheet"
       onRequestClose={onClose}>
-      <View style={adminStyles.modalContainer}>
+      <ScreenSafeArea style={adminStyles.modalContainer}>
         <View style={adminStyles.modalHeader}>
           <Text style={adminStyles.modalTitle}>{title}</Text>
           {error ? <Text style={adminStyles.formError}>{error}</Text> : null}
@@ -57,7 +58,7 @@ function AdminEntityForm({
             buttonStyle={adminStyles.primaryButton}
           />
         </View>
-      </View>
+      </ScreenSafeArea>
     </Modal>
   );
 }

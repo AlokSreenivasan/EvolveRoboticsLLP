@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import {
   FlatList,
-  SafeAreaView,
   StyleSheet,
   Text,
   View,
@@ -20,6 +19,7 @@ import {
 import type { ExamAttempt } from '../../../services/firebase/examAttemptsService';
 import { useExamAttempts } from '../../hooks/useExamAttempts';
 import { useExams } from '../../hooks/useExams';
+import ScreenSafeArea from '../../../components/ui/ScreenSafeArea';
 
 function formatSubmittedAt(attempt: ExamAttempt): string {
   const dt = attempt.submittedAt?.toDate?.();
@@ -99,7 +99,7 @@ function ExamAttemptsScreen() {
   }, [error, loading]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenSafeArea style={styles.container}>
       <ScreenHeader
         title="My exam results"
         subtitle="Your latest submitted attempts."
@@ -113,7 +113,7 @@ function ExamAttemptsScreen() {
         showsVerticalScrollIndicator={false}
         {...VERTICAL_LIST_PERF}
       />
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }
 

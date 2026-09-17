@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Linking,
-  SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -30,6 +29,7 @@ import {
   resolvePdfViewerUrl,
   type PdfViewerMode,
 } from '../../../utils/resources/pdfViewerUrl';
+import ScreenSafeArea from '../../../components/ui/ScreenSafeArea';
 
 type ResourcePdfRoute = RouteProp<RootStackParamList, 'ResourcePdfViewer'>;
 
@@ -111,7 +111,7 @@ function ResourcePdfViewerScreen() {
   ) : undefined;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenSafeArea style={styles.container}>
       <ScreenHeader
         title={title}
         rightSlot={openExternalLink}
@@ -175,7 +175,7 @@ function ResourcePdfViewerScreen() {
           </>
         )}
       </View>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }
 
