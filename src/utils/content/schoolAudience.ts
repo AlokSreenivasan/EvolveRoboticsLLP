@@ -188,7 +188,7 @@ export function filterByViewerTrack<T extends { track?: CourseTrack | null }>(
   viewerTrack?: CourseTrack,
 ): T[] {
   if (!viewerTrack) {
-    return items;
+    return items.filter(item => item.track == null);
   }
 
   return items.filter(

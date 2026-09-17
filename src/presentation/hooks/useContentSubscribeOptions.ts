@@ -9,7 +9,7 @@ import { useContentViewerSchoolId } from './useContentViewerSchoolId';
 export function useContentSubscribeOptions(
   includeUnpublished = false,
 ): ContentSubscribeOptions {
-  const { profile, isAdmin, roleLoading } = useAuth();
+  const { profile } = useAuth();
   const viewerSchoolId = useContentViewerSchoolId();
   const viewerGrade = useContentViewerGradeId();
 
@@ -18,12 +18,11 @@ export function useContentSubscribeOptions(
       return { includeUnpublished: true };
     }
 
-    if (roleLoading || isAdmin) {
-      return { includeUnpublished: false };
-    }
-
-    const viewerTrack = profile?.track ?? undefined;
-    const isKids = profile?.track === 'kids';
+    const viewerTrack =
+      profile?.track === 'kids' || profile?.track === 'professionals'
+        ? profile.track
+        : undefined;
+    const isKids = viewerTrack === 'kids';
 
     return {
       includeUnpublished: false,
@@ -37,9 +36,7 @@ export function useContentSubscribeOptions(
     };
   }, [
     includeUnpublished,
-    isAdmin,
     profile?.track,
-    roleLoading,
     viewerGrade,
     viewerSchoolId,
   ]);

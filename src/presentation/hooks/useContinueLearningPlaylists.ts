@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { useHomeFeedContinueLearning } from '../context/HomeFeedContext';
+import { onAuthStateChanged } from '../../services/firebase/authService';
 import { subscribeContinueLearningPlaylists } from '../../services/firebase/continueLearningPlaylistsService';
 import type { ContinueLearningPlaylist } from '../../store/content/types/continueLearningPlaylists.types';
 import { getErrorMessage } from '../../utils/firebase/errors';
@@ -23,26 +24,38 @@ export function useContinueLearningPlaylists(
       return;
     }
 
-    let ready = false;
+    let unsubPlaylists: (() => void) | undefined;
 
-    const unsub = subscribeContinueLearningPlaylists(
-      nextPlaylists => {
-        setPlaylists(nextPlaylists);
+    const unsubAuth = onAuthStateChanged(user => {
+      unsubPlaylists?.();
+      unsubPlaylists = undefined;
+
+      if (!user) {
+        setPlaylists([]);
         setError(null);
-        ready = true;
         setLoading(false);
-      },
-      { includeUnpublished },
-      err => {
-        setError(getErrorMessage(err));
-        ready = true;
-        if (ready) {
-          setLoading(false);
-        }
-      },
-    );
+        return;
+      }
 
-    return () => unsub();
+      setLoading(true);
+      unsubPlaylists = subscribeContinueLearningPlaylists(
+        nextPlaylists => {
+          setPlaylists(nextPlaylists);
+          setError(null);
+          setLoading(false);
+        },
+        { includeUnpublished },
+        err => {
+          setError(getErrorMessage(err));
+          setLoading(false);
+        },
+      );
+    });
+
+    return () => {
+      unsubAuth();
+      unsubPlaylists?.();
+    };
   }, [includeUnpublished]);
 
   if (!includeUnpublished) {

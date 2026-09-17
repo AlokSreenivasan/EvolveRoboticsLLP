@@ -151,7 +151,7 @@ export async function createContinueLearningPlaylist(
       subtitle: input.subtitle.trim(),
       imageUri: input.imageUri.trim(),
       playlistUrl: input.playlistUrl.trim(),
-      videoCount: Math.max(1, Math.trunc(input.videoCount)),
+      videoCount: Math.min(500, Math.max(1, Math.trunc(input.videoCount))),
       sortOrder,
       track: input.track,
       isPublished: input.isPublished ?? true,
@@ -203,7 +203,7 @@ export async function updateContinueLearningPlaylist(
       updates.playlistUrl = input.playlistUrl.trim();
     }
     if (input.videoCount !== undefined) {
-      updates.videoCount = Math.max(1, Math.trunc(input.videoCount));
+      updates.videoCount = Math.min(500, Math.max(1, Math.trunc(input.videoCount)));
     }
     if (input.sortOrder !== undefined) {
       updates.sortOrder = input.sortOrder;
@@ -310,10 +310,21 @@ export async function moveContinueLearningPlaylist(
   await reorderContinueLearningPlaylists(nextIds);
 }
 
+const YOUTUBE_PLAYLIST_ID_PATTERN =
+  /(?:PL|UU|FL|LP|OL|RD|WL|LL)[\w-]{10,}/i;
+
+function isYouTubePlaylistId(value: string): boolean {
+  return /^(?:PL|UU|FL|LP|OL|RD|WL|LL)[\w-]{10,}$/i.test(value.trim());
+}
+
 export function extractYouTubePlaylistId(url: string): string | null {
   const trimmed = url.trim();
   if (!trimmed) {
     return null;
+  }
+
+  if (isYouTubePlaylistId(trimmed)) {
+    return trimmed;
   }
 
   let normalized = trimmed;
@@ -325,12 +336,32 @@ export function extractYouTubePlaylistId(url: string): string | null {
   // - https://www.youtube.com/playlist?list=PLxxxx
   // - https://youtube.com/playlist?list=PLxxxx&si=...
   // - https://www.youtube.com/watch?v=...&list=PLxxxx
-  const match = normalized.match(/[?&]list=([^&#]+)/i);
-  if (match?.[1]) {
-    return decodeURIComponent(match[1]);
+  // - https://studio.youtube.com/playlist/PLxxxx/edit
+  try {
+    const parsed = new URL(normalized);
+    const fromQuery = parsed.searchParams.get('list')?.trim();
+    if (fromQuery && isYouTubePlaylistId(fromQuery)) {
+      return fromQuery;
+    }
+    if (fromQuery) {
+      return decodeURIComponent(fromQuery);
+    }
+
+    const pathMatch = parsed.pathname.match(
+      /\/playlist\/((?:PL|UU|FL|LP|OL|RD|WL|LL)[\w-]{10,})/i,
+    );
+    if (pathMatch?.[1]) {
+      return pathMatch[1];
+    }
+  } catch {
+    const match = normalized.match(/[?&]list=([^&#]+)/i);
+    if (match?.[1]) {
+      return decodeURIComponent(match[1]);
+    }
   }
 
-  return null;
+  const fallback = trimmed.match(YOUTUBE_PLAYLIST_ID_PATTERN);
+  return fallback?.[0] ?? null;
 }
 
 /** Picks a playlist URL from form fields (handles paste in title by mistake). */

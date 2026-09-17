@@ -147,18 +147,13 @@ type HomeFeedProviderProps = {
  * ContinueLearningList. Subscribes only while those routes are focused.
  */
 function buildHomeFeedSubscribeOptions(
-  isAdmin: boolean,
   track: string | null | undefined,
   schoolId: string | null | undefined,
   grade: string | null | undefined,
 ): ContentSubscribeOptions {
-  if (isAdmin) {
-    return { includeUnpublished: false };
-  }
-
   const viewerTrack =
     track === 'kids' || track === 'professionals' ? track : undefined;
-  const isKids = track === 'kids';
+  const isKids = viewerTrack === 'kids';
 
   return {
     includeUnpublished: false,
@@ -173,16 +168,15 @@ function buildHomeFeedSubscribeOptions(
 }
 
 export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
-  const { user, profile, isAdmin, roleLoading } = useAuth();
+  const { user, profile } = useAuth();
   const contentSubscribeOptions = useMemo(
     () =>
       buildHomeFeedSubscribeOptions(
-        !roleLoading && isAdmin,
         profile?.track,
         profile?.schoolId,
         profile?.grade,
       ),
-    [isAdmin, profile?.grade, profile?.schoolId, profile?.track, roleLoading],
+    [profile?.grade, profile?.schoolId, profile?.track],
   );
   const playlistSubscribeOptions = contentSubscribeOptions;
   const [focusCount, setFocusCount] = useState(0);
@@ -242,6 +236,13 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
 
   useEffect(() => {
     if (!isActive) {
+      return;
+    }
+
+    if (!user) {
+      setPlaylists([]);
+      setPlaylistsLoading(false);
+      setPlaylistsError(null);
       return;
     }
 
@@ -359,7 +360,13 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
       unsubEvents();
       unsubNotifications();
     };
-  }, [contentSubscribeOptions, isActive, playlistSubscribeOptions, refreshNonce]);
+  }, [
+    contentSubscribeOptions,
+    isActive,
+    playlistSubscribeOptions,
+    refreshNonce,
+    user,
+  ]);
 
   useEffect(() => {
     if (!isActive) {

@@ -6,6 +6,12 @@ const YOUTUBE_API_BASE = 'https://www.googleapis.com/youtube/v3';
 const PLAYLIST_RSS_BASE =
   'https://www.youtube.com/feeds/videos.xml?playlist_id=';
 
+const YOUTUBE_FETCH_HEADERS = {
+  Accept: 'application/json, application/atom+xml, application/xml, text/xml',
+  'User-Agent':
+    'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+};
+
 type YouTubeApiPlaylistItem = {
   snippet?: {
     title?: string;
@@ -71,6 +77,7 @@ async function fetchPlaylistVideosFromApi(
 
     const response = await fetch(
       `${YOUTUBE_API_BASE}/playlistItems?${params.toString()}`,
+      { headers: YOUTUBE_FETCH_HEADERS },
     );
     const data = (await response.json()) as YouTubeApiPlaylistItemsResponse;
 
@@ -95,7 +102,10 @@ async function fetchPlaylistVideosFromApi(
 async function fetchPlaylistVideosFromRss(
   playlistId: string,
 ): Promise<YouTubePlaylistVideo[]> {
-  const response = await fetch(`${PLAYLIST_RSS_BASE}${playlistId}`);
+  const response = await fetch(
+    `${PLAYLIST_RSS_BASE}${encodeURIComponent(playlistId)}`,
+    { headers: YOUTUBE_FETCH_HEADERS },
+  );
   if (!response.ok) {
     throw new Error('Could not load course lessons.');
   }

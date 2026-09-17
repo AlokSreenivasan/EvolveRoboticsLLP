@@ -262,8 +262,8 @@ function ManageContinueLearningPlaylists() {
       try {
         const videos = await fetchYouTubePlaylistVideos(playlistUrl);
         if (videos.length > 0) {
-          videoCount = videos.length;
-          setForm(prev => ({ ...prev, videoCount: String(videos.length) }));
+          videoCount = Math.min(500, videos.length);
+          setForm(prev => ({ ...prev, videoCount: String(videoCount) }));
         }
       } catch {
         // Keep the manually entered count when YouTube is unavailable.

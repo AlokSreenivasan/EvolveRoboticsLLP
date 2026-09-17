@@ -57,6 +57,10 @@ export function applyLearnerContentFilters<
 ): T[] {
   const includeUnpublished = options?.includeUnpublished === true;
   const published = filterPublishedContent(items, includeUnpublished);
+  if (includeUnpublished) {
+    return published;
+  }
+
   const byTrack = filterByViewerTrack(published, options?.viewerTrack);
   return filterByViewerSchool(byTrack, options);
 }
