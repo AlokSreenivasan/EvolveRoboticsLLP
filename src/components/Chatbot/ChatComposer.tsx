@@ -24,7 +24,7 @@ type ChatComposerProps = {
   draft: string;
   onDraftChange: (text: string) => void;
   onSend: () => void;
-  onKeywordPress: (label: string) => void;
+  onKeywordPress: (keyword: ChatKeyword) => void;
 };
 
 function ChatComposer({

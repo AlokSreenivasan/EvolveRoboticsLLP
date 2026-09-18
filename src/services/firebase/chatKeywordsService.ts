@@ -261,3 +261,19 @@ export function findChatKeywordResponse(
 
   return match?.response.trim() || null;
 }
+
+export const UNMATCHED_CHAT_REPLY =
+  "I don't have an answer for that yet. Try one of the quick options below.";
+
+export function resolveAssistantReply(
+  keywords: ChatKeyword[],
+  userMessage: string,
+  explicitResponse?: string,
+): string {
+  const explicit = explicitResponse?.trim();
+  if (explicit) {
+    return explicit;
+  }
+
+  return findChatKeywordResponse(keywords, userMessage) ?? UNMATCHED_CHAT_REPLY;
+}

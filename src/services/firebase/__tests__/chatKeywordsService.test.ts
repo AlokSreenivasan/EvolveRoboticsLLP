@@ -1,6 +1,8 @@
 import {
   computeMovedChatKeywordIds,
   findChatKeywordResponse,
+  resolveAssistantReply,
+  UNMATCHED_CHAT_REPLY,
 } from '../chatKeywordsService';
 import type { ChatKeyword } from '../../../store/content/types/chatKeywords.types';
 
@@ -47,6 +49,35 @@ describe('findChatKeywordResponse', () => {
 
   it('returns null when the matched keyword has an empty response', () => {
     expect(findChatKeywordResponse(keywords, 'Empty')).toBeNull();
+  });
+});
+
+describe('resolveAssistantReply', () => {
+  const keywords = [
+    keyword('1', 'Courses', 'Browse available courses.'),
+    keyword('2', 'Empty', '   '),
+  ];
+
+  it('uses the explicit keyword response for quick options', () => {
+    expect(
+      resolveAssistantReply(keywords, 'Courses', 'Browse available courses.'),
+    ).toBe('Browse available courses.');
+  });
+
+  it('falls back to label matching when no explicit response is passed', () => {
+    expect(resolveAssistantReply(keywords, 'courses')).toBe(
+      'Browse available courses.',
+    );
+  });
+
+  it('returns a fallback when a quick option has a blank response', () => {
+    expect(resolveAssistantReply(keywords, 'Empty', '   ')).toBe(
+      UNMATCHED_CHAT_REPLY,
+    );
+  });
+
+  it('returns a fallback when the typed message does not match', () => {
+    expect(resolveAssistantReply(keywords, 'unknown')).toBe(UNMATCHED_CHAT_REPLY);
   });
 });
 

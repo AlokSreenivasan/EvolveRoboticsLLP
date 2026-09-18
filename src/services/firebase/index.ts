@@ -104,6 +104,8 @@ export {
   createChatKeyword,
   deleteChatKeyword,
   findChatKeywordResponse,
+  resolveAssistantReply,
+  UNMATCHED_CHAT_REPLY,
   moveChatKeyword,
   reorderChatKeywords,
   subscribeChatKeywords,

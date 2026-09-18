@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   FlatList,
   Image,
@@ -20,7 +20,8 @@ import {
   spacing,
   typography,
 } from '../../../constants/theme';
-import { findChatKeywordResponse } from '../../../services/firebase/chatKeywordsService';
+import { resolveAssistantReply } from '../../../services/firebase/chatKeywordsService';
+import type { ChatKeyword } from '../../../store/content/types/chatKeywords.types';
 import { useChatKeywords } from '../../hooks/useChatKeywords';
 import type { LoginScreenNavigationProp } from '../../../types/navigation';
 import ScreenSafeArea from '../../../components/ui/ScreenSafeArea';
@@ -43,6 +44,8 @@ function ChatbotScreen() {
   const [isChatActive, setIsChatActive] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState('');
+  const messageListRef = useRef<FlatList<ChatMessage>>(null);
+  const messageIdRef = useRef(0);
 
   const handleStartChat = () => {
     setIsChatActive(true);
@@ -61,32 +64,33 @@ function ChatbotScreen() {
     }
   };
 
+  const scrollToLatestMessage = useCallback(() => {
+    messageListRef.current?.scrollToEnd({ animated: true });
+  }, []);
+
   const appendExchange = useCallback(
-    (userText: string) => {
+    (userText: string, explicitResponse?: string) => {
       const trimmed = userText.trim();
       if (!trimmed) {
         return;
       }
 
-      const response = findChatKeywordResponse(keywords, trimmed);
-      const timestamp = Date.now();
+      const response = resolveAssistantReply(
+        keywords,
+        trimmed,
+        explicitResponse,
+      );
+      const exchangeId = ++messageIdRef.current;
 
-      setMessages(current => {
-        const nextMessages: ChatMessage[] = [
-          ...current,
-          { id: `user-${timestamp}`, text: trimmed, role: 'user' },
-        ];
-
-        if (response) {
-          nextMessages.push({
-            id: `assistant-${timestamp}`,
-            text: response,
-            role: 'assistant',
-          });
-        }
-
-        return nextMessages;
-      });
+      setMessages(current => [
+        ...current,
+        { id: `user-${exchangeId}`, text: trimmed, role: 'user' },
+        {
+          id: `assistant-${exchangeId}`,
+          text: response,
+          role: 'assistant',
+        },
+      ]);
     },
     [keywords],
   );
@@ -102,8 +106,8 @@ function ChatbotScreen() {
   }, [appendExchange, draft]);
 
   const handleKeywordPress = useCallback(
-    (label: string) => {
-      appendExchange(label);
+    (keyword: ChatKeyword) => {
+      appendExchange(keyword.label, keyword.response);
     },
     [appendExchange],
   );
@@ -164,6 +168,7 @@ function ChatbotScreen() {
             </View>
 
             <FlatList
+              ref={messageListRef}
               data={messages}
               keyExtractor={keyExtractor}
               renderItem={renderMessage}
@@ -171,6 +176,7 @@ function ChatbotScreen() {
               contentContainerStyle={styles.messageListContent}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
+              onContentSizeChange={scrollToLatestMessage}
             />
 
             <ChatComposer
