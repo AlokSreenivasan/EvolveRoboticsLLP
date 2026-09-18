@@ -96,6 +96,7 @@ function buildAuthDerivedProfile(user: FirebaseAuthTypes.User): UserProfile {
     grade: null,
     track: null,
     birthYear: null,
+    dateOfBirth: null,
     parentalConsentAtMs: null,
     role: DEFAULT_USER_ROLE,
     createdAt: null,

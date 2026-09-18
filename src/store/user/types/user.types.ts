@@ -15,8 +15,10 @@ export interface UserProfileDocument {
   grade: string | null;
   /** Learner track — kids or professionals. */
   track: CourseTrack | null;
-  /** Calendar birth year only; null until the learner declares age. */
+  /** Calendar birth year derived from date of birth; null until declared. */
   birthYear?: number | null;
+  /** Full date of birth as DD/MM/YYYY; null until declared. */
+  dateOfBirth?: string | null;
   /** Set after a parent/guardian completes the in-app gate for under-13. */
   parentalConsentAt?:
     | FirebaseFirestoreTypes.Timestamp
@@ -38,6 +40,7 @@ export interface UserProfile {
   grade: string | null;
   track: CourseTrack | null;
   birthYear: number | null;
+  dateOfBirth: string | null;
   parentalConsentAtMs: number | null;
   role: UserRole;
   createdAt: FirebaseFirestoreTypes.Timestamp | null;
@@ -53,6 +56,7 @@ export interface CreateUserProfileInput {
   grade?: string | null;
   track?: CourseTrack | null;
   birthYear?: number | null;
+  dateOfBirth?: string | null;
   parentalConsentAtMs?: number | null;
 }
 
@@ -66,6 +70,7 @@ export type UpdateUserProfileInput = Partial<
     | 'grade'
     | 'track'
     | 'birthYear'
+    | 'dateOfBirth'
     | 'parentalConsentAtMs'
   >
 >;

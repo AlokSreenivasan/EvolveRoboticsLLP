@@ -21,6 +21,7 @@ jest.mock('../../firebase/userService', () => ({
       grade: null,
       track: null,
       birthYear: null,
+      dateOfBirth: null,
       parentalConsentAtMs: null,
       role: 'student',
       createdAt: null,

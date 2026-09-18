@@ -1,5 +1,5 @@
 import { isCourseTrack } from '../../../store/content/types/courses.types';
-import { isValidBirthYear } from './ageGate';
+import { isValidDateOfBirth } from './dateOfBirth';
 import { isValidContactNumber } from './isValidContactNumber';
 
 export type ProfileFormErrors = {
@@ -9,6 +9,7 @@ export type ProfileFormErrors = {
   schoolId?: string;
   grade?: string;
   birthYear?: string;
+  dateOfBirth?: string;
 };
 
 export type ProfileFormInput = {
@@ -18,6 +19,7 @@ export type ProfileFormInput = {
   schoolId: string | null;
   grade: string | null;
   birthYear?: number | null;
+  dateOfBirth?: string | null;
 };
 
 export type ProfileFormValidationOptions = {
@@ -60,8 +62,10 @@ export function validateProfileForm(
     }
   }
 
-  if (requireAgeDeclaration && !isValidBirthYear(input.birthYear)) {
-    errors.birthYear = 'Please select your birth year';
+  if (requireAgeDeclaration && !isValidDateOfBirth(input.dateOfBirth)) {
+    errors.dateOfBirth = input.dateOfBirth
+      ? 'Please enter a valid date of birth (DD/MM/YYYY)'
+      : 'Please select your date of birth';
   }
 
   if (input.track === 'kids') {

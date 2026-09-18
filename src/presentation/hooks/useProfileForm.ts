@@ -17,6 +17,11 @@ import {
   resolveWritableBirthYear,
 } from '../../utils/profile/birthYearLock';
 import {
+  birthYearFromDateOfBirth,
+  isDateOfBirthLocked,
+  resolveWritableDateOfBirth,
+} from '../../domain/Profile/validation/dateOfBirth';
+import {
   isSchoolOrGradeLocked,
   resolveWritableGrade,
   resolveWritableSchoolId,
@@ -50,10 +55,14 @@ export function useProfileForm() {
     () => isBirthYearLocked(sessionProfile?.birthYear),
     [sessionProfile?.birthYear],
   );
+  const isDateOfBirthLockedForUser = useMemo(
+    () => isDateOfBirthLocked(sessionProfile?.dateOfBirth),
+    [sessionProfile?.dateOfBirth],
+  );
 
   /** Admins and superadmins are not learners — skip Learning Track. */
   const requireLearningTrack = !roleLoading && !isAdmin;
-  const requireAgeDeclaration = requireLearningTrack;
+  const requireAgeDeclaration = !roleLoading;
 
   useEffect(() => {
     if (!sessionProfile) {
@@ -83,6 +92,9 @@ export function useProfileForm() {
       birthYear: isBirthYearLocked(nextForm.birthYear)
         ? nextForm.birthYear
         : prev.birthYear ?? nextForm.birthYear,
+      dateOfBirth: isDateOfBirthLocked(nextForm.dateOfBirth)
+        ? nextForm.dateOfBirth
+        : prev.dateOfBirth ?? nextForm.dateOfBirth,
     }));
   }, [sessionProfile]);
 
@@ -152,16 +164,25 @@ export function useProfileForm() {
     [isGradeLocked, markDirty],
   );
 
-  const setBirthYear = useCallback(
-    (birthYear: number) => {
-      if (isBirthYearLockedForUser) {
+  const setDateOfBirth = useCallback(
+    (dateOfBirth: string) => {
+      if (isDateOfBirthLockedForUser) {
         return;
       }
       markDirty();
-      setProfileForm(prev => ({ ...prev, birthYear }));
-      setErrors(prev => ({ ...prev, birthYear: undefined }));
+      const birthYear = birthYearFromDateOfBirth(dateOfBirth);
+      setProfileForm(prev => ({
+        ...prev,
+        dateOfBirth,
+        birthYear: birthYear ?? prev.birthYear,
+      }));
+      setErrors(prev => ({
+        ...prev,
+        dateOfBirth: undefined,
+        birthYear: undefined,
+      }));
     },
-    [isBirthYearLockedForUser, markDirty],
+    [isDateOfBirthLockedForUser, markDirty],
   );
 
   const validate = useCallback(
@@ -174,6 +195,7 @@ export function useProfileForm() {
           schoolId: profileForm.schoolId,
           grade: profileForm.grade,
           birthYear: profileForm.birthYear,
+          dateOfBirth: profileForm.dateOfBirth,
         },
         {
           requireTrack: requireLearningTrack,
@@ -193,6 +215,7 @@ export function useProfileForm() {
       profileForm.schoolId,
       profileForm.grade,
       profileForm.birthYear,
+      profileForm.dateOfBirth,
     ],
   );
 
@@ -200,10 +223,18 @@ export function useProfileForm() {
     options?: { recordParentalConsent?: boolean },
   ): Promise<boolean> => {
     const isKidsTrack = profileForm.track === 'kids';
+    const nextDateOfBirth = requireAgeDeclaration
+      ? resolveWritableDateOfBirth(
+          sessionProfile?.dateOfBirth,
+          profileForm.dateOfBirth,
+        )
+      : sessionProfile?.dateOfBirth ?? null;
+    const derivedBirthYear = birthYearFromDateOfBirth(nextDateOfBirth);
     const nextBirthYear = requireAgeDeclaration
       ? resolveWritableBirthYear(
           sessionProfile?.birthYear,
-          profileForm.birthYear,
+          derivedBirthYear ?? profileForm.birthYear,
+          sessionProfile?.dateOfBirth,
         )
       : sessionProfile?.birthYear ?? null;
     const recordParentalConsent =
@@ -230,6 +261,7 @@ export function useProfileForm() {
       ...(requireAgeDeclaration
         ? {
             birthYear: nextBirthYear,
+            dateOfBirth: nextDateOfBirth,
             parentalConsentAtMs,
           }
         : {}),
@@ -244,6 +276,7 @@ export function useProfileForm() {
     profileForm,
     requireAgeDeclaration,
     sessionProfile?.birthYear,
+    sessionProfile?.dateOfBirth,
     sessionProfile?.grade,
     sessionProfile?.parentalConsentAtMs,
     sessionProfile?.schoolId,
@@ -259,6 +292,7 @@ export function useProfileForm() {
     isSchoolLocked,
     isGradeLocked,
     isBirthYearLocked: isBirthYearLockedForUser,
+    isDateOfBirthLocked: isDateOfBirthLockedForUser,
     requireLearningTrack,
     requireAgeDeclaration,
     hasParentalConsent: sessionProfile?.parentalConsentAtMs != null,
@@ -269,7 +303,7 @@ export function useProfileForm() {
     setPhotoUri,
     setSchoolId,
     setGrade,
-    setBirthYear,
+    setDateOfBirth,
     validate,
     persistProfile,
   };

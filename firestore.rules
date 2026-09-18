@@ -16,7 +16,7 @@ service cloud.firestore {
 
       // Owners may edit their own profile fields (not role).
       // Superadmins may update any user, including role (user or admin only).
-      // schoolId, grade, birthYear, and parental consent are write-once.
+      // schoolId, grade, birthYear, dateOfBirth, and parental consent are write-once.
       allow update: if (isOwner(userId)
           && onlyProfileFieldsChanged()
           && isValidProfileDataAfterUpdate()
@@ -759,6 +759,8 @@ function isValidProfileData() {
     && isOptionalGrade(data.grade)
     && isOptionalUserTrack(data.track)
     && isOptionalBirthYear(data)
+    && isOptionalDateOfBirth(data)
+    && dateOfBirthMatchesBirthYear(data)
     && isOptionalParentalConsent(data)
     && learnerAgeDeclarationHolds(data);
 }
@@ -774,6 +776,7 @@ function onlyProfileFieldsChanged() {
       'grade',
       'track',
       'birthYear',
+      'dateOfBirth',
       'parentalConsentAt',
       'updatedAt',
     ]);
@@ -801,6 +804,7 @@ function onlySuperAdminUserFieldsChanged() {
       'grade',
       'track',
       'birthYear',
+      'dateOfBirth',
       'parentalConsentAt',
       'role',
       'email',
@@ -820,6 +824,8 @@ function isValidProfileDataAfterUpdate() {
     && isOptionalGrade(data.grade)
     && isOptionalUserTrack(data.track)
     && isOptionalBirthYear(data)
+    && isOptionalDateOfBirth(data)
+    && dateOfBirthMatchesBirthYear(data)
     && isOptionalParentalConsent(data)
     && learnerAgeDeclarationHolds(data);
 }
@@ -840,6 +846,8 @@ function isValidProfileDataAfterSuperAdminUpdate() {
     && isOptionalGrade(data.grade)
     && isOptionalUserTrack(data.track)
     && isOptionalBirthYear(data)
+    && isOptionalDateOfBirth(data)
+    && dateOfBirthMatchesBirthYear(data)
     && isOptionalParentalConsent(data);
 }
 
@@ -916,6 +924,34 @@ function isOptionalBirthYear(data) {
     || isValidBirthYearValue(data.birthYear);
 }
 
+function isValidDateOfBirthValue(value) {
+  return value is string
+    && value.size() == 10
+    && value.matches('^[0-9]{2}/[0-9]{2}/[0-9]{4}$')
+    && int(value[0:2]) >= 1
+    && int(value[0:2]) <= 31
+    && int(value[3:5]) >= 1
+    && int(value[3:5]) <= 12
+    && isValidBirthYearValue(int(value[6:10]));
+}
+
+function isOptionalDateOfBirth(data) {
+  return !('dateOfBirth' in data)
+    || data.dateOfBirth == null
+    || isValidDateOfBirthValue(data.dateOfBirth);
+}
+
+function dateOfBirthMatchesBirthYear(data) {
+  let dob = data.get('dateOfBirth', null);
+  let birthYear = data.get('birthYear', null);
+  return dob == null
+    || (
+      isValidDateOfBirthValue(dob)
+      && isValidBirthYearValue(birthYear)
+      && int(dob[6:10]) == birthYear
+    );
+}
+
 function isOptionalParentalConsent(data) {
   return !('parentalConsentAt' in data)
     || data.parentalConsentAt == null
@@ -934,10 +970,12 @@ function isLearnerRole(data) {
 function learnerAgeDeclarationHolds(data) {
   let track = data.get('track', null);
   let birthYear = data.get('birthYear', null);
+  let dateOfBirth = data.get('dateOfBirth', null);
   return !isLearnerRole(data)
     || track == null
     || (
       isValidBirthYearValue(birthYear)
+      && isValidDateOfBirthValue(dateOfBirth)
       && (
         !isUnder13BirthYear(birthYear)
         || data.get('parentalConsentAt', null) is timestamp
@@ -949,6 +987,10 @@ function hasSetBirthYear(data) {
   return 'birthYear' in data && isValidBirthYearValue(data.birthYear);
 }
 
+function hasSetDateOfBirth(data) {
+  return 'dateOfBirth' in data && isValidDateOfBirthValue(data.dateOfBirth);
+}
+
 function hasSetParentalConsent(data) {
   return 'parentalConsentAt' in data && data.parentalConsentAt is timestamp;
 }
@@ -956,7 +998,11 @@ function hasSetParentalConsent(data) {
 function birthYearAndConsentImmutableOnceSet() {
   let before = resource.data;
   let after = request.resource.data;
-  return (!hasSetBirthYear(before) || after.birthYear == before.birthYear)
+  return (!hasSetDateOfBirth(before)
+      || (
+        after.dateOfBirth == before.dateOfBirth
+        && after.birthYear == before.birthYear
+      ))
     && (!hasSetParentalConsent(before)
       || after.parentalConsentAt == before.parentalConsentAt);
 }

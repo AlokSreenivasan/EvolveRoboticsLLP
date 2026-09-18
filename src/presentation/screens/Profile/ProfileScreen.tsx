@@ -15,7 +15,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 
 import AppButton from '../../../components/AppButton.tsx';
-import BirthYearPicker from '../../../components/Profile/BirthYearPicker.tsx';
+import DateOfBirthPicker from '../../../components/Profile/DateOfBirthPicker.tsx';
 import ParentalConsentModal from '../../../components/Profile/ParentalConsentModal.tsx';
 import ProfilePhotoSection from '../../../components/Profile/ProfilePhotoSection.tsx';
 import GradePicker from '../../../components/Profile/GradePicker.tsx';
@@ -65,7 +65,7 @@ function ProfileScreen() {
     saveError,
     isSchoolLocked,
     isGradeLocked,
-    isBirthYearLocked,
+    isDateOfBirthLocked,
     requireLearningTrack,
     requireAgeDeclaration,
     hasParentalConsent,
@@ -76,7 +76,7 @@ function ProfileScreen() {
     setPhotoUri,
     setSchoolId,
     setGrade,
-    setBirthYear,
+    setDateOfBirth,
     validate,
     persistProfile,
   } = useProfileForm();
@@ -269,24 +269,24 @@ function ProfileScreen() {
 
               {requireAgeDeclaration ? (
                 <>
-                  <Text style={styles.label}>Birth year</Text>
-                  <BirthYearPicker
-                    selectedYear={profile.birthYear}
-                    onSelectYear={setBirthYear}
-                    disabled={isFormDisabled || isBirthYearLocked}
-                    hasError={Boolean(errors.birthYear)}
+                  <Text style={styles.label}>Date of birth</Text>
+                  <DateOfBirthPicker
+                    value={profile.dateOfBirth}
+                    onSelect={setDateOfBirth}
+                    disabled={isFormDisabled || isDateOfBirthLocked}
+                    hasError={Boolean(errors.dateOfBirth)}
                   />
-                  {errors.birthYear ? (
-                    <Text style={styles.errorText}>{errors.birthYear}</Text>
+                  {errors.dateOfBirth ? (
+                    <Text style={styles.errorText}>{errors.dateOfBirth}</Text>
                   ) : null}
                   <Text style={styles.helperText}>
-                    We only ask for the year you were born. If you are under
-                    13, a parent or guardian will confirm the next step. You
-                    can still use Kids or Professional.
+                    Choose day, month, and year. It is saved as DD/MM/YYYY. If
+                    you are under 13, a parent or guardian will confirm the
+                    next step. You can still use Kids or Professional.
                   </Text>
-                  {isBirthYearLocked ? (
+                  {isDateOfBirthLocked ? (
                     <Text style={styles.helperText}>
-                      Birth year cannot be changed once saved.
+                      Date of birth cannot be changed once saved.
                     </Text>
                   ) : null}
                 </>

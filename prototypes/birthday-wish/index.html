@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Evolve Birthday Wish</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary: #a42a8b;
+        --primary-dark: #7a1f66;
+        --primary-light: #faf2ff;
+        --primary-muted: #eecdf4;
+        --primary-soft: #e8b4dc;
+        --background: #f8f9fb;
+        --surface: #ffffff;
+        --text-primary: #1a1a2e;
+        --text-secondary: #6b7280;
+        --accent-orange: #ff9800;
+        --hero-overlay: rgba(122, 31, 102, 0.72);
+        --glow: rgba(238, 205, 244, 0.55);
+        --radius: 28px;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        min-height: 100%;
+        background: var(--background);
+        color: var(--text-primary);
+        font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+      }
+
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 24px;
+        padding: 28px 16px 48px;
+      }
+
+      body.embed {
+        padding: 0;
+        background: transparent;
+        min-height: 100vh;
+        justify-content: center;
+      }
+
+      body.embed .studio,
+      body.embed .note {
+        display: none;
+      }
+
+      .studio,
+      .note {
+        width: min(720px, 100%);
+      }
+
+      .studio {
+        background: var(--surface);
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        padding: 16px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .studio h1 {
+        font-size: 16px;
+        font-weight: 800;
+        letter-spacing: -0.2px;
+      }
+
+      .studio p {
+        font-size: 13px;
+        color: var(--text-secondary);
+        font-weight: 500;
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: end;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-secondary);
+      }
+
+      input {
+        height: 44px;
+        border-radius: 14px;
+        border: 1px solid #e5e7eb;
+        padding: 0 12px;
+        font: inherit;
+        font-weight: 600;
+        color: var(--text-primary);
+        min-width: 180px;
+      }
+
+      input:focus {
+        outline: 2px solid var(--primary-muted);
+        border-color: var(--primary);
+      }
+
+      button {
+        height: 44px;
+        border: 0;
+        border-radius: 16px;
+        padding: 0 16px;
+        font: inherit;
+        font-weight: 800;
+        letter-spacing: 0.15px;
+        cursor: pointer;
+        background: var(--primary);
+        color: white;
+      }
+
+      button.secondary {
+        background: var(--primary-light);
+        color: var(--primary);
+      }
+
+      .note {
+        font-size: 13px;
+        color: var(--text-secondary);
+        font-weight: 500;
+        line-height: 1.5;
+      }
+
+      .banner-wrap {
+        width: min(720px, 100%);
+      }
+
+      .banner {
+        position: relative;
+        overflow: hidden;
+        border-radius: var(--radius);
+        min-height: 420px;
+        background:
+          radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.28), transparent 32%),
+          radial-gradient(circle at 88% 8%, rgba(255, 152, 0, 0.22), transparent 28%),
+          linear-gradient(165deg, var(--primary) 0%, var(--primary-dark) 58%, #4a1540 100%);
+        box-shadow: 0 18px 40px rgba(122, 31, 102, 0.28);
+        color: white;
+        isolation: isolate;
+      }
+
+      .hex {
+        position: absolute;
+        inset: 0;
+        background-image: url("data:image/svg+xml,%3Csvg width='56' height='64' viewBox='0 0 56 64' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M28 2l24 14v28L28 58 4 44V16z' fill='none' stroke='rgba(255,255,255,0.08)' stroke-width='1'/%3E%3C/svg%3E");
+        opacity: 0.9;
+        animation: drift 18s linear infinite;
+        pointer-events: none;
+      }
+
+      .circuits {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .circuits path {
+        fill: none;
+        stroke: var(--primary-muted);
+        stroke-width: 1.4;
+        opacity: 0.45;
+        stroke-dasharray: 8 10;
+        animation: dash 7s linear infinite;
+      }
+
+      .glow-orb {
+        position: absolute;
+        width: 220px;
+        height: 220px;
+        border-radius: 50%;
+        filter: blur(18px);
+        background: var(--glow);
+        animation: pulse 4.2s ease-in-out infinite;
+        pointer-events: none;
+      }
+
+      .glow-orb.one {
+        top: -70px;
+        right: -40px;
+      }
+
+      .glow-orb.two {
+        bottom: 40px;
+        left: -80px;
+        animation-delay: -1.6s;
+        opacity: 0.55;
+      }
+
+      canvas.confetti {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 4;
+      }
+
+      .content {
+        position: relative;
+        z-index: 5;
+        display: grid;
+        justify-items: center;
+        text-align: center;
+        gap: 10px;
+        padding: 36px 24px 88px;
+      }
+
+      .logo-wrap {
+        width: 96px;
+        height: 96px;
+        border-radius: 50%;
+        background: white;
+        padding: 8px;
+        box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.18), 0 10px 24px rgba(0, 0, 0, 0.18);
+        animation: pop 900ms cubic-bezier(0.2, 1.4, 0.3, 1) both, float 3.6s ease-in-out 900ms infinite;
+      }
+
+      .logo-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+      }
+
+      .kicker {
+        margin-top: 8px;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--primary-muted);
+        animation: fadeUp 700ms 200ms both;
+      }
+
+      .title {
+        font-size: clamp(28px, 6vw, 42px);
+        font-weight: 800;
+        letter-spacing: -0.6px;
+        line-height: 1.12;
+        animation: fadeUp 800ms 320ms both;
+        text-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+      }
+
+      .title span {
+        display: inline-block;
+        background: linear-gradient(90deg, #fff, var(--primary-muted), #fff);
+        background-size: 200% 100%;
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        animation: shine 3.2s linear infinite;
+      }
+
+      .message {
+        max-width: 460px;
+        font-size: 15px;
+        font-weight: 500;
+        line-height: 1.5;
+        color: rgba(255, 255, 255, 0.92);
+        animation: fadeUp 800ms 460ms both;
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 6px;
+        animation: fadeUp 800ms 560ms both;
+      }
+
+      .chip {
+        background: rgba(250, 242, 255, 0.16);
+        border: 1px solid rgba(238, 205, 244, 0.45);
+        color: white;
+        border-radius: 12px;
+        padding: 8px 12px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .from {
+        margin-top: 4px;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--primary-muted);
+        animation: fadeUp 800ms 680ms both;
+      }
+
+      .balloons {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 3;
+      }
+
+      .balloon {
+        position: absolute;
+        width: 28px;
+        height: 36px;
+        border-radius: 50% 50% 50% 50% / 42% 42% 58% 58%;
+        animation: rise 7.5s ease-in infinite;
+        opacity: 0.85;
+      }
+
+      .balloon::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 34px;
+        width: 1px;
+        height: 28px;
+        background: rgba(255, 255, 255, 0.45);
+      }
+
+      .balloon.a {
+        left: 8%;
+        background: var(--primary-soft);
+        animation-delay: 0s;
+      }
+      .balloon.b {
+        left: 22%;
+        background: var(--accent-orange);
+        animation-delay: 1.4s;
+        width: 22px;
+        height: 30px;
+      }
+      .balloon.c {
+        right: 12%;
+        left: auto;
+        background: var(--primary-muted);
+        animation-delay: 0.7s;
+      }
+      .balloon.d {
+        right: 24%;
+        left: auto;
+        background: white;
+        animation-delay: 2.1s;
+        width: 20px;
+        height: 26px;
+      }
+
+      .wave {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: -2px;
+        height: 78px;
+        z-index: 6;
+      }
+
+      .cake {
+        position: absolute;
+        right: 18px;
+        bottom: 54px;
+        z-index: 7;
+        width: 72px;
+        animation: pop 900ms 500ms both, float 3.2s ease-in-out 1.2s infinite;
+      }
+
+      @keyframes drift {
+        from {
+          background-position: 0 0;
+        }
+        to {
+          background-position: 56px 64px;
+        }
+      }
+
+      @keyframes dash {
+        to {
+          stroke-dashoffset: -120;
+        }
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 0.7;
+        }
+        50% {
+          transform: scale(1.12);
+          opacity: 1;
+        }
+      }
+
+      @keyframes pop {
+        from {
+          transform: scale(0.4);
+          opacity: 0;
+        }
+        to {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-8px);
+        }
+      }
+
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(14px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes shine {
+        from {
+          background-position: 200% 0;
+        }
+        to {
+          background-position: -200% 0;
+        }
+      }
+
+      @keyframes rise {
+        0% {
+          transform: translateY(70px);
+          opacity: 0;
+        }
+        15% {
+          opacity: 0.85;
+        }
+        100% {
+          transform: translateY(-360px);
+          opacity: 0;
+        }
+      }
+
+      @media (max-width: 520px) {
+        .content {
+          padding: 28px 18px 86px;
+        }
+        .logo-wrap {
+          width: 80px;
+          height: 80px;
+        }
+        .cake {
+          width: 56px;
+          right: 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <section class="studio">
+      <h1>Birthday wish preview</h1>
+      <p>
+        Standalone prototype — not wired into the app. Change the name below, or open
+        <code>?name=Aisha&amp;age=12</code>.
+      </p>
+      <form class="controls" id="form">
+        <label>
+          Name
+          <input id="name" name="name" value="Aisha" autocomplete="off" />
+        </label>
+        <label>
+          Age (optional)
+          <input id="age" name="age" value="" inputmode="numeric" />
+        </label>
+        <button type="submit">Play wish</button>
+        <button type="button" class="secondary" id="replay">Replay</button>
+      </form>
+    </section>
+
+    <div class="banner-wrap">
+      <article class="banner" id="banner" aria-live="polite">
+        <div class="hex"></div>
+        <div class="glow-orb one"></div>
+        <div class="glow-orb two"></div>
+        <svg class="circuits" viewBox="0 0 720 420" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M40 80h90l24 24h120l20-20h80" />
+          <path d="M620 70v70l-30 30h-90" />
+          <path d="M80 300h70l18-18h140" />
+          <path d="M540 250h90l20 20v60" />
+        </svg>
+        <div class="balloons">
+          <span class="balloon a"></span>
+          <span class="balloon b"></span>
+          <span class="balloon c"></span>
+          <span class="balloon d"></span>
+        </div>
+        <canvas class="confetti" id="confetti"></canvas>
+        <div class="content">
+          <div class="logo-wrap">
+            <img src="./logo.png" alt="Evolve Robotics" />
+          </div>
+          <p class="kicker">Evolve Robotics</p>
+          <h2 class="title" id="title">Happy Birthday, <span>Aisha</span>!</h2>
+          <p class="message" id="message"></p>
+          <div class="chips">
+            <span class="chip" id="chip-age">Keep building</span>
+            <span class="chip">Keep evolving</span>
+            <span class="chip">More robots ahead</span>
+          </div>
+          <p class="from">With love, the Evolve Robotics team</p>
+        </div>
+        <svg class="cake" viewBox="0 0 72 72" aria-hidden="true">
+          <rect x="16" y="34" width="40" height="22" rx="6" fill="#faf2ff" />
+          <rect x="20" y="24" width="32" height="16" rx="6" fill="#e8b4dc" />
+          <rect x="33" y="12" width="6" height="14" rx="3" fill="#ff9800" />
+          <circle cx="36" cy="11" r="4" fill="#fff3c4">
+            <animate attributeName="opacity" values="1;0.35;1" dur="0.7s" repeatCount="indefinite" />
+          </circle>
+          <circle cx="26" cy="45" r="3" fill="#a42a8b" />
+          <circle cx="36" cy="45" r="3" fill="#a42a8b" />
+          <circle cx="46" cy="45" r="3" fill="#a42a8b" />
+        </svg>
+        <svg class="wave" viewBox="0 0 720 78" preserveAspectRatio="none" aria-hidden="true">
+          <path
+            d="M0 38c60 22 120-18 180-8s120 34 180 18 120-36 180-18 90 28 180 8v40H0z"
+            fill="#e8b4dc"
+          />
+          <path
+            d="M0 50c70 16 110-12 180-4s130 24 180 8 110-24 180-8 110 20 180 8v24H0z"
+            fill="#7a1f66"
+          />
+        </svg>
+      </article>
+    </div>
+
+    <p class="note">
+      Later integration idea: pass the learner’s first name (and optional age) into this banner.
+      Copy stays robotics-themed and signed by Evolve Robotics. Open with
+      <code>?embed=1&amp;name=FirstName</code> to hide the preview controls.
+    </p>
+
+    <script>
+      const WISHES = [
+        "May your year be packed with bright ideas, kind teammates, and robots that actually do what you coded.",
+        "Another trip around the sun — keep stacking skills, curiosity, and circuits that make you proud.",
+        "Wishing you joy, focus, and a year of builds that surprise even you.",
+        "May every project you start this year evolve into something you’re excited to show.",
+      ];
+
+      const params = new URLSearchParams(location.search);
+      if (params.get("embed") === "1") document.body.classList.add("embed");
+
+      const nameInput = document.getElementById("name");
+      const ageInput = document.getElementById("age");
+      const titleEl = document.getElementById("title");
+      const messageEl = document.getElementById("message");
+      const ageChip = document.getElementById("chip-age");
+      const banner = document.getElementById("banner");
+      const canvas = document.getElementById("confetti");
+      const ctx = canvas.getContext("2d");
+
+      if (params.get("name")) nameInput.value = params.get("name");
+      if (params.get("age")) ageInput.value = params.get("age");
+
+      let wishIndex = 0;
+      let particles = [];
+      let raf;
+
+      function resize() {
+        const rect = banner.getBoundingClientRect();
+        canvas.width = rect.width * devicePixelRatio;
+        canvas.height = rect.height * devicePixelRatio;
+        ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+      }
+
+      function burst() {
+        const rect = banner.getBoundingClientRect();
+        const colors = ["#a42a8b", "#eecdf4", "#e8b4dc", "#ffffff", "#ff9800", "#faf2ff"];
+        for (let i = 0; i < 90; i++) {
+          particles.push({
+            x: rect.width / 2,
+            y: 70,
+            vx: (Math.random() - 0.5) * 8,
+            vy: Math.random() * -7 - 2,
+            g: 0.14 + Math.random() * 0.08,
+            w: 4 + Math.random() * 5,
+            h: 7 + Math.random() * 6,
+            r: Math.random() * Math.PI,
+            vr: (Math.random() - 0.5) * 0.2,
+            color: colors[i % colors.length],
+            life: 140 + Math.random() * 40,
+          });
+        }
+      }
+
+      function tick() {
+        const rect = banner.getBoundingClientRect();
+        ctx.clearRect(0, 0, rect.width, rect.height);
+        particles = particles.filter((p) => p.life > 0);
+        for (const p of particles) {
+          p.vy += p.g;
+          p.x += p.vx;
+          p.y += p.vy;
+          p.r += p.vr;
+          p.life -= 1;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.r);
+          ctx.globalAlpha = Math.max(p.life / 160, 0);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+          ctx.restore();
+        }
+        raf = requestAnimationFrame(tick);
+      }
+
+      function renderWish() {
+        const name = (nameInput.value || "friend").trim() || "friend";
+        const age = ageInput.value.trim();
+        titleEl.innerHTML = `Happy Birthday, <span>${escapeHtml(name)}</span>!`;
+        messageEl.textContent = WISHES[wishIndex % WISHES.length];
+        ageChip.textContent = age
+          ? `${age} trips around the sun`
+          : "A year of brighter builds";
+        banner.style.animation = "none";
+        banner.offsetHeight;
+        banner.style.animation = "";
+        burst();
+      }
+
+      function escapeHtml(value) {
+        return value
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;");
+      }
+
+      document.getElementById("form").addEventListener("submit", (event) => {
+        event.preventDefault();
+        wishIndex += 1;
+        renderWish();
+      });
+
+      document.getElementById("replay").addEventListener("click", () => {
+        wishIndex += 1;
+        renderWish();
+      });
+
+      window.addEventListener("resize", resize);
+      resize();
+      tick();
+      renderWish();
+    </script>
+  </body>
+</html>

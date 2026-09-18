@@ -45,6 +45,10 @@ export function useUserProfile(): UseUserProfileResult {
         track: input.track !== undefined ? input.track : profile.track,
         birthYear:
           input.birthYear !== undefined ? input.birthYear : profile.birthYear,
+        dateOfBirth:
+          input.dateOfBirth !== undefined
+            ? input.dateOfBirth
+            : profile.dateOfBirth,
         parentalConsentAtMs:
           input.parentalConsentAtMs !== undefined
             ? input.parentalConsentAtMs
@@ -69,6 +73,10 @@ export function useUserProfile(): UseUserProfileResult {
         track: input.track !== undefined ? input.track : profile.track,
         birthYear:
           input.birthYear !== undefined ? input.birthYear : profile.birthYear,
+        dateOfBirth:
+          input.dateOfBirth !== undefined
+            ? input.dateOfBirth
+            : profile.dateOfBirth,
         parentalConsentAtMs:
           input.parentalConsentAtMs !== undefined
             ? input.parentalConsentAtMs

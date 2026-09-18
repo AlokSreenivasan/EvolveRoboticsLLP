@@ -1,4 +1,5 @@
 import { isValidBirthYear } from '../../domain/Profile/validation/ageGate';
+import { isDateOfBirthLocked } from '../../domain/Profile/validation/dateOfBirth';
 
 export function isBirthYearLocked(
   value: number | null | undefined,
@@ -9,10 +10,11 @@ export function isBirthYearLocked(
 export function resolveWritableBirthYear(
   existing: number | null | undefined,
   next: number | null | undefined,
+  existingDateOfBirth?: string | null,
   asOf: Date = new Date(),
 ): number | null {
-  if (isBirthYearLocked(existing)) {
-    return existing as number;
+  if (isDateOfBirthLocked(existingDateOfBirth) && isBirthYearLocked(existing)) {
+    return existing ?? null;
   }
   if (isValidBirthYear(next, asOf)) {
     return next;

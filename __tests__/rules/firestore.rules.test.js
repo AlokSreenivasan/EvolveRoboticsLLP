@@ -251,6 +251,45 @@ describe('users collection', () => {
     );
   });
 
+  test('owners can set date of birth once', async () => {
+    const year = new Date().getFullYear() - 18;
+    await assertSucceeds(
+      updateDoc(doc(db(OWNER_UID), 'users', OWNER_UID), {
+        birthYear: year,
+        dateOfBirth: `15/06/${year}`,
+        updatedAt: serverTimestamp(),
+      }),
+    );
+  });
+
+  test('owners cannot change date of birth after it is set', async () => {
+    const year = new Date().getFullYear() - 18;
+    await testEnv.withSecurityRulesDisabled(async context => {
+      await updateDoc(doc(context.firestore(), 'users', OWNER_UID), {
+        birthYear: year,
+        dateOfBirth: `15/06/${year}`,
+      });
+    });
+
+    await assertFails(
+      updateDoc(doc(db(OWNER_UID), 'users', OWNER_UID), {
+        dateOfBirth: `01/01/${year}`,
+        updatedAt: serverTimestamp(),
+      }),
+    );
+  });
+
+  test('date of birth year must match birth year', async () => {
+    const year = new Date().getFullYear() - 18;
+    await assertFails(
+      updateDoc(doc(db(OWNER_UID), 'users', OWNER_UID), {
+        birthYear: year,
+        dateOfBirth: `15/06/${year - 1}`,
+        updatedAt: serverTimestamp(),
+      }),
+    );
+  });
+
   test('owners can set birth year once', async () => {
     const year = new Date().getFullYear() - 18;
     await assertSucceeds(
@@ -261,11 +300,29 @@ describe('users collection', () => {
     );
   });
 
-  test('owners cannot change birth year after it is set', async () => {
+  test('owners can change birth year until a full date of birth is saved', async () => {
     const year = new Date().getFullYear() - 18;
     await testEnv.withSecurityRulesDisabled(async context => {
       await updateDoc(doc(context.firestore(), 'users', OWNER_UID), {
         birthYear: year,
+      });
+    });
+
+    await assertSucceeds(
+      updateDoc(doc(db(OWNER_UID), 'users', OWNER_UID), {
+        birthYear: year - 1,
+        dateOfBirth: `15/06/${year - 1}`,
+        updatedAt: serverTimestamp(),
+      }),
+    );
+  });
+
+  test('owners cannot change birth year after date of birth is set', async () => {
+    const year = new Date().getFullYear() - 18;
+    await testEnv.withSecurityRulesDisabled(async context => {
+      await updateDoc(doc(context.firestore(), 'users', OWNER_UID), {
+        birthYear: year,
+        dateOfBirth: `15/06/${year}`,
       });
     });
 
@@ -291,6 +348,7 @@ describe('users collection', () => {
       updateDoc(doc(db(OWNER_UID), 'users', OWNER_UID), {
         track: 'professionals',
         birthYear: year,
+        dateOfBirth: `15/06/${year}`,
         parentalConsentAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       }),
@@ -303,6 +361,7 @@ describe('users collection', () => {
       updateDoc(doc(db(OWNER_UID), 'users', OWNER_UID), {
         track: 'professionals',
         birthYear: year,
+        dateOfBirth: `15/06/${year}`,
         updatedAt: serverTimestamp(),
       }),
     );
@@ -317,7 +376,18 @@ describe('users collection', () => {
     );
   });
 
-  test('owners can save a typical profile payload with a whole-number birth year', async () => {
+  test('setting a track without a date of birth is rejected', async () => {
+    const year = new Date().getFullYear() - 18;
+    await assertFails(
+      updateDoc(doc(db(OWNER_UID), 'users', OWNER_UID), {
+        track: 'professionals',
+        birthYear: year,
+        updatedAt: serverTimestamp(),
+      }),
+    );
+  });
+
+  test('owners can save a typical profile payload with a date of birth', async () => {
     const year = new Date().getFullYear() - 18;
     await assertSucceeds(
       updateDoc(doc(db(OWNER_UID), 'users', OWNER_UID), {
@@ -328,6 +398,7 @@ describe('users collection', () => {
         grade: null,
         track: 'professionals',
         birthYear: year,
+        dateOfBirth: `15/06/${year}`,
         updatedAt: serverTimestamp(),
       }),
     );

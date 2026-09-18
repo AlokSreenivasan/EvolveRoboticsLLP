@@ -19,10 +19,11 @@ export function isProfileComplete(profile: UserProfile | null | undefined): bool
       schoolId: profile.schoolId,
       grade: profile.grade,
       birthYear: profile.birthYear,
+      dateOfBirth: profile.dateOfBirth,
     },
     {
       requireTrack: !isAdmin,
-      requireAgeDeclaration: !isAdmin,
+      requireAgeDeclaration: true,
     },
   );
 

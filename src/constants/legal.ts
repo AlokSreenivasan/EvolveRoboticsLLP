@@ -29,7 +29,7 @@ export const PRIVACY_POLICY_SECTIONS: PrivacyPolicySection[] = [
     title: 'What this app collects',
     paragraphs: [
       'Account and authentication: Firebase Authentication user ID, email address, and sign-in credentials. You can create an email/password account or sign in with Google. We store email verification status and, for Google sign-in, the Google account identifier needed to authenticate you.',
-      'Profile: full name, phone number, school, grade, learner track (kids or professionals), calendar birth year, and parental-consent timestamp when a guardian completes the under-13 gate. Profiles are stored in Cloud Firestore at users/{your user id}.',
+      'Profile: full name, phone number, school, grade, learner track (kids or professionals), date of birth (DD/MM/YYYY), and parental-consent timestamp when a guardian completes the under-13 gate. Profiles are stored in Cloud Firestore at users/{your user id}.',
       'Photos: an optional profile photo you choose from the device. Photos are uploaded to Firebase Storage (profileImages/{your user id}) and the download URL is saved on your profile.',
       'Class forum: if you post in your school/grade channel, we store the message text, your user id, display name, and role. Classmates in that channel and administrators can see those posts. If you report a message, we store the report, reporter name, and a copy of the reported text so we can review it.',
       'Push notifications (FCM): if you allow notifications, we collect a Firebase Cloud Messaging device token and platform (Android or iOS) and store it under users/{your user id}/fcmTokens. You can turn push off in Notification Preferences, which removes the device token.',
@@ -88,7 +88,7 @@ export const PRIVACY_POLICY_SECTIONS: PrivacyPolicySection[] = [
   {
     title: 'Children',
     paragraphs: [
-      'The app includes a kids learning track. We collect calendar birth year to apply an age gate. Learners under 13 need a parent or guardian to complete in-app parental consent before the profile is treated as complete.',
+      'The app includes a kids learning track. We collect date of birth to apply an age gate. Learners under 13 need a parent or guardian to complete in-app parental consent before the profile is treated as complete.',
       'We do not use children’s data for advertising, profiling for ads, or sale. We ask only for information needed to run the learning account (including school and grade for the kids track). Parents or guardians can contact us at ' +
         SUPPORT_EMAIL +
         ' to review, correct, or request deletion of a child’s account.',

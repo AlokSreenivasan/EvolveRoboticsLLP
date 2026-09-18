@@ -15,6 +15,7 @@ function profile(overrides: Partial<UserProfile> = {}): UserProfile {
     grade: '5',
     track: 'kids',
     birthYear: under13BirthYear,
+    dateOfBirth: `15/06/${under13BirthYear}`,
     parentalConsentAtMs: 1,
     role: 'user',
     createdAt: null,
@@ -24,8 +25,25 @@ function profile(overrides: Partial<UserProfile> = {}): UserProfile {
 }
 
 describe('isProfileComplete', () => {
-  it('is false when a learner is missing birth year', () => {
-    expect(isProfileComplete(profile({ birthYear: null }))).toBe(false);
+  it('is false when a learner is missing date of birth', () => {
+    expect(
+      isProfileComplete(profile({ birthYear: null, dateOfBirth: null })),
+    ).toBe(false);
+  });
+
+  it('is false when a learner only stored a birth year', () => {
+    expect(
+      isProfileComplete(
+        profile({
+          track: 'professionals',
+          schoolId: null,
+          grade: null,
+          birthYear: over13BirthYear,
+          dateOfBirth: null,
+          parentalConsentAtMs: null,
+        }),
+      ),
+    ).toBe(false);
   });
 
   it('is false when an under-13 learner has no parental consent', () => {
@@ -48,13 +66,14 @@ describe('isProfileComplete', () => {
           schoolId: null,
           grade: null,
           birthYear: over13BirthYear,
+          dateOfBirth: `15/06/${over13BirthYear}`,
           parentalConsentAtMs: null,
         }),
       ),
     ).toBe(true);
   });
 
-  it('skips track and age for admins', () => {
+  it('is false for an admin missing date of birth', () => {
     expect(
       isProfileComplete(
         profile({
@@ -63,6 +82,23 @@ describe('isProfileComplete', () => {
           schoolId: null,
           grade: null,
           birthYear: null,
+          dateOfBirth: null,
+          parentalConsentAtMs: null,
+        }),
+      ),
+    ).toBe(false);
+  });
+
+  it('is true for an admin with a date of birth and no learning track', () => {
+    expect(
+      isProfileComplete(
+        profile({
+          role: 'admin',
+          track: null,
+          schoolId: null,
+          grade: null,
+          birthYear: over13BirthYear,
+          dateOfBirth: `15/06/${over13BirthYear}`,
           parentalConsentAtMs: null,
         }),
       ),

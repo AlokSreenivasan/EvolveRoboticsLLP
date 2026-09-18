@@ -18,6 +18,7 @@ export type ProfileEditPayload = {
   schoolId: string | null;
   grade: string | null;
   birthYear?: number | null;
+  dateOfBirth?: string | null;
   parentalConsentAtMs?: number | null;
 };
 
@@ -35,6 +36,9 @@ function buildOptimisticProfile(
     schoolId: payload.schoolId,
     grade: payload.grade,
     ...(payload.birthYear !== undefined ? { birthYear: payload.birthYear } : {}),
+    ...(payload.dateOfBirth !== undefined
+      ? { dateOfBirth: payload.dateOfBirth }
+      : {}),
     ...(payload.parentalConsentAtMs !== undefined
       ? { parentalConsentAtMs: payload.parentalConsentAtMs }
       : {}),
@@ -93,6 +97,9 @@ export async function updateUserProfileWithSync(
         grade: payload.grade,
         ...(payload.birthYear !== undefined
           ? { birthYear: payload.birthYear }
+          : {}),
+        ...(payload.dateOfBirth !== undefined
+          ? { dateOfBirth: payload.dateOfBirth }
           : {}),
         ...(payload.parentalConsentAtMs !== undefined
           ? { parentalConsentAtMs: payload.parentalConsentAtMs }

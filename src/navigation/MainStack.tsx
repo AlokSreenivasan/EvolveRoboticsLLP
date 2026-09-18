@@ -47,8 +47,8 @@ function MainStack() {
   const { profile } = useAuth();
   const { isAdmin, roleLoading } = useUserRole();
   const showAdminStack = !roleLoading && isAdmin;
-  // Wait for role so admin/superadmin are not forced through Learning Track
-  // or the learner age declaration (isProfileComplete skips both for admins).
+  // Wait for role so admin/superadmin are not forced through Learning Track.
+  // Date of birth is required for every signed-in user.
   const needsProfileCompletion =
     !roleLoading && !isProfileComplete(profile);
 

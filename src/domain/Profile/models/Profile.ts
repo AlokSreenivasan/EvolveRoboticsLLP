@@ -8,6 +8,8 @@ export type Profile = {
   schoolId: string | null;
   grade: string | null;
   birthYear: number | null;
+  /** Display and storage format: DD/MM/YYYY. */
+  dateOfBirth: string | null;
 };
 
 export const emptyProfile = (): Profile => ({
@@ -18,4 +20,5 @@ export const emptyProfile = (): Profile => ({
   schoolId: null,
   grade: null,
   birthYear: null,
+  dateOfBirth: null,
 });

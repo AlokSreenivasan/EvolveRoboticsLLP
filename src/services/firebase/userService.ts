@@ -36,6 +36,10 @@ import {
   wrapFirebaseError,
 } from '../../utils/firebase/errors';
 import { isUnder13 } from '../../domain/Profile/validation/ageGate';
+import {
+  isValidDateOfBirth,
+  resolveWritableDateOfBirth,
+} from '../../domain/Profile/validation/dateOfBirth';
 import { resolveWritableBirthYear } from '../../utils/profile/birthYearLock';
 import {
   resolveWritableGrade,
@@ -74,6 +78,7 @@ function mapDocumentToUserProfile(
     grade: data.grade ?? null,
     track: data.track ?? null,
     birthYear: Number.isInteger(data.birthYear) ? (data.birthYear as number) : null,
+    dateOfBirth: isValidDateOfBirth(data.dateOfBirth) ? data.dateOfBirth : null,
     parentalConsentAtMs: timestampToMillis(data.parentalConsentAt),
     role,
     createdAt: isTimestamp(data.createdAt) ? data.createdAt : null,
@@ -138,6 +143,10 @@ function buildProfileCreateInput(
     track: input.track !== undefined ? input.track : baseProfile.track,
     birthYear:
       input.birthYear !== undefined ? input.birthYear : baseProfile.birthYear,
+    dateOfBirth:
+      input.dateOfBirth !== undefined
+        ? input.dateOfBirth
+        : baseProfile.dateOfBirth,
     parentalConsentAtMs:
       input.parentalConsentAtMs !== undefined
         ? input.parentalConsentAtMs
@@ -179,12 +188,20 @@ function buildProfileUpdatePayload(
     updates.birthYear = resolveWritableBirthYear(
       baseProfile.birthYear,
       input.birthYear,
+      baseProfile.dateOfBirth,
+    );
+  }
+  if (input.dateOfBirth !== undefined) {
+    updates.dateOfBirth = resolveWritableDateOfBirth(
+      baseProfile.dateOfBirth,
+      input.dateOfBirth,
     );
   }
 
   const nextBirthYear = resolveWritableBirthYear(
     baseProfile.birthYear,
     input.birthYear !== undefined ? input.birthYear : baseProfile.birthYear,
+    baseProfile.dateOfBirth,
   );
   if (
     baseProfile.parentalConsentAtMs == null &&
@@ -249,6 +266,7 @@ export async function createUserProfile(
 ): Promise<UserProfile> {
   try {
     const birthYear = input.birthYear ?? null;
+    const dateOfBirth = input.dateOfBirth ?? null;
     const recordParentalConsent =
       isUnder13(birthYear) && input.parentalConsentAtMs != null;
     const payload: UserProfileDocument = {
@@ -260,6 +278,7 @@ export async function createUserProfile(
       grade: input.grade ?? null,
       track: input.track ?? null,
       birthYear,
+      dateOfBirth,
       parentalConsentAt: recordParentalConsent ? serverTimestamp() : null,
       role: DEFAULT_USER_ROLE,
       createdAt: serverTimestamp(),
@@ -279,6 +298,7 @@ export async function createUserProfile(
       grade: payload.grade ?? null,
       track: payload.track ?? null,
       birthYear,
+      dateOfBirth,
       parentalConsentAtMs: recordParentalConsent
         ? input.parentalConsentAtMs ?? Date.now()
         : null,
@@ -404,14 +424,26 @@ function mergeUserProfile(
     track: input.track !== undefined ? input.track : base.track,
     birthYear:
       input.birthYear !== undefined
-        ? resolveWritableBirthYear(base.birthYear, input.birthYear)
+        ? resolveWritableBirthYear(
+            base.birthYear,
+            input.birthYear,
+            base.dateOfBirth,
+          )
         : base.birthYear,
+    dateOfBirth:
+      input.dateOfBirth !== undefined
+        ? resolveWritableDateOfBirth(base.dateOfBirth, input.dateOfBirth)
+        : base.dateOfBirth,
     parentalConsentAtMs:
       base.parentalConsentAtMs ??
       (input.parentalConsentAtMs != null &&
       isUnder13(
         input.birthYear !== undefined
-          ? resolveWritableBirthYear(base.birthYear, input.birthYear)
+          ? resolveWritableBirthYear(
+              base.birthYear,
+              input.birthYear,
+              base.dateOfBirth,
+            )
           : base.birthYear,
       )
         ? input.parentalConsentAtMs
