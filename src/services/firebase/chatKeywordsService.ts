@@ -4,6 +4,10 @@ import type {
   UpdateData,
 } from '@react-native-firebase/firestore';
 
+import {
+  SUPPORT_EMAIL,
+  SUPPORT_PHONE,
+} from '../../config/support';
 import type {
   ChatKeyword,
   ChatKeywordDocument,
@@ -246,24 +250,131 @@ export async function moveChatKeyword(
   await reorderChatKeywords(nextIds);
 }
 
-export function findChatKeywordResponse(
+const MIN_FUZZY_MATCH_LENGTH = 3;
+
+export const STARTER_CHAT_KEYWORD_LIMIT = 6;
+
+export const UNMATCHED_CHAT_REPLY =
+  `I don't have an answer for that yet. Contact Evolve support at ${SUPPORT_PHONE} or ${SUPPORT_EMAIL}. You can also try one of the topics below.`;
+
+export const MATCHED_CHAT_SUPPORT_NOTE =
+  `If this answer does not meet your requirement, connect with the support team at ${SUPPORT_PHONE} or ${SUPPORT_EMAIL}.`;
+
+export function withMatchedSupportNote(answer: string): string {
+  return `${answer}\n\n${MATCHED_CHAT_SUPPORT_NOTE}`;
+}
+
+function normalizeChatText(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function isUsableChatKeyword(keyword: ChatKeyword): boolean {
+  return Boolean(keyword.label.trim() && keyword.response.trim());
+}
+
+function longestLabelFirst(left: ChatKeyword, right: ChatKeyword): number {
+  return (
+    normalizeChatText(right.label).length - normalizeChatText(left.label).length
+  );
+}
+
+export function getStarterChatKeywords(
+  keywords: ChatKeyword[],
+  limit: number = STARTER_CHAT_KEYWORD_LIMIT,
+): ChatKeyword[] {
+  return keywords.filter(isUsableChatKeyword).slice(0, limit);
+}
+
+export function filterChatKeywordsByQuery(
+  keywords: ChatKeyword[],
+  query: string,
+): ChatKeyword[] {
+  const normalized = normalizeChatText(query);
+  if (normalized.length < 2) {
+    return keywords;
+  }
+
+  return keywords.filter(keyword =>
+    normalizeChatText(keyword.label).includes(normalized),
+  );
+}
+
+export function findRelatedChatKeywords(
   keywords: ChatKeyword[],
   userMessage: string,
-): string | null {
-  const normalized = userMessage.trim().toLowerCase();
+  limit: number = STARTER_CHAT_KEYWORD_LIMIT,
+): ChatKeyword[] {
+  const words = normalizeChatText(userMessage)
+    .split(/\s+/)
+    .filter(word => word.length >= MIN_FUZZY_MATCH_LENGTH);
+
+  if (words.length === 0) {
+    return getStarterChatKeywords(keywords, limit);
+  }
+
+  const related = keywords.filter(keyword => {
+    if (!isUsableChatKeyword(keyword)) {
+      return false;
+    }
+
+    const label = normalizeChatText(keyword.label);
+    return words.some(word => label.includes(word));
+  });
+
+  if (related.length === 0) {
+    return getStarterChatKeywords(keywords, limit);
+  }
+
+  return related.slice(0, limit);
+}
+
+export function findMatchingChatKeyword(
+  keywords: ChatKeyword[],
+  userMessage: string,
+): ChatKeyword | null {
+  const normalized = normalizeChatText(userMessage);
   if (!normalized) {
     return null;
   }
 
-  const match = keywords.find(
-    keyword => keyword.label.trim().toLowerCase() === normalized,
-  );
+  const usable = keywords.filter(isUsableChatKeyword);
 
-  return match?.response.trim() || null;
+  const exact = usable.find(
+    keyword => normalizeChatText(keyword.label) === normalized,
+  );
+  if (exact) {
+    return exact;
+  }
+
+  const contained = usable
+    .filter(keyword => {
+      const label = normalizeChatText(keyword.label);
+      return label.length >= MIN_FUZZY_MATCH_LENGTH && normalized.includes(label);
+    })
+    .sort(longestLabelFirst);
+  if (contained[0]) {
+    return contained[0];
+  }
+
+  if (normalized.length < MIN_FUZZY_MATCH_LENGTH) {
+    return null;
+  }
+
+  const prefixed = usable
+    .filter(keyword =>
+      normalizeChatText(keyword.label).startsWith(normalized),
+    )
+    .sort(longestLabelFirst);
+
+  return prefixed[0] ?? null;
 }
 
-export const UNMATCHED_CHAT_REPLY =
-  "I don't have an answer for that yet. Try one of the quick options below.";
+export function findChatKeywordResponse(
+  keywords: ChatKeyword[],
+  userMessage: string,
+): string | null {
+  return findMatchingChatKeyword(keywords, userMessage)?.response.trim() || null;
+}
 
 export function resolveAssistantReply(
   keywords: ChatKeyword[],
@@ -275,5 +386,10 @@ export function resolveAssistantReply(
     return explicit;
   }
 
-  return findChatKeywordResponse(keywords, userMessage) ?? UNMATCHED_CHAT_REPLY;
+  const matched = findChatKeywordResponse(keywords, userMessage);
+  if (matched) {
+    return withMatchedSupportNote(matched);
+  }
+
+  return UNMATCHED_CHAT_REPLY;
 }

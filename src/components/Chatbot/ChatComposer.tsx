@@ -3,12 +3,12 @@ import {
   Platform,
   StyleSheet,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { Send } from 'lucide-react-native';
 
 import {
+  buttonVariants,
   cardShadowElevated,
   cardShadowLight,
   colors,
@@ -17,6 +17,7 @@ import {
   spacing,
 } from '../../constants/theme';
 import type { ChatKeyword } from '../../store/content/types/chatKeywords.types';
+import TactileButton from '../ui/TactileButton';
 import ChatKeywordOptions from './ChatKeywordOptions';
 
 type ChatComposerProps = {
@@ -25,6 +26,11 @@ type ChatComposerProps = {
   onDraftChange: (text: string) => void;
   onSend: () => void;
   onKeywordPress: (keyword: ChatKeyword) => void;
+  disabled?: boolean;
+  loadingKeywords?: boolean;
+  canExpandKeywords?: boolean;
+  keywordsExpanded?: boolean;
+  onToggleKeywordsExpanded?: () => void;
 };
 
 function ChatComposer({
@@ -33,37 +39,52 @@ function ChatComposer({
   onDraftChange,
   onSend,
   onKeywordPress,
+  disabled = false,
+  loadingKeywords = false,
+  canExpandKeywords = false,
+  keywordsExpanded = false,
+  onToggleKeywordsExpanded,
 }: ChatComposerProps) {
-  const canSend = draft.trim().length > 0;
+  const canSend = draft.trim().length > 0 && !disabled;
 
   return (
     <View style={styles.container}>
       <ChatKeywordOptions
         keywords={keywords}
         onKeywordPress={onKeywordPress}
+        disabled={disabled}
+        loading={loadingKeywords}
+        canExpand={canExpandKeywords}
+        expanded={keywordsExpanded}
+        onToggleExpanded={onToggleKeywordsExpanded}
       />
 
       <View style={styles.inputBar}>
         <TextInput
           style={styles.input}
-          placeholder="Type a message..."
+          placeholder="Ask about Evolve…"
           placeholderTextColor={colors.textMuted}
           value={draft}
           onChangeText={onDraftChange}
           multiline
           maxLength={500}
+          editable={!disabled}
           returnKeyType="send"
           onSubmitEditing={onSend}
         />
-        <TouchableOpacity
-          style={[styles.sendButton, !canSend && styles.sendButtonDisabled]}
-          activeOpacity={0.85}
+        <TactileButton
+          variant="primary"
           onPress={onSend}
           disabled={!canSend}
-          accessibilityRole="button"
+          borderRadius={22}
+          style={styles.sendButton}
           accessibilityLabel="Send message">
-          <Send size={18} color={colors.surface} strokeWidth={2.5} />
-        </TouchableOpacity>
+          <Send
+            size={18}
+            color={buttonVariants.primary.text}
+            strokeWidth={2.5}
+          />
+        </TactileButton>
       </View>
     </View>
   );
@@ -101,14 +122,10 @@ const styles = StyleSheet.create({
   sendButton: {
     width: 44,
     height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...cardShadowLight,
-  },
-  sendButtonDisabled: {
-    opacity: 0.45,
+    minHeight: 44,
+    paddingVertical: 0,
+    paddingHorizontal: 0,
+    alignSelf: 'flex-end',
   },
 });
 

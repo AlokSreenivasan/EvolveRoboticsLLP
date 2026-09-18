@@ -3,28 +3,48 @@ import { Pressable, StyleSheet, Text } from 'react-native';
 import { Sparkles } from 'lucide-react-native';
 
 import {
-  cardShadowLight,
+  buttonVariants,
   colors,
   glassBorder,
   spacing,
 } from '../../constants/theme';
 
-const CHIP_MIN_HEIGHT = 44;
+const CHIP_MIN_HEIGHT = 36;
 
 type ChatKeywordChipProps = {
   label: string;
   onPress: () => void;
+  disabled?: boolean;
+  muted?: boolean;
+  accessibilityLabel?: string;
 };
 
-function ChatKeywordChip({ label, onPress }: ChatKeywordChipProps) {
+function ChatKeywordChip({
+  label,
+  onPress,
+  disabled = false,
+  muted = false,
+  accessibilityLabel,
+}: ChatKeywordChipProps) {
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.chip, pressed && styles.chipPressed]}
+      disabled={disabled}
+      style={({ pressed }) => [
+        styles.chip,
+        muted && styles.chipMuted,
+        pressed && !disabled && styles.chipPressed,
+        disabled && styles.chipDisabled,
+      ]}
       accessibilityRole="button"
-      accessibilityLabel={`Send keyword ${label}`}>
-      <Sparkles size={12} color={colors.primary} strokeWidth={2.5} />
-      <Text style={styles.label}>{label}</Text>
+      accessibilityState={{ disabled }}
+      accessibilityLabel={accessibilityLabel ?? `Send keyword ${label}`}>
+      <Sparkles
+        size={12}
+        color={muted ? colors.textSecondary : colors.primary}
+        strokeWidth={2.5}
+      />
+      <Text style={[styles.label, muted && styles.labelMuted]}>{label}</Text>
     </Pressable>
   );
 }
@@ -33,26 +53,36 @@ const styles = StyleSheet.create({
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'stretch',
-    gap: 8,
+    alignSelf: 'flex-start',
+    gap: 6,
     minHeight: CHIP_MIN_HEIGHT,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: spacing.chipRadius,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.primaryLight,
     ...glassBorder,
-    ...cardShadowLight,
+    borderColor: colors.primaryMuted,
+  },
+  chipMuted: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
   },
   chipPressed: {
-    backgroundColor: colors.primaryLight,
-    borderColor: colors.primarySoft,
+    backgroundColor: buttonVariants.primary.edge,
+    borderColor: buttonVariants.primary.border,
+  },
+  chipDisabled: {
+    opacity: 0.55,
   },
   label: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '700',
     color: colors.primary,
     letterSpacing: 0.1,
+  },
+  labelMuted: {
+    color: colors.textSecondary,
+    fontWeight: '600',
   },
 });
 

@@ -8,31 +8,61 @@ import ChatKeywordChip from './ChatKeywordChip';
 type ChatKeywordOptionsProps = {
   keywords: ChatKeyword[];
   onKeywordPress: (keyword: ChatKeyword) => void;
+  disabled?: boolean;
+  loading?: boolean;
+  canExpand?: boolean;
+  expanded?: boolean;
+  onToggleExpanded?: () => void;
 };
 
 function ChatKeywordOptions({
   keywords,
   onKeywordPress,
+  disabled = false,
+  loading = false,
+  canExpand = false,
+  expanded = false,
+  onToggleExpanded,
 }: ChatKeywordOptionsProps) {
-  if (keywords.length === 0) {
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.hint}>Loading topics</Text>
+      </View>
+    );
+  }
+
+  if (keywords.length === 0 && !canExpand) {
     return null;
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.hint}>Quick options</Text>
+      <Text style={styles.hint}>Try a topic</Text>
       <ScrollView
-        style={styles.list}
+        horizontal
+        showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
-        keyboardShouldPersistTaps="handled"
-        nestedScrollEnabled>
+        keyboardShouldPersistTaps="handled">
         {keywords.map(keyword => (
           <ChatKeywordChip
             key={keyword.id}
             label={keyword.label}
+            disabled={disabled}
             onPress={() => onKeywordPress(keyword)}
           />
         ))}
+        {canExpand && onToggleExpanded ? (
+          <ChatKeywordChip
+            label={expanded ? 'Fewer topics' : 'More topics'}
+            muted
+            disabled={disabled}
+            accessibilityLabel={
+              expanded ? 'Show fewer topics' : 'Show more topics'
+            }
+            onPress={onToggleExpanded}
+          />
+        ) : null}
       </ScrollView>
     </View>
   );
@@ -40,7 +70,7 @@ function ChatKeywordOptions({
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 14,
+    paddingTop: 12,
     paddingBottom: 4,
     backgroundColor: colors.surface,
   },
@@ -51,12 +81,10 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     paddingHorizontal: spacing.screenHorizontal,
   },
-  list: {
-    maxHeight: 168,
-  },
   listContent: {
     gap: 8,
     paddingHorizontal: spacing.screenHorizontal,
+    paddingBottom: 4,
   },
 });
 

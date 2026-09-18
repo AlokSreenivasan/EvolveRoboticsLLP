@@ -1,7 +1,6 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
-  Image,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
@@ -9,91 +8,221 @@ import {
   View,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import AppButton from '../../../components/AppButton';
+import { RotateCcw } from 'lucide-react-native';
+
 import ChatComposer from '../../../components/Chatbot/ChatComposer';
+import ChatMessageBubble from '../../../components/Chatbot/ChatMessageBubble';
+import ChatTypingIndicator from '../../../components/Chatbot/ChatTypingIndicator';
 import ScreenHeader from '../../../components/ui/ScreenHeader';
+import ScreenSafeArea from '../../../components/ui/ScreenSafeArea';
+import ScreenStateCard from '../../../components/ui/ScreenStateCard';
+import TactileButton from '../../../components/ui/TactileButton';
 import {
-  cardShadowElevated,
-  cardShadowLight,
   colors,
-  glassBorder,
   spacing,
   typography,
 } from '../../../constants/theme';
-import { resolveAssistantReply } from '../../../services/firebase/chatKeywordsService';
+import {
+  filterChatKeywordsByQuery,
+  findRelatedChatKeywords,
+  getStarterChatKeywords,
+  resolveAssistantReply,
+  UNMATCHED_CHAT_REPLY,
+} from '../../../services/firebase/chatKeywordsService';
 import type { ChatKeyword } from '../../../store/content/types/chatKeywords.types';
 import { useChatKeywords } from '../../hooks/useChatKeywords';
+import useChatSession, {
+  appendPersistedChatMessage,
+  type ChatMessage,
+} from '../../hooks/useChatSession';
 import type { LoginScreenNavigationProp } from '../../../types/navigation';
-import ScreenSafeArea from '../../../components/ui/ScreenSafeArea';
 
-type ChatMessage = {
-  id: string;
-  text: string;
-  role: 'user' | 'assistant';
-};
+const ASSISTANT_REPLY_DELAY_MS = 450;
 
-const WELCOME_MESSAGE: ChatMessage = {
-  id: 'welcome',
-  text: "Hi! I'm your Evolve assistant. How can I help you today?",
-  role: 'assistant',
+type PendingReply = {
+  exchangeId: number;
+  userText: string;
+  explicitResponse?: string;
 };
 
 function ChatbotScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
-  const { keywords } = useChatKeywords();
-  const [isChatActive, setIsChatActive] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const { keywords: loadedKeywords, loading, error } = useChatKeywords();
+  const keywords = useMemo(
+    () =>
+      loadedKeywords.filter(
+        keyword => keyword.label.trim() && keyword.response.trim(),
+      ),
+    [loadedKeywords],
+  );
+  const {
+    messages,
+    setMessages,
+    nextExchangeId,
+    resetSession,
+    hasConversation,
+  } = useChatSession();
   const [draft, setDraft] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [keywordsExpanded, setKeywordsExpanded] = useState(false);
   const messageListRef = useRef<FlatList<ChatMessage>>(null);
-  const messageIdRef = useRef(0);
+  const pendingReplyRef = useRef<PendingReply | null>(null);
+  const replyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const keywordsRef = useRef(keywords);
+  keywordsRef.current = keywords;
 
-  const handleStartChat = () => {
-    setIsChatActive(true);
-    setMessages([WELCOME_MESSAGE]);
-  };
+  const lastUserText = useMemo(() => {
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+      if (messages[index].role === 'user') {
+        return messages[index].text;
+      }
+    }
+    return '';
+  }, [messages]);
 
-  const handleBack = () => {
-    if (isChatActive) {
-      setIsChatActive(false);
-      setMessages([]);
-      setDraft('');
-      return;
+  const lastAssistantUnmatched =
+    messages[messages.length - 1]?.role === 'assistant' &&
+    messages[messages.length - 1]?.text === UNMATCHED_CHAT_REPLY;
+
+  const starterKeywords = useMemo(
+    () => getStarterChatKeywords(keywords),
+    [keywords],
+  );
+
+  const relatedKeywords = useMemo(
+    () => findRelatedChatKeywords(keywords, lastUserText),
+    [keywords, lastUserText],
+  );
+
+  const queryTrimmed = draft.trim();
+  const isFiltering = queryTrimmed.length >= 2;
+
+  const visibleKeywords = useMemo(() => {
+    if (isFiltering) {
+      return filterChatKeywordsByQuery(keywords, queryTrimmed);
     }
-    if (navigation.canGoBack()) {
-      navigation.goBack();
+    if (keywordsExpanded) {
+      return keywords;
     }
-  };
+    if (lastAssistantUnmatched) {
+      return relatedKeywords;
+    }
+    return starterKeywords;
+  }, [
+    isFiltering,
+    keywords,
+    keywordsExpanded,
+    lastAssistantUnmatched,
+    queryTrimmed,
+    relatedKeywords,
+    starterKeywords,
+  ]);
+
+  const canExpandKeywords =
+    !isFiltering &&
+    !lastAssistantUnmatched &&
+    keywords.length > starterKeywords.length;
 
   const scrollToLatestMessage = useCallback(() => {
     messageListRef.current?.scrollToEnd({ animated: true });
   }, []);
 
-  const appendExchange = useCallback(
+  const clearReplyTimeout = useCallback(() => {
+    if (replyTimeoutRef.current) {
+      clearTimeout(replyTimeoutRef.current);
+      replyTimeoutRef.current = null;
+    }
+  }, []);
+
+  const commitAssistantReply = useCallback((pending: PendingReply) => {
+    const response = resolveAssistantReply(
+      keywordsRef.current,
+      pending.userText,
+      pending.explicitResponse,
+    );
+
+    setMessages(current => [
+      ...current,
+      {
+        id: `assistant-${pending.exchangeId}`,
+        text: response,
+        role: 'assistant',
+      },
+    ]);
+    pendingReplyRef.current = null;
+    setIsTyping(false);
+  }, [setMessages]);
+
+  const enqueueExchange = useCallback(
     (userText: string, explicitResponse?: string) => {
       const trimmed = userText.trim();
-      if (!trimmed) {
+      if (!trimmed || pendingReplyRef.current) {
         return;
       }
 
-      const response = resolveAssistantReply(
-        keywords,
-        trimmed,
+      const exchangeId = nextExchangeId();
+      const pending: PendingReply = {
+        exchangeId,
+        userText: trimmed,
         explicitResponse,
-      );
-      const exchangeId = ++messageIdRef.current;
+      };
 
+      pendingReplyRef.current = pending;
+      setKeywordsExpanded(false);
       setMessages(current => [
         ...current,
         { id: `user-${exchangeId}`, text: trimmed, role: 'user' },
-        {
-          id: `assistant-${exchangeId}`,
-          text: response,
-          role: 'assistant',
-        },
       ]);
+      setIsTyping(true);
+
+      clearReplyTimeout();
+      replyTimeoutRef.current = setTimeout(() => {
+        commitAssistantReply(pending);
+        replyTimeoutRef.current = null;
+      }, ASSISTANT_REPLY_DELAY_MS);
     },
-    [keywords],
+    [clearReplyTimeout, commitAssistantReply, nextExchangeId, setMessages],
   );
+
+  useEffect(() => {
+    return () => {
+      if (replyTimeoutRef.current) {
+        clearTimeout(replyTimeoutRef.current);
+        replyTimeoutRef.current = null;
+      }
+
+      const pending = pendingReplyRef.current;
+      if (!pending) {
+        return;
+      }
+
+      pendingReplyRef.current = null;
+      appendPersistedChatMessage({
+        id: `assistant-${pending.exchangeId}`,
+        text: resolveAssistantReply(
+          keywordsRef.current,
+          pending.userText,
+          pending.explicitResponse,
+        ),
+        role: 'assistant',
+      });
+    };
+  }, []);
+
+  const handleBack = useCallback(() => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    }
+  }, [navigation]);
+
+  const handleNewChat = useCallback(() => {
+    clearReplyTimeout();
+    pendingReplyRef.current = null;
+    setIsTyping(false);
+    setDraft('');
+    setKeywordsExpanded(false);
+    resetSession();
+  }, [clearReplyTimeout, resetSession]);
 
   const handleSend = useCallback(() => {
     const trimmed = draft.trim();
@@ -101,47 +230,37 @@ function ChatbotScreen() {
       return;
     }
 
-    appendExchange(trimmed);
+    enqueueExchange(trimmed);
     setDraft('');
-  }, [appendExchange, draft]);
+  }, [draft, enqueueExchange]);
 
   const handleKeywordPress = useCallback(
     (keyword: ChatKeyword) => {
-      appendExchange(keyword.label, keyword.response);
+      enqueueExchange(keyword.label, keyword.response);
+      setDraft('');
     },
-    [appendExchange],
+    [enqueueExchange],
   );
 
   const renderMessage = useCallback(
-    ({ item }: { item: ChatMessage }) => {
-      const isUser = item.role === 'user';
-
-      return (
-        <View
-          style={[
-            styles.messageRow,
-            isUser ? styles.messageRowUser : styles.messageRowAssistant,
-          ]}>
-          <View
-            style={[
-              styles.messageBubble,
-              isUser ? styles.userBubble : styles.assistantBubble,
-            ]}>
-            <Text
-              style={[
-                styles.messageText,
-                isUser ? styles.userMessageText : styles.assistantMessageText,
-              ]}>
-              {item.text}
-            </Text>
-          </View>
-        </View>
-      );
-    },
+    ({ item }: { item: ChatMessage }) => (
+      <ChatMessageBubble role={item.role} text={item.text} />
+    ),
     [],
   );
 
   const keyExtractor = useCallback((item: ChatMessage) => item.id, []);
+
+  const listHeader = error ? (
+    <ScreenStateCard
+      variant="error"
+      title="Couldn't load topics"
+      message="You can still type a message. Suggested topics may be missing."
+      style={styles.stateCard}
+    />
+  ) : null;
+
+  const listFooter = isTyping ? <ChatTypingIndicator /> : null;
 
   return (
     <ScreenSafeArea style={styles.container}>
@@ -151,65 +270,53 @@ function ChatbotScreen() {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}>
         <ScreenHeader
           title="Chat Assistant"
-          subtitle={isChatActive ? 'Ask me anything about Evolve' : 'Your robotics learning companion'}
+          subtitle="Ask me anything about Evolve"
           onBackPress={handleBack}
           compact
+          rightSlot={
+            hasConversation ? (
+              <TactileButton
+                variant="ghost"
+                style={styles.newChatButton}
+                onPress={handleNewChat}
+                accessibilityLabel="Start a new chat">
+                <RotateCcw size={16} color={colors.primary} strokeWidth={2.5} />
+                <Text style={styles.newChatButtonText}>New</Text>
+              </TactileButton>
+            ) : undefined
+          }
         />
 
-        {isChatActive ? (
-          <View style={styles.chatContainer}>
-            <View style={styles.watermarkWrap} pointerEvents="none">
-              <Image
-                source={require('../../../assets/chat-assistant.webp')}
-                style={styles.watermark}
-                resizeMode="contain"
-                accessibilityLabel=""
-              />
-            </View>
+        <View style={styles.chatContainer}>
+          <FlatList
+            ref={messageListRef}
+            data={messages}
+            keyExtractor={keyExtractor}
+            renderItem={renderMessage}
+            style={styles.messageList}
+            contentContainerStyle={styles.messageListContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            onContentSizeChange={scrollToLatestMessage}
+            ListHeaderComponent={listHeader}
+            ListFooterComponent={listFooter}
+          />
 
-            <FlatList
-              ref={messageListRef}
-              data={messages}
-              keyExtractor={keyExtractor}
-              renderItem={renderMessage}
-              style={styles.messageList}
-              contentContainerStyle={styles.messageListContent}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-              onContentSizeChange={scrollToLatestMessage}
-            />
-
-            <ChatComposer
-              keywords={keywords}
-              draft={draft}
-              onDraftChange={setDraft}
-              onSend={handleSend}
-              onKeywordPress={handleKeywordPress}
-            />
-          </View>
-        ) : (
-          <>
-            <View style={styles.content}>
-              <View style={styles.mascotGlow} />
-              <Image
-                source={require('../../../assets/chat-assistant.webp')}
-                style={styles.mascot}
-                resizeMode="contain"
-                accessibilityLabel="Chat assistant"
-              />
-            </View>
-
-            <View style={styles.footer}>
-              <AppButton
-                title="Start Chat"
-                onPress={handleStartChat}
-                variant="primary"
-                buttonStyle={styles.startChatButton}
-                textStyle={styles.startChatButtonText}
-              />
-            </View>
-          </>
-        )}
+          <ChatComposer
+            keywords={visibleKeywords}
+            draft={draft}
+            onDraftChange={setDraft}
+            onSend={handleSend}
+            onKeywordPress={handleKeywordPress}
+            disabled={isTyping}
+            loadingKeywords={loading && keywords.length === 0}
+            canExpandKeywords={canExpandKeywords}
+            keywordsExpanded={keywordsExpanded}
+            onToggleKeywordsExpanded={() =>
+              setKeywordsExpanded(current => !current)
+            }
+          />
+        </View>
       </KeyboardAvoidingView>
     </ScreenSafeArea>
   );
@@ -223,54 +330,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  content: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing.screenHorizontal,
+  newChatButton: {
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: spacing.chipRadius,
   },
-  mascotGlow: {
-    position: 'absolute',
-    width: 240,
-    height: 240,
-    borderRadius: 120,
-    backgroundColor: colors.primaryMuted,
-    opacity: 0.5,
-    ...cardShadowLight,
-  },
-  mascot: {
-    width: 180,
-    height: 180,
-  },
-  footer: {
-    paddingHorizontal: spacing.screenHorizontal,
-    paddingBottom: 24,
-  },
-  startChatButton: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  startChatButtonText: {
-    ...typography.button,
+  newChatButtonText: {
+    ...typography.label,
+    fontWeight: '800',
+    color: colors.primary,
   },
   chatContainer: {
     flex: 1,
-    backgroundColor: colors.primaryLight,
-  },
-  watermarkWrap: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 0,
-  },
-  watermark: {
-    width: 220,
-    height: 220,
-    opacity: 0.22,
+    backgroundColor: colors.background,
   },
   messageList: {
     flex: 1,
-    zIndex: 1,
   },
   messageListContent: {
     paddingHorizontal: spacing.screenHorizontal,
@@ -278,40 +354,9 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     flexGrow: 1,
   },
-  messageRow: {
-    marginBottom: 12,
-    maxWidth: '85%',
-  },
-  messageRowAssistant: {
-    alignSelf: 'flex-start',
-  },
-  messageRowUser: {
-    alignSelf: 'flex-end',
-  },
-  messageBubble: {
-    borderRadius: spacing.cardRadius,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    ...cardShadowElevated,
-  },
-  assistantBubble: {
-    backgroundColor: colors.surface,
-    ...glassBorder,
-  },
-  userBubble: {
-    backgroundColor: colors.primary,
-    borderWidth: 0,
-  },
-  messageText: {
-    ...typography.body,
-    fontSize: 15,
-    lineHeight: 21,
-  },
-  assistantMessageText: {
-    color: colors.textPrimary,
-  },
-  userMessageText: {
-    color: colors.surface,
+  stateCard: {
+    marginBottom: 16,
+    paddingVertical: 18,
   },
 });
 
