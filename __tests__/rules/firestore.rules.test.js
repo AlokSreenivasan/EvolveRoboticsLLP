@@ -108,6 +108,10 @@ beforeEach(async () => {
       doc(adminDb, 'users', OWNER_UID, 'examAttempts', 'attempt1'),
       { examId: 'exam1', percentage: 80 },
     );
+    await setDoc(
+      doc(adminDb, 'users', OWNER_UID, 'continueLearningProgress', 'playlist1'),
+      { videosWatched: 2, hasStartedWatching: true },
+    );
   });
 });
 
@@ -515,6 +519,46 @@ describe('attempt subcollections (server-graded)', () => {
     );
     await assertSucceeds(
       deleteDoc(doc(database, 'users', OWNER_UID, 'quizAttempts', 'quiz1')),
+    );
+  });
+
+  test('superadmins can read and delete another user\'s lesson progress', async () => {
+    const database = db(SUPERADMIN_UID);
+    await assertSucceeds(
+      getDoc(
+        doc(
+          database,
+          'users',
+          OWNER_UID,
+          'continueLearningProgress',
+          'playlist1',
+        ),
+      ),
+    );
+    await assertSucceeds(
+      deleteDoc(
+        doc(
+          database,
+          'users',
+          OWNER_UID,
+          'continueLearningProgress',
+          'playlist1',
+        ),
+      ),
+    );
+  });
+
+  test('plain admins cannot delete another user\'s lesson progress', async () => {
+    await assertFails(
+      deleteDoc(
+        doc(
+          db(ADMIN_UID),
+          'users',
+          OWNER_UID,
+          'continueLearningProgress',
+          'playlist1',
+        ),
+      ),
     );
   });
 });

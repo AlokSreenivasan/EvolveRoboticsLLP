@@ -1,17 +1,20 @@
 export function getLearnerRank(level: number): string {
-  if (level <= 1) {
+  if (level <= 3) {
     return 'Explorer';
   }
-  if (level <= 3) {
+  if (level <= 7) {
     return 'Builder';
   }
-  if (level <= 5) {
+  if (level <= 12) {
     return 'Innovator';
   }
-  if (level <= 8) {
+  if (level <= 18) {
     return 'Roboticist';
   }
-  return 'Master';
+  if (level <= 23) {
+    return 'Master';
+  }
+  return 'Pioneer';
 }
 
 export function getLearnerMotivation(

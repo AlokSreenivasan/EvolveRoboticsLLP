@@ -34,9 +34,9 @@ service cloud.firestore {
       allow delete: if isOwner(userId) || isSuperAdmin(database);
 
       match /continueLearningProgress/{playlistId} {
-        allow read: if isOwner(userId);
+        allow read: if isOwner(userId) || isSuperAdmin(database);
         allow create, update: if isOwner(userId) && isValidContinueLearningProgress();
-        allow delete: if isOwner(userId);
+        allow delete: if isOwner(userId) || isSuperAdmin(database);
       }
 
       match /examAttempts/{attemptId} {

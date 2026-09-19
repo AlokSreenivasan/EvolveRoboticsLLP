@@ -22,7 +22,10 @@ import { colors, spacing } from '../../constants/theme';
 import CardShadowShell from '../ui/CardShadowShell';
 import { useUserStreakStats } from '../../presentation/hooks/useUserStreakStats';
 import type { LoginScreenNavigationProp } from '../../types/navigation';
-import { getLearnerMotivation } from '../../utils/gamification/learnerRank';
+import {
+  getLearnerMotivation,
+  getLearnerRank,
+} from '../../utils/gamification/learnerRank';
 import { XP_LEVEL_SIZE } from '../../utils/gamification/computeUserStreakStats';
 
 const MIN_PROGRESS_PERCENT = 4;
@@ -108,6 +111,7 @@ function StreakBoardPanel() {
   }, []);
 
   const xpRemaining = XP_LEVEL_SIZE - stats.currentXp;
+  const rank = getLearnerRank(stats.level);
   const motivation = getLearnerMotivation(
     stats.level,
     stats.currentXp,
@@ -164,14 +168,16 @@ function StreakBoardPanel() {
       innerStyle={styles.cardInner}
       onLayout={onCardLayout}
       accessibilityRole="summary"
-      accessibilityLabel={`Level ${stats.level}. ${stats.currentXp} of ${XP_LEVEL_SIZE} experience points. ${dayStreakLabel} streak.`}>
+      accessibilityLabel={`Level ${stats.level}, ${rank}. ${stats.currentXp} of ${XP_LEVEL_SIZE} experience points. ${dayStreakLabel} streak.`}>
       <CardBackdrop width={cardSize.width} height={cardSize.height} />
 
       <View style={styles.contentRow}>
         <View style={styles.mainColumn}>
           <View style={styles.levelPill}>
             <Zap size={12} color="#fff" fill="#fff" strokeWidth={2} />
-            <Text style={styles.levelPillText}>Level {stats.level}</Text>
+            <Text style={styles.levelPillText}>
+              Level {stats.level} · {rank}
+            </Text>
           </View>
 
           <Text style={styles.motivation} numberOfLines={2}>
@@ -236,7 +242,7 @@ function StreakBoardPanel() {
                 />
               }
               label={`Lv ${stats.level}`}
-              accessibilityLabel={`Level ${stats.level}. Open courses to level up.`}
+              accessibilityLabel={`Level ${stats.level}, ${rank}. Open courses to level up.`}
               onPress={handleLevelPress}
             />
           </View>

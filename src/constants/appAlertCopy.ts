@@ -67,9 +67,9 @@ export const appAlertCopy = {
         ? `Delivered to ${delivered} of ${total} device(s). ${failed} could not be reached.`
         : `Delivered to ${delivered} learner device(s).`,
     resetQuizProgressConfirm: (label: string) =>
-      `Clear all quiz competition progress for ${label}? They will start again from the first quiz.`,
+      `Clear quiz attempts, lesson progress, and earned XP for ${label}? Daily missions and levels will start over.`,
     resetQuizProgressSuccess: (label: string) =>
-      `Quiz progress for ${label} has been cleared. They can begin fresh.`,
+      `Quiz progress, lesson progress, and XP for ${label} have been cleared.`,
     grantAdminConfirm: (label: string) =>
       `Grant admin access to ${label}? They will be able to open the admin dashboard and manage Resources, Assignments, Exams, and Quiz Competition.`,
     revokeAdminConfirm: (label: string) =>
@@ -99,10 +99,10 @@ export const appAlertCopy = {
     fileOpenFailedTitle: 'Could not open file',
     savedTitle: 'All set',
     liveSentTitle: 'Notification sent',
-    resetQuizProgressTitle: 'Quiz progress reset',
+    resetQuizProgressTitle: 'Progress and XP reset',
     roleUpdatedTitle: 'Role updated',
     deleteTitle: (item: string) => `Delete ${item}?`,
-    resetQuizProgressConfirmTitle: 'Reset quiz progress?',
+    resetQuizProgressConfirmTitle: 'Reset progress and XP?',
     changeRoleConfirmTitle: 'Change role?',
     sendLiveTitle: 'Send live notification?',
     cannotSaveTitle: (item: string) => `Cannot save ${item}`,

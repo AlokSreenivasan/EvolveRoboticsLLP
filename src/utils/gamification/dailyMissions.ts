@@ -40,18 +40,6 @@ function hasQuizActivityOnDate(
   return attempts.some(attempt => isTimestampOnDateKey(attempt.submittedAt, dateKey));
 }
 
-function hasAnyLearningActivityOnDate(
-  progressRecords: ContinueLearningProgress[],
-  attempts: QuizAttempt[],
-  dateKey: string,
-): boolean {
-  return (
-    progressRecords.some(record =>
-      isTimestampOnDateKey(record.updatedAt, dateKey),
-    ) || hasQuizActivityOnDate(attempts, dateKey)
-  );
-}
-
 export function collectLearningActivityDateKeys(
   progressRecords: ContinueLearningProgress[],
   attempts: QuizAttempt[],
@@ -93,13 +81,19 @@ export function computeDailyStreakXpForDate(
 ): number {
   let xp = 0;
 
-  if (hasAnyLearningActivityOnDate(progressRecords, attempts, dateKey)) {
+  const completedLessonsMission = hasVideoWatchActivityOnDate(
+    progressRecords,
+    dateKey,
+  );
+  const completedQuizMission = hasQuizActivityOnDate(attempts, dateKey);
+
+  if (completedLessonsMission || completedQuizMission) {
     xp += DAILY_STREAK_ACTIVITY_XP;
   }
-  if (hasVideoWatchActivityOnDate(progressRecords, dateKey)) {
+  if (completedLessonsMission) {
     xp += DAILY_MISSION_LESSONS_XP;
   }
-  if (hasQuizActivityOnDate(attempts, dateKey)) {
+  if (completedQuizMission) {
     xp += DAILY_MISSION_QUIZ_XP;
   }
 

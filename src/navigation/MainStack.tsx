@@ -34,6 +34,7 @@ import ChatForumScreen from '../presentation/screens/Forum/ChatForumScreen';
 import ChatForumChannelScreen from '../presentation/screens/Forum/ChatForumChannelScreen';
 import { HomeFeedProvider } from '../presentation/context/HomeFeedContext';
 import { useUserRole } from '../presentation/hooks/useUserRole';
+import LevelAchievementHost from '../components/Home/LevelAchievementHost';
 
 import AdminStackNavigator from './AdminStack';
 import UnauthorizedRoute from './UnauthorizedRoute';
@@ -54,6 +55,7 @@ function MainStack() {
 
   return (
     <HomeFeedProvider>
+      <LevelAchievementHost />
       <Stack.Navigator
         initialRouteName={needsProfileCompletion ? 'Profile' : 'Home'}
         screenOptions={{ headerShown: false, statusBarStyle: 'dark' }}>

@@ -8,6 +8,7 @@ import {
 import { assertAuthenticatedUserId } from '../../utils/firebase/assertAuthenticated';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { syncFirestoreAuthSession } from '../../utils/firebase/firestoreSessionSync';
+import { formatDateKey } from '../../utils/gamification/gamificationDates';
 import { FIRESTORE_COLLECTIONS } from './constants';
 import {
   collection,
@@ -29,6 +30,13 @@ function isTimestamp(
     'toDate' in value &&
     typeof (value as FirebaseFirestoreTypes.Timestamp).toDate === 'function'
   );
+}
+
+function isTimestampOnLocalDate(
+  value: unknown,
+  date: Date = new Date(),
+): boolean {
+  return isTimestamp(value) && formatDateKey(value.toDate()) === formatDateKey(date);
 }
 
 function progressCollection(uid: string) {
@@ -122,7 +130,7 @@ export async function recordPlaylistVideoProgress(
         : 0;
       const next = Math.min(total, Math.max(current, target));
 
-      if (snapshot.exists() && next === current) {
+      if (snapshot.exists() && next === current && isTimestampOnLocalDate(snapshot.data()?.updatedAt)) {
         return;
       }
 
@@ -183,7 +191,8 @@ export async function recordVideoWatchSeconds(
       if (
         snapshot.exists() &&
         nextSeconds === currentSeconds &&
-        nextVideosWatched === currentVideosWatched
+        nextVideosWatched === currentVideosWatched &&
+        isTimestampOnLocalDate(data?.updatedAt)
       ) {
         return;
       }

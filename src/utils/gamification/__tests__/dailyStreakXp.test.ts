@@ -130,4 +130,19 @@ describe('daily streak XP', () => {
     expect(stats.totalXp).toBe(20 + expectedDailyXp);
     expect(stats.streakDays).toBeGreaterThanOrEqual(1);
   });
+
+  it('does not award mission XP from a timestamp without lesson or quiz activity', () => {
+    const progress = [
+      makeProgress({
+        updatedAt: timestampForDate(2026, 6, 10),
+      }),
+    ];
+
+    expect(computeDailyStreakXpForDate(activityDateKey, progress, [])).toBe(0);
+  });
+
+  it('starts XP at zero when quiz and lesson progress are empty', () => {
+    expect(computeUserStreakStats([], []).totalXp).toBe(0);
+    expect(computeUserStreakStats([], []).level).toBe(1);
+  });
 });
