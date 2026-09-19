@@ -28,6 +28,7 @@ function AdminScreenLayout({
   const body = scrollable ? (
     <ScrollView
       showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
       contentContainerStyle={[styles.scrollContent, contentContainerStyle]}>
       {children}
     </ScrollView>

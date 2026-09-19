@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import Animated, {
+  cancelAnimation,
   Easing,
   useAnimatedStyle,
   useSharedValue,
@@ -54,7 +55,15 @@ type ConfettiSpec = {
   rotate: number;
 };
 
-function ConfettiPiece({ spec, burstKey }: { spec: ConfettiSpec; burstKey: number }) {
+function ConfettiPiece({
+  spec,
+  burstKey,
+  containerWidth,
+}: {
+  spec: ConfettiSpec;
+  burstKey: number;
+  containerWidth: number;
+}) {
   const progress = useSharedValue(0);
   const spin = useSharedValue(0);
 
@@ -72,6 +81,11 @@ function ConfettiPiece({ spec, burstKey }: { spec: ConfettiSpec; burstKey: numbe
       spec.delay,
       withTiming(spec.rotate, { duration: spec.duration }),
     );
+
+    return () => {
+      cancelAnimation(progress);
+      cancelAnimation(spin);
+    };
   }, [burstKey, progress, spec.delay, spec.duration, spec.rotate, spin]);
 
   const style = useAnimatedStyle(() => ({
@@ -89,7 +103,7 @@ function ConfettiPiece({ spec, burstKey }: { spec: ConfettiSpec; burstKey: numbe
       style={[
         styles.confetti,
         {
-          left: `${spec.leftPct}%` as `${number}%`,
+          left: (spec.leftPct / 100) * containerWidth,
           width: spec.width,
           height: spec.height,
           backgroundColor: spec.color,
@@ -105,11 +119,13 @@ function Balloon({
   color,
   delay,
   size,
+  containerWidth,
 }: {
   leftPct: number;
   color: string;
   delay: number;
   size: number;
+  containerWidth: number;
 }) {
   const translateY = useSharedValue(70);
   const opacity = useSharedValue(0);
@@ -135,6 +151,11 @@ function Balloon({
         false,
       ),
     );
+
+    return () => {
+      cancelAnimation(translateY);
+      cancelAnimation(opacity);
+    };
   }, [delay, opacity, translateY]);
 
   const style = useAnimatedStyle(() => ({
@@ -147,7 +168,7 @@ function Balloon({
       pointerEvents="none"
       style={[
         styles.balloonWrap,
-        { left: `${leftPct}%` as `${number}%` },
+        { left: (leftPct / 100) * containerWidth },
         style,
       ]}>
       <View
@@ -201,12 +222,15 @@ function BirthdayWishBanner({
 }: BirthdayWishBannerProps) {
   const [wishIndex, setWishIndex] = useState(0);
   const [burstKey, setBurstKey] = useState(0);
+  const [cardWidth, setCardWidth] = useState(0);
   const confetti = useMemo(() => makeConfetti(), [burstKey]);
   const logoScale = useSharedValue(0.4);
   const logoFloat = useSharedValue(0);
 
   useEffect(() => {
     if (!visible) {
+      cancelAnimation(logoScale);
+      cancelAnimation(logoFloat);
       return;
     }
     setWishIndex(0);
@@ -223,6 +247,11 @@ function BirthdayWishBanner({
       -1,
       false,
     );
+
+    return () => {
+      cancelAnimation(logoScale);
+      cancelAnimation(logoFloat);
+    };
   }, [logoFloat, logoScale, visible]);
 
   const logoStyle = useAnimatedStyle(() => ({
@@ -237,9 +266,13 @@ function BirthdayWishBanner({
   const ageLabel =
     age && age > 0 ? `${age} trips around the sun` : 'A year of brighter builds';
 
+  if (!visible) {
+    return null;
+  }
+
   return (
     <Modal
-      visible={visible}
+      visible
       transparent
       animationType="fade"
       statusBarTranslucent
@@ -248,16 +281,54 @@ function BirthdayWishBanner({
         <View
           style={styles.card}
           accessibilityViewIsModal
-          accessibilityRole="alert">
+          accessibilityRole="alert"
+          onLayout={event => {
+            const nextWidth = Math.round(event.nativeEvent.layout.width);
+            if (nextWidth > 0 && nextWidth !== cardWidth) {
+              setCardWidth(nextWidth);
+            }
+          }}>
           <View style={styles.hex} />
-          <Balloon leftPct={8} color={colors.primarySoft} delay={0} size={22} />
-          <Balloon leftPct={22} color={colors.accentOrange} delay={900} size={18} />
-          <Balloon leftPct={68} color={colors.primaryMuted} delay={400} size={20} />
-          <Balloon leftPct={82} color={colors.surface} delay={1400} size={16} />
-
-          {confetti.map((spec, index) => (
-            <ConfettiPiece key={`${burstKey}-${index}`} spec={spec} burstKey={burstKey} />
-          ))}
+          {cardWidth > 0 ? (
+            <>
+              <Balloon
+                leftPct={8}
+                color={colors.primarySoft}
+                delay={0}
+                size={22}
+                containerWidth={cardWidth}
+              />
+              <Balloon
+                leftPct={22}
+                color={colors.accentOrange}
+                delay={900}
+                size={18}
+                containerWidth={cardWidth}
+              />
+              <Balloon
+                leftPct={68}
+                color={colors.primaryMuted}
+                delay={400}
+                size={20}
+                containerWidth={cardWidth}
+              />
+              <Balloon
+                leftPct={82}
+                color={colors.surface}
+                delay={1400}
+                size={16}
+                containerWidth={cardWidth}
+              />
+              {confetti.map((spec, index) => (
+                <ConfettiPiece
+                  key={`${burstKey}-${index}`}
+                  spec={spec}
+                  burstKey={burstKey}
+                  containerWidth={cardWidth}
+                />
+              ))}
+            </>
+          ) : null}
 
           <View style={styles.content}>
             <Animated.View style={[styles.logoWrap, logoStyle]}>
@@ -292,21 +363,23 @@ function BirthdayWishBanner({
           <View style={styles.cake} pointerEvents="none">
             <BirthdayCake />
           </View>
-          <Svg
-            style={styles.wave}
-            width="100%"
-            height={72}
-            viewBox="0 0 720 78"
-            preserveAspectRatio="none">
-            <Path
-              d="M0 38c60 22 120-18 180-8s120 34 180 18 120-36 180-18 90 28 180 8v40H0z"
-              fill={colors.primarySoft}
-            />
-            <Path
-              d="M0 50c70 16 110-12 180-4s130 24 180 8 110-24 180-8 110 20 180 8v24H0z"
-              fill={colors.primaryDark}
-            />
-          </Svg>
+          {cardWidth > 0 ? (
+            <Svg
+              style={styles.wave}
+              width={cardWidth}
+              height={72}
+              viewBox="0 0 720 78"
+              preserveAspectRatio="none">
+              <Path
+                d="M0 38c60 22 120-18 180-8s120 34 180 18 120-36 180-18 90 28 180 8v40H0z"
+                fill={colors.primarySoft}
+              />
+              <Path
+                d="M0 50c70 16 110-12 180-4s130 24 180 8 110-24 180-8 110 20 180 8v24H0z"
+                fill={colors.primaryDark}
+              />
+            </Svg>
+          ) : null}
 
           <View style={styles.actions}>
             <Pressable

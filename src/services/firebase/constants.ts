@@ -52,4 +52,7 @@ export const STORAGE_PATHS = {
   /** projectMarkdown/{uid}/{projectId}.md */
   projectMarkdown: (uid: string, projectId: string) =>
     `projectMarkdown/${uid}/${projectId}.md`,
+  /** examImages/{uid}/{fileStem}.jpg — question/choice images */
+  examImage: (uid: string, fileStem: string, extension = '.jpg') =>
+    `examImages/${uid}/${fileStem}${extension}`,
 } as const;

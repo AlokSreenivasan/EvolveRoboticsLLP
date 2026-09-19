@@ -142,12 +142,35 @@ function computeQuizXpEarned(xpValue, correctCount, totalQuestions) {
   return maxXp;
 }
 
+function optionalImageUrl(url) {
+  const trimmed = typeof url === 'string' ? url.trim() : '';
+  return trimmed || undefined;
+}
+
 function stripQuestionsForPublic(questions) {
-  return questions.map(question => ({
-    id: question.id,
-    prompt: question.prompt,
-    choices: question.choices,
-  }));
+  return questions.map(question => {
+    const imageUrl = optionalImageUrl(question.imageUrl);
+    const choices = Array.isArray(question.choices)
+      ? question.choices.map(choice => {
+          if (!choice || typeof choice !== 'object') {
+            return choice;
+          }
+          const choiceImageUrl = optionalImageUrl(choice.imageUrl);
+          return {
+            id: choice.id,
+            text: choice.text,
+            ...(choiceImageUrl ? { imageUrl: choiceImageUrl } : {}),
+          };
+        })
+      : question.choices;
+
+    return {
+      id: question.id,
+      prompt: question.prompt,
+      choices,
+      ...(imageUrl ? { imageUrl } : {}),
+    };
+  });
 }
 
 function extractAnswerKeyFromQuestions(questions, contentData, docId) {

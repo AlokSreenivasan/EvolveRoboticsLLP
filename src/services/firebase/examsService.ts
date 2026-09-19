@@ -273,7 +273,10 @@ async function getNextSortOrder(): Promise<number> {
   return (typeof top.sortOrder === 'number' ? top.sortOrder : 0) + 1;
 }
 
-export async function createExam(input: CreateExamInput): Promise<Exam> {
+export async function createExam(
+  input: CreateExamInput,
+  options?: { examId?: string },
+): Promise<Exam> {
   try {
     if (!isCourseTrack(input.track)) {
       throw wrapFirebaseError(
@@ -284,7 +287,9 @@ export async function createExam(input: CreateExamInput): Promise<Exam> {
     }
 
     const sortOrder = Math.trunc(await getNextSortOrder());
-    const ref = doc(examsCollection());
+    const ref = options?.examId?.trim()
+      ? examDocRef(options.examId.trim())
+      : doc(examsCollection());
     const publicQuestions = stripQuestionsForPublic(input.questions);
     const payload: ExamDocument = {
       title: input.title.trim(),

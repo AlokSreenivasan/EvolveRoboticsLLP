@@ -51,7 +51,6 @@ export const adminStyles = StyleSheet.create({
     fontSize: 15,
     color: colors.textPrimary,
     backgroundColor: colors.surface,
-    ...cardShadowLight,
   },
   inputError: {
     borderColor: colors.danger,
@@ -213,6 +212,11 @@ export const adminStyles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  modalOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   modalHeader: {
     paddingTop: 20,
     paddingHorizontal: spacing.screenHorizontal,
@@ -232,10 +236,14 @@ export const adminStyles = StyleSheet.create({
     color: colors.danger,
     marginTop: 8,
   },
+  modalScrollView: {
+    flex: 1,
+  },
   modalScroll: {
     paddingHorizontal: spacing.screenHorizontal,
     paddingTop: 16,
     paddingBottom: 16,
+    flexGrow: 1,
   },
   pdfPicker: {
     gap: 10,

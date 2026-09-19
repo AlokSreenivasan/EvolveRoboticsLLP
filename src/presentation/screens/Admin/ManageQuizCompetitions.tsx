@@ -533,27 +533,33 @@ function ManageQuizCompetitions() {
                 const Icon = selected ? CheckCircle2 : Circle;
                 const choiceError = questionFieldErrors.choices?.[idx] === true;
                 return (
-                  <TouchableOpacity
+                  <View
                     key={idx}
                     style={[
                       styles.choiceRow,
                       selected && styles.choiceRowSelected,
                       choiceError && styles.choiceRowError,
-                    ]}
-                    activeOpacity={0.85}
-                    onPress={() =>
-                      setQuestionDraft(prev => ({
-                        ...prev,
-                        correctChoiceIndex: idx,
-                      }))
-                    }>
-                    <View style={styles.choiceIcon}>
+                    ]}>
+                    <TouchableOpacity
+                      style={styles.choiceIcon}
+                      activeOpacity={0.85}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected }}
+                      accessibilityLabel={`Mark option ${String.fromCharCode(
+                        65 + idx,
+                      )} as correct`}
+                      onPress={() =>
+                        setQuestionDraft(prev => ({
+                          ...prev,
+                          correctChoiceIndex: idx,
+                        }))
+                      }>
                       <Icon
                         size={18}
                         color={selected ? colors.primary : colors.textMuted}
                         strokeWidth={2.5}
                       />
-                    </View>
+                    </TouchableOpacity>
                     <View style={styles.choiceField}>
                       <AdminFormField
                         label={`Option ${String.fromCharCode(65 + idx)}`}
@@ -590,7 +596,7 @@ function ManageQuizCompetitions() {
                         error={choiceError}
                       />
                     </View>
-                  </TouchableOpacity>
+                  </View>
                 );
               })}
             </View>

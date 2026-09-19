@@ -4,15 +4,14 @@ import {
   FlatList,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
-import { CheckCircle2, Circle } from 'lucide-react-native';
 
 import AppButton from '../../../components/AppButton';
 import BackButton from '../../../components/BackButton';
+import ExamQuestionCard from '../../../components/Exams/ExamQuestionCard';
 import { VERTICAL_LIST_PERF } from '../../../constants/listPerformance';
 import {
   cardShadow,
@@ -140,48 +139,16 @@ function ExamAttemptScreen() {
     [],
   );
 
-  const renderChoice = useCallback(
-    (questionId: string, choiceIndex: number, label: string) => {
-      const selected = answers[questionId] === choiceIndex;
-      const Icon = selected ? CheckCircle2 : Circle;
-
-      return (
-        <TouchableOpacity
-          key={`${questionId}_${choiceIndex}`}
-          style={[styles.choiceRow, selected && styles.choiceRowSelected]}
-          activeOpacity={0.85}
-          onPress={() => handleSelect(questionId, choiceIndex)}
-          accessibilityRole="button"
-          accessibilityLabel={`Select option ${String.fromCharCode(
-            65 + choiceIndex,
-          )}`}>
-          <Icon
-            size={18}
-            color={selected ? colors.primary : colors.textMuted}
-            strokeWidth={2.5}
-          />
-          <Text style={styles.choiceText}>
-            {String.fromCharCode(65 + choiceIndex)}. {label}
-          </Text>
-        </TouchableOpacity>
-      );
-    },
-    [answers, handleSelect],
-  );
-
   const renderQuestion = useCallback(
     ({ item, index }: { item: ExamQuestion; index: number }) => (
-      <View style={styles.questionCard}>
-        <Text style={styles.questionIndex}>Question {index + 1}</Text>
-        <Text style={styles.questionPrompt}>{item.prompt}</Text>
-        <View style={styles.choices}>
-          {item.choices.map((choice, idx) =>
-            renderChoice(item.id, idx, choice.text),
-          )}
-        </View>
-      </View>
+      <ExamQuestionCard
+        question={item}
+        index={index}
+        selectedChoiceIndex={answers[item.id]}
+        onSelectChoice={choiceIndex => handleSelect(item.id, choiceIndex)}
+      />
     ),
-    [renderChoice],
+    [answers, handleSelect],
   );
 
   const keyExtractor = useCallback((item: ExamQuestion) => item.id, []);
@@ -459,52 +426,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.primary,
     textAlign: 'center',
-  },
-  questionCard: {
-    padding: 16,
-    borderRadius: spacing.cardRadiusLg,
-    backgroundColor: colors.surface,
-    marginBottom: 14,
-    ...glassBorder,
-    ...cardShadow,
-  },
-  questionIndex: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: colors.primary,
-    marginBottom: 8,
-    letterSpacing: 0.3,
-    textTransform: 'uppercase',
-  },
-  questionPrompt: {
-    ...typography.body,
-    fontWeight: '700',
-    marginBottom: 12,
-  },
-  choices: {
-    gap: 10,
-  },
-  choiceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderRadius: spacing.inputRadius,
-    backgroundColor: colors.background,
-    ...glassBorder,
-    ...cardShadowLight,
-  },
-  choiceRowSelected: {
-    borderColor: colors.primaryMuted,
-    backgroundColor: colors.primaryLight,
-  },
-  choiceText: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    lineHeight: 20,
   },
   footer: {
     position: 'absolute',

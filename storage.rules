@@ -132,6 +132,21 @@ service firebase.storage {
       allow delete: if isAdmin();
     }
 
+    // CMS media for admin-accessible screens (Exams):
+    // role "admin" and superadmin may write/delete.
+    match /examImages/{uid}/{imageFile} {
+      allow read: if isAuthenticated();
+
+      allow write: if isAdmin()
+        && request.auth.uid == uid
+        && imageFile.matches('^[A-Za-z0-9_-]+\\.(jpg|jpeg|png|webp)$')
+        && request.resource.size < 5 * 1024 * 1024
+        && isImageUpload();
+
+      // Any admin may delete so exam cleanup works across admins.
+      allow delete: if isAdmin();
+    }
+
     match /{allPaths=**} {
       allow read, write: if false;
     }

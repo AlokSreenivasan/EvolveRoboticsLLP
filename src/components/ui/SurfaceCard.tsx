@@ -105,7 +105,6 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
     borderRadius: spacing.cardRadiusLg,
-    overflow: 'hidden',
     ...glassBorder,
   },
   tinted: {

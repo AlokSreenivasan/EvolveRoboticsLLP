@@ -10,11 +10,15 @@ import type {
 export type ExamChoice = {
   id: string;
   text: string;
+  /** Optional image shown with or instead of choice text. */
+  imageUrl?: string;
 };
 
 export type ExamQuestion = {
   id: string;
   prompt: string;
+  /** Optional image shown with or instead of the prompt text. */
+  imageUrl?: string;
   choices: [ExamChoice, ExamChoice, ExamChoice, ExamChoice];
   /**
    * 0..3 — present for admins after answer-key merge; omitted for learners.

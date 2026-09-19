@@ -42,6 +42,9 @@ function AdminFormField({
         multiline={multiline}
         autoCapitalize={autoCapitalize}
         keyboardType={keyboardType}
+        textAlignVertical={multiline ? 'top' : 'center'}
+        scrollEnabled={multiline === true ? false : true}
+        autoCorrect={false}
       />
     </View>
   );

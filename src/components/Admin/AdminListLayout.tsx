@@ -71,9 +71,11 @@ function AdminListLayout<T>({
         ListHeaderComponent={listHeader}
         ListEmptyComponent={listEmpty}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={adminStyles.scrollContent}
         extraData={reorderingId}
         {...VERTICAL_LIST_PERF}
+        removeClippedSubviews={false}
       />
     </AdminScreenLayout>
   );

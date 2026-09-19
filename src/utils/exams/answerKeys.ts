@@ -11,15 +11,33 @@ export function normalizeCorrectChoiceIndex(value: unknown): number {
   return Math.min(3, Math.max(0, Math.trunc(value)));
 }
 
+function optionalImageUrl(url: string | undefined): string | undefined {
+  const trimmed = url?.trim();
+  return trimmed ? trimmed : undefined;
+}
+
 /** Public question shape persisted on exams / quizCompetitions (no answer key). */
 export function stripQuestionsForPublic(
   questions: ExamQuestion[],
 ): Array<Omit<ExamQuestion, 'correctChoiceIndex'>> {
-  return questions.map(question => ({
-    id: question.id,
-    prompt: question.prompt,
-    choices: question.choices,
-  }));
+  return questions.map(question => {
+    const imageUrl = optionalImageUrl(question.imageUrl);
+    const choices = question.choices.map(choice => {
+      const choiceImageUrl = optionalImageUrl(choice.imageUrl);
+      return {
+        id: choice.id,
+        text: choice.text,
+        ...(choiceImageUrl ? { imageUrl: choiceImageUrl } : {}),
+      };
+    }) as ExamQuestion['choices'];
+
+    return {
+      id: question.id,
+      prompt: question.prompt,
+      choices,
+      ...(imageUrl ? { imageUrl } : {}),
+    };
+  });
 }
 
 export function extractAnswerKey(

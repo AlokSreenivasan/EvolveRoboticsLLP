@@ -1,11 +1,12 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CheckCircle2, Circle, Pencil, Plus, Trash2 } from 'lucide-react-native';
 
 import AdminEntityForm from '../../../components/Admin/AdminEntityForm';
 import BackButton from '../../../components/BackButton';
 import AdminFormField from '../../../components/Admin/AdminFormField';
 import AdminIconButton from '../../../components/Admin/AdminIconButton';
+import AdminImageAttachField from '../../../components/Admin/AdminImageAttachField';
 import AdminListLayout from '../../../components/Admin/AdminListLayout';
 import AdminListRow from '../../../components/Admin/AdminListRow';
 import AdminListSectionHeader from '../../../components/Admin/AdminListSectionHeader';
@@ -34,11 +35,24 @@ import {
   moveExam,
   updateExam,
 } from '../../../services/firebase/examsService';
+import { FIRESTORE_COLLECTIONS } from '../../../services/firebase/constants';
+import {
+  collection,
+  db,
+  doc,
+} from '../../../services/firebase/firestoreClient';
+import { deleteExamImagesByUrlsSafe } from '../../../services/firebase/storageService';
 import { useAdminReorder } from '../../hooks/admin/useAdminReorder';
 import type { Exam, ExamQuestion } from '../../../store/content/types/exams.types';
 import type { CourseTrack } from '../../../store/content/types/courses.types';
 import { toAdminWriteErrorMessage } from '../../../utils/admin/adminWriteErrorMessage';
 import { appAlert, appAlertButtons, appAlertCopy } from '../../../utils/alert/appAlert';
+import {
+  choiceHasContent,
+  collectExamImageUrls,
+  persistExamQuestionImages,
+  questionHasPromptContent,
+} from '../../../utils/exams/questionMedia';
 
 type ExamFormState = {
   title: string;
@@ -52,7 +66,9 @@ type ExamFormState = {
 type QuestionDraft = {
   id: string;
   prompt: string;
+  imageUrl: string;
   choices: [string, string, string, string];
+  choiceImageUrls: [string, string, string, string];
   correctChoiceIndex: number;
 };
 
@@ -81,7 +97,9 @@ const EMPTY_EXAM_FORM: ExamFormState = {
 const EMPTY_QUESTION_DRAFT: QuestionDraft = {
   id: '',
   prompt: '',
+  imageUrl: '',
   choices: ['', '', '', ''],
+  choiceImageUrls: ['', '', '', ''],
   correctChoiceIndex: 0,
 };
 
@@ -114,11 +132,18 @@ function fromQuestion(question: ExamQuestion): QuestionDraft {
   return {
     id: question.id,
     prompt: question.prompt ?? '',
+    imageUrl: question.imageUrl?.trim() ?? '',
     choices: [
       question.choices?.[0]?.text ?? '',
       question.choices?.[1]?.text ?? '',
       question.choices?.[2]?.text ?? '',
       question.choices?.[3]?.text ?? '',
+    ],
+    choiceImageUrls: [
+      question.choices?.[0]?.imageUrl?.trim() ?? '',
+      question.choices?.[1]?.imageUrl?.trim() ?? '',
+      question.choices?.[2]?.imageUrl?.trim() ?? '',
+      question.choices?.[3]?.imageUrl?.trim() ?? '',
     ],
     correctChoiceIndex:
       typeof question.correctChoiceIndex === 'number' &&
@@ -129,15 +154,30 @@ function fromQuestion(question: ExamQuestion): QuestionDraft {
   };
 }
 
+function toChoice(
+  draft: QuestionDraft,
+  index: 0 | 1 | 2 | 3,
+  suffix: 'a' | 'b' | 'c' | 'd',
+) {
+  const imageUrl = draft.choiceImageUrls[index].trim();
+  return {
+    id: `${draft.id}_${suffix}`,
+    text: draft.choices[index].trim(),
+    ...(imageUrl ? { imageUrl } : {}),
+  };
+}
+
 function toQuestion(draft: QuestionDraft): ExamQuestion {
+  const imageUrl = draft.imageUrl.trim();
   return {
     id: draft.id,
     prompt: draft.prompt.trim(),
+    ...(imageUrl ? { imageUrl } : {}),
     choices: [
-      { id: `${draft.id}_a`, text: draft.choices[0].trim() },
-      { id: `${draft.id}_b`, text: draft.choices[1].trim() },
-      { id: `${draft.id}_c`, text: draft.choices[2].trim() },
-      { id: `${draft.id}_d`, text: draft.choices[3].trim() },
+      toChoice(draft, 0, 'a'),
+      toChoice(draft, 1, 'b'),
+      toChoice(draft, 2, 'c'),
+      toChoice(draft, 3, 'd'),
     ],
     correctChoiceIndex: draft.correctChoiceIndex,
   };
@@ -164,6 +204,7 @@ function ManageExams() {
     useState<QuestionDraft>(EMPTY_QUESTION_DRAFT);
   const [questionFieldErrors, setQuestionFieldErrors] =
     useState<QuestionFieldErrors>(EMPTY_QUESTION_FIELD_ERRORS);
+  const [savedImageUrls, setSavedImageUrls] = useState<string[]>([]);
 
   const clearExamErrors = () => {
     setFormError(null);
@@ -184,6 +225,7 @@ function ManageExams() {
     setEditingId(null);
     setForm(EMPTY_EXAM_FORM);
     audienceForm.resetAudience();
+    setSavedImageUrls([]);
     clearExamErrors();
     clearQuestionErrors();
     setEditorVisible(true);
@@ -200,6 +242,7 @@ function ManageExams() {
         isPublished: exam.isPublished,
         questions: exam.questions ?? [],
       });
+      setSavedImageUrls(collectExamImageUrls(exam.questions));
       resetAudience({
         audience: exam.audience,
         schoolIds: exam.schoolIds,
@@ -218,6 +261,7 @@ function ManageExams() {
     setEditingId(null);
     setForm(EMPTY_EXAM_FORM);
     audienceForm.resetAudience();
+    setSavedImageUrls([]);
     clearExamErrors();
     closeQuestionEditor();
   };
@@ -250,20 +294,39 @@ function ManageExams() {
     const nextErrors: QuestionFieldErrors = {};
     const messages: string[] = [];
 
-    if (!questionDraft.prompt.trim()) {
+    if (
+      !questionHasPromptContent({
+        prompt: questionDraft.prompt,
+        imageUrl: questionDraft.imageUrl,
+      })
+    ) {
       nextErrors.prompt = true;
-      messages.push(appAlertCopy.admin.questionRequired);
+      messages.push('Add a question prompt, an image, or both.');
     }
 
     const choiceErrors: [boolean, boolean, boolean, boolean] = [
-      !questionDraft.choices[0].trim(),
-      !questionDraft.choices[1].trim(),
-      !questionDraft.choices[2].trim(),
-      !questionDraft.choices[3].trim(),
+      !choiceHasContent({
+        text: questionDraft.choices[0],
+        imageUrl: questionDraft.choiceImageUrls[0],
+      }),
+      !choiceHasContent({
+        text: questionDraft.choices[1],
+        imageUrl: questionDraft.choiceImageUrls[1],
+      }),
+      !choiceHasContent({
+        text: questionDraft.choices[2],
+        imageUrl: questionDraft.choiceImageUrls[2],
+      }),
+      !choiceHasContent({
+        text: questionDraft.choices[3],
+        imageUrl: questionDraft.choiceImageUrls[3],
+      }),
     ];
     if (choiceErrors.some(Boolean)) {
       nextErrors.choices = choiceErrors;
-      messages.push(appAlertCopy.admin.allChoicesRequired(4, 'choices'));
+      messages.push(
+        'Add text, an image, or both for all 4 choices before saving.',
+      );
     }
 
     if (messages.length > 0) {
@@ -361,22 +424,32 @@ function ManageExams() {
       form.track!,
       audienceForm.toPayload(),
     );
-    const payload = {
-      title: form.title,
-      description: form.description,
-      timerSeconds: toTimerSeconds(form.timerMinutes),
-      questions: form.questions,
-      isPublished: form.isPublished,
-      ...visibilityPayload,
-    };
+    const examId =
+      editingId ?? doc(collection(db, FIRESTORE_COLLECTIONS.exams)).id;
 
     setSaving(true);
     clearExamErrors();
     try {
+      const questions = await persistExamQuestionImages(examId, form.questions);
+      const payload = {
+        title: form.title,
+        description: form.description,
+        timerSeconds: toTimerSeconds(form.timerMinutes),
+        questions,
+        isPublished: form.isPublished,
+        ...visibilityPayload,
+      };
+
       if (editingId) {
         await updateExam(editingId, payload);
       } else {
-        await createExam(payload);
+        await createExam(payload, { examId });
+      }
+
+      const nextUrls = collectExamImageUrls(questions);
+      const removedUrls = savedImageUrls.filter(url => !nextUrls.includes(url));
+      if (removedUrls.length > 0) {
+        await deleteExamImagesByUrlsSafe(removedUrls);
       }
       closeEditor();
     } catch (error) {
@@ -398,6 +471,9 @@ function ManageExams() {
           onPress: async () => {
             try {
               await deleteExam(exam.id);
+              await deleteExamImagesByUrlsSafe(
+                collectExamImageUrls(exam.questions),
+              );
             } catch (error) {
               appAlert(
                 appAlertCopy.admin.deleteFailedTitle,
@@ -451,17 +527,19 @@ function ManageExams() {
   const keyExtractor = useCallback((item: Exam) => item.id, []);
 
   return (
-    <>
-      <AdminListLayout
-        title="Exams"
-        data={exams}
-        loading={loading}
-        reorderingId={reorderingId}
-        keyExtractor={keyExtractor}
-        renderItem={renderExam}
-        listHeader={listHeader}
-        emptyMessage="No exams yet. Create your first timed exam."
-      />
+    <View style={styles.listHost}>
+      {editorVisible ? null : (
+        <AdminListLayout
+          title="Exams"
+          data={exams}
+          loading={loading}
+          reorderingId={reorderingId}
+          keyExtractor={keyExtractor}
+          renderItem={renderExam}
+          listHeader={listHeader}
+          emptyMessage="No exams yet. Create your first timed exam."
+        />
+      )}
 
       <AdminEntityForm
         visible={editorVisible}
@@ -494,7 +572,7 @@ function ManageExams() {
             />
 
             <AdminFormField
-              label="Question"
+              label="Question (text optional if you add an image)"
               value={questionDraft.prompt}
               onChangeText={prompt => {
                 setQuestionDraft(prev => ({ ...prev, prompt }));
@@ -505,35 +583,53 @@ function ManageExams() {
               multiline
               error={questionFieldErrors.prompt}
             />
+            <AdminImageAttachField
+              imageUri={questionDraft.imageUrl}
+              accessibilityLabel="Add question image"
+              onChange={imageUrl => {
+                setQuestionDraft(prev => ({ ...prev, imageUrl }));
+                setQuestionFieldErrors(prev => ({ ...prev, prompt: undefined }));
+                setFormError(null);
+              }}
+            />
 
             <Text style={styles.correctHeading}>Choices (tap to mark correct)</Text>
+            <Text style={styles.choiceHint}>
+              Each question and choice can be text, an image, or both.
+            </Text>
             <View style={styles.choiceList}>
               {questionDraft.choices.map((choice, idx) => {
                 const selected = questionDraft.correctChoiceIndex === idx;
                 const Icon = selected ? CheckCircle2 : Circle;
                 const choiceError = questionFieldErrors.choices?.[idx] === true;
                 return (
-                  <TouchableOpacity
+                  <View
                     key={idx}
                     style={[
                       styles.choiceRow,
                       selected && styles.choiceRowSelected,
                       choiceError && styles.choiceRowError,
-                    ]}
-                    activeOpacity={0.85}
-                    onPress={() =>
-                      setQuestionDraft(prev => ({
-                        ...prev,
-                        correctChoiceIndex: idx,
-                      }))
-                    }>
-                    <View style={styles.choiceIcon}>
+                    ]}>
+                    <TouchableOpacity
+                      style={styles.choiceIcon}
+                      activeOpacity={0.85}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected }}
+                      accessibilityLabel={`Mark choice ${String.fromCharCode(
+                        65 + idx,
+                      )} as correct`}
+                      onPress={() =>
+                        setQuestionDraft(prev => ({
+                          ...prev,
+                          correctChoiceIndex: idx,
+                        }))
+                      }>
                       <Icon
                         size={18}
                         color={selected ? colors.primary : colors.textMuted}
                         strokeWidth={2.5}
                       />
-                    </View>
+                    </TouchableOpacity>
                     <View style={styles.choiceField}>
                       <AdminFormField
                         label={`Choice ${String.fromCharCode(65 + idx)}`}
@@ -569,8 +665,43 @@ function ManageExams() {
                         placeholder={idx === 0 ? 'Newton (N)' : undefined}
                         error={choiceError}
                       />
+                      <AdminImageAttachField
+                        compact
+                        imageUri={questionDraft.choiceImageUrls[idx]}
+                        accessibilityLabel={`Add image for choice ${String.fromCharCode(
+                          65 + idx,
+                        )}`}
+                        onChange={imageUrl => {
+                          setQuestionDraft(prev => {
+                            const nextImages = [
+                              ...prev.choiceImageUrls,
+                            ] as QuestionDraft['choiceImageUrls'];
+                            nextImages[idx] = imageUrl;
+                            return { ...prev, choiceImageUrls: nextImages };
+                          });
+                          setQuestionFieldErrors(prev => {
+                            if (!prev.choices) {
+                              return prev;
+                            }
+                            const nextChoices = [...prev.choices] as [
+                              boolean,
+                              boolean,
+                              boolean,
+                              boolean,
+                            ];
+                            nextChoices[idx] = false;
+                            return {
+                              ...prev,
+                              choices: nextChoices.some(Boolean)
+                                ? nextChoices
+                                : undefined,
+                            };
+                          });
+                          setFormError(null);
+                        }}
+                      />
                     </View>
-                  </TouchableOpacity>
+                  </View>
                 );
               })}
             </View>
@@ -652,8 +783,15 @@ function ManageExams() {
                   <View key={question.id} style={styles.questionCard}>
                     <View style={styles.questionMeta}>
                       <Text style={styles.questionIndex}>Q{index + 1}</Text>
+                      {question.imageUrl?.trim() ? (
+                        <Image
+                          source={{ uri: question.imageUrl.trim() }}
+                          style={styles.questionThumb}
+                          resizeMode="cover"
+                        />
+                      ) : null}
                       <Text style={styles.questionPrompt} numberOfLines={3}>
-                        {question.prompt}
+                        {question.prompt.trim() || 'Image question'}
                       </Text>
                       <Text style={styles.questionStatus}>
                         Correct:{' '}
@@ -731,11 +869,14 @@ function ManageExams() {
           </>
         )}
       </AdminEntityForm>
-    </>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  listHost: {
+    flex: 1,
+  },
   hintText: {
     fontSize: 13,
     color: colors.textSecondary,
@@ -821,6 +962,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.textPrimary,
   },
+  questionThumb: {
+    width: '100%',
+    height: 72,
+    borderRadius: spacing.inputRadius,
+    marginBottom: 8,
+    backgroundColor: colors.primaryLight,
+  },
   questionStatus: {
     marginTop: 6,
     fontSize: 12,
@@ -834,7 +982,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: colors.textPrimary,
+    marginBottom: 6,
+  },
+  choiceHint: {
+    fontSize: 13,
+    color: colors.textSecondary,
     marginBottom: 10,
+    lineHeight: 18,
   },
   choiceList: {
     gap: 10,

@@ -100,6 +100,18 @@ function buildProjectMarkdownRef(uid: string, projectId: string) {
   return ref(firebaseStorage, STORAGE_PATHS.projectMarkdown(uid, projectId));
 }
 
+function buildExamImageRef(
+  uid: string,
+  fileStem: string,
+  localUri: string,
+) {
+  const extension = resolveFileExtension(localUri);
+  return ref(
+    firebaseStorage,
+    STORAGE_PATHS.examImage(uid, fileStem, extension),
+  );
+}
+
 function buildResourceNotePdfRef(uid: string, noteId: string) {
   return ref(firebaseStorage, STORAGE_PATHS.resourceNotePdf(uid, noteId));
 }
@@ -479,6 +491,75 @@ export async function deleteProjectImagesByUrlsSafe(
   imageUrls: Array<string | null | undefined>,
 ): Promise<void> {
   await Promise.all(imageUrls.map(url => deleteProjectImageByUrlSafe(url)));
+}
+
+function sanitizeExamImageStem(value: string): string {
+  const cleaned = value.replace(/[^A-Za-z0-9_-]/g, '_').replace(/_+/g, '_');
+  const trimmed = cleaned.replace(/^_+|_+$/g, '').slice(0, 96);
+  return trimmed || 'image';
+}
+
+/** Uploads a question or choice image; requires Storage rules for examImages. */
+export async function uploadExamQuestionImage(
+  examId: string,
+  slotId: string,
+  localFileUri: string,
+): Promise<string> {
+  try {
+    const trimmedUri = localFileUri.trim();
+    if (!trimmedUri) {
+      throw new Error('A valid local image URI is required.');
+    }
+    if (!examId.trim()) {
+      throw new Error('An exam id is required.');
+    }
+
+    const uid = await syncFirestoreAuthSession();
+    const fileStem = sanitizeExamImageStem(
+      `${examId.trim()}_${slotId.trim() || 'slot'}_${Date.now()}_${Math.random()
+        .toString(36)
+        .slice(2, 6)}`,
+    );
+    const reference = buildExamImageRef(uid, fileStem, trimmedUri);
+    await putFile(reference, trimmedUri, {
+      contentType: resolveContentType(trimmedUri),
+    });
+    return getDownloadURL(reference);
+  } catch (error) {
+    throw wrapFirebaseError(
+      error,
+      'UPLOAD_FAILED',
+      'Failed to upload exam image.',
+    );
+  }
+}
+
+export async function deleteExamImageByUrlSafe(
+  imageUrl: string | null | undefined,
+): Promise<void> {
+  if (!isFirebaseStorageUrl(imageUrl)) {
+    return;
+  }
+
+  try {
+    await deleteObject(refFromURL(firebaseStorage, imageUrl!.trim()));
+  } catch (error) {
+    const { code } = extractFirebaseErrorDetails(error);
+    if (isFirebaseNotFoundError(code)) {
+      return;
+    }
+    logFirebaseOperationError(
+      'deleteExamImageByUrlSafe',
+      'deleteByUrl',
+      error,
+    );
+  }
+}
+
+export async function deleteExamImagesByUrlsSafe(
+  imageUrls: Array<string | null | undefined>,
+): Promise<void> {
+  await Promise.all(imageUrls.map(url => deleteExamImageByUrlSafe(url)));
 }
 
 /**

@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { Platform, StatusBar } from 'react-native';
+import { Platform, StatusBar, StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import PushRegistrationBootstrap from './components/PushRegistrationBootstrap.tsx';
@@ -14,18 +15,26 @@ function App() {
   }, []);
 
   return (
-    <SafeAreaProvider>
-      {Platform.OS === 'android' ? (
-        <StatusBar barStyle="dark-content" />
-      ) : null}
-      <AuthProvider>
-        <AppAlertProvider>
-          <PushRegistrationBootstrap />
-          <AppNavigation />
-        </AppAlertProvider>
-      </AuthProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={styles.root}>
+      <SafeAreaProvider>
+        {Platform.OS === 'android' ? (
+          <StatusBar barStyle="dark-content" />
+        ) : null}
+        <AuthProvider>
+          <AppAlertProvider>
+            <PushRegistrationBootstrap />
+            <AppNavigation />
+          </AppAlertProvider>
+        </AuthProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+});
 
 export default App;

@@ -196,6 +196,26 @@ describe('stripQuestionsForPublic', () => {
     expect(stripped).toEqual([{ id: 'q1', prompt: 'A?', choices: ['x'] }]);
     expect(stripped[0]).not.toHaveProperty('correctChoiceIndex');
   });
+
+  it('keeps question and choice image URLs', () => {
+    const stripped = stripQuestionsForPublic([
+      {
+        id: 'q1',
+        prompt: 'A?',
+        imageUrl: 'https://example.com/q.png',
+        choices: [{ id: 'a', text: 'x', imageUrl: 'https://example.com/a.png' }],
+        correctChoiceIndex: 2,
+      },
+    ]);
+    expect(stripped).toEqual([
+      {
+        id: 'q1',
+        prompt: 'A?',
+        imageUrl: 'https://example.com/q.png',
+        choices: [{ id: 'a', text: 'x', imageUrl: 'https://example.com/a.png' }],
+      },
+    ]);
+  });
 });
 
 describe('extractAnswerKeyFromQuestions', () => {
