@@ -11,6 +11,7 @@ import {
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import BirthdayWishBanner from '../../../components/Home/BirthdayWishBanner';
 import ContinueLearningCard from '../../../components/Home/ContinueLearningCard';
 import DailyMissionsSection from '../../../components/Home/DailyMissionsSection';
 import QuizCompetitionHomePanel from '../../../components/Home/QuizCompetitionHomePanel';
@@ -32,6 +33,7 @@ import { LoginScreenNavigationProp } from '../../../types/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { useHomeFeedFocus, useHomeFeedRefresh } from '../../context/HomeFeedContext';
 import { useAdminNavigation } from '../../hooks/useAdminNavigation';
+import { useBirthdayWish } from '../../hooks/useBirthdayWish';
 import { useContinueLearningPlaylists } from '../../hooks/useContinueLearningPlaylists';
 import { useContinueLearningProgress } from '../../hooks/useContinueLearningProgress';
 import { useStoredProfileFullName } from '../../hooks/useStoredProfileFullName';
@@ -51,6 +53,13 @@ function HomeScreen() {
   const { profile, profileLoading } = useAuth();
   const insets = useSafeAreaInsets();
   const displayName = useStoredProfileFullName();
+  const {
+    visible: birthdayWishVisible,
+    isBirthday,
+    firstName: birthdayFirstName,
+    age: birthdayAge,
+    dismiss: dismissBirthdayWish,
+  } = useBirthdayWish();
   const { isAdmin, roleLoading } = useUserRole();
   const { openAdmin } = useAdminNavigation();
   const { playlists, loading: playlistsLoading } = useContinueLearningPlaylists();
@@ -156,7 +165,7 @@ function HomeScreen() {
 
   return (
     <ScreenSafeArea style={styles.container} includeBottomInset={false}>
-      <HomeHeader displayName={displayName} />
+      <HomeHeader displayName={displayName} isBirthday={isBirthday} />
 
       <ScrollView
         ref={scrollRef}
@@ -220,6 +229,13 @@ function HomeScreen() {
 
       <FloatingChatAssistant
         onPress={() => navigation.navigate('ChatbotScreen')}
+      />
+
+      <BirthdayWishBanner
+        visible={birthdayWishVisible}
+        firstName={birthdayFirstName}
+        age={birthdayAge}
+        onClose={dismissBirthdayWish}
       />
     </ScreenSafeArea>
   );

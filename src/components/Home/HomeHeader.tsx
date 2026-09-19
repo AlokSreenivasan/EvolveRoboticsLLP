@@ -4,27 +4,31 @@ import { useNavigation } from '@react-navigation/native';
 import { Bell } from 'lucide-react-native';
 
 import { cardShadowLight, colors, glassBorder, spacing } from '../../constants/theme';
+import { firstNameFromDisplayName } from '../../domain/Profile/birthdayWish';
 import { useNotifications } from '../../presentation/hooks/useNotifications';
 import type { LoginScreenNavigationProp } from '../../types/navigation';
 
 type HomeHeaderProps = {
   displayName: string;
+  isBirthday?: boolean;
 };
 
-function HomeHeader({ displayName }: HomeHeaderProps) {
+function HomeHeader({ displayName, isBirthday = false }: HomeHeaderProps) {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const { unreadCount, loading, error } = useNotifications();
-  const firstName = displayName.trim().split(/\s+/)[0] || 'Learner';
+  const firstName = firstNameFromDisplayName(displayName);
   const notificationCount = !loading && !error ? unreadCount : 0;
 
   return (
     <View style={styles.container}>
       <View style={styles.textBlock}>
         <Text style={styles.greeting} accessibilityRole="header">
-          Hello, {firstName}
+          {isBirthday ? `Happy birthday, ${firstName}` : `Hello, ${firstName}`}
         </Text>
         <Text style={styles.tagline}>
-          Keep learning, keep building the future!
+          {isBirthday
+            ? 'Wishing you a year of brighter builds!'
+            : 'Keep learning, keep building the future!'}
         </Text>
       </View>
 
