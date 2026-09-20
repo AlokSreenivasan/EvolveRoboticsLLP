@@ -3,7 +3,6 @@ import { RouteProp } from '@react-navigation/native';
 
 import type { ContinueLearningPlaylist } from '../store/content/types/continueLearningPlaylists.types';
 import type { Course } from '../store/content/types/courses.types';
-import type { Project } from '../store/content/types/projects.types';
 
 export type AdminStackParamList = {
   AdminDashboard: undefined;
@@ -35,8 +34,8 @@ export type RootStackParamList = {
   ToDo: { tab?: 'learn' | 'project' } | undefined;
   /** Published projects from To Do → Projects. */
   Projects: undefined;
-  /** Full project requirements from Projects list. */
-  ProjectDetail: { project: Project };
+  /** Full project requirements from To Do → Project. */
+  ProjectDetail: { projectId: string };
   Settings: undefined;
   ChangePassword: undefined;
   PrivacySettings: undefined;

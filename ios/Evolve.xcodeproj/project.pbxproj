@@ -59,16 +59,6 @@
 			name = Evolve;
 			sourceTree = "<group>";
 		};
-		A1B2C3D4E5F60718293A4B60 /* Config */ = {
-			isa = PBXGroup;
-			children = (
-				A1B2C3D4E5F60718293A4B5C /* Debug.xcconfig */,
-				A1B2C3D4E5F60718293A4B5D /* Release.xcconfig */,
-			);
-			name = Config;
-			path = Config;
-			sourceTree = "<group>";
-		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -107,6 +97,16 @@
 				13B07F961A680F5B00A75B9A /* Evolve.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		A1B2C3D4E5F60718293A4B60 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D4E5F60718293A4B5C /* Debug.xcconfig */,
+				A1B2C3D4E5F60718293A4B5D /* Release.xcconfig */,
+			);
+			name = Config;
+			path = Config;
 			sourceTree = "<group>";
 		};
 		BBD78D7AC51CEA395F1C20DB /* Pods */ = {

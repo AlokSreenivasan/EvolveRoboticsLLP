@@ -84,6 +84,10 @@ function projectsCollection() {
   return collection(db, FIRESTORE_COLLECTIONS.projects);
 }
 
+function projectDocRef(projectId: string) {
+  return doc(projectsCollection(), projectId);
+}
+
 function mapSection(
   data: ProjectsSectionDocument | undefined,
 ): ProjectsSection {
@@ -156,6 +160,47 @@ export function subscribeProjects(
     },
     error => onError?.(error),
   );
+}
+
+export function subscribeProject(
+  projectId: string,
+  listener: (project: Project | null) => void,
+  options?: ContentSubscribeOptions,
+  onError?: (error: unknown) => void,
+): () => void {
+  return onSnapshot(
+    projectDocRef(projectId),
+    snapshot => {
+      if (!snapshot.exists()) {
+        listener(null);
+        return;
+      }
+
+      const project = mapProject(
+        snapshot.id,
+        snapshot.data() as ProjectDocument,
+      );
+      const [visible] = applyLearnerContentFilters([project], options);
+      listener(visible ?? null);
+    },
+    error => onError?.(error),
+  );
+}
+
+export async function getProject(projectId: string): Promise<Project | null> {
+  try {
+    const snapshot = await getDoc(projectDocRef(projectId));
+    if (!snapshot.exists()) {
+      return null;
+    }
+    return mapProject(snapshot.id, snapshot.data() as ProjectDocument);
+  } catch (error) {
+    throw wrapFirebaseError(
+      error,
+      'FIRESTORE_ERROR',
+      'Failed to load project.',
+    );
+  }
 }
 
 export async function ensureProjectsSectionDefaults(): Promise<void> {

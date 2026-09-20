@@ -69,7 +69,12 @@ function ToDoScreen() {
     ({ item }: { item: Project }) => (
       <ProjectCard
         project={item}
-        onPress={() => navigation.navigate('ProjectDetail', { project: item })}
+        onPress={() => {
+          if (!item.id) {
+            return;
+          }
+          navigation.navigate('ProjectDetail', { projectId: item.id });
+        }}
       />
     ),
     [navigation],

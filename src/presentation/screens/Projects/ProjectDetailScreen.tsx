@@ -8,9 +8,11 @@ import {
   View,
 } from 'react-native';
 import { RouteProp, useRoute } from '@react-navigation/native';
+import { AlertCircle, FolderKanban } from 'lucide-react-native';
 
 import MarkdownDocument from '../../../components/Markdown/MarkdownDocument';
 import ScreenHeader from '../../../components/ui/ScreenHeader';
+import ScreenStateCard from '../../../components/ui/ScreenStateCard';
 import SurfaceCard from '../../../components/ui/SurfaceCard';
 import {
   colors,
@@ -19,21 +21,31 @@ import {
 } from '../../../constants/theme';
 import type { RootStackParamList } from '../../../types/navigation';
 import ScreenSafeArea from '../../../components/ui/ScreenSafeArea';
+import { useProject } from '../../hooks/useProject';
 
 type ProjectDetailRouteProp = RouteProp<RootStackParamList, 'ProjectDetail'>;
 
 function ProjectDetailScreen() {
   const route = useRoute<ProjectDetailRouteProp>();
-  const { project } = route.params;
+  const projectId = route.params?.projectId?.trim() ?? '';
+  const { project, loading, error } = useProject(projectId);
   const imageUris = useMemo(() => {
-    if (project.imageUris?.length) {
-      return project.imageUris.map(uri => uri.trim()).filter(Boolean);
+    if (!project) {
+      return [];
     }
-    const legacy = project.imageUri?.trim();
+    if (project.imageUris?.length) {
+      return project.imageUris
+        .map(uri => (typeof uri === 'string' ? uri.trim() : ''))
+        .filter(Boolean);
+    }
+    const legacy =
+      typeof project.imageUri === 'string' ? project.imageUri.trim() : '';
     return legacy ? [legacy] : [];
-  }, [project.imageUri, project.imageUris]);
-  const description = project.description?.trim();
-  const markdownUrl = project.markdownUrl?.trim();
+  }, [project]);
+  const description =
+    typeof project?.description === 'string' ? project.description.trim() : '';
+  const markdownUrl =
+    typeof project?.markdownUrl === 'string' ? project.markdownUrl.trim() : '';
 
   const [markdownBody, setMarkdownBody] = useState<string | null>(null);
   const [markdownLoading, setMarkdownLoading] = useState(Boolean(markdownUrl));
@@ -64,7 +76,7 @@ function ProjectDetailScreen() {
       })
       .then(text => {
         if (!cancelled) {
-          setMarkdownBody(text);
+          setMarkdownBody(typeof text === 'string' ? text : String(text ?? ''));
           setMarkdownLoading(false);
         }
       })
@@ -80,11 +92,48 @@ function ProjectDetailScreen() {
     };
   }, [markdownUrl]);
 
+  if (loading) {
+    return (
+      <ScreenSafeArea style={styles.container}>
+        <ScreenHeader title="Project" compact />
+        <View style={styles.body}>
+          <ScreenStateCard variant="loading" />
+        </View>
+      </ScreenSafeArea>
+    );
+  }
+
+  if (!project) {
+    return (
+      <ScreenSafeArea style={styles.container}>
+        <ScreenHeader title="Project" compact />
+        <View style={styles.body}>
+          <ScreenStateCard
+            variant="error"
+            title="Could not open project"
+            message={
+              error ??
+              'This project is unavailable. Go back and try another project.'
+            }
+            Icon={error ? AlertCircle : FolderKanban}
+          />
+        </View>
+      </ScreenSafeArea>
+    );
+  }
+
   return (
     <ScreenSafeArea style={styles.container}>
       <ScreenHeader
-        title={project.title}
-        subtitle={project.subtitle ?? undefined}
+        title={
+          (typeof project.title === 'string' ? project.title.trim() : '') ||
+          'Project'
+        }
+        subtitle={
+          (typeof project.subtitle === 'string'
+            ? project.subtitle.trim()
+            : '') || undefined
+        }
         compact
       />
 

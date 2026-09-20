@@ -39,11 +39,18 @@ target 'Evolve' do
     )
 
     # Xcode 26+ / Apple Clang 21: fmt 11.0.2 consteval fails unless built as C++17.
+    # Xcode 27 rejects IPHONEOS_DEPLOYMENT_TARGET below 15.0 (Pods often ship 9–13).
+    min_ios = '15.1'
     installer.pods_project.targets.each do |target|
-      next unless target.name == 'fmt'
-
       target.build_configurations.each do |build_configuration|
-        build_configuration.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+        if target.name == 'fmt'
+          build_configuration.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+        end
+
+        current = build_configuration.build_settings['IPHONEOS_DEPLOYMENT_TARGET']
+        if current.nil? || current.to_f < min_ios.to_f
+          build_configuration.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = min_ios
+        end
       end
     end
   end

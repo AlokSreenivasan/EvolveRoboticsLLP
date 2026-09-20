@@ -1,10 +1,11 @@
-import React, { useMemo } from 'react';
-import { Linking, StyleSheet, View, type ViewStyle } from 'react-native';
+import React, { Component, useMemo, type ErrorInfo, type ReactNode } from 'react';
+import { Linking, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import Markdown, { MarkdownIt } from 'react-native-markdown-display';
 
 import { markdownHtmlRules } from './markdownHtmlRules';
 import { markdownDocumentStyles } from './markdownDocumentStyles';
 import { rewriteRelativeMarkdownImages } from './resolveMarkdownImageUrl';
+import { colors } from '../../constants/theme';
 
 type MarkdownDocumentProps = {
   content: string;
@@ -12,6 +13,36 @@ type MarkdownDocumentProps = {
   documentUrl?: string | null;
   style?: ViewStyle;
 };
+
+type MarkdownErrorBoundaryState = {
+  hasError: boolean;
+};
+
+class MarkdownErrorBoundary extends Component<
+  { children: ReactNode },
+  MarkdownErrorBoundaryState
+> {
+  state: MarkdownErrorBoundaryState = { hasError: false };
+
+  static getDerivedStateFromError(): MarkdownErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(_error: Error, _info: ErrorInfo) {
+    // Keep the project screen mounted; markdown is optional content.
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <Text style={styles.fallback}>
+          This project page could not be displayed.
+        </Text>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 // html: true so GitHub README raw HTML (<img>, centered <p>) is tokenized
 // instead of shown as literal text. Images are rendered via markdownHtmlRules.
@@ -42,7 +73,8 @@ function MarkdownDocument({
   style,
 }: MarkdownDocumentProps) {
   const body = useMemo(() => {
-    const withoutBom = content.replace(/^\uFEFF/, '');
+    const source = typeof content === 'string' ? content : String(content ?? '');
+    const withoutBom = source.replace(/^\uFEFF/, '');
     return rewriteRelativeMarkdownImages(withoutBom, documentUrl);
   }, [content, documentUrl]);
 
@@ -52,14 +84,16 @@ function MarkdownDocument({
 
   return (
     <View style={[styles.container, style]}>
-      <Markdown
-        style={markdownDocumentStyles}
-        markdownit={markdownIt}
-        rules={markdownHtmlRules}
-        onLinkPress={handleLinkPress}
-        mergeStyle>
-        {body}
-      </Markdown>
+      <MarkdownErrorBoundary key={`${documentUrl ?? ''}:${body.length}`}>
+        <Markdown
+          style={markdownDocumentStyles}
+          markdownit={markdownIt}
+          rules={markdownHtmlRules}
+          onLinkPress={handleLinkPress}
+          mergeStyle>
+          {body}
+        </Markdown>
+      </MarkdownErrorBoundary>
     </View>
   );
 }
@@ -67,6 +101,12 @@ function MarkdownDocument({
 const styles = StyleSheet.create({
   container: {
     width: '100%',
+  },
+  fallback: {
+    fontSize: 15,
+    color: colors.textMuted,
+    lineHeight: 22,
+    fontStyle: 'italic',
   },
 });
 
