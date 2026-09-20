@@ -25,7 +25,11 @@ import {
 import { isCourseTrack } from '../../store/content/types/courses.types';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { APP_CONTENT_DOCS, FIRESTORE_COLLECTIONS } from './constants';
-import { buildSortedContentListQuery } from './contentListQuery';
+import type { ContentListPageMeta } from './contentListQuery';
+import {
+  fetchSortedContentListPage,
+  subscribeSortedContentList,
+} from './contentListSubscribe';
 import {
   collection,
   db,
@@ -118,27 +122,40 @@ export function subscribeResourcesSection(
   );
 }
 
+function mapNotesSnapshot(
+  snapshot: { docs: Array<{ id: string; data: () => unknown }> },
+  options?: ContentSubscribeOptions,
+): ResourceNote[] {
+  const includeUnpublished = options?.includeUnpublished === true;
+  const notes = snapshot.docs.map(noteDoc =>
+    mapNote(noteDoc.id, noteDoc.data() as ResourceNoteDocument),
+  );
+  let filtered = applyLearnerContentFilters(notes, options);
+  if (!includeUnpublished) {
+    filtered = filtered.filter(note => note.pdfUrl.length > 0);
+  }
+  return sortNotes(filtered);
+}
+
 export function subscribeResourceNotes(
-  listener: (notes: ResourceNote[]) => void,
+  listener: (notes: ResourceNote[], meta?: ContentListPageMeta) => void,
   options?: ContentSubscribeOptions,
   onError?: (error: unknown) => void,
 ): () => void {
-  const includeUnpublished = options?.includeUnpublished === true;
-  const notesQuery = buildSortedContentListQuery(notesCollection(), options);
+  return subscribeSortedContentList(
+    notesCollection(),
+    options,
+    snapshot => mapNotesSnapshot(snapshot, options),
+    listener,
+    onError,
+  );
+}
 
-  return onSnapshot(
-    notesQuery,
-    snapshot => {
-      const notes = snapshot.docs.map(noteDoc =>
-        mapNote(noteDoc.id, noteDoc.data() as ResourceNoteDocument),
-      );
-      let filtered = applyLearnerContentFilters(notes, options);
-      if (!includeUnpublished) {
-        filtered = filtered.filter(note => note.pdfUrl.length > 0);
-      }
-      listener(sortNotes(filtered));
-    },
-    error => onError?.(error),
+export function fetchResourceNotesPage(options?: ContentSubscribeOptions) {
+  return fetchSortedContentListPage(
+    notesCollection(),
+    options,
+    snapshot => mapNotesSnapshot(snapshot, options),
   );
 }
 

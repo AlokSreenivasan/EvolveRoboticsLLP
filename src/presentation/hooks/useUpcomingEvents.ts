@@ -84,6 +84,9 @@ export function useUpcomingEvents(options?: UseUpcomingEventsOptions) {
       displayEvents: homeFeed.displayEvents,
       loading: homeFeed.loading,
       error: homeFeed.error,
+      loadMore: homeFeed.loadMore,
+      loadingMore: homeFeed.loadingMore,
+      hasMore: homeFeed.hasMore,
     };
   }
 
@@ -93,5 +96,8 @@ export function useUpcomingEvents(options?: UseUpcomingEventsOptions) {
     displayEvents,
     loading,
     error,
+    loadMore: () => undefined,
+    loadingMore: false,
+    hasMore: false,
   };
 }

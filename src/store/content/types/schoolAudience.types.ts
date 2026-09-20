@@ -27,6 +27,15 @@ export type SchoolAudienceInput = {
 export type ContentSubscribeOptions = {
   /** Admin: include draft items. */
   includeUnpublished?: boolean;
+  /** Override the default learner page size. */
+  pageSize?: number;
+  /**
+   * Learner queries are capped by default. Set when the full published
+   * collection is required (e.g. chatbot keyword matching).
+   */
+  unbounded?: boolean;
+  /** Cursor from the previous learner page (`startAfter`). */
+  startAfter?: unknown;
   /**
    * Learner view: only items matching this track (kids vs professionals).
    * Omit to skip track filtering (admin lists).

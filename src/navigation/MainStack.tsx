@@ -1,42 +1,13 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import CourseDetailScreen from '../presentation/screens/Courses/CourseDetailScreen';
-import CoursePlaylistScreen from '../presentation/screens/Courses/CoursePlaylistScreen';
-import CourseVideoScreen from '../presentation/screens/Courses/CourseVideoScreen';
-import CoursesScreen from '../presentation/screens/Courses/CoursesScreen';
-import ContinueLearningListScreen from '../presentation/screens/Home/ContinueLearningListScreen';
-import ImportantUpdatesListScreen from '../presentation/screens/Home/ImportantUpdatesListScreen';
-import NotificationsListScreen from '../presentation/screens/Home/NotificationsListScreen';
-import UpcomingEventsListScreen from '../presentation/screens/Home/UpcomingEventsListScreen';
 import HomeScreen from '../presentation/screens/Home/HomeScreen';
 import ToDoScreen from '../presentation/screens/ToDo/ToDoScreen';
-import ProjectsScreen from '../presentation/screens/Projects/ProjectsScreen';
-import ProjectDetailScreen from '../presentation/screens/Projects/ProjectDetailScreen';
-import ResourcePdfViewerScreen from '../presentation/screens/Resources/ResourcePdfViewerScreen';
-import AssignmentsScreen from '../presentation/screens/Assignments/AssignmentsScreen';
-import ResourcesScreen from '../presentation/screens/Resources/ResourcesScreen';
-import ExamsScreen from '../presentation/screens/Exams/ExamsScreen';
-import ExamAttemptScreen from '../presentation/screens/Exams/ExamAttemptScreen';
-import ExamAttemptsScreen from '../presentation/screens/Exams/ExamAttemptsScreen';
-import QuizCompetitionsScreen from '../presentation/screens/QuizCompetitions/QuizCompetitionsScreen';
-import QuizAttemptScreen from '../presentation/screens/QuizCompetitions/QuizAttemptScreen';
-import AboutScreen from '../presentation/screens/About/AboutScreen';
 import ProfileScreen from '../presentation/screens/Profile/ProfileScreen';
-import SettingsScreen from '../presentation/screens/Settings/SettingsScreen';
-import ChangePasswordScreen from '../presentation/screens/Settings/ChangePasswordScreen';
-import PrivacySettingsScreen from '../presentation/screens/Settings/PrivacySettingsScreen';
-import PrivacyPolicyScreen from '../presentation/screens/Settings/PrivacyPolicyScreen';
-import NotificationPreferencesScreen from '../presentation/screens/Settings/NotificationPreferencesScreen';
-import SupportScreen from '../presentation/screens/Settings/SupportScreen';
-import ChatbotScreen from '../presentation/screens/Chatbot/ChatbotScreen';
-import ChatForumScreen from '../presentation/screens/Forum/ChatForumScreen';
-import ChatForumChannelScreen from '../presentation/screens/Forum/ChatForumChannelScreen';
 import { HomeFeedProvider } from '../presentation/context/HomeFeedContext';
 import { useUserRole } from '../presentation/hooks/useUserRole';
 import LevelAchievementHost from '../components/Home/LevelAchievementHost';
 
-import AdminStackNavigator from './AdminStack';
 import UnauthorizedRoute from './UnauthorizedRoute';
 import { isProfileComplete } from '../domain/Profile/validation/isProfileComplete';
 import { useAuth } from '../presentation/context/AuthContext';
@@ -60,67 +31,205 @@ function MainStack() {
         initialRouteName={needsProfileCompletion ? 'Profile' : 'Home'}
         screenOptions={{ headerShown: false, statusBarStyle: 'dark' }}>
         <Stack.Screen name="Home" component={HomeScreen} />
-      <Stack.Screen name="ToDo" component={ToDoScreen} />
-      <Stack.Screen name="Projects" component={ProjectsScreen} />
-      <Stack.Screen name="ProjectDetail" component={ProjectDetailScreen} />
-      <Stack.Screen
-        name="ContinueLearningList"
-        component={ContinueLearningListScreen}
-      />
-      <Stack.Screen
-        name="NotificationsList"
-        component={NotificationsListScreen}
-      />
-      <Stack.Screen
-        name="ImportantUpdatesList"
-        component={ImportantUpdatesListScreen}
-      />
-      <Stack.Screen
-        name="UpcomingEventsList"
-        component={UpcomingEventsListScreen}
-      />
-      <Stack.Screen name="Resources" component={ResourcesScreen} />
-      <Stack.Screen name="Assignments" component={AssignmentsScreen} />
-      <Stack.Screen name="Exams" component={ExamsScreen} />
-      <Stack.Screen name="QuizCompetitions" component={QuizCompetitionsScreen} />
-      <Stack.Screen name="QuizAttempt" component={QuizAttemptScreen} />
-      <Stack.Screen name="ExamAttempt" component={ExamAttemptScreen} />
-      <Stack.Screen name="ExamAttempts" component={ExamAttemptsScreen} />
-      <Stack.Screen
-        name="ResourcePdfViewer"
-        component={ResourcePdfViewerScreen}
-      />
-      <Stack.Screen name="Courses" component={CoursesScreen} />
-      <Stack.Screen name="CourseDetail" component={CourseDetailScreen} />
-      <Stack.Screen name="CoursePlaylist" component={CoursePlaylistScreen} />
-      <Stack.Screen name="CourseVideo" component={CourseVideoScreen} />
-      <Stack.Screen name="Settings" component={SettingsScreen} />
-      <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
-      <Stack.Screen name="PrivacySettings" component={PrivacySettingsScreen} />
-      <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
-      <Stack.Screen
-        name="NotificationPreferences"
-        component={NotificationPreferencesScreen}
-      />
-      <Stack.Screen name="Support" component={SupportScreen} />
-      <Stack.Screen
-        name="Profile"
-        component={ProfileScreen}
-        initialParams={
-          needsProfileCompletion ? { requireCompletion: true } : undefined
-        }
-      />
-      <Stack.Screen name="About" component={AboutScreen} />
-      <Stack.Screen name="ChatForum" component={ChatForumScreen} />
-      <Stack.Screen
-        name="ChatForumChannel"
-        component={ChatForumChannelScreen}
-      />
-      <Stack.Screen name="ChatbotScreen" component={ChatbotScreen} />
-      <Stack.Screen name="Unauthorized" component={UnauthorizedRoute} />
-      {showAdminStack ? (
-        <Stack.Screen name="AdminStack" component={AdminStackNavigator} />
-      ) : null}
+        <Stack.Screen name="ToDo" component={ToDoScreen} />
+        <Stack.Screen
+          name="Projects"
+          getComponent={() =>
+            require('../presentation/screens/Projects/ProjectsScreen').default
+          }
+        />
+        <Stack.Screen
+          name="ProjectDetail"
+          getComponent={() =>
+            require('../presentation/screens/Projects/ProjectDetailScreen')
+              .default
+          }
+        />
+        <Stack.Screen
+          name="ContinueLearningList"
+          getComponent={() =>
+            require('../presentation/screens/Home/ContinueLearningListScreen')
+              .default
+          }
+        />
+        <Stack.Screen
+          name="NotificationsList"
+          getComponent={() =>
+            require('../presentation/screens/Home/NotificationsListScreen')
+              .default
+          }
+        />
+        <Stack.Screen
+          name="ImportantUpdatesList"
+          getComponent={() =>
+            require('../presentation/screens/Home/ImportantUpdatesListScreen')
+              .default
+          }
+        />
+        <Stack.Screen
+          name="UpcomingEventsList"
+          getComponent={() =>
+            require('../presentation/screens/Home/UpcomingEventsListScreen')
+              .default
+          }
+        />
+        <Stack.Screen
+          name="Resources"
+          getComponent={() =>
+            require('../presentation/screens/Resources/ResourcesScreen').default
+          }
+        />
+        <Stack.Screen
+          name="Assignments"
+          getComponent={() =>
+            require('../presentation/screens/Assignments/AssignmentsScreen')
+              .default
+          }
+        />
+        <Stack.Screen
+          name="Exams"
+          getComponent={() =>
+            require('../presentation/screens/Exams/ExamsScreen').default
+          }
+        />
+        <Stack.Screen
+          name="QuizCompetitions"
+          getComponent={() =>
+            require('../presentation/screens/QuizCompetitions/QuizCompetitionsScreen')
+              .default
+          }
+        />
+        <Stack.Screen
+          name="QuizAttempt"
+          getComponent={() =>
+            require('../presentation/screens/QuizCompetitions/QuizAttemptScreen')
+              .default
+          }
+        />
+        <Stack.Screen
+          name="ExamAttempt"
+          getComponent={() =>
+            require('../presentation/screens/Exams/ExamAttemptScreen').default
+          }
+        />
+        <Stack.Screen
+          name="ExamAttempts"
+          getComponent={() =>
+            require('../presentation/screens/Exams/ExamAttemptsScreen').default
+          }
+        />
+        <Stack.Screen
+          name="ResourcePdfViewer"
+          getComponent={() =>
+            require('../presentation/screens/Resources/ResourcePdfViewerScreen')
+              .default
+          }
+        />
+        <Stack.Screen
+          name="Courses"
+          getComponent={() =>
+            require('../presentation/screens/Courses/CoursesScreen').default
+          }
+        />
+        <Stack.Screen
+          name="CourseDetail"
+          getComponent={() =>
+            require('../presentation/screens/Courses/CourseDetailScreen')
+              .default
+          }
+        />
+        <Stack.Screen
+          name="CoursePlaylist"
+          getComponent={() =>
+            require('../presentation/screens/Courses/CoursePlaylistScreen')
+              .default
+          }
+        />
+        <Stack.Screen
+          name="CourseVideo"
+          getComponent={() =>
+            require('../presentation/screens/Courses/CourseVideoScreen').default
+          }
+        />
+        <Stack.Screen
+          name="Settings"
+          getComponent={() =>
+            require('../presentation/screens/Settings/SettingsScreen').default
+          }
+        />
+        <Stack.Screen
+          name="ChangePassword"
+          getComponent={() =>
+            require('../presentation/screens/Settings/ChangePasswordScreen')
+              .default
+          }
+        />
+        <Stack.Screen
+          name="PrivacySettings"
+          getComponent={() =>
+            require('../presentation/screens/Settings/PrivacySettingsScreen')
+              .default
+          }
+        />
+        <Stack.Screen
+          name="PrivacyPolicy"
+          getComponent={() =>
+            require('../presentation/screens/Settings/PrivacyPolicyScreen')
+              .default
+          }
+        />
+        <Stack.Screen
+          name="NotificationPreferences"
+          getComponent={() =>
+            require('../presentation/screens/Settings/NotificationPreferencesScreen')
+              .default
+          }
+        />
+        <Stack.Screen
+          name="Support"
+          getComponent={() =>
+            require('../presentation/screens/Settings/SupportScreen').default
+          }
+        />
+        <Stack.Screen
+          name="Profile"
+          component={ProfileScreen}
+          initialParams={
+            needsProfileCompletion ? { requireCompletion: true } : undefined
+          }
+        />
+        <Stack.Screen
+          name="About"
+          getComponent={() =>
+            require('../presentation/screens/About/AboutScreen').default
+          }
+        />
+        <Stack.Screen
+          name="ChatForum"
+          getComponent={() =>
+            require('../presentation/screens/Forum/ChatForumScreen').default
+          }
+        />
+        <Stack.Screen
+          name="ChatForumChannel"
+          getComponent={() =>
+            require('../presentation/screens/Forum/ChatForumChannelScreen')
+              .default
+          }
+        />
+        <Stack.Screen
+          name="ChatbotScreen"
+          getComponent={() =>
+            require('../presentation/screens/Chatbot/ChatbotScreen').default
+          }
+        />
+        <Stack.Screen name="Unauthorized" component={UnauthorizedRoute} />
+        {showAdminStack ? (
+          <Stack.Screen
+            name="AdminStack"
+            getComponent={() => require('./AdminStack').default}
+          />
+        ) : null}
       </Stack.Navigator>
     </HomeFeedProvider>
   );

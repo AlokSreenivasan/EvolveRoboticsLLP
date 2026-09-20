@@ -23,10 +23,17 @@ import {
   shouldApplyTrackAwareSchoolAudienceUpdate,
 } from './schoolAudienceFirestore';
 import { isCourseTrack } from '../../store/content/types/courses.types';
-import { parseStoredEventYear } from '../../utils/upcomingEventDate';
+import {
+  compareUpcomingEventsByDate,
+  parseStoredEventYear,
+} from '../../utils/upcomingEventDate';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { APP_CONTENT_DOCS, FIRESTORE_COLLECTIONS } from './constants';
-import { buildSortedContentListQuery } from './contentListQuery';
+import type { ContentListPageMeta } from './contentListQuery';
+import {
+  fetchSortedContentListPage,
+  subscribeSortedContentList,
+} from './contentListSubscribe';
 import {
   collection,
   db,
@@ -108,7 +115,7 @@ function mapEvent(id: string, data: UpcomingEventDocument): UpcomingEvent {
 }
 
 function sortEvents(events: UpcomingEvent[]): UpcomingEvent[] {
-  return [...events].sort((a, b) => a.sortOrder - b.sortOrder);
+  return [...events].sort(compareUpcomingEventsByDate);
 }
 
 export function subscribeUpcomingEventsSection(
@@ -125,22 +132,35 @@ export function subscribeUpcomingEventsSection(
   );
 }
 
+function mapEventsSnapshot(
+  snapshot: { docs: Array<{ id: string; data: () => unknown }> },
+  options?: ContentSubscribeOptions,
+): UpcomingEvent[] {
+  const events = snapshot.docs.map(eventDoc =>
+    mapEvent(eventDoc.id, eventDoc.data() as UpcomingEventDocument),
+  );
+  return sortEvents(applyLearnerContentFilters(events, options));
+}
+
 export function subscribeUpcomingEvents(
-  listener: (events: UpcomingEvent[]) => void,
+  listener: (events: UpcomingEvent[], meta?: ContentListPageMeta) => void,
   options?: ContentSubscribeOptions,
   onError?: (error: unknown) => void,
 ): () => void {
-  const eventsQuery = buildSortedContentListQuery(eventsCollection(), options);
+  return subscribeSortedContentList(
+    eventsCollection(),
+    options,
+    snapshot => mapEventsSnapshot(snapshot, options),
+    listener,
+    onError,
+  );
+}
 
-  return onSnapshot(
-    eventsQuery,
-    snapshot => {
-      const events = snapshot.docs.map(eventDoc =>
-        mapEvent(eventDoc.id, eventDoc.data() as UpcomingEventDocument),
-      );
-      listener(sortEvents(applyLearnerContentFilters(events, options)));
-    },
-    error => onError?.(error),
+export function fetchUpcomingEventsPage(options?: ContentSubscribeOptions) {
+  return fetchSortedContentListPage(
+    eventsCollection(),
+    options,
+    snapshot => mapEventsSnapshot(snapshot, options),
   );
 }
 

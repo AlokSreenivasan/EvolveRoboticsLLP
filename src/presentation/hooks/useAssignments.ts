@@ -2,15 +2,14 @@ import { useEffect, useState } from 'react';
 
 import { DEFAULT_ASSIGNMENTS_SECTION } from '../../constants/assignmentsDefaults';
 import {
+  fetchAssignmentsPage,
   subscribeAssignments,
   subscribeAssignmentsSection,
 } from '../../services/firebase/assignmentsService';
-import type {
-  Assignment,
-  AssignmentsSection,
-} from '../../store/content/types/assignments.types';
+import type { AssignmentsSection } from '../../store/content/types/assignments.types';
 import { getErrorMessage } from '../../utils/firebase/errors';
 import { useContentSubscribeOptions } from './useContentSubscribeOptions';
+import { usePagedContentList } from './usePagedContentList';
 
 type UseAssignmentsOptions = {
   /** When true, includes draft (unpublished) assignments — for admin screens. */
@@ -23,58 +22,37 @@ export function useAssignments(options?: UseAssignmentsOptions) {
   const [section, setSection] = useState<AssignmentsSection>(
     DEFAULT_ASSIGNMENTS_SECTION,
   );
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [sectionLoading, setSectionLoading] = useState(true);
+  const [sectionError, setSectionError] = useState<string | null>(null);
+  const assignmentsPage = usePagedContentList({
+    subscribe: subscribeAssignments,
+    fetchPage: fetchAssignmentsPage,
+    options: subscribeOptions,
+  });
 
   useEffect(() => {
-    let sectionReady = false;
-    let assignmentsReady = false;
-
-    const markReady = () => {
-      if (sectionReady && assignmentsReady) {
-        setLoading(false);
-      }
-    };
-
     const unsubSection = subscribeAssignmentsSection(
       nextSection => {
         setSection(nextSection);
-        sectionReady = true;
-        markReady();
+        setSectionError(null);
+        setSectionLoading(false);
       },
       err => {
-        setError(getErrorMessage(err));
-        sectionReady = true;
-        markReady();
+        setSectionError(getErrorMessage(err));
+        setSectionLoading(false);
       },
     );
 
-    const unsubAssignments = subscribeAssignments(
-      nextAssignments => {
-        setAssignments(nextAssignments);
-        setError(null);
-        assignmentsReady = true;
-        markReady();
-      },
-      subscribeOptions,
-      err => {
-        setError(getErrorMessage(err));
-        assignmentsReady = true;
-        markReady();
-      },
-    );
-
-    return () => {
-      unsubSection();
-      unsubAssignments();
-    };
-  }, [subscribeOptions]);
+    return () => unsubSection();
+  }, []);
 
   return {
     section,
-    assignments,
-    loading,
-    error,
+    assignments: assignmentsPage.items,
+    loading: sectionLoading || assignmentsPage.loading,
+    error: sectionError ?? assignmentsPage.error,
+    loadMore: assignmentsPage.loadMore,
+    loadingMore: assignmentsPage.loadingMore,
+    hasMore: assignmentsPage.hasMore,
   };
 }

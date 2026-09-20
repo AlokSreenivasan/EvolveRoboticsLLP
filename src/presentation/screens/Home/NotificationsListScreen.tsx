@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import {
+  ActivityIndicator,
   FlatList,
   RefreshControl,
   StyleSheet,
@@ -38,6 +39,8 @@ function NotificationsListScreen() {
     markNotificationRead,
     loading,
     error,
+    loadMore,
+    loadingMore,
   } = useNotifications();
   const { refresh, refreshing } = useHomeFeedRefresh();
 
@@ -119,7 +122,14 @@ function NotificationsListScreen() {
         }
         ListFooterComponent={
           !loading ? (
-            <TactileButton
+            <>
+              {loadingMore ? (
+                <ActivityIndicator
+                  color={colors.primary}
+                  style={styles.loadingMore}
+                />
+              ) : null}
+              <TactileButton
               variant="secondary"
               style={styles.settingsLink}
               onPress={() => navigation.navigate('NotificationPreferences')}
@@ -129,8 +139,11 @@ function NotificationsListScreen() {
                 Notification settings
               </Text>
             </TactileButton>
+            </>
           ) : null
         }
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.4}
         ListEmptyComponent={listEmpty}
         ItemSeparatorComponent={ListSeparator}
         contentContainerStyle={styles.scrollContent}
@@ -204,6 +217,9 @@ const styles = StyleSheet.create({
   },
   separator: {
     height: 12,
+  },
+  loadingMore: {
+    paddingVertical: 12,
   },
   settingsLink: {
     gap: 8,

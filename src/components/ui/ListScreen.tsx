@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import {
+  ActivityIndicator,
   FlatList,
   StyleSheet,
   type ListRenderItem,
@@ -34,6 +35,8 @@ type ListScreenProps<T> = {
   listHeader?: React.ReactElement | null;
   contentContainerStyle?: StyleProp<ViewStyle>;
   extraData?: unknown;
+  onEndReached?: () => void;
+  loadingMore?: boolean;
 };
 
 /**
@@ -59,6 +62,8 @@ function ListScreen<T>({
   listHeader,
   contentContainerStyle,
   extraData,
+  onEndReached,
+  loadingMore = false,
 }: ListScreenProps<T>) {
   const listEmpty = useCallback(() => {
     if (loading) {
@@ -111,6 +116,16 @@ function ListScreen<T>({
         contentContainerStyle={[styles.listContent, contentContainerStyle]}
         showsVerticalScrollIndicator={false}
         extraData={extraData}
+        onEndReached={onEndReached}
+        onEndReachedThreshold={0.4}
+        ListFooterComponent={
+          loadingMore ? (
+            <ActivityIndicator
+              color={colors.primary}
+              style={styles.loadingMore}
+            />
+          ) : null
+        }
         {...VERTICAL_LIST_PERF}
       />
     </ScreenSafeArea>
@@ -127,6 +142,9 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 28,
     flexGrow: 1,
+  },
+  loadingMore: {
+    paddingVertical: 16,
   },
 });
 

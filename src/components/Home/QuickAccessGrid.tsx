@@ -72,7 +72,7 @@ function QuickAccessGrid() {
 
   const visibleItems = QUICK_ACCESS_ITEMS.filter(
     item => !QUICK_ACCESS_HIDDEN_IDS.has(item.id),
-  );
+  ).sort((a, b) => a.label.localeCompare(b.label));
   const itemWidth: DimensionValue = `${100 / visibleItems.length}%`;
 
   return (

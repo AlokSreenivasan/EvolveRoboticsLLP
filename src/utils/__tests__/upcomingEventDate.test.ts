@@ -1,6 +1,7 @@
 import {
   EVENT_YEAR_MAX,
   clampEventPickerDate,
+  compareUpcomingEventsByDate,
   computeDaysLeftLabel,
   formatEventDateParts,
   formatMonthDayStrings,
@@ -66,6 +67,21 @@ describe('upcomingEventDate', () => {
       day: '25',
       year: 2028,
     });
+  });
+
+  it('sorts events by resolved calendar date', () => {
+    const later = { id: 'later', month: 'JUL', day: '10', year: 2026, sortOrder: 0 };
+    const sooner = { id: 'sooner', month: 'JUN', day: '8', year: 2026, sortOrder: 9 };
+    const undated = { id: 'undated', month: '', day: '', year: null, sortOrder: 1 };
+
+    expect(compareUpcomingEventsByDate(sooner, later, fixedNow)).toBeLessThan(0);
+    expect(compareUpcomingEventsByDate(later, sooner, fixedNow)).toBeGreaterThan(0);
+    expect(compareUpcomingEventsByDate(undated, sooner, fixedNow)).toBeGreaterThan(0);
+    expect(
+      [later, undated, sooner]
+        .sort((a, b) => compareUpcomingEventsByDate(a, b, fixedNow))
+        .map(event => event.id),
+    ).toEqual(['sooner', 'later', 'undated']);
   });
 
   it('clamps picker dates to today through 2030', () => {

@@ -57,13 +57,6 @@ export const QUICK_ACCESS_HIDDEN_IDS = new Set([
 
 export const QUICK_ACCESS_ITEMS: QuickAccessItem[] = [
   {
-    id: 'live',
-    label: 'Live Classes',
-    iconName: 'play',
-    iconColor: '#FF9800',
-    backgroundColor: '#FFF3E0',
-  },
-  {
     id: 'assignments',
     label: 'Assignments',
     iconName: 'clipboard',
@@ -71,11 +64,32 @@ export const QUICK_ACCESS_ITEMS: QuickAccessItem[] = [
     backgroundColor: '#E8F5E9',
   },
   {
+    id: 'chat-forum',
+    label: 'Chat Forum',
+    iconName: 'chat-forum',
+    iconColor: '#00ACC1',
+    backgroundColor: '#E0F7FA',
+  },
+  {
     id: 'exams',
     label: 'Exams',
     iconName: 'file',
     iconColor: '#F44336',
     backgroundColor: '#FFEBEE',
+  },
+  {
+    id: 'live',
+    label: 'Live Classes',
+    iconName: 'play',
+    iconColor: '#FF9800',
+    backgroundColor: '#FFF3E0',
+  },
+  {
+    id: 'more',
+    label: 'More',
+    iconName: 'grid',
+    iconColor: '#6B7280',
+    backgroundColor: '#F3F4F6',
   },
   {
     id: 'quiz-competition',
@@ -90,20 +104,6 @@ export const QUICK_ACCESS_ITEMS: QuickAccessItem[] = [
     iconName: 'folder',
     iconColor: colors.primaryDark,
     backgroundColor: colors.primaryLight,
-  },
-  {
-    id: 'chat-forum',
-    label: 'Chat Forum',
-    iconName: 'chat-forum',
-    iconColor: '#00ACC1',
-    backgroundColor: '#E0F7FA',
-  },
-  {
-    id: 'more',
-    label: 'More',
-    iconName: 'grid',
-    iconColor: '#6B7280',
-    backgroundColor: '#F3F4F6',
   },
 ];
 

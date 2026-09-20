@@ -75,7 +75,7 @@ export function subscribeChatKeywords(
   const includeUnpublished = options?.includeUnpublished === true;
   const keywordsQuery = buildSortedContentListQuery(
     chatKeywordsCollection(),
-    options,
+    { ...options, unbounded: true },
   );
 
   return onSnapshot(

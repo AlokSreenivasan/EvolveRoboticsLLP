@@ -25,7 +25,11 @@ import {
 import { isCourseTrack } from '../../store/content/types/courses.types';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { APP_CONTENT_DOCS, FIRESTORE_COLLECTIONS } from './constants';
-import { buildSortedContentListQuery } from './contentListQuery';
+import type { ContentListPageMeta } from './contentListQuery';
+import {
+  fetchSortedContentListPage,
+  subscribeSortedContentList,
+} from './contentListSubscribe';
 import {
   collection,
   db,
@@ -122,27 +126,40 @@ export function subscribeAssignmentsSection(
   );
 }
 
+function mapAssignmentsSnapshot(
+  snapshot: { docs: Array<{ id: string; data: () => unknown }> },
+  options?: ContentSubscribeOptions,
+): Assignment[] {
+  const includeUnpublished = options?.includeUnpublished === true;
+  const items = snapshot.docs.map(itemDoc =>
+    mapAssignment(itemDoc.id, itemDoc.data() as AssignmentDocument),
+  );
+  let filtered = applyLearnerContentFilters(items, options);
+  if (!includeUnpublished) {
+    filtered = filtered.filter(item => item.pdfUrl.length > 0);
+  }
+  return sortAssignments(filtered);
+}
+
 export function subscribeAssignments(
-  listener: (assignments: Assignment[]) => void,
+  listener: (assignments: Assignment[], meta?: ContentListPageMeta) => void,
   options?: ContentSubscribeOptions,
   onError?: (error: unknown) => void,
 ): () => void {
-  const includeUnpublished = options?.includeUnpublished === true;
-  const assignmentsQuery = buildSortedContentListQuery(assignmentsCollection(), options);
+  return subscribeSortedContentList(
+    assignmentsCollection(),
+    options,
+    snapshot => mapAssignmentsSnapshot(snapshot, options),
+    listener,
+    onError,
+  );
+}
 
-  return onSnapshot(
-    assignmentsQuery,
-    snapshot => {
-      const items = snapshot.docs.map(itemDoc =>
-        mapAssignment(itemDoc.id, itemDoc.data() as AssignmentDocument),
-      );
-      let filtered = applyLearnerContentFilters(items, options);
-      if (!includeUnpublished) {
-        filtered = filtered.filter(item => item.pdfUrl.length > 0);
-      }
-      listener(sortAssignments(filtered));
-    },
-    error => onError?.(error),
+export function fetchAssignmentsPage(options?: ContentSubscribeOptions) {
+  return fetchSortedContentListPage(
+    assignmentsCollection(),
+    options,
+    snapshot => mapAssignmentsSnapshot(snapshot, options),
   );
 }
 

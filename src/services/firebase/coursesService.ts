@@ -19,7 +19,11 @@ import {
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { syncFirestoreAuthSession } from '../../utils/firebase/firestoreSessionSync';
 import { FIRESTORE_COLLECTIONS } from './constants';
-import { buildSortedContentListQuery } from './contentListQuery';
+import type { ContentListPageMeta } from './contentListQuery';
+import {
+  fetchSortedContentListPage,
+  subscribeSortedContentList,
+} from './contentListSubscribe';
 import {
   collection,
   db,
@@ -28,7 +32,6 @@ import {
   getDoc,
   getDocs,
   limit,
-  onSnapshot,
   orderBy,
   query,
   serverTimestamp,
@@ -76,26 +79,39 @@ function sortCourses(courses: Course[]): Course[] {
   return [...courses].sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
+function mapCoursesSnapshot(
+  snapshot: { docs: Array<{ id: string; data: () => unknown }> },
+  options?: ContentSubscribeOptions,
+): Course[] {
+  const courses = snapshot.docs.map(courseDoc =>
+    mapCourse(
+      courseDoc.id,
+      courseDoc.data() as Partial<CourseDocument> | undefined,
+    ),
+  );
+
+  return sortCourses(applyLearnerContentFilters(courses, options));
+}
+
 export function subscribeCourses(
-  listener: (courses: Course[]) => void,
+  listener: (courses: Course[], meta?: ContentListPageMeta) => void,
   options?: ContentSubscribeOptions,
   onError?: (error: unknown) => void,
 ): () => void {
-  const coursesQuery = buildSortedContentListQuery(coursesCollection(), options);
+  return subscribeSortedContentList(
+    coursesCollection(),
+    options,
+    snapshot => mapCoursesSnapshot(snapshot, options),
+    listener,
+    onError,
+  );
+}
 
-  return onSnapshot(
-    coursesQuery,
-    snapshot => {
-      const courses = snapshot.docs.map(courseDoc =>
-        mapCourse(
-          courseDoc.id,
-          courseDoc.data() as Partial<CourseDocument> | undefined,
-        ),
-      );
-
-      listener(sortCourses(applyLearnerContentFilters(courses, options)));
-    },
-    error => onError?.(error),
+export function fetchCoursesPage(options?: ContentSubscribeOptions) {
+  return fetchSortedContentListPage(
+    coursesCollection(),
+    options,
+    snapshot => mapCoursesSnapshot(snapshot, options),
   );
 }
 

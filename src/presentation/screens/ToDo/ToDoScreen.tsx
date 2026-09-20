@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import { AlertCircle, BookOpen, FolderKanban } from 'lucide-react-native';
 
@@ -37,10 +37,10 @@ function ToDoScreen() {
     route.params?.tab ?? 'learn',
   );
 
-  const { playlists, loading: playlistsLoading, error: playlistsError } =
+  const { playlists, loading: playlistsLoading, error: playlistsError, loadMore: loadMorePlaylists, loadingMore: playlistsLoadingMore } =
     useContinueLearningPlaylists();
   const { getVideosWatched } = useContinueLearningProgress();
-  const { projects, loading: projectsLoading, error: projectsError } =
+  const { projects, loading: projectsLoading, error: projectsError, loadMore: loadMoreProjects, loadingMore: projectsLoadingMore } =
     useProjects();
 
   useEffect(() => {
@@ -135,6 +135,13 @@ function ToDoScreen() {
           data={playlistsLoading || playlistsError ? [] : playlists}
           keyExtractor={item => item.id}
           renderItem={renderLearnItem}
+          onEndReached={loadMorePlaylists}
+          onEndReachedThreshold={0.4}
+          ListFooterComponent={
+            playlistsLoadingMore ? (
+              <ActivityIndicator color={colors.primary} />
+            ) : null
+          }
           {...listProps}
         />
       ) : (
@@ -142,6 +149,13 @@ function ToDoScreen() {
           data={projectsLoading || projectsError ? [] : projects}
           keyExtractor={item => item.id}
           renderItem={renderProjectItem}
+          onEndReached={loadMoreProjects}
+          onEndReachedThreshold={0.4}
+          ListFooterComponent={
+            projectsLoadingMore ? (
+              <ActivityIndicator color={colors.primary} />
+            ) : null
+          }
           {...listProps}
         />
       )}

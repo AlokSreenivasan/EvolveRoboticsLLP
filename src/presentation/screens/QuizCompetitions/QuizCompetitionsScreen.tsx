@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import {
+  ActivityIndicator,
   FlatList,
   StyleSheet,
   Text,
@@ -36,7 +37,7 @@ function formatMinutes(timerSeconds: number): number {
 
 function QuizCompetitionsScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
-  const { quizzes, loading, error } = useQuizCompetitions();
+  const { quizzes, loading, error, loadMore, loadingMore } = useQuizCompetitions();
   const {
     completedQuizIds,
     attemptByQuizId,
@@ -262,6 +263,13 @@ function QuizCompetitionsScreen() {
         keyExtractor={keyExtractor}
         renderItem={renderQuiz}
         ListEmptyComponent={listEmpty}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.4}
+        ListFooterComponent={
+          loadingMore ? (
+            <ActivityIndicator color={colors.primary} />
+          ) : null
+        }
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         {...VERTICAL_LIST_PERF}

@@ -43,24 +43,9 @@ type AdminMenuItem = {
 
 const MENU_ITEMS: AdminMenuItem[] = [
   {
-    key: 'ManageContinueLearningPlaylists',
-    title: 'Lessons',
-    icon: PlayCircle,
-  },
-  {
-    key: 'ManageImportantUpdates',
-    title: 'Important Updates',
-    icon: Megaphone,
-  },
-  {
-    key: 'ManageUpcomingEvents',
-    title: 'Upcoming Events',
-    icon: Calendar,
-  },
-  {
-    key: 'ManageResources',
-    title: 'Resources',
-    icon: FolderOpen,
+    key: 'ManageSchools',
+    title: 'Add Schools',
+    icon: School,
   },
   {
     key: 'ManageAssignments',
@@ -68,14 +53,24 @@ const MENU_ITEMS: AdminMenuItem[] = [
     icon: ClipboardList,
   },
   {
+    key: 'ManageChatKeywords',
+    title: 'Chat Keywords',
+    icon: MessageSquare,
+  },
+  {
     key: 'ManageExams',
     title: 'Exams',
     icon: ClipboardCheck,
   },
   {
-    key: 'ManageQuizCompetitions',
-    title: 'Quiz Competition',
-    icon: Trophy,
+    key: 'ManageImportantUpdates',
+    title: 'Important Updates',
+    icon: Megaphone,
+  },
+  {
+    key: 'ManageContinueLearningPlaylists',
+    title: 'Lessons',
+    icon: PlayCircle,
   },
   {
     key: 'ManageCourses',
@@ -83,9 +78,29 @@ const MENU_ITEMS: AdminMenuItem[] = [
     icon: BookOpen,
   },
   {
+    key: 'ManageUsers',
+    title: 'Manage Users',
+    icon: Users,
+  },
+  {
+    key: 'AdminNotifications',
+    title: 'Notifications',
+    icon: Bell,
+  },
+  {
     key: 'ManageProjects',
     title: 'Projects',
     icon: FolderKanban,
+  },
+  {
+    key: 'ManageQuizCompetitions',
+    title: 'Quiz Competition',
+    icon: Trophy,
+  },
+  {
+    key: 'ManageResources',
+    title: 'Resources',
+    icon: FolderOpen,
   },
   {
     key: 'ManageRoles',
@@ -94,24 +109,9 @@ const MENU_ITEMS: AdminMenuItem[] = [
     superadminOnly: true,
   },
   {
-    key: 'ManageUsers',
-    title: 'Manage Users',
-    icon: Users,
-  },
-  {
-    key: 'ManageSchools',
-    title: 'Add Schools',
-    icon: School,
-  },
-  {
-    key: 'ManageChatKeywords',
-    title: 'Chat Keywords',
-    icon: MessageSquare,
-  },
-  {
-    key: 'AdminNotifications',
-    title: 'Notifications',
-    icon: Bell,
+    key: 'ManageUpcomingEvents',
+    title: 'Upcoming Events',
+    icon: Calendar,
   },
 ];
 
@@ -123,7 +123,7 @@ function AdminDashboard() {
       return false;
     }
     return canAccessAdminDashboardScreen(role, item.key);
-  });
+  }).sort((a, b) => a.title.localeCompare(b.title));
 
   return (
     <AdminScreenLayout title="Admin">

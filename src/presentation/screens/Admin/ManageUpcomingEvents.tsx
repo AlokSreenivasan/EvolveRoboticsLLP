@@ -16,7 +16,6 @@ import { adminStyles } from '../../../components/Admin/adminStyles';
 import { getNotificationCategoryLabel } from '../../../constants/notificationCategories';
 import { useUpcomingEvents } from '../../hooks/useUpcomingEvents';
 import { useSchools } from '../../hooks/useSchools';
-import { useAdminReorder } from '../../hooks/admin/useAdminReorder';
 import { useAdminSchoolAudienceForm } from '../../hooks/admin/useAdminSchoolAudienceForm';
 import {
   buildContentVisibilityPayload,
@@ -31,7 +30,6 @@ import {
   createUpcomingEvent,
   deleteUpcomingEvent,
   ensureUpcomingEventsSectionDefaults,
-  moveUpcomingEvent,
   updateUpcomingEvent,
   updateUpcomingEventsSection,
 } from '../../../services/firebase/upcomingEventsService';
@@ -115,7 +113,6 @@ function ManageUpcomingEvents() {
   const { schools, loading: schoolsLoading, error: schoolsError } = useSchools();
   const audienceForm = useAdminSchoolAudienceForm();
   const { resetAudience } = audienceForm;
-  const { reorderingId, handleMove } = useAdminReorder(events, moveUpcomingEvent);
 
   useAdminSectionDefaults(ensureUpcomingEventsSectionDefaults);
 
@@ -427,7 +424,7 @@ function ManageUpcomingEvents() {
   );
 
   const renderEvent = useCallback(
-    ({ item: event, index }: { item: UpcomingEvent; index: number }) => {
+    ({ item: event }: { item: UpcomingEvent; index: number }) => {
       const isSending = sendingLiveId === event.id;
       return (
         <SurfaceCard elevation="elevated" style={adminStyles.listRowCard}>
@@ -472,11 +469,6 @@ function ManageUpcomingEvents() {
               ) : null}
             </View>
             <AdminListRowActions
-              index={index}
-              itemCount={events.length}
-              reordering={reorderingId === event.id}
-              onMoveUp={() => handleMove(event.id, 'up')}
-              onMoveDown={() => handleMove(event.id, 'down')}
               onEdit={() => openEditEditor(event)}
               onDelete={() => confirmDeleteEvent(event)}
             />
@@ -495,11 +487,8 @@ function ManageUpcomingEvents() {
       );
     },
     [
-      events.length,
-      handleMove,
       handleSendEventNotification,
       openEditEditor,
-      reorderingId,
       schools,
       sendingLiveId,
     ],
@@ -513,7 +502,7 @@ function ManageUpcomingEvents() {
         title="Upcoming Events"
         data={events}
         loading={loading}
-        reorderingId={reorderingId}
+        reorderingId={null}
         keyExtractor={keyExtractor}
         renderItem={renderEvent}
         listHeader={listHeader}

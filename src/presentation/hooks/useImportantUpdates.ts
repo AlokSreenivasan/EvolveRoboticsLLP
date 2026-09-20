@@ -88,6 +88,9 @@ export function useImportantUpdates(options?: UseImportantUpdatesOptions) {
       displayNotices: homeFeed.displayNotices,
       loading: homeFeed.loading,
       error: homeFeed.error,
+      loadMore: homeFeed.loadMore,
+      loadingMore: homeFeed.loadingMore,
+      hasMore: homeFeed.hasMore,
     };
   }
 
@@ -97,5 +100,8 @@ export function useImportantUpdates(options?: UseImportantUpdatesOptions) {
     displayNotices,
     loading,
     error,
+    loadMore: () => undefined,
+    loadingMore: false,
+    hasMore: false,
   };
 }

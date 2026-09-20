@@ -33,7 +33,14 @@ import {
 import { isCourseTrack } from '../../store/content/types/courses.types';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { FIRESTORE_COLLECTIONS } from './constants';
-import { buildSortedContentListQuery } from './contentListQuery';
+import {
+  buildSortedContentListQuery,
+  type ContentListPageMeta,
+} from './contentListQuery';
+import {
+  fetchSortedContentListPage,
+  subscribeSortedContentList,
+} from './contentListSubscribe';
 import {
   collection,
   db,
@@ -148,12 +155,37 @@ async function writeExamAnswerKey(
   });
 }
 
+function mapLearnerExamsSnapshot(
+  snapshot: { docs: Array<{ id: string; data: () => unknown }> },
+  options?: ContentSubscribeOptions,
+): Exam[] {
+  const items = snapshot.docs.map(examDoc =>
+    mapExam(examDoc.id, examDoc.data() as ExamDocument, null, false),
+  );
+  return sortExams(
+    applyLearnerContentFilters(items, options).filter(
+      item => item.questions.length > 0,
+    ),
+  );
+}
+
 export function subscribeExams(
-  listener: (exams: Exam[]) => void,
+  listener: (exams: Exam[], meta?: ContentListPageMeta) => void,
   options?: ContentSubscribeOptions,
   onError?: (error: unknown) => void,
 ): () => void {
   const includeUnpublished = options?.includeUnpublished === true;
+
+  if (!includeUnpublished) {
+    return subscribeSortedContentList(
+      examsCollection(),
+      options,
+      snapshot => mapLearnerExamsSnapshot(snapshot, options),
+      listener,
+      onError,
+    );
+  }
+
   const examsQuery = buildSortedContentListQuery(examsCollection(), options);
 
   return onSnapshot(
@@ -169,24 +201,22 @@ export function subscribeExams(
           mapExam(id, data, keys.get(id) ?? null, includeUnpublished),
         );
 
-        let filtered = applyLearnerContentFilters(items, options);
-        if (!includeUnpublished) {
-          filtered = filtered.filter(item => item.questions.length > 0);
-        }
-
-        listener(sortExams(filtered));
+        listener(sortExams(applyLearnerContentFilters(items, options)));
       };
-
-      if (!includeUnpublished) {
-        emit(new Map());
-        return;
-      }
 
       loadAnswerKeyMaps(docs.map(item => item.id))
         .then(emit)
         .catch(error => onError?.(error));
     },
     error => onError?.(error),
+  );
+}
+
+export function fetchExamsPage(options?: ContentSubscribeOptions) {
+  return fetchSortedContentListPage(
+    examsCollection(),
+    options,
+    snapshot => mapLearnerExamsSnapshot(snapshot, options),
   );
 }
 

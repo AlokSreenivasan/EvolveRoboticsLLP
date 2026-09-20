@@ -20,7 +20,7 @@ function CoursesScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const route = useRoute<RouteProp<RootStackParamList, 'Courses'>>();
   const trackFilter = route.params?.track;
-  const { courses, loading, error } = useCourses();
+  const { courses, loading, error, loadMore, loadingMore } = useCourses();
 
   const filteredCourses = useMemo(() => {
     if (!trackFilter) {
@@ -66,6 +66,8 @@ function CoursesScreen() {
       EmptyIcon={BookOpen}
       keyExtractor={keyExtractor}
       renderItem={renderCourse}
+      onEndReached={loadMore}
+      loadingMore={loadingMore}
     />
   );
 }

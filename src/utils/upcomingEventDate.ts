@@ -67,6 +67,59 @@ function normalizeEventDateOptions(
   return options ?? {};
 }
 
+export type UpcomingEventDateSortable = {
+  id?: string;
+  month: string;
+  day: string;
+  year?: number | null;
+  sortOrder?: number;
+};
+
+export function upcomingEventDateMs(
+  event: UpcomingEventDateSortable,
+  now?: Date,
+): number | null {
+  const resolved = resolveUpcomingEventDate(event.month, event.day, {
+    now,
+    year: event.year ?? undefined,
+  });
+  return resolved ? resolved.getTime() : null;
+}
+
+/** Soonest dated events first; undated last. Ties use sortOrder, then id. */
+export function compareUpcomingEventsByDate(
+  a: UpcomingEventDateSortable,
+  b: UpcomingEventDateSortable,
+  now?: Date,
+): number {
+  const aMs = upcomingEventDateMs(a, now);
+  const bMs = upcomingEventDateMs(b, now);
+  if (aMs == null && bMs == null) {
+    return compareUpcomingEventTieBreak(a, b);
+  }
+  if (aMs == null) {
+    return 1;
+  }
+  if (bMs == null) {
+    return -1;
+  }
+  if (aMs !== bMs) {
+    return aMs - bMs;
+  }
+  return compareUpcomingEventTieBreak(a, b);
+}
+
+function compareUpcomingEventTieBreak(
+  a: UpcomingEventDateSortable,
+  b: UpcomingEventDateSortable,
+): number {
+  const order = (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+  if (order !== 0) {
+    return order;
+  }
+  return (a.id ?? '').localeCompare(b.id ?? '');
+}
+
 /** Calendar date for month/day; uses stored year when set, else next occurrence on/after today. */
 export function resolveUpcomingEventDate(
   month: string,

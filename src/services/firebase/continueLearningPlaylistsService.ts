@@ -21,7 +21,11 @@ import {
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { syncFirestoreAuthSession } from '../../utils/firebase/firestoreSessionSync';
 import { FIRESTORE_COLLECTIONS } from './constants';
-import { buildSortedContentListQuery } from './contentListQuery';
+import type { ContentListPageMeta } from './contentListQuery';
+import {
+  fetchSortedContentListPage,
+  subscribeSortedContentList,
+} from './contentListSubscribe';
 import {
   collection,
   db,
@@ -29,7 +33,6 @@ import {
   doc,
   getDocs,
   limit,
-  onSnapshot,
   orderBy,
   query,
   serverTimestamp,
@@ -87,31 +90,44 @@ export type ContinueLearningPlaylistSubscribeOptions = ContentSubscribeOptions &
   viewerTrack?: CourseTrack;
 };
 
+function mapPlaylistsSnapshot(
+  snapshot: { docs: Array<{ id: string; data: () => unknown }> },
+  options?: ContinueLearningPlaylistSubscribeOptions,
+): ContinueLearningPlaylist[] {
+  const playlists = snapshot.docs.map(playlistDoc =>
+    mapPlaylist(
+      playlistDoc.id,
+      playlistDoc.data() as Partial<ContinueLearningPlaylistDocument> | undefined,
+    ),
+  );
+
+  return sortPlaylists(applyLearnerContentFilters(playlists, options));
+}
+
 export function subscribeContinueLearningPlaylists(
-  listener: (playlists: ContinueLearningPlaylist[]) => void,
+  listener: (
+    playlists: ContinueLearningPlaylist[],
+    meta?: ContentListPageMeta,
+  ) => void,
   options?: ContinueLearningPlaylistSubscribeOptions,
   onError?: (error: unknown) => void,
 ): () => void {
-  const playlistsQuery = buildSortedContentListQuery(
+  return subscribeSortedContentList(
     playlistsCollection(),
     options,
+    snapshot => mapPlaylistsSnapshot(snapshot, options),
+    listener,
+    onError,
   );
+}
 
-  return onSnapshot(
-    playlistsQuery,
-    snapshot => {
-      const playlists = snapshot.docs.map(playlistDoc =>
-        mapPlaylist(
-          playlistDoc.id,
-          playlistDoc.data() as Partial<ContinueLearningPlaylistDocument> | undefined,
-        ),
-      );
-
-      let filtered = applyLearnerContentFilters(playlists, options);
-
-      listener(sortPlaylists(filtered));
-    },
-    error => onError?.(error),
+export function fetchContinueLearningPlaylistsPage(
+  options?: ContinueLearningPlaylistSubscribeOptions,
+) {
+  return fetchSortedContentListPage(
+    playlistsCollection(),
+    options,
+    snapshot => mapPlaylistsSnapshot(snapshot, options),
   );
 }
 

@@ -55,6 +55,9 @@ export function useNotifications(options?: UseNotificationsOptions) {
       markNotificationRead: homeFeed.markNotificationRead,
       loading: homeFeed.loading,
       error: homeFeed.error,
+      loadMore: homeFeed.loadMore,
+      loadingMore: homeFeed.loadingMore,
+      hasMore: homeFeed.hasMore,
     };
   }
 
@@ -65,5 +68,8 @@ export function useNotifications(options?: UseNotificationsOptions) {
     markNotificationRead: async () => undefined,
     loading,
     error,
+    loadMore: () => undefined,
+    loadingMore: false,
+    hasMore: false,
   };
 }

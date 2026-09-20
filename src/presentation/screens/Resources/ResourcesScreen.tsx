@@ -10,7 +10,7 @@ import { useResources } from '../../hooks/useResources';
 
 function ResourcesScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
-  const { section, notes, loading, error } = useResources();
+  const { section, notes, loading, error, loadMore, loadingMore } = useResources();
 
   const noteCtaLabel = section.actionLabel?.trim() || undefined;
 
@@ -46,6 +46,8 @@ function ResourcesScreen() {
       EmptyIcon={FileText}
       keyExtractor={keyExtractor}
       renderItem={renderNote}
+      onEndReached={loadMore}
+      loadingMore={loadingMore}
     />
   );
 }

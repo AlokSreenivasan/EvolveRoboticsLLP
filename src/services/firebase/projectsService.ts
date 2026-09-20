@@ -26,7 +26,11 @@ import {
 import { isCourseTrack } from '../../store/content/types/courses.types';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { APP_CONTENT_DOCS, FIRESTORE_COLLECTIONS } from './constants';
-import { buildSortedContentListQuery } from './contentListQuery';
+import type { ContentListPageMeta } from './contentListQuery';
+import {
+  fetchSortedContentListPage,
+  subscribeSortedContentList,
+} from './contentListSubscribe';
 import {
   collection,
   db,
@@ -143,22 +147,35 @@ export function subscribeProjectsSection(
   );
 }
 
+function mapProjectsSnapshot(
+  snapshot: { docs: Array<{ id: string; data: () => unknown }> },
+  options?: ContentSubscribeOptions,
+): Project[] {
+  const projects = snapshot.docs.map(projectDoc =>
+    mapProject(projectDoc.id, projectDoc.data() as ProjectDocument),
+  );
+  return sortProjects(applyLearnerContentFilters(projects, options));
+}
+
 export function subscribeProjects(
-  listener: (projects: Project[]) => void,
+  listener: (projects: Project[], meta?: ContentListPageMeta) => void,
   options?: ContentSubscribeOptions,
   onError?: (error: unknown) => void,
 ): () => void {
-  const projectsQuery = buildSortedContentListQuery(projectsCollection(), options);
+  return subscribeSortedContentList(
+    projectsCollection(),
+    options,
+    snapshot => mapProjectsSnapshot(snapshot, options),
+    listener,
+    onError,
+  );
+}
 
-  return onSnapshot(
-    projectsQuery,
-    snapshot => {
-      const projects = snapshot.docs.map(projectDoc =>
-        mapProject(projectDoc.id, projectDoc.data() as ProjectDocument),
-      );
-      listener(sortProjects(applyLearnerContentFilters(projects, options)));
-    },
-    error => onError?.(error),
+export function fetchProjectsPage(options?: ContentSubscribeOptions) {
+  return fetchSortedContentListPage(
+    projectsCollection(),
+    options,
+    snapshot => mapProjectsSnapshot(snapshot, options),
   );
 }
 

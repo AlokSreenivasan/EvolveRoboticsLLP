@@ -36,7 +36,14 @@ import { isCourseTrack } from '../../store/content/types/courses.types';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { XP_PER_QUIZ } from '../../utils/gamification/computeUserStreakStats';
 import { FIRESTORE_COLLECTIONS } from './constants';
-import { buildSortedContentListQuery } from './contentListQuery';
+import {
+  buildSortedContentListQuery,
+  type ContentListPageMeta,
+} from './contentListQuery';
+import {
+  fetchSortedContentListPage,
+  subscribeSortedContentList,
+} from './contentListSubscribe';
 import {
   collection,
   db,
@@ -206,12 +213,45 @@ async function writeQuizAnswerKey(
   });
 }
 
+function mapLearnerQuizzesSnapshot(
+  snapshot: { docs: Array<{ id: string; data: () => unknown }> },
+  options?: ContentSubscribeOptions,
+): QuizCompetition[] {
+  const items = snapshot.docs.map(quizDoc =>
+    mapQuizCompetition(
+      quizDoc.id,
+      quizDoc.data() as QuizCompetitionDocument,
+      null,
+      false,
+    ),
+  );
+  return sortQuizCompetitions(
+    applyLearnerContentFilters(items, options).filter(
+      item => item.questions.length > 0,
+    ),
+  );
+}
+
 export function subscribeQuizCompetitions(
-  listener: (quizzes: QuizCompetition[]) => void,
+  listener: (
+    quizzes: QuizCompetition[],
+    meta?: ContentListPageMeta,
+  ) => void,
   options?: ContentSubscribeOptions,
   onError?: (error: unknown) => void,
 ): () => void {
   const includeUnpublished = options?.includeUnpublished === true;
+
+  if (!includeUnpublished) {
+    return subscribeSortedContentList(
+      quizCompetitionsCollection(),
+      options,
+      snapshot => mapLearnerQuizzesSnapshot(snapshot, options),
+      listener,
+      onError,
+    );
+  }
+
   const quizzesQuery = buildSortedContentListQuery(
     quizCompetitionsCollection(),
     options,
@@ -230,24 +270,22 @@ export function subscribeQuizCompetitions(
           mapQuizCompetition(id, data, keys.get(id) ?? null, includeUnpublished),
         );
 
-        let filtered = applyLearnerContentFilters(items, options);
-        if (!includeUnpublished) {
-          filtered = filtered.filter(item => item.questions.length > 0);
-        }
-
-        listener(sortQuizCompetitions(filtered));
+        listener(sortQuizCompetitions(applyLearnerContentFilters(items, options)));
       };
-
-      if (!includeUnpublished) {
-        emit(new Map());
-        return;
-      }
 
       loadAnswerKeyMaps(docs.map(item => item.id))
         .then(emit)
         .catch(error => onError?.(error));
     },
     error => onError?.(error),
+  );
+}
+
+export function fetchQuizCompetitionsPage(options?: ContentSubscribeOptions) {
+  return fetchSortedContentListPage(
+    quizCompetitionsCollection(),
+    options,
+    snapshot => mapLearnerQuizzesSnapshot(snapshot, options),
   );
 }
 

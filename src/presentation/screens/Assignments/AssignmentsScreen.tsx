@@ -10,7 +10,8 @@ import { useAssignments } from '../../hooks/useAssignments';
 
 function AssignmentsScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
-  const { section, assignments, loading, error } = useAssignments();
+  const { section, assignments, loading, error, loadMore, loadingMore } =
+    useAssignments();
 
   const renderAssignment = useCallback(
     ({ item, index }: { item: Assignment; index: number }) => (
@@ -50,6 +51,8 @@ function AssignmentsScreen() {
       EmptyIcon={ClipboardList}
       keyExtractor={keyExtractor}
       renderItem={renderAssignment}
+      onEndReached={loadMore}
+      loadingMore={loadingMore}
     />
   );
 }

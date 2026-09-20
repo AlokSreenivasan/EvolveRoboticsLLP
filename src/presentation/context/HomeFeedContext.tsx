@@ -6,13 +6,16 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
 
 import { DEFAULT_IMPORTANT_UPDATES_SECTION } from '../../constants/importantUpdatesDefaults';
 import { DEFAULT_UPCOMING_EVENTS_SECTION } from '../../constants/upcomingEventsDefaults';
-import { subscribeContinueLearningPlaylists } from '../../services/firebase/continueLearningPlaylistsService';
+import {
+  fetchContinueLearningPlaylistsPage,
+  subscribeContinueLearningPlaylists,
+} from '../../services/firebase/continueLearningPlaylistsService';
 import { subscribeContinueLearningProgress } from '../../services/firebase/continueLearningProgressService';
 import {
+  fetchImportantUpdatesPage,
   subscribeImportantUpdates,
   subscribeImportantUpdatesSection,
 } from '../../services/firebase/importantUpdatesService';
@@ -20,11 +23,23 @@ import {
   markNotificationAsRead,
   subscribeNotificationReads,
 } from '../../services/firebase/notificationReadsService';
-import { subscribeNotifications } from '../../services/firebase/notificationsService';
 import {
+  fetchNotificationsPage,
+  subscribeNotifications,
+} from '../../services/firebase/notificationsService';
+import {
+  fetchUpcomingEventsPage,
   subscribeUpcomingEvents,
   subscribeUpcomingEventsSection,
 } from '../../services/firebase/upcomingEventsService';
+import {
+  fetchQuizCompetitionsPage,
+  subscribeQuizCompetitions,
+} from '../../services/firebase/quizCompetitionsService';
+import {
+  subscribeQuizAttempts,
+  type QuizAttempt,
+} from '../../services/firebase/quizAttemptsService';
 import type { NotificationRead } from '../../store/content/types/notificationReads.types';
 import type {
   AppNotification,
@@ -40,11 +55,19 @@ import type {
   UpcomingEvent,
   UpcomingEventsSection,
 } from '../../store/content/types/upcomingEvents.types';
+import type { QuizCompetition } from '../../store/content/types/quizCompetitions.types';
 import { getErrorMessage } from '../../utils/firebase/errors';
 import type { ContentSubscribeOptions } from '../../store/content/types/schoolAudience.types';
+import { usePagedContentList } from '../hooks/usePagedContentList';
 import { useAuth } from './AuthContext';
 
-export type HomeFeedContinueLearning = {
+export type HomeFeedPaged = {
+  loadMore: () => void;
+  loadingMore: boolean;
+  hasMore: boolean;
+};
+
+export type HomeFeedContinueLearning = HomeFeedPaged & {
   playlists: ContinueLearningPlaylist[];
   loading: boolean;
   error: string | null;
@@ -58,7 +81,7 @@ export type HomeFeedProgress = {
   error: string | null;
 };
 
-export type HomeFeedImportantUpdates = {
+export type HomeFeedImportantUpdates = HomeFeedPaged & {
   section: ImportantUpdatesSection;
   notices: ImportantUpdateNotice[];
   displayNotices: ImportantUpdateNotice[];
@@ -66,7 +89,7 @@ export type HomeFeedImportantUpdates = {
   error: string | null;
 };
 
-export type HomeFeedUpcomingEvents = {
+export type HomeFeedUpcomingEvents = HomeFeedPaged & {
   section: UpcomingEventsSection;
   events: UpcomingEvent[];
   displayEvents: UpcomingEvent[];
@@ -74,11 +97,23 @@ export type HomeFeedUpcomingEvents = {
   error: string | null;
 };
 
-export type HomeFeedNotifications = {
+export type HomeFeedNotifications = HomeFeedPaged & {
   notifications: AppNotification[];
   displayNotifications: LearnerNotification[];
   unreadCount: number;
   markNotificationRead: (notificationId: string) => Promise<void>;
+  loading: boolean;
+  error: string | null;
+};
+
+export type HomeFeedQuizCompetitions = HomeFeedPaged & {
+  quizzes: QuizCompetition[];
+  loading: boolean;
+  error: string | null;
+};
+
+export type HomeFeedQuizAttempts = {
+  attempts: QuizAttempt[];
   loading: boolean;
   error: string | null;
 };
@@ -89,17 +124,22 @@ export type HomeFeedContextValue = {
   importantUpdates: HomeFeedImportantUpdates;
   upcomingEvents: HomeFeedUpcomingEvents;
   notifications: HomeFeedNotifications;
+  quizCompetitions: HomeFeedQuizCompetitions;
+  quizAttempts: HomeFeedQuizAttempts;
   refreshing: boolean;
   refresh: () => void;
 };
 
 const HomeFeedContext = createContext<HomeFeedContextValue | null>(null);
 
-type HomeFeedFocusRegistrar = () => () => void;
-
-const HomeFeedFocusContext = createContext<HomeFeedFocusRegistrar | null>(null);
+const NOOP_PAGED: HomeFeedPaged = {
+  loadMore: () => undefined,
+  loadingMore: false,
+  hasMore: false,
+};
 
 const EMPTY_CONTINUE_LEARNING: HomeFeedContinueLearning = {
+  ...NOOP_PAGED,
   playlists: [],
   loading: true,
   error: null,
@@ -114,6 +154,7 @@ const EMPTY_PROGRESS: HomeFeedProgress = {
 };
 
 const EMPTY_IMPORTANT_UPDATES: HomeFeedImportantUpdates = {
+  ...NOOP_PAGED,
   section: DEFAULT_IMPORTANT_UPDATES_SECTION,
   notices: [],
   displayNotices: [],
@@ -122,6 +163,7 @@ const EMPTY_IMPORTANT_UPDATES: HomeFeedImportantUpdates = {
 };
 
 const EMPTY_UPCOMING_EVENTS: HomeFeedUpcomingEvents = {
+  ...NOOP_PAGED,
   section: DEFAULT_UPCOMING_EVENTS_SECTION,
   events: [],
   displayEvents: [],
@@ -130,10 +172,24 @@ const EMPTY_UPCOMING_EVENTS: HomeFeedUpcomingEvents = {
 };
 
 const EMPTY_NOTIFICATIONS: HomeFeedNotifications = {
+  ...NOOP_PAGED,
   notifications: [],
   displayNotifications: [],
   unreadCount: 0,
   markNotificationRead: async () => undefined,
+  loading: true,
+  error: null,
+};
+
+const EMPTY_QUIZ_COMPETITIONS: HomeFeedQuizCompetitions = {
+  ...NOOP_PAGED,
+  quizzes: [],
+  loading: true,
+  error: null,
+};
+
+const EMPTY_QUIZ_ATTEMPTS: HomeFeedQuizAttempts = {
+  attempts: [],
   loading: true,
   error: null,
 };
@@ -143,8 +199,8 @@ type HomeFeedProviderProps = {
 };
 
 /**
- * Owns published home-feed Firestore listeners once for Home and
- * ContinueLearningList. Subscribes only while those routes are focused.
+ * Owns published home-feed Firestore listeners once for the signed-in
+ * MainStack session (kept warm after leaving Home).
  */
 function buildHomeFeedSubscribeOptions(
   isAdmin: boolean,
@@ -184,18 +240,65 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
       ),
     [isAdmin, profile?.grade, profile?.schoolId, profile?.track, roleLoading],
   );
-  const playlistSubscribeOptions = contentSubscribeOptions;
-  const [focusCount, setFocusCount] = useState(0);
-  const isActive = focusCount > 0;
+  const signedIn = Boolean(user);
 
-  const registerHomeFeedFocus = useCallback(() => {
-    setFocusCount(count => count + 1);
-    return () => setFocusCount(count => Math.max(0, count - 1));
-  }, []);
+  const [refreshNonce, setRefreshNonce] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const [playlists, setPlaylists] = useState<ContinueLearningPlaylist[]>([]);
-  const [playlistsLoading, setPlaylistsLoading] = useState(true);
-  const [playlistsError, setPlaylistsError] = useState<string | null>(null);
+  const eventsSubscribeOptions = useMemo(
+    () => ({ ...contentSubscribeOptions, unbounded: true }),
+    [contentSubscribeOptions],
+  );
+  const playlistsPage = usePagedContentList({
+    subscribe: subscribeContinueLearningPlaylists,
+    fetchPage: fetchContinueLearningPlaylistsPage,
+    options: contentSubscribeOptions,
+    enabled: signedIn,
+    resetKey: refreshNonce,
+  });
+  const noticesPage = usePagedContentList({
+    subscribe: subscribeImportantUpdates,
+    fetchPage: fetchImportantUpdatesPage,
+    options: contentSubscribeOptions,
+    enabled: signedIn,
+    resetKey: refreshNonce,
+  });
+  const eventsPage = usePagedContentList({
+    subscribe: subscribeUpcomingEvents,
+    fetchPage: fetchUpcomingEventsPage,
+    options: eventsSubscribeOptions,
+    enabled: signedIn,
+    resetKey: refreshNonce,
+  });
+  const notificationsPage = usePagedContentList({
+    subscribe: subscribeNotifications,
+    fetchPage: fetchNotificationsPage,
+    options: contentSubscribeOptions,
+    enabled: signedIn,
+    resetKey: refreshNonce,
+  });
+  const quizzesPage = usePagedContentList({
+    subscribe: subscribeQuizCompetitions,
+    fetchPage: fetchQuizCompetitionsPage,
+    options: contentSubscribeOptions,
+    enabled: signedIn,
+    resetKey: refreshNonce,
+  });
+
+  const [importantSection, setImportantSection] =
+    useState<ImportantUpdatesSection>(DEFAULT_IMPORTANT_UPDATES_SECTION);
+  const [importantSectionLoading, setImportantSectionLoading] = useState(true);
+  const [importantSectionError, setImportantSectionError] = useState<
+    string | null
+  >(null);
+
+  const [eventsSection, setEventsSection] = useState<UpcomingEventsSection>(
+    DEFAULT_UPCOMING_EVENTS_SECTION,
+  );
+  const [eventsSectionLoading, setEventsSectionLoading] = useState(true);
+  const [eventsSectionError, setEventsSectionError] = useState<string | null>(
+    null,
+  );
 
   const [progressByPlaylistId, setProgressByPlaylistId] = useState<
     Record<string, ContinueLearningProgress>
@@ -203,24 +306,6 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
   const [progressLoading, setProgressLoading] = useState(true);
   const [progressError, setProgressError] = useState<string | null>(null);
 
-  const [importantSection, setImportantSection] =
-    useState<ImportantUpdatesSection>(DEFAULT_IMPORTANT_UPDATES_SECTION);
-  const [notices, setNotices] = useState<ImportantUpdateNotice[]>([]);
-  const [importantLoading, setImportantLoading] = useState(true);
-  const [importantError, setImportantError] = useState<string | null>(null);
-
-  const [eventsSection, setEventsSection] = useState<UpcomingEventsSection>(
-    DEFAULT_UPCOMING_EVENTS_SECTION,
-  );
-  const [events, setEvents] = useState<UpcomingEvent[]>([]);
-  const [eventsLoading, setEventsLoading] = useState(true);
-  const [eventsError, setEventsError] = useState<string | null>(null);
-
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const [notificationsLoading, setNotificationsLoading] = useState(true);
-  const [notificationsError, setNotificationsError] = useState<string | null>(
-    null,
-  );
   const [readByNotificationId, setReadByNotificationId] = useState<
     Record<string, NotificationRead>
   >({});
@@ -229,170 +314,76 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
     Record<string, true>
   >({});
 
-  const [refreshNonce, setRefreshNonce] = useState(0);
-  const [refreshing, setRefreshing] = useState(false);
+  const [attempts, setAttempts] = useState<QuizAttempt[]>([]);
+  const [attemptsLoading, setAttemptsLoading] = useState(true);
+  const [attemptsError, setAttemptsError] = useState<string | null>(null);
 
   const refresh = useCallback(() => {
-    if (!isActive || refreshing) {
+    if (refreshing) {
       return;
     }
     setRefreshing(true);
     setRefreshNonce(n => n + 1);
-  }, [isActive, refreshing]);
+  }, [refreshing]);
 
   useEffect(() => {
-    if (!isActive) {
+    if (!signedIn) {
+      setImportantSection(DEFAULT_IMPORTANT_UPDATES_SECTION);
+      setImportantSectionLoading(false);
+      setImportantSectionError(null);
+      setEventsSection(DEFAULT_UPCOMING_EVENTS_SECTION);
+      setEventsSectionLoading(false);
+      setEventsSectionError(null);
       return;
     }
 
-    if (!user) {
-      setPlaylists([]);
-      setPlaylistsLoading(false);
-      setPlaylistsError(null);
-      return;
-    }
-
-    let importantSectionReady = false;
-    let importantNoticesReady = false;
-    let eventsSectionReady = false;
-    let eventsReady = false;
-
-    // Keep prior data visible on Home blur→focus / pull-to-refresh. Flipping
-    // loading back to true collapses sections and resets ScrollView offset.
-    setPlaylistsError(null);
-    setImportantError(null);
-    setEventsError(null);
-    setNotificationsError(null);
-
-    const unsubPlaylists = subscribeContinueLearningPlaylists(
-      next => {
-        setPlaylists(next);
-        setPlaylistsError(null);
-        setPlaylistsLoading(false);
-      },
-      playlistSubscribeOptions,
-      err => {
-        setPlaylistsError(getErrorMessage(err));
-        setPlaylistsLoading(false);
-      },
-    );
-
-    const markImportantReady = () => {
-      if (importantSectionReady && importantNoticesReady) {
-        setImportantLoading(false);
-      }
-    };
+    setImportantSectionError(null);
+    setEventsSectionError(null);
 
     const unsubImportantSection = subscribeImportantUpdatesSection(
       next => {
         setImportantSection(next);
-        importantSectionReady = true;
-        markImportantReady();
+        setImportantSectionLoading(false);
       },
       err => {
-        setImportantError(getErrorMessage(err));
-        importantSectionReady = true;
-        markImportantReady();
+        setImportantSectionError(getErrorMessage(err));
+        setImportantSectionLoading(false);
       },
     );
-
-    const unsubImportantNotices = subscribeImportantUpdates(
-      next => {
-        setNotices(next);
-        setImportantError(null);
-        importantNoticesReady = true;
-        markImportantReady();
-      },
-      contentSubscribeOptions,
-      err => {
-        setImportantError(getErrorMessage(err));
-        importantNoticesReady = true;
-        markImportantReady();
-      },
-    );
-
-    const markEventsReady = () => {
-      if (eventsSectionReady && eventsReady) {
-        setEventsLoading(false);
-      }
-    };
 
     const unsubEventsSection = subscribeUpcomingEventsSection(
       next => {
         setEventsSection(next);
-        eventsSectionReady = true;
-        markEventsReady();
+        setEventsSectionLoading(false);
       },
       err => {
-        setEventsError(getErrorMessage(err));
-        eventsSectionReady = true;
-        markEventsReady();
-      },
-    );
-
-    const unsubEvents = subscribeUpcomingEvents(
-      next => {
-        setEvents(next);
-        setEventsError(null);
-        eventsReady = true;
-        markEventsReady();
-      },
-      contentSubscribeOptions,
-      err => {
-        setEventsError(getErrorMessage(err));
-        eventsReady = true;
-        markEventsReady();
-      },
-    );
-
-    const unsubNotifications = subscribeNotifications(
-      next => {
-        setNotifications(next);
-        setNotificationsError(null);
-        setNotificationsLoading(false);
-      },
-      contentSubscribeOptions,
-      err => {
-        setNotificationsError(getErrorMessage(err));
-        setNotificationsLoading(false);
+        setEventsSectionError(getErrorMessage(err));
+        setEventsSectionLoading(false);
       },
     );
 
     return () => {
-      unsubPlaylists();
       unsubImportantSection();
-      unsubImportantNotices();
       unsubEventsSection();
-      unsubEvents();
-      unsubNotifications();
     };
-  }, [
-    contentSubscribeOptions,
-    isActive,
-    playlistSubscribeOptions,
-    refreshNonce,
-    user,
-  ]);
+  }, [refreshNonce, signedIn]);
 
   useEffect(() => {
-    if (!isActive) {
-      return;
-    }
-
-    if (!user) {
+    if (!signedIn) {
       setProgressByPlaylistId({});
       setProgressLoading(false);
       setProgressError(null);
       setReadByNotificationId({});
       setReadsLoading(false);
       setOptimisticReadIds({});
+      setAttempts([]);
+      setAttemptsLoading(false);
+      setAttemptsError(null);
       return;
     }
 
-    // Do not set progressLoading true on re-subscribe — Continue Learning
-    // would unmount and jump the Home ScrollView to the top.
     setProgressError(null);
-    const unsub = subscribeContinueLearningProgress(
+    const unsubProgress = subscribeContinueLearningProgress(
       next => {
         setProgressByPlaylistId(next);
         setProgressError(null);
@@ -404,22 +395,7 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
       },
     );
 
-    return () => unsub();
-  }, [isActive, refreshNonce, user]);
-
-  useEffect(() => {
-    if (!isActive) {
-      return;
-    }
-
-    if (!user) {
-      setReadByNotificationId({});
-      setReadsLoading(false);
-      setOptimisticReadIds({});
-      return;
-    }
-
-    const unsub = subscribeNotificationReads(
+    const unsubReads = subscribeNotificationReads(
       next => {
         setReadByNotificationId(next);
         setOptimisticReadIds(prev => {
@@ -438,11 +414,32 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
       },
     );
 
-    return () => unsub();
-  }, [isActive, refreshNonce, user]);
+    const unsubAttempts = subscribeQuizAttempts(
+      next => {
+        setAttempts(next);
+        setAttemptsError(null);
+        setAttemptsLoading(false);
+      },
+      err => {
+        setAttemptsError(getErrorMessage(err));
+        setAttemptsLoading(false);
+      },
+    );
+
+    return () => {
+      unsubProgress();
+      unsubReads();
+      unsubAttempts();
+    };
+  }, [refreshNonce, signedIn]);
+
+  const playlistsLoading = playlistsPage.loading;
+  const importantLoading = importantSectionLoading || noticesPage.loading;
+  const eventsLoading = eventsSectionLoading || eventsPage.loading;
+  const notificationsLoading = notificationsPage.loading;
 
   useEffect(() => {
-    if (!refreshing || !isActive) {
+    if (!refreshing) {
       return;
     }
 
@@ -452,18 +449,21 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
       !eventsLoading &&
       !notificationsLoading &&
       !progressLoading &&
-      !readsLoading;
+      !readsLoading &&
+      !quizzesPage.loading &&
+      !attemptsLoading;
 
     if (allSettled) {
       setRefreshing(false);
     }
   }, [
+    attemptsLoading,
     eventsLoading,
     importantLoading,
-    isActive,
     notificationsLoading,
     playlistsLoading,
     progressLoading,
+    quizzesPage.loading,
     readsLoading,
     refreshing,
   ]);
@@ -488,11 +488,11 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
 
   const displayNotifications = useMemo<LearnerNotification[]>(
     () =>
-      notifications.map(item => ({
+      notificationsPage.items.map(item => ({
         ...item,
         isRead: isNotificationRead(item.id),
       })),
-    [isNotificationRead, notifications],
+    [isNotificationRead, notificationsPage.items],
   );
 
   const unreadCount = useMemo(
@@ -529,65 +529,112 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
   const value = useMemo<HomeFeedContextValue>(
     () => ({
       continueLearning: {
-        playlists,
-        loading: isActive ? playlistsLoading : false,
-        error: playlistsError,
+        playlists: playlistsPage.items,
+        loading: playlistsPage.loading,
+        error: playlistsPage.error,
+        loadMore: playlistsPage.loadMore,
+        loadingMore: playlistsPage.loadingMore,
+        hasMore: playlistsPage.hasMore,
       },
       progress: {
         progressByPlaylistId,
         getVideosWatched,
         getHasStartedWatching,
-        loading: isActive ? progressLoading : false,
+        loading: progressLoading,
         error: progressError,
       },
       importantUpdates: {
         section: importantSection,
-        notices,
-        displayNotices: notices,
-        loading: isActive ? importantLoading : false,
-        error: importantError,
+        notices: noticesPage.items,
+        displayNotices: noticesPage.items,
+        loading: importantLoading,
+        error: importantSectionError ?? noticesPage.error,
+        loadMore: noticesPage.loadMore,
+        loadingMore: noticesPage.loadingMore,
+        hasMore: noticesPage.hasMore,
       },
       upcomingEvents: {
         section: eventsSection,
-        events,
-        displayEvents: events,
-        loading: isActive ? eventsLoading : false,
-        error: eventsError,
+        events: eventsPage.items,
+        displayEvents: eventsPage.items,
+        loading: eventsLoading,
+        error: eventsSectionError ?? eventsPage.error,
+        loadMore: eventsPage.loadMore,
+        loadingMore: eventsPage.loadingMore,
+        hasMore: eventsPage.hasMore,
       },
       notifications: {
-        notifications,
+        notifications: notificationsPage.items,
         displayNotifications,
         unreadCount,
         markNotificationRead,
-        loading: isActive ? notificationsLoading || readsLoading : false,
-        error: notificationsError,
+        loading: notificationsLoading || readsLoading,
+        error: notificationsPage.error,
+        loadMore: notificationsPage.loadMore,
+        loadingMore: notificationsPage.loadingMore,
+        hasMore: notificationsPage.hasMore,
+      },
+      quizCompetitions: {
+        quizzes: quizzesPage.items,
+        loading: quizzesPage.loading,
+        error: quizzesPage.error,
+        loadMore: quizzesPage.loadMore,
+        loadingMore: quizzesPage.loadingMore,
+        hasMore: quizzesPage.hasMore,
+      },
+      quizAttempts: {
+        attempts,
+        loading: attemptsLoading,
+        error: attemptsError,
       },
       refreshing,
       refresh,
     }),
     [
+      attempts,
+      attemptsError,
+      attemptsLoading,
       displayNotifications,
-      events,
-      eventsError,
       eventsLoading,
+      eventsPage.error,
+      eventsPage.hasMore,
+      eventsPage.items,
+      eventsPage.loadMore,
+      eventsPage.loadingMore,
       eventsSection,
+      eventsSectionError,
       getHasStartedWatching,
       getVideosWatched,
-      importantError,
       importantLoading,
       importantSection,
-      isActive,
+      importantSectionError,
       markNotificationRead,
-      notices,
-      notifications,
-      notificationsError,
+      noticesPage.error,
+      noticesPage.hasMore,
+      noticesPage.items,
+      noticesPage.loadMore,
+      noticesPage.loadingMore,
       notificationsLoading,
-      playlists,
-      playlistsError,
-      playlistsLoading,
+      notificationsPage.error,
+      notificationsPage.hasMore,
+      notificationsPage.items,
+      notificationsPage.loadMore,
+      notificationsPage.loadingMore,
+      playlistsPage.error,
+      playlistsPage.hasMore,
+      playlistsPage.items,
+      playlistsPage.loadMore,
+      playlistsPage.loading,
+      playlistsPage.loadingMore,
       progressByPlaylistId,
       progressError,
       progressLoading,
+      quizzesPage.error,
+      quizzesPage.hasMore,
+      quizzesPage.items,
+      quizzesPage.loadMore,
+      quizzesPage.loading,
+      quizzesPage.loadingMore,
       readsLoading,
       refresh,
       refreshing,
@@ -595,29 +642,14 @@ export function HomeFeedProvider({ children }: HomeFeedProviderProps) {
     ],
   );
 
-  return (
-    <HomeFeedFocusContext.Provider value={registerHomeFeedFocus}>
-      <HomeFeedContext.Provider value={value}>{children}</HomeFeedContext.Provider>
-    </HomeFeedFocusContext.Provider>
-  );
+  return <HomeFeedContext.Provider value={value}>{children}</HomeFeedContext.Provider>;
 }
 
 /**
- * Call from screens that display home feed data so listeners stay active
- * while Home, Lessons list, Notifications, Important Updates, or Upcoming
- * Events list is focused.
+ * Previously gated HomeFeed listeners to focused routes. Listeners now stay
+ * warm for the signed-in session; this remains a no-op for call sites.
  */
-export function useHomeFeedFocus() {
-  const register = useContext(HomeFeedFocusContext);
-  useFocusEffect(
-    useCallback(() => {
-      if (!register) {
-        return undefined;
-      }
-      return register();
-    }, [register]),
-  );
-}
+export function useHomeFeedFocus() {}
 
 export function useHomeFeedOptional(): HomeFeedContextValue | null {
   return useContext(HomeFeedContext);
@@ -655,6 +687,16 @@ export function useHomeFeedUpcomingEvents(): HomeFeedUpcomingEvents {
 export function useHomeFeedNotifications(): HomeFeedNotifications {
   const ctx = useHomeFeedOptional();
   return ctx?.notifications ?? EMPTY_NOTIFICATIONS;
+}
+
+export function useHomeFeedQuizCompetitions(): HomeFeedQuizCompetitions {
+  const ctx = useHomeFeedOptional();
+  return ctx?.quizCompetitions ?? EMPTY_QUIZ_COMPETITIONS;
+}
+
+export function useHomeFeedQuizAttempts(): HomeFeedQuizAttempts {
+  const ctx = useHomeFeedOptional();
+  return ctx?.quizAttempts ?? EMPTY_QUIZ_ATTEMPTS;
 }
 
 export function useHomeFeedRefresh(): { refreshing: boolean; refresh: () => void } {

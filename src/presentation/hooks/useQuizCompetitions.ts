@@ -1,9 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
-import { subscribeQuizCompetitions } from '../../services/firebase/quizCompetitionsService';
-import type { QuizCompetition } from '../../store/content/types/quizCompetitions.types';
-import { getErrorMessage } from '../../utils/firebase/errors';
+import {
+  fetchQuizCompetitionsPage,
+  subscribeQuizCompetitions,
+} from '../../services/firebase/quizCompetitionsService';
+import { useHomeFeedOptional } from '../context/HomeFeedContext';
 import { useContentSubscribeOptions } from './useContentSubscribeOptions';
+import { usePagedContentList } from './usePagedContentList';
 
 type UseQuizCompetitionsOptions = {
   /** When true, includes draft (unpublished) quizzes — for admin screens. */
@@ -12,27 +15,34 @@ type UseQuizCompetitionsOptions = {
 
 export function useQuizCompetitions(options?: UseQuizCompetitionsOptions) {
   const includeUnpublished = options?.includeUnpublished === true;
+  const homeFeed = useHomeFeedOptional();
   const subscribeOptions = useContentSubscribeOptions(includeUnpublished);
-  const [quizzes, setQuizzes] = useState<QuizCompetition[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const useSharedFeed = !includeUnpublished && homeFeed != null;
+  const paged = usePagedContentList({
+    subscribe: subscribeQuizCompetitions,
+    fetchPage: fetchQuizCompetitionsPage,
+    options: subscribeOptions,
+    enabled: includeUnpublished,
+  });
 
-  useEffect(() => {
-    const unsub = subscribeQuizCompetitions(
-      next => {
-        setQuizzes(next);
-        setError(null);
-        setLoading(false);
-      },
-      subscribeOptions,
-      err => {
-        setError(getErrorMessage(err));
-        setLoading(false);
-      },
-    );
-
-    return () => unsub();
-  }, [subscribeOptions]);
+  const quizzes = useSharedFeed
+    ? homeFeed.quizCompetitions.quizzes
+    : paged.items;
+  const loading = useSharedFeed
+    ? homeFeed.quizCompetitions.loading
+    : paged.loading;
+  const error = useSharedFeed
+    ? homeFeed.quizCompetitions.error
+    : paged.error;
+  const loadMore = useSharedFeed
+    ? homeFeed.quizCompetitions.loadMore
+    : paged.loadMore;
+  const loadingMore = useSharedFeed
+    ? homeFeed.quizCompetitions.loadingMore
+    : paged.loadingMore;
+  const hasMore = useSharedFeed
+    ? homeFeed.quizCompetitions.hasMore
+    : paged.hasMore;
 
   const displayQuizzes = useMemo(() => quizzes, [quizzes]);
 
@@ -41,5 +51,8 @@ export function useQuizCompetitions(options?: UseQuizCompetitionsOptions) {
     displayQuizzes,
     loading,
     error,
+    loadMore,
+    loadingMore,
+    hasMore,
   };
 }

@@ -1,9 +1,7 @@
-import { useEffect, useState } from 'react';
-import { onAuthStateChanged } from '../../services/firebase/authService';
-import { subscribeCourses } from '../../services/firebase/coursesService';
-import type { Course } from '../../store/content/types/courses.types';
-import { getErrorMessage } from '../../utils/firebase/errors';
+import { useAuth } from '../context/AuthContext';
+import { fetchCoursesPage, subscribeCourses } from '../../services/firebase/coursesService';
 import { useContentSubscribeOptions } from './useContentSubscribeOptions';
+import { usePagedContentList } from './usePagedContentList';
 
 type UseCoursesOptions = {
   /** When true, includes draft (unpublished) courses — for admin screens. */
@@ -12,49 +10,22 @@ type UseCoursesOptions = {
 
 export function useCourses(options?: UseCoursesOptions) {
   const includeUnpublished = options?.includeUnpublished === true;
+  const { user } = useAuth();
   const subscribeOptions = useContentSubscribeOptions(includeUnpublished);
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let unsubCourses: (() => void) | undefined;
-
-    const unsubAuth = onAuthStateChanged(user => {
-      unsubCourses?.();
-      unsubCourses = undefined;
-
-      if (!user) {
-        setCourses([]);
-        setError(null);
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-      unsubCourses = subscribeCourses(
-        nextCourses => {
-          setCourses(nextCourses);
-          setError(null);
-          setLoading(false);
-        },
-        subscribeOptions,
-        err => {
-          setError(getErrorMessage(err));
-          setLoading(false);
-        },
-      );
+  const { items, loading, error, loadMore, loadingMore, hasMore } =
+    usePagedContentList({
+      subscribe: subscribeCourses,
+      fetchPage: fetchCoursesPage,
+      options: subscribeOptions,
+      enabled: Boolean(user),
     });
 
-    return () => {
-      unsubAuth();
-      unsubCourses?.();
-    };
-  }, [subscribeOptions]);
-
   return {
-    courses,
+    courses: items,
     loading,
     error,
+    loadMore,
+    loadingMore,
+    hasMore,
   };
 }

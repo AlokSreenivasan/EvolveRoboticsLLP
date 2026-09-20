@@ -63,8 +63,11 @@ export function useContinueLearningPlaylists(
       playlists: homeFeed.playlists,
       loading: homeFeed.loading,
       error: homeFeed.error,
+      loadMore: homeFeed.loadMore,
+      loadingMore: homeFeed.loadingMore,
+      hasMore: homeFeed.hasMore,
     };
   }
 
-  return { playlists, loading, error };
+  return { playlists, loading, error, loadMore: () => undefined, loadingMore: false, hasMore: false };
 }

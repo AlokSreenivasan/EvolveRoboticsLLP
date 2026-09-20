@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import {
+  ActivityIndicator,
   FlatList,
   RefreshControl,
   StyleSheet,
@@ -24,7 +25,8 @@ import ScreenSafeArea from '../../../components/ui/ScreenSafeArea';
 
 function ImportantUpdatesListScreen() {
   useHomeFeedFocus();
-  const { section, displayNotices, loading, error } = useImportantUpdates();
+  const { section, displayNotices, loading, error, loadMore, loadingMore } =
+    useImportantUpdates();
   const { refresh, refreshing } = useHomeFeedRefresh();
 
   const renderItem = useCallback(
@@ -105,6 +107,13 @@ function ImportantUpdatesListScreen() {
           ) : null
         }
         ListEmptyComponent={listEmpty}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.4}
+        ListFooterComponent={
+          loadingMore ? (
+            <ActivityIndicator color={colors.primary} style={styles.loadingMore} />
+          ) : null
+        }
         ItemSeparatorComponent={ListSeparator}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -177,6 +186,9 @@ const styles = StyleSheet.create({
   },
   separator: {
     height: 14,
+  },
+  loadingMore: {
+    paddingVertical: 16,
   },
 });
 

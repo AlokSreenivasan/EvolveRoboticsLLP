@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
-import { subscribeExams } from '../../services/firebase/examsService';
-import type { Exam } from '../../store/content/types/exams.types';
-import { getErrorMessage } from '../../utils/firebase/errors';
+import {
+  fetchExamsPage,
+  subscribeExams,
+} from '../../services/firebase/examsService';
 import { useContentSubscribeOptions } from './useContentSubscribeOptions';
+import { usePagedContentList } from './usePagedContentList';
 
 type UseExamsOptions = {
   /** When true, includes draft (unpublished) exams — for admin screens. */
@@ -13,34 +15,22 @@ type UseExamsOptions = {
 export function useExams(options?: UseExamsOptions) {
   const includeUnpublished = options?.includeUnpublished === true;
   const subscribeOptions = useContentSubscribeOptions(includeUnpublished);
-  const [exams, setExams] = useState<Exam[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { items, loading, error, loadMore, loadingMore, hasMore } =
+    usePagedContentList({
+      subscribe: subscribeExams,
+      fetchPage: fetchExamsPage,
+      options: subscribeOptions,
+    });
 
-  useEffect(() => {
-    const unsub = subscribeExams(
-      next => {
-        setExams(next);
-        setError(null);
-        setLoading(false);
-      },
-      subscribeOptions,
-      err => {
-        setError(getErrorMessage(err));
-        setLoading(false);
-      },
-    );
-
-    return () => unsub();
-  }, [subscribeOptions]);
-
-  const displayExams = useMemo(() => exams, [exams]);
+  const displayExams = useMemo(() => items, [items]);
 
   return {
-    exams,
+    exams: items,
     displayExams,
     loading,
     error,
+    loadMore,
+    loadingMore,
+    hasMore,
   };
 }
-

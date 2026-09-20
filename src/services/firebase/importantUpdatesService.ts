@@ -26,11 +26,12 @@ import {
 } from './schoolAudienceFirestore';
 import { isCourseTrack } from '../../store/content/types/courses.types';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
+import { APP_CONTENT_DOCS, FIRESTORE_COLLECTIONS } from './constants';
+import type { ContentListPageMeta } from './contentListQuery';
 import {
-  APP_CONTENT_DOCS,
-  FIRESTORE_COLLECTIONS,
-} from './constants';
-import { buildSortedContentListQuery } from './contentListQuery';
+  fetchSortedContentListPage,
+  subscribeSortedContentList,
+} from './contentListSubscribe';
 import {
   collection,
   db,
@@ -127,22 +128,38 @@ export function subscribeImportantUpdatesSection(
   );
 }
 
+function mapNoticesSnapshot(
+  snapshot: { docs: Array<{ id: string; data: () => unknown }> },
+  options?: ContentSubscribeOptions,
+): ImportantUpdateNotice[] {
+  const notices = snapshot.docs.map(noticeDoc =>
+    mapNotice(noticeDoc.id, noticeDoc.data() as ImportantUpdateNoticeDocument),
+  );
+  return sortNotices(applyLearnerContentFilters(notices, options));
+}
+
 export function subscribeImportantUpdates(
-  listener: (notices: ImportantUpdateNotice[]) => void,
+  listener: (
+    notices: ImportantUpdateNotice[],
+    meta?: ContentListPageMeta,
+  ) => void,
   options?: ContentSubscribeOptions,
   onError?: (error: unknown) => void,
 ): () => void {
-  const noticesQuery = buildSortedContentListQuery(noticesCollection(), options);
+  return subscribeSortedContentList(
+    noticesCollection(),
+    options,
+    snapshot => mapNoticesSnapshot(snapshot, options),
+    listener,
+    onError,
+  );
+}
 
-  return onSnapshot(
-    noticesQuery,
-    snapshot => {
-      const notices = snapshot.docs.map(noticeDoc =>
-        mapNotice(noticeDoc.id, noticeDoc.data() as ImportantUpdateNoticeDocument),
-      );
-      listener(sortNotices(applyLearnerContentFilters(notices, options)));
-    },
-    error => onError?.(error),
+export function fetchImportantUpdatesPage(options?: ContentSubscribeOptions) {
+  return fetchSortedContentListPage(
+    noticesCollection(),
+    options,
+    snapshot => mapNoticesSnapshot(snapshot, options),
   );
 }
 

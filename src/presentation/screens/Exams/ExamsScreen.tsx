@@ -24,7 +24,7 @@ function formatMinutes(timerSeconds: number): number {
 
 function ExamsScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
-  const { exams, loading, error } = useExams();
+  const { exams, loading, error, loadMore, loadingMore } = useExams();
 
   const renderExam = useCallback(
     ({ item }: { item: Exam }) => (
@@ -81,6 +81,8 @@ function ExamsScreen() {
       keyExtractor={keyExtractor}
       renderItem={renderExam}
       rightSlot={resultsButton}
+      onEndReached={loadMore}
+      loadingMore={loadingMore}
     />
   );
 }

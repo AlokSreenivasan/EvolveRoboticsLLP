@@ -25,7 +25,11 @@ import {
 import { isCourseTrack } from '../../store/content/types/courses.types';
 import { wrapFirebaseError } from '../../utils/firebase/errors';
 import { FIRESTORE_COLLECTIONS } from './constants';
-import { buildSortedContentListQuery } from './contentListQuery';
+import type { ContentListPageMeta } from './contentListQuery';
+import {
+  fetchSortedContentListPage,
+  subscribeSortedContentList,
+} from './contentListSubscribe';
 import {
   collection,
   db,
@@ -33,7 +37,6 @@ import {
   doc,
   getDocs,
   limit,
-  onSnapshot,
   orderBy,
   query,
   serverTimestamp,
@@ -81,31 +84,42 @@ function sortNotifications(items: AppNotification[]): AppNotification[] {
   return [...items].sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
+function mapNotificationsSnapshot(
+  snapshot: { docs: Array<{ id: string; data: () => unknown }> },
+  options?: ContentSubscribeOptions,
+): AppNotification[] {
+  const items = snapshot.docs.map(notificationDoc =>
+    mapNotification(
+      notificationDoc.id,
+      notificationDoc.data() as AppNotificationDocument,
+    ),
+  );
+
+  return sortNotifications(applyLearnerContentFilters(items, options));
+}
+
 export function subscribeNotifications(
-  listener: (notifications: AppNotification[]) => void,
+  listener: (
+    notifications: AppNotification[],
+    meta?: ContentListPageMeta,
+  ) => void,
   options?: ContentSubscribeOptions,
   onError?: (error: unknown) => void,
 ): () => void {
-  const notificationsQuery = buildSortedContentListQuery(
+  return subscribeSortedContentList(
     notificationsCollection(),
     options,
+    snapshot => mapNotificationsSnapshot(snapshot, options),
+    listener,
+    onError,
   );
+}
 
-  return onSnapshot(
-    notificationsQuery,
-    snapshot => {
-      const items = snapshot.docs.map(notificationDoc =>
-        mapNotification(
-          notificationDoc.id,
-          notificationDoc.data() as AppNotificationDocument,
-        ),
-      );
-
-      listener(
-        sortNotifications(applyLearnerContentFilters(items, options)),
-      );
-    },
-    error => onError?.(error),
+export function fetchNotificationsPage(options?: ContentSubscribeOptions) {
+  return fetchSortedContentListPage(
+    notificationsCollection(),
+    options,
+    snapshot => mapNotificationsSnapshot(snapshot, options),
   );
 }
 

@@ -2,15 +2,14 @@ import { useEffect, useState } from 'react';
 
 import { DEFAULT_RESOURCES_SECTION } from '../../constants/resourcesDefaults';
 import {
+  fetchResourceNotesPage,
   subscribeResourceNotes,
   subscribeResourcesSection,
 } from '../../services/firebase/resourcesService';
-import type {
-  ResourceNote,
-  ResourcesSection,
-} from '../../store/content/types/resources.types';
+import type { ResourcesSection } from '../../store/content/types/resources.types';
 import { getErrorMessage } from '../../utils/firebase/errors';
 import { useContentSubscribeOptions } from './useContentSubscribeOptions';
+import { usePagedContentList } from './usePagedContentList';
 
 type UseResourcesOptions = {
   /** When true, includes draft (unpublished) notes — for admin screens. */
@@ -23,58 +22,37 @@ export function useResources(options?: UseResourcesOptions) {
   const [section, setSection] = useState<ResourcesSection>(
     DEFAULT_RESOURCES_SECTION,
   );
-  const [notes, setNotes] = useState<ResourceNote[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [sectionLoading, setSectionLoading] = useState(true);
+  const [sectionError, setSectionError] = useState<string | null>(null);
+  const notesPage = usePagedContentList({
+    subscribe: subscribeResourceNotes,
+    fetchPage: fetchResourceNotesPage,
+    options: subscribeOptions,
+  });
 
   useEffect(() => {
-    let sectionReady = false;
-    let notesReady = false;
-
-    const markReady = () => {
-      if (sectionReady && notesReady) {
-        setLoading(false);
-      }
-    };
-
     const unsubSection = subscribeResourcesSection(
       nextSection => {
         setSection(nextSection);
-        sectionReady = true;
-        markReady();
+        setSectionError(null);
+        setSectionLoading(false);
       },
       err => {
-        setError(getErrorMessage(err));
-        sectionReady = true;
-        markReady();
+        setSectionError(getErrorMessage(err));
+        setSectionLoading(false);
       },
     );
 
-    const unsubNotes = subscribeResourceNotes(
-      nextNotes => {
-        setNotes(nextNotes);
-        setError(null);
-        notesReady = true;
-        markReady();
-      },
-      subscribeOptions,
-      err => {
-        setError(getErrorMessage(err));
-        notesReady = true;
-        markReady();
-      },
-    );
-
-    return () => {
-      unsubSection();
-      unsubNotes();
-    };
-  }, [subscribeOptions]);
+    return () => unsubSection();
+  }, []);
 
   return {
     section,
-    notes,
-    loading,
-    error,
+    notes: notesPage.items,
+    loading: sectionLoading || notesPage.loading,
+    error: sectionError ?? notesPage.error,
+    loadMore: notesPage.loadMore,
+    loadingMore: notesPage.loadingMore,
+    hasMore: notesPage.hasMore,
   };
 }

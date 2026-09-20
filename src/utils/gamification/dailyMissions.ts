@@ -9,9 +9,9 @@ import {
 /** XP for maintaining a daily learning streak (any activity). */
 export const DAILY_STREAK_ACTIVITY_XP = 10;
 /** XP for watching a lesson video on a given day. */
-export const DAILY_MISSION_LESSONS_XP = 20;
+export const DAILY_MISSION_LESSONS_XP = 10;
 /** XP for completing any quiz on a given day. */
-export const DAILY_MISSION_QUIZ_XP = 30;
+export const DAILY_MISSION_QUIZ_XP = 10;
 
 
 function hasVideoWatchActivityOnDate(

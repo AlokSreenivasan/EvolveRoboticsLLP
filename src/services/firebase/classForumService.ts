@@ -175,7 +175,7 @@ export function subscribeClassForumMessages(
 ): () => void {
   const messagesQuery = query(
     messagesCollection(channelId),
-    orderBy('createdAt', 'asc'),
+    orderBy('createdAt', 'desc'),
     limit(MESSAGE_PAGE_SIZE),
   );
 
@@ -183,13 +183,15 @@ export function subscribeClassForumMessages(
     messagesQuery,
     snapshot => {
       listener(
-        snapshot.docs.map(messageDoc =>
-          mapMessage(
-            channelId,
-            messageDoc.id,
-            messageDoc.data() as ClassForumMessageDocument,
-          ),
-        ),
+        snapshot.docs
+          .map(messageDoc =>
+            mapMessage(
+              channelId,
+              messageDoc.id,
+              messageDoc.data() as ClassForumMessageDocument,
+            ),
+          )
+          .reverse(),
       );
     },
     error => onError?.(error),
