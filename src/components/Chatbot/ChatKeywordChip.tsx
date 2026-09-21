@@ -43,6 +43,7 @@ function ChatKeywordChip({
         size={12}
         color={muted ? colors.textSecondary : colors.primary}
         strokeWidth={2.5}
+        style={styles.icon}
       />
       <Text style={[styles.label, muted && styles.labelMuted]}>{label}</Text>
     </Pressable>
@@ -52,8 +53,8 @@ function ChatKeywordChip({
 const styles = StyleSheet.create({
   chip: {
     flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
+    alignItems: 'flex-start',
+    alignSelf: 'stretch',
     gap: 6,
     minHeight: CHIP_MIN_HEIGHT,
     paddingHorizontal: 12,
@@ -62,6 +63,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primaryLight,
     ...glassBorder,
     borderColor: colors.primaryMuted,
+  },
+  icon: {
+    marginTop: 3,
   },
   chipMuted: {
     backgroundColor: colors.surface,
@@ -75,8 +79,11 @@ const styles = StyleSheet.create({
     opacity: 0.55,
   },
   label: {
+    flex: 1,
+    flexShrink: 1,
     fontSize: 13,
     fontWeight: '700',
+    lineHeight: 18,
     color: colors.primary,
     letterSpacing: 0.1,
   },

@@ -5,6 +5,16 @@ import type { YouTubePlaylistVideo } from '../../store/content/types/youtubePlay
 const YOUTUBE_API_BASE = 'https://www.googleapis.com/youtube/v3';
 const PLAYLIST_RSS_BASE =
   'https://www.youtube.com/feeds/videos.xml?playlist_id=';
+const INNERTUBE_BROWSE_URL =
+  'https://www.youtube.com/youtubei/v1/browse?prettyPrint=false';
+const INNERTUBE_CLIENT = {
+  clientName: 'WEB',
+  clientVersion: '2.20250918.01.00',
+  hl: 'en',
+  gl: 'US',
+};
+const MAX_INNERTUBE_PAGES = 20;
+const YOUTUBE_VIDEO_ID_PATTERN = /^[\w-]{11}$/;
 
 const YOUTUBE_FETCH_HEADERS = {
   Accept: 'application/json, application/atom+xml, application/xml, text/xml',
@@ -32,6 +42,11 @@ type YouTubeApiPlaylistItemsResponse = {
   error?: { message?: string };
 };
 
+type InnertubeCollectResult = {
+  videos: YouTubePlaylistVideo[];
+  continuationTokens: string[];
+};
+
 function thumbnailForVideo(videoId: string): string {
   return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
 }
@@ -56,6 +71,156 @@ function mapApiItem(
     thumbnailForVideo(videoId);
 
   return { videoId, title, thumbnailUrl, position };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value != null && typeof value === 'object';
+}
+
+function readString(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+function titleFromInnertubeNode(node: unknown): string | null {
+  if (!isRecord(node)) {
+    return null;
+  }
+
+  const simple = readString(node.simpleText);
+  if (simple) {
+    return simple;
+  }
+
+  const content = readString(node.content);
+  if (content) {
+    return content;
+  }
+
+  if (Array.isArray(node.runs)) {
+    const joined = node.runs
+      .map(run => (isRecord(run) ? readString(run.text) : null))
+      .filter((text): text is string => text != null)
+      .join('');
+    if (joined.trim()) {
+      return joined.trim();
+    }
+  }
+
+  return null;
+}
+
+function videoFromLockup(lockup: Record<string, unknown>): YouTubePlaylistVideo | null {
+  const videoId = readString(lockup.contentId);
+  if (!videoId || !YOUTUBE_VIDEO_ID_PATTERN.test(videoId)) {
+    return null;
+  }
+
+  const metadata = isRecord(lockup.metadata)
+    ? lockup.metadata.lockupMetadataViewModel
+    : undefined;
+  const titleNode = isRecord(metadata) ? metadata.title : undefined;
+  const title = titleFromInnertubeNode(titleNode) || 'Untitled video';
+
+  return {
+    videoId,
+    title,
+    thumbnailUrl: thumbnailForVideo(videoId),
+    position: 0,
+  };
+}
+
+function videoFromPlaylistRenderer(
+  renderer: Record<string, unknown>,
+): YouTubePlaylistVideo | null {
+  const videoId = readString(renderer.videoId);
+  if (!videoId || !YOUTUBE_VIDEO_ID_PATTERN.test(videoId)) {
+    return null;
+  }
+
+  const title = titleFromInnertubeNode(renderer.title) || 'Untitled video';
+  const index =
+    typeof renderer.index === 'number'
+      ? renderer.index
+      : typeof renderer.index === 'string' && /^\d+$/.test(renderer.index)
+        ? Number(renderer.index)
+        : 0;
+
+  return {
+    videoId,
+    title,
+    thumbnailUrl: thumbnailForVideo(videoId),
+    position: index,
+  };
+}
+
+function continuationTokenFromRenderer(renderer: unknown): string | null {
+  if (!isRecord(renderer)) {
+    return null;
+  }
+
+  const endpoint = isRecord(renderer.continuationEndpoint)
+    ? renderer.continuationEndpoint
+    : renderer;
+  const command = isRecord(endpoint) ? endpoint.continuationCommand : undefined;
+  return isRecord(command) ? readString(command.token) : null;
+}
+
+/** Pulls videos + continuation tokens from a YouTube innertube browse payload. */
+export function collectYouTubeInnertubePlaylist(
+  payload: unknown,
+): InnertubeCollectResult {
+  const videos: YouTubePlaylistVideo[] = [];
+  const seenVideoIds = new Set<string>();
+  const continuationTokens: string[] = [];
+  const seenTokens = new Set<string>();
+
+  const visit = (node: unknown) => {
+    if (Array.isArray(node)) {
+      node.forEach(visit);
+      return;
+    }
+    if (!isRecord(node)) {
+      return;
+    }
+
+    if (isRecord(node.lockupViewModel)) {
+      const video = videoFromLockup(node.lockupViewModel);
+      if (video && !seenVideoIds.has(video.videoId)) {
+        seenVideoIds.add(video.videoId);
+        videos.push({ ...video, position: videos.length });
+      }
+      return;
+    }
+
+    if (isRecord(node.playlistVideoRenderer)) {
+      const video = videoFromPlaylistRenderer(node.playlistVideoRenderer);
+      if (video && !seenVideoIds.has(video.videoId)) {
+        seenVideoIds.add(video.videoId);
+        videos.push({
+          ...video,
+          position:
+            typeof node.playlistVideoRenderer.index === 'number'
+              ? video.position
+              : videos.length,
+        });
+      }
+      return;
+    }
+
+    if (isRecord(node.continuationItemRenderer)) {
+      const token = continuationTokenFromRenderer(node.continuationItemRenderer);
+      if (token && !seenTokens.has(token)) {
+        seenTokens.add(token);
+        continuationTokens.push(token);
+      }
+      return;
+    }
+
+    Object.values(node).forEach(visit);
+  };
+
+  visit(payload);
+  return { videos, continuationTokens };
 }
 
 async function fetchPlaylistVideosFromApi(
@@ -99,6 +264,67 @@ async function fetchPlaylistVideosFromApi(
   return videos.sort((a, b) => a.position - b.position);
 }
 
+async function fetchInnertubeBrowsePage(body: {
+  browseId?: string;
+  continuation?: string;
+}): Promise<unknown> {
+  const response = await fetch(INNERTUBE_BROWSE_URL, {
+    method: 'POST',
+    headers: {
+      ...YOUTUBE_FETCH_HEADERS,
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Origin: 'https://www.youtube.com',
+      Referer: 'https://www.youtube.com/',
+    },
+    body: JSON.stringify({
+      context: { client: INNERTUBE_CLIENT },
+      ...body,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Could not load course lessons.');
+  }
+
+  return response.json();
+}
+
+async function fetchPlaylistVideosFromInnertube(
+  playlistId: string,
+): Promise<YouTubePlaylistVideo[]> {
+  const videos: YouTubePlaylistVideo[] = [];
+  const seenVideoIds = new Set<string>();
+  const queuedTokens: string[] = [];
+  const seenTokens = new Set<string>();
+  let page = await fetchInnertubeBrowsePage({ browseId: `VL${playlistId}` });
+
+  for (let pageIndex = 0; pageIndex < MAX_INNERTUBE_PAGES; pageIndex += 1) {
+    const collected = collectYouTubeInnertubePlaylist(page);
+    collected.videos.forEach(video => {
+      if (seenVideoIds.has(video.videoId)) {
+        return;
+      }
+      seenVideoIds.add(video.videoId);
+      videos.push({ ...video, position: videos.length });
+    });
+    collected.continuationTokens.forEach(token => {
+      if (!seenTokens.has(token)) {
+        seenTokens.add(token);
+        queuedTokens.push(token);
+      }
+    });
+
+    const nextToken = queuedTokens.shift();
+    if (!nextToken) {
+      break;
+    }
+    page = await fetchInnertubeBrowsePage({ continuation: nextToken });
+  }
+
+  return videos;
+}
+
 async function fetchPlaylistVideosFromRss(
   playlistId: string,
 ): Promise<YouTubePlaylistVideo[]> {
@@ -133,6 +359,17 @@ async function fetchPlaylistVideosFromRss(
   return videos;
 }
 
+async function fetchPlaylistVideosWithoutApiKey(
+  playlistId: string,
+): Promise<YouTubePlaylistVideo[]> {
+  try {
+    return await fetchPlaylistVideosFromInnertube(playlistId);
+  } catch {
+    // RSS used to work as a public fallback; YouTube now 404s it in many regions.
+    return fetchPlaylistVideosFromRss(playlistId);
+  }
+}
+
 export async function fetchYouTubePlaylistVideos(
   playlistUrl: string,
 ): Promise<YouTubePlaylistVideo[]> {
@@ -147,10 +384,9 @@ export async function fetchYouTubePlaylistVideos(
     try {
       return await fetchPlaylistVideosFromApi(playlistId);
     } catch {
-      // Fallback RSS is public and often still works even when API fails.
-      return fetchPlaylistVideosFromRss(playlistId);
+      return fetchPlaylistVideosWithoutApiKey(playlistId);
     }
   }
 
-  return fetchPlaylistVideosFromRss(playlistId);
+  return fetchPlaylistVideosWithoutApiKey(playlistId);
 }

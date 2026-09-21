@@ -40,9 +40,10 @@ function ChatKeywordOptions({
     <View style={styles.container}>
       <Text style={styles.hint}>Try a topic</Text>
       <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
+        nestedScrollEnabled
+        style={styles.list}
         contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator
         keyboardShouldPersistTaps="handled">
         {keywords.map(keyword => (
           <ChatKeywordChip
@@ -81,10 +82,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     paddingHorizontal: spacing.screenHorizontal,
   },
+  list: {
+    maxHeight: 220,
+  },
   listContent: {
     gap: 8,
     paddingHorizontal: spacing.screenHorizontal,
-    paddingBottom: 4,
+    paddingBottom: 8,
   },
 });
 
