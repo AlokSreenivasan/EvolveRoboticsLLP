@@ -78,10 +78,12 @@ export {
   updateCourse,
 } from './coursesService';
 export {
+  addResourceNoteCategory,
   createResourceNote,
   deleteResourceNote,
   ensureResourcesSectionDefaults,
   moveResourceNote,
+  removeResourceNoteCategory,
   reorderResourceNotes,
   subscribeResourceNotes,
   subscribeResourcesSection,

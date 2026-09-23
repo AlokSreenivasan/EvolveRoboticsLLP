@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
 import AdminEntityForm from '../../../components/Admin/AdminEntityForm';
+import AdminNoteCategorySelect from '../../../components/Admin/AdminNoteCategorySelect';
 import AdminFormField from '../../../components/Admin/AdminFormField';
 import AdminListLayout from '../../../components/Admin/AdminListLayout';
 import AdminListRow from '../../../components/Admin/AdminListRow';
@@ -20,10 +21,12 @@ import {
 import { useAdminReorder } from '../../hooks/admin/useAdminReorder';
 import { useAdminSectionDefaults } from '../../hooks/admin/useAdminSectionDefaults';
 import {
+  addResourceNoteCategory,
   createResourceNote,
   deleteResourceNote,
   ensureResourcesSectionDefaults,
   moveResourceNote,
+  removeResourceNoteCategory,
   updateResourceNote,
   updateResourcesSection,
 } from '../../../services/firebase/resourcesService';
@@ -37,7 +40,11 @@ import type {
 } from '../../../store/content/types/resources.types';
 import type { CourseTrack } from '../../../store/content/types/courses.types';
 import { toAdminWriteErrorMessage } from '../../../utils/admin/adminWriteErrorMessage';
-import { appAlert, appAlertButtons, appAlertCopy } from '../../../utils/alert/appAlert';
+import {
+  appAlert,
+  appAlertButtons,
+  appAlertCopy,
+} from '../../../utils/alert/appAlert';
 import { saveAdminPdfEntity } from '../../../utils/admin/saveAdminPdfEntity';
 
 type NoteFormState = {
@@ -55,7 +62,9 @@ const EMPTY_NOTE_FORM: NoteFormState = {
 };
 
 function ManageResources() {
-  const { section, notes, loading } = useResources({ includeUnpublished: true });
+  const { section, notes, loading } = useResources({
+    includeUnpublished: true,
+  });
 
   const [sectionTitle, setSectionTitle] = useState('');
   const [sectionSubtitle, setSectionSubtitle] = useState('');
@@ -69,7 +78,11 @@ function ManageResources() {
   const [formError, setFormError] = useState<string | null>(null);
   const [savingNote, setSavingNote] = useState(false);
 
-  const { schools, loading: schoolsLoading, error: schoolsError } = useSchools();
+  const {
+    schools,
+    loading: schoolsLoading,
+    error: schoolsError,
+  } = useSchools();
   const audienceForm = useAdminSchoolAudienceForm();
   const pdfPicker = useAdminPdfPicker();
   const { resetAudience } = audienceForm;
@@ -244,6 +257,32 @@ function ManageResources() {
     );
   };
 
+  const handleSelectNoteCategory = useCallback(
+    async (noteId: string, categoryId: string) => {
+      await updateResourceNote(noteId, { categoryId });
+    },
+    [],
+  );
+
+  const handleAddNoteCategory = useCallback(
+    async (noteId: string, name: string) => {
+      const category = await addResourceNoteCategory(name);
+      await updateResourceNote(noteId, { categoryId: category.id });
+    },
+    [],
+  );
+
+  const handleRemoveNoteCategory = useCallback(
+    async (categoryId: string) => {
+      await removeResourceNoteCategory(categoryId);
+      const affected = notes.filter(note => note.categoryId === categoryId);
+      await Promise.all(
+        affected.map(note => updateResourceNote(note.id, { categoryId: '' })),
+      );
+    },
+    [notes],
+  );
+
   const listHeader = (
     <AdminListSectionHeader
       title="PDF notes"
@@ -258,7 +297,9 @@ function ManageResources() {
       <AdminListRow
         title={note.title}
         subtitle={note.subtitle}
-        statusLine={`${note.pdfUrl.trim() ? 'PDF attached' : 'Missing PDF'} · ${formatContentVisibilitySummary(note.track, note, schools)}`}
+        statusLine={`${
+          note.pdfUrl.trim() ? 'PDF attached' : 'Missing PDF'
+        } · ${formatContentVisibilitySummary(note.track, note, schools)}`}
         isPublished={note.isPublished}
         index={index}
         itemCount={notes.length}
@@ -267,9 +308,31 @@ function ManageResources() {
         onMoveDown={() => handleMove(note.id, 'down')}
         onEdit={() => openEditEditor(note)}
         onDelete={() => confirmDeleteNote(note)}
+        footer={
+          <AdminNoteCategorySelect
+            categories={section.categories}
+            selectedCategoryId={note.categoryId}
+            disabled={reorderingId === note.id}
+            onSelect={categoryId =>
+              handleSelectNoteCategory(note.id, categoryId)
+            }
+            onAddCategory={name => handleAddNoteCategory(note.id, name)}
+            onRemoveCategory={handleRemoveNoteCategory}
+          />
+        }
       />
     ),
-    [handleMove, notes.length, openEditEditor, reorderingId, schools],
+    [
+      handleAddNoteCategory,
+      handleMove,
+      handleRemoveNoteCategory,
+      handleSelectNoteCategory,
+      notes.length,
+      openEditEditor,
+      reorderingId,
+      schools,
+      section.categories,
+    ],
   );
 
   const keyExtractor = useCallback((item: ResourceNote) => item.id, []);
@@ -294,7 +357,8 @@ function ManageResources() {
         saving={savingSection}
         error={sectionFormError}
         onClose={closeSectionEditor}
-        onSave={handleSaveSection}>
+        onSave={handleSaveSection}
+      >
         <AdminFormField
           label="Screen title"
           value={sectionTitle}
@@ -319,7 +383,8 @@ function ManageResources() {
         saving={savingNote}
         error={formError}
         onClose={closeEditor}
-        onSave={handleSaveNote}>
+        onSave={handleSaveNote}
+      >
         <AdminFormField
           label="Heading"
           value={noteForm.title}

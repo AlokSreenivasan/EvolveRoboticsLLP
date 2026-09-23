@@ -249,6 +249,44 @@ function isOwner(userId) {
   return request.auth != null && request.auth.uid == userId;
 }
 
+function isValidResourceCategoryAt(categories, index) {
+  return categories.size() <= index
+    || (
+      categories[index] is map
+      && categories[index].id is string
+      && categories[index].id.size() > 0
+      && categories[index].id.size() <= 40
+      && categories[index].name is string
+      && categories[index].name.size() > 0
+      && categories[index].name.size() <= 40
+    );
+}
+
+function isValidResourceCategories(categories) {
+  return categories is list
+    && categories.size() <= 20
+    && isValidResourceCategoryAt(categories, 0)
+    && isValidResourceCategoryAt(categories, 1)
+    && isValidResourceCategoryAt(categories, 2)
+    && isValidResourceCategoryAt(categories, 3)
+    && isValidResourceCategoryAt(categories, 4)
+    && isValidResourceCategoryAt(categories, 5)
+    && isValidResourceCategoryAt(categories, 6)
+    && isValidResourceCategoryAt(categories, 7)
+    && isValidResourceCategoryAt(categories, 8)
+    && isValidResourceCategoryAt(categories, 9)
+    && isValidResourceCategoryAt(categories, 10)
+    && isValidResourceCategoryAt(categories, 11)
+    && isValidResourceCategoryAt(categories, 12)
+    && isValidResourceCategoryAt(categories, 13)
+    && isValidResourceCategoryAt(categories, 14)
+    && isValidResourceCategoryAt(categories, 15)
+    && isValidResourceCategoryAt(categories, 16)
+    && isValidResourceCategoryAt(categories, 17)
+    && isValidResourceCategoryAt(categories, 18)
+    && isValidResourceCategoryAt(categories, 19);
+}
+
 function isValidAppContentSection() {
   let data = request.resource.data;
   return data.sectionTitle is string
@@ -257,7 +295,8 @@ function isValidAppContentSection() {
     && data.sectionSubtitle is string
     && data.sectionSubtitle.size() <= 200
     && data.actionLabel is string
-    && data.actionLabel.size() <= 60;
+    && data.actionLabel.size() <= 60
+    && (!('categories' in data) || isValidResourceCategories(data.categories));
 }
 
 function isValidSchoolGradeIdsMap(data) {
@@ -430,6 +469,10 @@ function isValidResourceNoteFields(data) {
     && data.subtitle.size() <= 300
     && data.pdfUrl is string
     && data.pdfUrl.size() <= 8192
+    && (
+      !('categoryId' in data)
+      || (data.categoryId is string && data.categoryId.size() <= 40)
+    )
     && data.sortOrder is number
     && data.sortOrder >= 0
     && data.isPublished is bool;

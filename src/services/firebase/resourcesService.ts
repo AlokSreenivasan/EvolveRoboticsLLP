@@ -4,11 +4,16 @@ import type {
   UpdateData,
 } from '@react-native-firebase/firestore';
 
-import { DEFAULT_RESOURCES_SECTION } from '../../constants/resourcesDefaults';
+import {
+  DEFAULT_RESOURCES_SECTION,
+  MAX_RESOURCE_NOTE_CATEGORIES,
+  MAX_RESOURCE_NOTE_CATEGORY_NAME_LENGTH,
+} from '../../constants/resourcesDefaults';
 import type { ContentSubscribeOptions } from '../../store/content/types/schoolAudience.types';
 import type {
   CreateResourceNoteInput,
   ResourceNote,
+  ResourceNoteCategory,
   ResourceNoteDocument,
   ResourcesSection,
   ResourcesSectionDocument,
@@ -41,6 +46,7 @@ import {
   onSnapshot,
   orderBy,
   query,
+  runTransaction,
   serverTimestamp,
   setDoc,
   Timestamp,
@@ -71,6 +77,31 @@ function notesCollection() {
   return collection(db, FIRESTORE_COLLECTIONS.resourceNotes);
 }
 
+function mapCategories(value: unknown): ResourceNoteCategory[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const seen = new Set<string>();
+  const categories: ResourceNoteCategory[] = [];
+
+  value.forEach(item => {
+    if (item == null || typeof item !== 'object') {
+      return;
+    }
+    const record = item as { id?: unknown; name?: unknown };
+    const id = typeof record.id === 'string' ? record.id.trim() : '';
+    const name = typeof record.name === 'string' ? record.name.trim() : '';
+    if (!id || !name || seen.has(id)) {
+      return;
+    }
+    seen.add(id);
+    categories.push({ id, name });
+  });
+
+  return categories;
+}
+
 function mapSection(
   data: ResourcesSectionDocument | undefined,
 ): ResourcesSection {
@@ -85,6 +116,7 @@ function mapSection(
       data.sectionSubtitle?.trim() ?? DEFAULT_RESOURCES_SECTION.sectionSubtitle,
     actionLabel:
       data.actionLabel?.trim() ?? DEFAULT_RESOURCES_SECTION.actionLabel,
+    categories: mapCategories(data.categories),
     updatedAt: isTimestamp(data.updatedAt) ? data.updatedAt : null,
   };
 }
@@ -95,6 +127,7 @@ function mapNote(id: string, data: ResourceNoteDocument): ResourceNote {
     title: data.title?.trim() ?? '',
     subtitle: data.subtitle?.trim() ?? '',
     pdfUrl: data.pdfUrl?.trim() ?? '',
+    categoryId: data.categoryId?.trim() ?? '',
     track: mapContentTrack(data),
     sortOrder: typeof data.sortOrder === 'number' ? data.sortOrder : 0,
     isPublished: data.isPublished === true,
@@ -152,10 +185,8 @@ export function subscribeResourceNotes(
 }
 
 export function fetchResourceNotesPage(options?: ContentSubscribeOptions) {
-  return fetchSortedContentListPage(
-    notesCollection(),
-    options,
-    snapshot => mapNotesSnapshot(snapshot, options),
+  return fetchSortedContentListPage(notesCollection(), options, snapshot =>
+    mapNotesSnapshot(snapshot, options),
   );
 }
 
@@ -198,6 +229,7 @@ export async function updateResourcesSection(
       sectionTitle: payload.sectionTitle,
       sectionSubtitle: payload.sectionSubtitle,
       actionLabel: payload.actionLabel,
+      categories: [],
       updatedAt: null,
     };
   } catch (error) {
@@ -205,6 +237,86 @@ export async function updateResourcesSection(
       error,
       'FIRESTORE_ERROR',
       'Failed to update resources screen headings.',
+    );
+  }
+}
+
+function newResourceNoteCategoryId() {
+  return `cat_${Date.now().toString(36)}_${Math.random()
+    .toString(36)
+    .slice(2, 8)}`;
+}
+
+function readResourceNoteCategories(snapshot: {
+  data: () => unknown;
+}): ResourceNoteCategory[] {
+  const data = snapshot.data() as ResourcesSectionDocument | undefined;
+  return mapCategories(data?.categories);
+}
+
+export async function addResourceNoteCategory(
+  name: string,
+): Promise<ResourceNoteCategory> {
+  const trimmed = name.trim();
+  if (!trimmed || trimmed.length > MAX_RESOURCE_NOTE_CATEGORY_NAME_LENGTH) {
+    throw wrapFirebaseError(
+      new Error('Enter a category name.'),
+      'FIRESTORE_ERROR',
+      'Enter a category name.',
+    );
+  }
+
+  try {
+    await ensureResourcesSectionDefaults();
+    return await runTransaction(db, async transaction => {
+      const snapshot = await transaction.get(sectionDocRef());
+      const existing = readResourceNoteCategories(snapshot);
+      const match = existing.find(
+        category => category.name.toLowerCase() === trimmed.toLowerCase(),
+      );
+      if (match) {
+        return match;
+      }
+      if (existing.length >= MAX_RESOURCE_NOTE_CATEGORIES) {
+        throw new Error(
+          `You can add up to ${MAX_RESOURCE_NOTE_CATEGORIES} categories.`,
+        );
+      }
+
+      const category = { id: newResourceNoteCategoryId(), name: trimmed };
+      transaction.update(sectionDocRef(), {
+        categories: [...existing, category],
+        updatedAt: serverTimestamp(),
+      });
+      return category;
+    });
+  } catch (error) {
+    throw wrapFirebaseError(
+      error,
+      'FIRESTORE_ERROR',
+      'Failed to add note category.',
+    );
+  }
+}
+
+export async function removeResourceNoteCategory(
+  categoryId: string,
+): Promise<void> {
+  try {
+    await ensureResourcesSectionDefaults();
+    await runTransaction(db, async transaction => {
+      const snapshot = await transaction.get(sectionDocRef());
+      const existing = readResourceNoteCategories(snapshot);
+      transaction.update(sectionDocRef(), {
+        categories: existing.filter(category => category.id !== categoryId),
+        updatedAt: serverTimestamp(),
+      });
+    });
+  } catch (error) {
+    throw wrapFirebaseError(
+      error,
+      'FIRESTORE_ERROR',
+      'Failed to remove note category.',
     );
   }
 }
@@ -240,6 +352,7 @@ export async function createResourceNote(
       title: input.title.trim(),
       subtitle: input.subtitle?.trim() ?? '',
       pdfUrl: input.pdfUrl.trim(),
+      categoryId: input.categoryId?.trim() ?? '',
       track: input.track,
       sortOrder,
       isPublished: input.isPublished ?? true,
@@ -278,6 +391,9 @@ export async function updateResourceNote(
     if (input.pdfUrl !== undefined) {
       updates.pdfUrl = input.pdfUrl.trim();
     }
+    if (input.categoryId !== undefined) {
+      updates.categoryId = input.categoryId.trim();
+    }
     if (input.sortOrder !== undefined) {
       updates.sortOrder = input.sortOrder;
     }
@@ -298,7 +414,9 @@ export async function updateResourceNote(
       Object.assign(
         updates,
         buildTrackAwareSchoolAudienceWriteFields(
-          input.track === 'professionals' ? 'professionals' : input.track ?? 'kids',
+          input.track === 'professionals'
+            ? 'professionals'
+            : input.track ?? 'kids',
           input,
         ),
       );
@@ -321,7 +439,9 @@ export async function deleteResourceNote(noteId: string): Promise<void> {
   }
 }
 
-export async function reorderResourceNotes(orderedIds: string[]): Promise<void> {
+export async function reorderResourceNotes(
+  orderedIds: string[],
+): Promise<void> {
   if (orderedIds.length === 0) {
     return;
   }

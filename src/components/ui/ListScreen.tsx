@@ -32,6 +32,7 @@ type ListScreenProps<T> = {
   showBack?: boolean;
   onBackPress?: () => void;
   rightSlot?: React.ReactNode;
+  headerAccessory?: React.ReactNode;
   listHeader?: React.ReactElement | null;
   contentContainerStyle?: StyleProp<ViewStyle>;
   extraData?: unknown;
@@ -59,6 +60,7 @@ function ListScreen<T>({
   showBack = true,
   onBackPress,
   rightSlot,
+  headerAccessory,
   listHeader,
   contentContainerStyle,
   extraData,
@@ -106,6 +108,7 @@ function ListScreen<T>({
         showBack={showBack}
         onBackPress={onBackPress}
         rightSlot={rightSlot}
+        accessory={headerAccessory}
       />
       <FlatList
         data={loading || error ? [] : data}

@@ -23,6 +23,8 @@ type ScreenHeaderProps = {
   backDisabled?: boolean;
   onBackPress?: () => void;
   rightSlot?: React.ReactNode;
+  /** Rendered under the title, in place of or below the subtitle. */
+  accessory?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   /** Compact header used under floating chrome. */
   compact?: boolean;
@@ -38,6 +40,7 @@ function ScreenHeader({
   backDisabled = false,
   onBackPress,
   rightSlot,
+  accessory,
   style,
   compact = false,
 }: ScreenHeaderProps) {
@@ -55,10 +58,12 @@ function ScreenHeader({
 
       <View style={[styles.titleRow, centerTitle && styles.titleRowCentered]}>
         <View
-          style={centerTitle ? styles.titleBlockCentered : styles.titleBlock}>
+          style={centerTitle ? styles.titleBlockCentered : styles.titleBlock}
+        >
           <Text
             style={[styles.title, centerTitle && styles.textCentered]}
-            accessibilityRole="header">
+            accessibilityRole="header"
+          >
             {title}
           </Text>
           {subtitle ? (
@@ -69,6 +74,7 @@ function ScreenHeader({
         </View>
         {rightSlot ? <View style={styles.rightSlot}>{rightSlot}</View> : null}
       </View>
+      {accessory ? <View style={styles.accessory}>{accessory}</View> : null}
     </View>
   );
 }
@@ -117,6 +123,9 @@ const styles = StyleSheet.create({
   },
   rightSlot: {
     paddingTop: 2,
+  },
+  accessory: {
+    marginTop: 2,
   },
 });
 

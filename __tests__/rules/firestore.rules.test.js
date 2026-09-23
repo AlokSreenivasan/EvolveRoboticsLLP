@@ -711,6 +711,35 @@ describe('admin-writable content (resourceNotes)', () => {
       setDoc(doc(db(OWNER_UID), 'resourceNotes', 'note1'), validNote),
     );
   });
+
+  test('admins can file a note under a category', async () => {
+    const database = db(ADMIN_UID);
+    await assertSucceeds(
+      setDoc(doc(database, 'resourceNotes', 'note-cat'), {
+        ...validNote,
+        categoryId: 'cat_physics',
+      }),
+    );
+    await assertSucceeds(
+      updateDoc(doc(database, 'resourceNotes', 'note-cat'), {
+        categoryId: '',
+      }),
+    );
+  });
+});
+
+describe('resource note categories', () => {
+  test('admins can store shared note categories on the resources section', async () => {
+    await assertSucceeds(
+      setDoc(doc(db(ADMIN_UID), 'appContent', 'resources'), {
+        sectionTitle: 'Resources',
+        sectionSubtitle: 'Study notes',
+        actionLabel: '',
+        categories: [{ id: 'cat_physics', name: 'Physics' }],
+        updatedAt: serverTimestamp(),
+      }),
+    );
+  });
 });
 
 describe('admin-writable content (assignments)', () => {
