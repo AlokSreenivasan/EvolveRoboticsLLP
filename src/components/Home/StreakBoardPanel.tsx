@@ -18,6 +18,9 @@ import Svg, {
 } from 'react-native-svg';
 
 import LevelBadgeIllustration from './icons/LevelBadgeIllustration';
+import StreakLevelUpOverlay, {
+  type StreakLevelUpDestination,
+} from './StreakLevelUpOverlay';
 import { colors, spacing } from '../../constants/theme';
 import CardShadowShell from '../ui/CardShadowShell';
 import { useUserStreakStats } from '../../presentation/hooks/useUserStreakStats';
@@ -36,23 +39,14 @@ const CARD_BG_BOTTOM = '#4a1240';
 type StatChipProps = {
   icon: React.ReactNode;
   label: string;
-  accessibilityLabel: string;
-  onPress: () => void;
 };
 
-function StatChip({ icon, label, accessibilityLabel, onPress }: StatChipProps) {
+function StatChip({ icon, label }: StatChipProps) {
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.statChip,
-        pressed && styles.statChipPressed,
-      ]}>
+    <View style={styles.statChip}>
       {icon}
       <Text style={styles.statChipText}>{label}</Text>
-    </Pressable>
+    </View>
   );
 }
 
@@ -102,6 +96,7 @@ function StreakBoardPanel() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const { stats, loading } = useUserStreakStats();
   const [cardSize, setCardSize] = useState({ width: 0, height: 0 });
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const onCardLayout = useCallback((event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout;
@@ -134,17 +129,29 @@ function StreakBoardPanel() {
   const dayStreakLabel =
     stats.streakDays === 1 ? '1 Day' : `${stats.streakDays} Days`;
 
-  const handleStreakPress = useCallback(() => {
-    navigation.navigate('ToDo', { tab: 'learn' });
-  }, [navigation]);
+  const openMenu = useCallback(() => {
+    setMenuOpen(true);
+  }, []);
 
-  const handleXpPress = useCallback(() => {
-    navigation.navigate('QuizCompetitions');
-  }, [navigation]);
+  const closeMenu = useCallback(() => {
+    setMenuOpen(false);
+  }, []);
 
-  const handleLevelPress = useCallback(() => {
-    navigation.navigate('Courses');
-  }, [navigation]);
+  const handleDestination = useCallback(
+    (destination: StreakLevelUpDestination) => {
+      setMenuOpen(false);
+      if (destination === 'todo') {
+        navigation.navigate('ToDo', { tab: 'learn' });
+        return;
+      }
+      if (destination === 'quiz') {
+        navigation.navigate('QuizCompetitions');
+        return;
+      }
+      navigation.navigate('Courses');
+    },
+    [navigation],
+  );
 
   if (loading) {
     return (
@@ -161,102 +168,110 @@ function StreakBoardPanel() {
   }
 
   return (
-    <CardShadowShell
-      elevation="elevated"
-      borderRadius={spacing.cardRadiusXl}
-      style={styles.shell}
-      innerStyle={styles.cardInner}
-      onLayout={onCardLayout}
-      accessibilityRole="summary"
-      accessibilityLabel={`Level ${stats.level}, ${rank}. ${stats.currentXp} of ${XP_LEVEL_SIZE} experience points. ${dayStreakLabel} streak.`}>
-      <CardBackdrop width={cardSize.width} height={cardSize.height} />
+    <>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Level ${stats.level}, ${rank}. ${stats.currentXp} of ${XP_LEVEL_SIZE} experience points. ${dayStreakLabel} streak. Open ways to earn XP and reach the next level.`}
+        onPress={openMenu}
+        style={({ pressed }) => pressed && styles.cardPressed}>
+        <CardShadowShell
+          elevation="elevated"
+          borderRadius={spacing.cardRadiusXl}
+          style={styles.shell}
+          innerStyle={styles.cardInner}
+          onLayout={onCardLayout}>
+          <CardBackdrop width={cardSize.width} height={cardSize.height} />
 
-      <View style={styles.contentRow}>
-        <View style={styles.mainColumn}>
-          <View style={styles.levelPill}>
-            <Zap size={12} color="#fff" fill="#fff" strokeWidth={2} />
-            <Text style={styles.levelPillText}>
-              Level {stats.level} · {rank}
-            </Text>
-          </View>
+          <View style={styles.contentRow} pointerEvents="none">
+            <View style={styles.mainColumn}>
+              <View style={styles.levelPill}>
+                <Zap size={12} color="#fff" fill="#fff" strokeWidth={2} />
+                <Text style={styles.levelPillText}>
+                  Level {stats.level} · {rank}
+                </Text>
+              </View>
 
-          <Text style={styles.motivation} numberOfLines={2}>
-            {motivation}
-          </Text>
+              <Text style={styles.motivation} numberOfLines={2}>
+                {motivation}
+              </Text>
 
-          <View
-            style={styles.progressTrack}
-            accessibilityRole="progressbar"
-            accessibilityValue={{
-              min: 0,
-              max: XP_LEVEL_SIZE,
-              now: stats.currentXp,
-            }}>
-            <View
-              style={[styles.progressFill, { width: `${progressPercent}%` }]}
-            />
-          </View>
+              <View
+                style={styles.progressTrack}
+                accessibilityRole="progressbar"
+                accessibilityValue={{
+                  min: 0,
+                  max: XP_LEVEL_SIZE,
+                  now: stats.currentXp,
+                }}>
+                <View
+                  style={[styles.progressFill, { width: `${progressPercent}%` }]}
+                />
+              </View>
 
-          <Text style={styles.xpLabel}>
-            {stats.currentXp} / {XP_LEVEL_SIZE} XP
-          </Text>
+              <Text style={styles.xpLabel}>
+                {stats.currentXp} / {XP_LEVEL_SIZE} XP
+              </Text>
 
-          <Text style={styles.levelProgressText} numberOfLines={2}>
-            {levelProgressText}
-          </Text>
+              <Text style={styles.levelProgressText} numberOfLines={2}>
+                {levelProgressText}
+              </Text>
 
-          <View style={styles.statsRow}>
-            <StatChip
-              icon={
-                <Flame
-                  size={12}
-                  color={colors.accentOrange}
-                  fill={
-                    stats.streakDays > 0 ? colors.accentOrange : 'transparent'
+              <View style={styles.statsRow}>
+                <StatChip
+                  icon={
+                    <Flame
+                      size={12}
+                      color={colors.accentOrange}
+                      fill={
+                        stats.streakDays > 0 ? colors.accentOrange : 'transparent'
+                      }
+                      strokeWidth={2.25}
+                    />
                   }
-                  strokeWidth={2.25}
+                  label={dayStreakLabel}
                 />
-              }
-              label={dayStreakLabel}
-              accessibilityLabel={`Day streak ${dayStreakLabel}. Open lessons to keep your streak.`}
-              onPress={handleStreakPress}
-            />
-            <StatChip
-              icon={
-                <Sparkles
-                  size={12}
-                  color={colors.heroHighlight}
-                  strokeWidth={2.25}
+                <StatChip
+                  icon={
+                    <Sparkles
+                      size={12}
+                      color={colors.heroHighlight}
+                      strokeWidth={2.25}
+                    />
+                  }
+                  label={String(stats.totalXp)}
                 />
-              }
-              label={String(stats.totalXp)}
-              accessibilityLabel={`Total ${stats.totalXp} XP. Open quiz competitions to earn more.`}
-              onPress={handleXpPress}
-            />
-            <StatChip
-              icon={
-                <Layers
-                  size={12}
-                  color={colors.heroHighlight}
-                  strokeWidth={2.25}
+                <StatChip
+                  icon={
+                    <Layers
+                      size={12}
+                      color={colors.heroHighlight}
+                      strokeWidth={2.25}
+                    />
+                  }
+                  label={`Lv ${stats.level}`}
                 />
-              }
-              label={`Lv ${stats.level}`}
-              accessibilityLabel={`Level ${stats.level}, ${rank}. Open courses to level up.`}
-              onPress={handleLevelPress}
-            />
-          </View>
-        </View>
+              </View>
+            </View>
 
-        <View style={styles.illustrationWrap}>
-          <LevelBadgeIllustration size={112} />
-        </View>
-      </View>
-    </CardShadowShell>
+            <View style={styles.illustrationWrap}>
+              <LevelBadgeIllustration size={112} />
+            </View>
+          </View>
+        </CardShadowShell>
+      </Pressable>
+      <StreakLevelUpOverlay
+        visible={menuOpen}
+        onClose={closeMenu}
+        onSelect={handleDestination}
+      />
+    </>
   );
 }
 
 const styles = StyleSheet.create({
+  cardPressed: {
+    opacity: 0.92,
+  },
   shell: {
     marginBottom: 22,
   },
@@ -396,10 +411,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.18)',
-  },
-  statChipPressed: {
-    opacity: 0.82,
-    backgroundColor: 'rgba(255, 255, 255, 0.18)',
   },
   statChipText: {
     fontSize: 10,
