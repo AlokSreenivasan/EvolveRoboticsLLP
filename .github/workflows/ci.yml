@@ -74,11 +74,11 @@ jobs:
         # Proves minify/R8 compiles. Do NOT upload this APK to Play Console.
         run: |
           printf '%s\n' \
-            'storeFile=debug.keystore' \
-            'storePassword=android' \
-            'keyAlias=androiddebugkey' \
-            'keyPassword=android' \
-            > android/keystore.properties
+            'MYAPP_UPLOAD_STORE_FILE=debug.keystore' \
+            'MYAPP_UPLOAD_KEY_ALIAS=androiddebugkey' \
+            'MYAPP_UPLOAD_STORE_PASSWORD=android' \
+            'MYAPP_UPLOAD_KEY_PASSWORD=android' \
+            >> android/gradle.properties
 
       - name: Assemble release APK with CI debug keystore
         working-directory: android

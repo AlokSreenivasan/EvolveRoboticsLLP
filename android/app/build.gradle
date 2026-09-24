@@ -85,12 +85,6 @@ def enableProguardInReleaseBuilds = true
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
-def keystorePropertiesFile = rootProject.file("keystore.properties")
-def keystoreProperties = new Properties()
-if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
-}
-
 android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -112,16 +106,22 @@ android {
             keyPassword 'android'
         }
         release {
-            if (!keystorePropertiesFile.exists()) {
+            if (!project.hasProperty('MYAPP_UPLOAD_STORE_FILE')
+                    || !project.hasProperty('MYAPP_UPLOAD_KEY_ALIAS')
+                    || !project.hasProperty('MYAPP_UPLOAD_STORE_PASSWORD')
+                    || !project.hasProperty('MYAPP_UPLOAD_KEY_PASSWORD')) {
                 throw new GradleException(
-                    "Missing android/keystore.properties. Copy keystore.properties.example and " +
-                    "point storeFile at your release keystore (see https://reactnative.dev/docs/signed-apk-android)."
+                    "Release signing is not configured. Add MYAPP_UPLOAD_STORE_FILE, " +
+                    "MYAPP_UPLOAD_KEY_ALIAS, MYAPP_UPLOAD_STORE_PASSWORD, and " +
+                    "MYAPP_UPLOAD_KEY_PASSWORD to ~/.gradle/gradle.properties " +
+                    "(never commit these values). The upload keystore belongs at " +
+                    "android/app/upload-keystore.jks."
                 )
             }
-            keyAlias keystoreProperties['keyAlias']
-            keyPassword keystoreProperties['keyPassword']
-            storeFile file(keystoreProperties['storeFile'])
-            storePassword keystoreProperties['storePassword']
+            storeFile file(MYAPP_UPLOAD_STORE_FILE)
+            storePassword MYAPP_UPLOAD_STORE_PASSWORD
+            keyAlias MYAPP_UPLOAD_KEY_ALIAS
+            keyPassword MYAPP_UPLOAD_KEY_PASSWORD
         }
     }
     buildTypes {
